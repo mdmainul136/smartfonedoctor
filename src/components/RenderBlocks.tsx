@@ -2,9 +2,9 @@
 
 import React from 'react'
 import HeroSection from '@/components/home/HeroSection'
-import BenefitsSection from '@/components/home/BenefitsSection'
-import FaqSection from '@/components/home/FaqSection'
-import CommonIssues from '@/components/home/CommonIssues'
+import { BenefitsSection } from '@/components/home/BenefitsSection'
+import { FaqSection } from '@/components/home/FaqSection'
+import { CommonIssues } from '@/components/home/CommonIssues'
 import Link from 'next/link'
 
 type BlockData = {
@@ -122,3 +122,4 @@ export default function RenderBlocks({ blocks }: Props) {
     </div>
   )
 }
+

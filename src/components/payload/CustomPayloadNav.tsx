@@ -15,19 +15,14 @@ import {
   User,
   Settings,
   Layers,
-  ChevronDown,
+  PhoneCall,
   ExternalLink,
 } from 'lucide-react'
 
 export const CustomPayloadNav = () => {
   const pathname = usePathname()
-  const [openSection, setOpenSection] = useState<string | null>('portal')
 
-  const toggleSection = (id: string) => {
-    setOpenSection((prev) => (prev === id ? null : id))
-  }
-
-  const isCurrent = (path: string) => pathname === path
+  const isCurrent = (path: string) => pathname === path || pathname.startsWith(path + '/')
 
   return (
     <div
@@ -36,7 +31,7 @@ export const CustomPayloadNav = () => {
         flexDirection: 'column',
         height: '100%',
         width: '100%',
-        backgroundColor: '#f9fafb',
+        backgroundColor: '#ffffff',
         borderRight: '1px solid #e5e7eb',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         fontSize: '13px',
@@ -46,7 +41,7 @@ export const CustomPayloadNav = () => {
       {/* 1. BRAND HEADER */}
       <div style={{ padding: '16px 14px 12px 14px', borderBottom: '1px solid #e5e7eb' }}>
         <Link
-          href="/portal"
+          href="/admin"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -57,27 +52,27 @@ export const CustomPayloadNav = () => {
         >
           <span
             style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '6px',
-              backgroundColor: '#111111',
+              width: '32px',
+              height: '32px',
+              borderRadius: '8px',
+              backgroundColor: '#009691',
               color: '#ffffff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '12px',
-              fontWeight: 700,
+              fontSize: '13px',
+              fontWeight: 800,
               flexShrink: 0,
             }}
           >
             SF
           </span>
           <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#111111', lineHeight: 1.2 }}>
-              Smart Fone Doctor
+            <span style={{ fontSize: '13px', fontWeight: 700, color: '#111111', lineHeight: 1.2 }}>
+              SmartFoneDoctor
             </span>
             <span style={{ fontSize: '11px', color: '#6b7280', lineHeight: 1.2 }}>
-              Philadelphia · 3 stores
+              Central Admin &amp; Operations
             </span>
           </div>
         </Link>
@@ -85,40 +80,115 @@ export const CustomPayloadNav = () => {
 
       {/* 2. SCROLLABLE MENU SECTIONS */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '12px 10px' }}>
-        {/* GROUP A: CMS COLLECTIONS */}
+        
+        {/* SECTION 1: OPERATIONS */}
         <div style={{ marginBottom: '18px' }}>
           <div
             style={{
               fontSize: '11px',
               fontWeight: 600,
               textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-              color: '#6b7280',
+              letterSpacing: '0.05em',
+              color: '#9ca3af',
               padding: '4px 8px',
               marginBottom: '4px',
             }}
           >
-            Website Content (CMS)
+            Store Operations
           </div>
 
           <Link
-            href="/admin"
+            href="/admin/collections/leads"
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              padding: '7px 10px',
+              padding: '8px 10px',
               borderRadius: '6px',
               textDecoration: 'none',
-              color: isCurrent('/admin') ? '#111111' : '#4b5563',
-              backgroundColor: isCurrent('/admin') ? '#e5e7eb' : 'transparent',
-              fontWeight: isCurrent('/admin') ? 600 : 500,
+              color: pathname.includes('/admin/collections/leads') ? '#009691' : '#374151',
+              backgroundColor: pathname.includes('/admin/collections/leads') ? '#e6f7f6' : 'transparent',
+              fontWeight: pathname.includes('/admin/collections/leads') ? 600 : 500,
               marginBottom: '2px',
             }}
           >
-            <LayoutDashboard size={15} style={{ color: '#4b5563' }} />
-            <span>CMS Dashboard</span>
+            <CalendarCheck size={16} style={{ color: pathname.includes('/admin/collections/leads') ? '#009691' : '#6b7280' }} />
+            <span>Customer Leads &amp; Calls</span>
           </Link>
+
+          <Link
+            href="/admin/collections/repairs"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 10px',
+              borderRadius: '6px',
+              textDecoration: 'none',
+              color: pathname.includes('/admin/collections/repairs') ? '#009691' : '#374151',
+              backgroundColor: pathname.includes('/admin/collections/repairs') ? '#e6f7f6' : 'transparent',
+              fontWeight: pathname.includes('/admin/collections/repairs') ? 600 : 500,
+              marginBottom: '2px',
+            }}
+          >
+            <Wrench size={16} style={{ color: pathname.includes('/admin/collections/repairs') ? '#009691' : '#6b7280' }} />
+            <span>Repair Tickets &amp; Tracking</span>
+          </Link>
+
+          <Link
+            href="/admin/collections/reviews"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 10px',
+              borderRadius: '6px',
+              textDecoration: 'none',
+              color: pathname.includes('/admin/collections/reviews') ? '#009691' : '#374151',
+              backgroundColor: pathname.includes('/admin/collections/reviews') ? '#e6f7f6' : 'transparent',
+              fontWeight: pathname.includes('/admin/collections/reviews') ? 600 : 500,
+              marginBottom: '2px',
+            }}
+          >
+            <Star size={16} style={{ color: pathname.includes('/admin/collections/reviews') ? '#009691' : '#6b7280' }} />
+            <span>Customer Reviews</span>
+          </Link>
+
+          <Link
+            href="/admin/collections/locations"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 10px',
+              borderRadius: '6px',
+              textDecoration: 'none',
+              color: pathname.includes('/admin/collections/locations') ? '#009691' : '#374151',
+              backgroundColor: pathname.includes('/admin/collections/locations') ? '#e6f7f6' : 'transparent',
+              fontWeight: pathname.includes('/admin/collections/locations') ? 600 : 500,
+              marginBottom: '2px',
+            }}
+          >
+            <MapPin size={16} style={{ color: pathname.includes('/admin/collections/locations') ? '#009691' : '#6b7280' }} />
+            <span>3 Store Locations</span>
+          </Link>
+        </div>
+
+        {/* SECTION 2: WEBSITE & CONTENT */}
+        <div style={{ marginBottom: '18px' }}>
+          <div
+            style={{
+              fontSize: '11px',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              color: '#9ca3af',
+              padding: '4px 8px',
+              marginBottom: '4px',
+            }}
+          >
+            Website &amp; CMS
+          </div>
 
           <Link
             href="/admin/collections/pages"
@@ -126,17 +196,17 @@ export const CustomPayloadNav = () => {
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              padding: '7px 10px',
+              padding: '8px 10px',
               borderRadius: '6px',
               textDecoration: 'none',
-              color: pathname.includes('/admin/collections/pages') ? '#111111' : '#4b5563',
-              backgroundColor: pathname.includes('/admin/collections/pages') ? '#e5e7eb' : 'transparent',
+              color: pathname.includes('/admin/collections/pages') ? '#009691' : '#374151',
+              backgroundColor: pathname.includes('/admin/collections/pages') ? '#e6f7f6' : 'transparent',
               fontWeight: pathname.includes('/admin/collections/pages') ? 600 : 500,
               marginBottom: '2px',
             }}
           >
-            <FileText size={15} style={{ color: '#4b5563' }} />
-            <span>Pages &amp; Blocks</span>
+            <FileText size={16} style={{ color: pathname.includes('/admin/collections/pages') ? '#009691' : '#6b7280' }} />
+            <span>Pages &amp; Block Builder</span>
           </Link>
 
           <Link
@@ -145,16 +215,16 @@ export const CustomPayloadNav = () => {
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              padding: '7px 10px',
+              padding: '8px 10px',
               borderRadius: '6px',
               textDecoration: 'none',
-              color: pathname.includes('/admin/collections/services') ? '#111111' : '#4b5563',
-              backgroundColor: pathname.includes('/admin/collections/services') ? '#e5e7eb' : 'transparent',
+              color: pathname.includes('/admin/collections/services') ? '#009691' : '#374151',
+              backgroundColor: pathname.includes('/admin/collections/services') ? '#e6f7f6' : 'transparent',
               fontWeight: pathname.includes('/admin/collections/services') ? 600 : 500,
               marginBottom: '2px',
             }}
           >
-            <Wrench size={15} style={{ color: '#4b5563' }} />
+            <Wrench size={16} style={{ color: pathname.includes('/admin/collections/services') ? '#009691' : '#6b7280' }} />
             <span>Services &amp; Pricing</span>
           </Link>
 
@@ -164,16 +234,16 @@ export const CustomPayloadNav = () => {
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              padding: '7px 10px',
+              padding: '8px 10px',
               borderRadius: '6px',
               textDecoration: 'none',
-              color: pathname.includes('/admin/collections/faqs') ? '#111111' : '#4b5563',
-              backgroundColor: pathname.includes('/admin/collections/faqs') ? '#e5e7eb' : 'transparent',
+              color: pathname.includes('/admin/collections/faqs') ? '#009691' : '#374151',
+              backgroundColor: pathname.includes('/admin/collections/faqs') ? '#e6f7f6' : 'transparent',
               fontWeight: pathname.includes('/admin/collections/faqs') ? 600 : 500,
               marginBottom: '2px',
             }}
           >
-            <Sparkles size={15} style={{ color: '#4b5563' }} />
+            <Sparkles size={16} style={{ color: pathname.includes('/admin/collections/faqs') ? '#009691' : '#6b7280' }} />
             <span>FAQs &amp; Schema</span>
           </Link>
 
@@ -183,94 +253,43 @@ export const CustomPayloadNav = () => {
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              padding: '7px 10px',
+              padding: '8px 10px',
               borderRadius: '6px',
               textDecoration: 'none',
-              color: pathname.includes('/admin/collections/media') ? '#111111' : '#4b5563',
-              backgroundColor: pathname.includes('/admin/collections/media') ? '#e5e7eb' : 'transparent',
+              color: pathname.includes('/admin/collections/media') ? '#009691' : '#374151',
+              backgroundColor: pathname.includes('/admin/collections/media') ? '#e6f7f6' : 'transparent',
               fontWeight: pathname.includes('/admin/collections/media') ? 600 : 500,
               marginBottom: '2px',
             }}
           >
-            <Layers size={15} style={{ color: '#4b5563' }} />
+            <Layers size={16} style={{ color: pathname.includes('/admin/collections/media') ? '#009691' : '#6b7280' }} />
             <span>Media &amp; Images</span>
           </Link>
         </div>
 
-        {/* GROUP B: STORE OPERATIONS PORTAL (Connected Directly) */}
+        {/* SECTION 3: ANALYTICS & TOOLS */}
         <div style={{ marginBottom: '18px' }}>
           <div
             style={{
               fontSize: '11px',
               fontWeight: 600,
               textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-              color: '#6b7280',
+              letterSpacing: '0.05em',
+              color: '#9ca3af',
               padding: '4px 8px',
               marginBottom: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
             }}
           >
-            <span>Operations Portal</span>
-            <span
-              style={{
-                fontSize: '10px',
-                padding: '1px 5px',
-                borderRadius: '4px',
-                backgroundColor: '#dcfce7',
-                color: '#15803d',
-                fontWeight: 600,
-              }}
-            >
-              LIVE
-            </span>
+            SEO &amp; Insights
           </div>
-
-          <a
-            href="/portal"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '7px 10px',
-              borderRadius: '6px',
-              textDecoration: 'none',
-              color: '#374151',
-              fontWeight: 500,
-              marginBottom: '2px',
-            }}
-          >
-            <LayoutDashboard size={15} style={{ color: '#6b7280' }} />
-            <span>Portal Overview</span>
-          </a>
-
-          <a
-            href="/portal/leads"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '7px 10px',
-              borderRadius: '6px',
-              textDecoration: 'none',
-              color: '#374151',
-              fontWeight: 500,
-              marginBottom: '2px',
-            }}
-          >
-            <CalendarCheck size={15} style={{ color: '#6b7280' }} />
-            <span>Leads &amp; Bookings</span>
-          </a>
 
           <a
             href="/portal/local-seo"
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              padding: '7px 10px',
+              justifyContent: 'space-between',
+              padding: '8px 10px',
               borderRadius: '6px',
               textDecoration: 'none',
               color: '#374151',
@@ -278,79 +297,28 @@ export const CustomPayloadNav = () => {
               marginBottom: '2px',
             }}
           >
-            <MapPin size={15} style={{ color: '#6b7280' }} />
-            <span>GMB &amp; Local SEO</span>
-          </a>
-
-          <a
-            href="/portal/reviews"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '7px 10px',
-              borderRadius: '6px',
-              textDecoration: 'none',
-              color: '#374151',
-              fontWeight: 500,
-              marginBottom: '2px',
-            }}
-          >
-            <Star size={15} style={{ color: '#6b7280' }} />
-            <span>Reviews &amp; Reputation</span>
-          </a>
-
-          <a
-            href="/portal/listings"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '7px 10px',
-              borderRadius: '6px',
-              textDecoration: 'none',
-              color: '#374151',
-              fontWeight: 500,
-              marginBottom: '2px',
-            }}
-          >
-            <Globe size={15} style={{ color: '#6b7280' }} />
-            <span>Directory Listings</span>
-          </a>
-
-          <a
-            href="/portal/listings/ai-visibility"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '7px 10px',
-              borderRadius: '6px',
-              textDecoration: 'none',
-              color: '#374151',
-              fontWeight: 500,
-              marginBottom: '2px',
-            }}
-          >
-            <Sparkles size={15} style={{ color: '#6b7280' }} />
-            <span>Search &amp; AI Visibility</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Globe size={16} style={{ color: '#6b7280' }} />
+              <span>GMB &amp; SEO Tracker</span>
+            </div>
+            <ExternalLink size={13} style={{ color: '#9ca3af' }} />
           </a>
         </div>
 
-        {/* GROUP C: SETTINGS & USERS */}
-        <div style={{ marginBottom: '14px' }}>
+        {/* SECTION 4: SYSTEM */}
+        <div>
           <div
             style={{
               fontSize: '11px',
               fontWeight: 600,
               textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-              color: '#6b7280',
+              letterSpacing: '0.05em',
+              color: '#9ca3af',
               padding: '4px 8px',
               marginBottom: '4px',
             }}
           >
-            Access &amp; Settings
+            System
           </div>
 
           <Link
@@ -359,64 +327,51 @@ export const CustomPayloadNav = () => {
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              padding: '7px 10px',
+              padding: '8px 10px',
               borderRadius: '6px',
               textDecoration: 'none',
-              color: pathname.includes('/admin/collections/users') ? '#111111' : '#4b5563',
-              backgroundColor: pathname.includes('/admin/collections/users') ? '#e5e7eb' : 'transparent',
+              color: pathname.includes('/admin/collections/users') ? '#009691' : '#374151',
+              backgroundColor: pathname.includes('/admin/collections/users') ? '#e6f7f6' : 'transparent',
               fontWeight: pathname.includes('/admin/collections/users') ? 600 : 500,
-              marginBottom: '2px',
             }}
           >
-            <User size={15} style={{ color: '#4b5563' }} />
-            <span>CMS Admins</span>
+            <User size={16} style={{ color: pathname.includes('/admin/collections/users') ? '#009691' : '#6b7280' }} />
+            <span>Staff &amp; Admins</span>
           </Link>
-
-          <a
-            href="/settings"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '7px 10px',
-              borderRadius: '6px',
-              textDecoration: 'none',
-              color: '#4b5563',
-              fontWeight: 500,
-              marginBottom: '2px',
-            }}
-          >
-            <Settings size={15} style={{ color: '#4b5563' }} />
-            <span>Store Settings</span>
-          </a>
         </div>
+
       </div>
 
-      {/* 3. FOOTER QUICK ACTION */}
-      <div style={{ padding: '12px 14px', borderTop: '1px solid #e5e7eb', backgroundColor: '#ffffff' }}>
+      {/* 3. FOOTER */}
+      <div
+        style={{
+          padding: '12px 14px',
+          borderTop: '1px solid #e5e7eb',
+          fontSize: '11px',
+          color: '#6b7280',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <span>v3.91 · PostgreSQL</span>
         <a
           href="/"
           target="_blank"
           rel="noreferrer"
           style={{
+            color: '#009691',
+            textDecoration: 'none',
+            fontWeight: 600,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-            padding: '7px 12px',
-            borderRadius: '6px',
-            backgroundColor: '#111111',
-            color: '#ffffff',
-            textDecoration: 'none',
-            fontSize: '12px',
-            fontWeight: 500,
+            gap: '4px',
           }}
         >
-          <span>View Customer Site</span>
-          <ExternalLink size={12} style={{ opacity: 0.8 }} />
+          View Site
+          <ExternalLink size={12} />
         </a>
       </div>
     </div>
   )
 }
-

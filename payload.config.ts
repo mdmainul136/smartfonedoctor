@@ -9,6 +9,10 @@ import { Media } from './src/collections/Media'
 import { Pages } from './src/collections/Pages'
 import { FAQs } from './src/collections/FAQs'
 import { Services } from './src/collections/Services'
+import { Leads } from './src/collections/Leads'
+import { Repairs } from './src/collections/Repairs'
+import { Locations } from './src/collections/Locations'
+import { Reviews } from './src/collections/Reviews'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -27,7 +31,17 @@ export default buildConfig({
       },
     },
   },
-  collections: [Users, Media, Pages, FAQs, Services],
+  collections: [
+    Users,
+    Leads,
+    Repairs,
+    Reviews,
+    Locations,
+    Pages,
+    Services,
+    FAQs,
+    Media,
+  ],
   editor: lexicalEditor(),
   secret:
     process.env.PAYLOAD_SECRET ||
@@ -44,4 +58,3 @@ export default buildConfig({
     },
   }),
 })
-

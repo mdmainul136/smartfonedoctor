@@ -5,6 +5,7 @@ export const FAQs: CollectionConfig = {
   admin: {
     useAsTitle: 'question',
     defaultColumns: ['question', 'category', 'order'],
+    group: 'Content & Website',
   },
   fields: [
     {

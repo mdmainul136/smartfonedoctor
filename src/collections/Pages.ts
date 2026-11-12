@@ -12,6 +12,8 @@ export const Pages: CollectionConfig = {
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'slug', 'updatedAt'],
+    group: 'Content & Website',
+    description: 'Landing pages, drag & drop sections, and announcement banners',
   },
   fields: [
     {
