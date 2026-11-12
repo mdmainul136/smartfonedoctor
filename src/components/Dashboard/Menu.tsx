@@ -13,6 +13,7 @@ import {
   Sparkles,
   Star,
   FileText,
+  Layers,
   User,
   Settings,
   LogOut,
@@ -61,6 +62,12 @@ const menuItems: { title: string; items: MenuLink[] }[] = [
         icon: FileText,
         label: "Pages & SEO",
         href: "/admin/pages",
+        visible: ["admin"],
+      },
+      {
+        icon: Layers,
+        label: "Mega Menu Builder",
+        href: "/admin/mega-menu",
         visible: ["admin"],
       },
       {

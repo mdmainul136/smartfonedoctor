@@ -352,3 +352,4 @@ export const INITIAL_SERVICES_CATALOG: CatalogServiceItem[] = [
     isPopular: false,
   },
 ];
+
