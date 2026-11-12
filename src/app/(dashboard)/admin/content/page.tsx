@@ -17,172 +17,525 @@ import {
   RotateCcw,
   Layout,
   Megaphone,
-  HelpCircle as FaqIcon,
   Store,
   Smartphone,
+  Tablet,
+  Laptop,
+  Gamepad2,
+  Tag,
+  Menu as MenuIcon,
+  Search,
+  Globe,
+  DollarSign,
+  ArrowRight,
+  ChevronRight,
+  Layers,
   Save,
+  FileText,
+  Sliders,
+  Settings,
+  AlertCircle,
+  Copy,
 } from "lucide-react";
 
-interface FaqItem {
+// 1. DEDICATED SITE PAGES LIST (One-by-One Page Editing)
+interface SitePageConfig {
   id: string;
-  question: string;
-  answer: string;
+  name: string;
+  path: string;
+  category: "Core" | "Repairs" | "Utility" | "Legal";
+  title: string;
+  metaDesc: string;
+  heroHeadline: string;
+  heroSubtitle: string;
+  heroBadge: string;
+  primaryCtaText: string;
+  primaryCtaLink: string;
+  status: "Published" | "Draft";
+  lastEdited: string;
 }
 
-interface BenefitItem {
+const INITIAL_PAGES: SitePageConfig[] = [
+  {
+    id: "home",
+    name: "Homepage",
+    path: "/",
+    category: "Core",
+    title: "Fast & Reliable Phone & Electronics Repair in Philadelphia",
+    metaDesc: "Philadelphia's top-rated cell phone, iPhone, iPad, MacBook, and console repair shop. 30-minute screen and battery service with warranty.",
+    heroHeadline: "Fast, reliable repairs that keep your tech working when it matters.",
+    heroSubtitle: "Repair services for smartphones, tablets, computers and game consoles, backed by certified technicians and a 90-day free warranty.",
+    heroBadge: "Philadelphia's Trusted Leader in",
+    primaryCtaText: "Book your repair",
+    primaryCtaLink: "/schedule-repair",
+    status: "Published",
+    lastEdited: "Today, 1:15 PM",
+  },
+  {
+    id: "repairs-iphone",
+    name: "iPhone Repair Page",
+    path: "/repairs/iphone",
+    category: "Repairs",
+    title: "Express iPhone Screen & Battery Repair Philadelphia | Same Day",
+    metaDesc: "Same-day cracked screen replacement, battery renewal, and back glass repair for iPhone 16 Pro down to iPhone 11 at 3 Philadelphia branches.",
+    heroHeadline: "Philadelphia's Premier iPhone Screen & Battery Repair Experts.",
+    heroSubtitle: "OEM-grade OLED displays, 30-minute battery replacements, and precision laser back glass repair backed by our 90-day guarantee.",
+    heroBadge: "Certified Apple Repair Specialists",
+    primaryCtaText: "Get iPhone Estimate",
+    primaryCtaLink: "/schedule-repair?device=iphone",
+    status: "Published",
+    lastEdited: "Yesterday",
+  },
+  {
+    id: "repairs-smartphone",
+    name: "Samsung & Android Repair",
+    path: "/repairs/smartphone",
+    category: "Repairs",
+    title: "Samsung Galaxy & Google Pixel Repair in Philadelphia",
+    metaDesc: "Authorized repair for Samsung Galaxy S24/S23, Z Fold, and Google Pixel. AMOLED screen replacements, charging ports, and water damage.",
+    heroHeadline: "Professional Samsung Galaxy & Android Smartphone Care.",
+    heroSubtitle: "Genuine Samsung service packs, authentic Pixel displays, and charging port replacements done in under 45 minutes.",
+    heroBadge: "Certified Android Technicians",
+    primaryCtaText: "Fix My Samsung",
+    primaryCtaLink: "/schedule-repair?device=samsung",
+    status: "Published",
+    lastEdited: "Nov 10",
+  },
+  {
+    id: "repairs-ipad",
+    name: "iPad & Tablet Repair",
+    path: "/repairs/ipad",
+    category: "Repairs",
+    title: "iPad Pro, Air, & Mini Screen Repair in West Philadelphia",
+    metaDesc: "Fast digitizer glass replacement, LCD repair, and charging dock restoration for iPad Pro, iPad Air, iPad Mini, and Galaxy Tabs.",
+    heroHeadline: "Fast iPad Glass & Digitizer Replacement in Philadelphia.",
+    heroSubtitle: "Restore your iPad or tablet to mint condition. Same-day repairs for schools, businesses, and everyday users.",
+    heroBadge: "All iPad Generations Supported",
+    primaryCtaText: "Book Tablet Service",
+    primaryCtaLink: "/schedule-repair?device=ipad",
+    status: "Published",
+    lastEdited: "Nov 08",
+  },
+  {
+    id: "repairs-mac",
+    name: "MacBook & Laptop Repair",
+    path: "/repairs/mac",
+    category: "Repairs",
+    title: "MacBook Pro, Air & PC Laptop Repair Philadelphia",
+    metaDesc: "Retina screen replacements, keyboard repair, battery service, and liquid damage logic board diagnostics in Philadelphia.",
+    heroHeadline: "Expert MacBook & PC Computer Repair in West Philly.",
+    heroSubtitle: "Component-level motherboard repair, SSD upgrades, and battery replacements for MacBook Pro, MacBook Air, Dell, and HP laptops.",
+    heroBadge: "Hardware & Logic Board Certified",
+    primaryCtaText: "Request Laptop Diagnostic",
+    primaryCtaLink: "/schedule-repair?device=laptop",
+    status: "Published",
+    lastEdited: "Nov 06",
+  },
+  {
+    id: "repairs-computer",
+    name: "Game Console & HDMI Repair",
+    path: "/repairs/computer",
+    category: "Repairs",
+    title: "PS5, Xbox & Nintendo Switch HDMI Port Repair Philadelphia",
+    metaDesc: "Micro-soldering HDMI port replacement, power supply diagnostics, and fan cleaning for PlayStation 5, Xbox Series X, and Switch.",
+    heroHeadline: "Next-Gen Gaming Console Repair & Micro-Soldering.",
+    heroSubtitle: "No signal on your TV? We specialize in precision micro-soldering HDMI port replacement for PS5, PS4, Xbox Series X/S, and Switch OLED.",
+    heroBadge: "Micro-Soldering Lab On-Site",
+    primaryCtaText: "Fix My Console",
+    primaryCtaLink: "/schedule-repair?device=console",
+    status: "Published",
+    lastEdited: "Nov 04",
+  },
+  {
+    id: "locations",
+    name: "All Store Locations",
+    path: "/locations",
+    category: "Core",
+    title: "Find Your Nearest SmartFoneDoctor Store | 3 Philly Branches",
+    metaDesc: "Visit SmartFoneDoctor on 52nd St or Lancaster Ave. Walk-ins welcome Monday through Saturday with dedicated technician bench service.",
+    heroHeadline: "3 Convenient Google-Verified Stores Across Philadelphia.",
+    heroSubtitle: "Choose your nearest location below for instant walk-in directions, store hours, and direct shop technician phone lines.",
+    heroBadge: "Philadelphia Neighborhood Hubs",
+    primaryCtaText: "View Interactive Map",
+    primaryCtaLink: "/locations#map",
+    status: "Published",
+    lastEdited: "Today",
+  },
+  {
+    id: "about",
+    name: "About Us",
+    path: "/about",
+    category: "Core",
+    title: "About SmartFoneDoctor | Trusted Philadelphia Repair Specialists",
+    metaDesc: "Learn about SmartFoneDoctor's mission, certified technicians, community commitment, and lifetime workmanship warranty.",
+    heroHeadline: "Keeping Philadelphia Connected Since 2018.",
+    heroSubtitle: "Locally owned, community focused, and dedicated to fast, transparent electronics repair that extends the lifespan of your devices.",
+    heroBadge: "Locally Owned & Operated",
+    primaryCtaText: "Meet the Team",
+    primaryCtaLink: "/about#team",
+    status: "Published",
+    lastEdited: "Oct 28",
+  },
+  {
+    id: "schedule-repair",
+    name: "Book a Repair / Schedule",
+    path: "/schedule-repair",
+    category: "Utility",
+    title: "Schedule Your Phone or Device Repair Online | Instant Estimate",
+    metaDesc: "Book your repair appointment online for priority bench check-in. Free diagnostics, 90-day warranty, and fast turnaround.",
+    heroHeadline: "Book Your Repair Online for Priority Bench Service.",
+    heroSubtitle: "Select your device, describe the issue, and pick your preferred Philadelphia store. Walk-ins always welcome.",
+    heroBadge: "Zero Waiting Time",
+    primaryCtaText: "Start Booking Flow",
+    primaryCtaLink: "#form",
+    status: "Published",
+    lastEdited: "Nov 11",
+  },
+  {
+    id: "track",
+    name: "Repair Status Tracking",
+    path: "/track",
+    category: "Utility",
+    title: "Track Your Device Repair Status Live | SmartFoneDoctor",
+    metaDesc: "Check real-time bench diagnostic, parts arrival, and ready-for-pickup status using your ticket number.",
+    heroHeadline: "Check Live Repair Bench & Pickup Status.",
+    heroSubtitle: "Enter your 4-digit ticket number or phone number to see real-time updates from our assigned bench technician.",
+    heroBadge: "Live Customer Portal",
+    primaryCtaText: "Check Ticket",
+    primaryCtaLink: "#tracker",
+    status: "Published",
+    lastEdited: "Nov 02",
+  },
+  {
+    id: "faq",
+    name: "FAQ Page",
+    path: "/faq",
+    category: "Utility",
+    title: "Frequently Asked Questions | SmartFoneDoctor Philadelphia",
+    metaDesc: "Answers to common questions about pricing, repair times, 90-day warranty, data privacy, and walk-in policies.",
+    heroHeadline: "Everything You Need to Know About Our Repair Service.",
+    heroSubtitle: "Clear, upfront answers regarding parts quality, repair duration, warranty coverage, and data safety.",
+    heroBadge: "Transparent Policies",
+    primaryCtaText: "Browse Topics",
+    primaryCtaLink: "#faqs",
+    status: "Published",
+    lastEdited: "Nov 01",
+  },
+];
+
+// 2. SERVICES & PRICING ENGINE DATA (Brand, Category, Price Tags)
+interface ServiceItem {
   id: string;
-  icon: string;
-  title: string;
-  description: string;
+  name: string;
+  category: "smartphone" | "tablet" | "computer" | "console";
+  brand: string;
+  model: string;
+  retailPrice: number;
+  costPrice: number;
+  turnaroundTag: string;
+  warrantyTag: string;
+  stockStatus: "In Stock" | "Low Stock" | "24h Order";
+  isPopular: boolean;
 }
+
+const INITIAL_SERVICES_CATALOG: ServiceItem[] = [
+  {
+    id: "srv-1",
+    name: "OEM OLED Screen Replacement",
+    category: "smartphone",
+    brand: "Apple",
+    model: "iPhone 15 Pro",
+    retailPrice: 219,
+    costPrice: 78,
+    turnaroundTag: "30 Mins",
+    warrantyTag: "90-Day Free Warranty",
+    stockStatus: "In Stock",
+    isPopular: true,
+  },
+  {
+    id: "srv-2",
+    name: "Authentic Battery Replacement",
+    category: "smartphone",
+    brand: "Apple",
+    model: "iPhone 14 / 13",
+    retailPrice: 79,
+    costPrice: 22,
+    turnaroundTag: "25 Mins",
+    warrantyTag: "90-Day Free Warranty",
+    stockStatus: "In Stock",
+    isPopular: true,
+  },
+  {
+    id: "srv-3",
+    name: "Laser Back Glass Renewal",
+    category: "smartphone",
+    brand: "Apple",
+    model: "iPhone 15 / 14 Series",
+    retailPrice: 129,
+    costPrice: 35,
+    turnaroundTag: "60 Mins",
+    warrantyTag: "Lifetime Workmanship",
+    stockStatus: "In Stock",
+    isPopular: false,
+  },
+  {
+    id: "srv-4",
+    name: "Dynamic AMOLED 2X Display",
+    category: "smartphone",
+    brand: "Samsung",
+    model: "Galaxy S24 Ultra",
+    retailPrice: 249,
+    costPrice: 95,
+    turnaroundTag: "45 Mins",
+    warrantyTag: "90-Day Free Warranty",
+    stockStatus: "In Stock",
+    isPopular: true,
+  },
+  {
+    id: "srv-5",
+    name: "USB-C Port Sub-Board Replacement",
+    category: "smartphone",
+    brand: "Google",
+    model: "Pixel 8 / 7 Pro",
+    retailPrice: 79,
+    costPrice: 20,
+    turnaroundTag: "30 Mins",
+    warrantyTag: "90-Day Free Warranty",
+    stockStatus: "In Stock",
+    isPopular: false,
+  },
+  {
+    id: "srv-6",
+    name: "Liquid Damage Ultrasonic Clean",
+    category: "smartphone",
+    brand: "All Brands",
+    model: "Universal Phone Diagnostics",
+    retailPrice: 69,
+    costPrice: 10,
+    turnaroundTag: "Same Day",
+    warrantyTag: "Bench Certified",
+    stockStatus: "In Stock",
+    isPopular: true,
+  },
+  {
+    id: "srv-7",
+    name: "Digitizer Glass + LCD Assembly",
+    category: "tablet",
+    brand: "Apple",
+    model: "iPad Pro 12.9 (5th Gen)",
+    retailPrice: 229,
+    costPrice: 85,
+    turnaroundTag: "Same Day",
+    warrantyTag: "90-Day Free Warranty",
+    stockStatus: "In Stock",
+    isPopular: true,
+  },
+  {
+    id: "srv-8",
+    name: "Retina Display OEM Assembly",
+    category: "computer",
+    brand: "Apple",
+    model: "MacBook Pro 14 (M1/M2/M3)",
+    retailPrice: 389,
+    costPrice: 160,
+    turnaroundTag: "24-48 Hours",
+    warrantyTag: "90-Day Free Warranty",
+    stockStatus: "24h Order",
+    isPopular: false,
+  },
+  {
+    id: "srv-9",
+    name: "HDMI Port Micro-Soldering Replacement",
+    category: "console",
+    brand: "Sony",
+    model: "PlayStation 5 (Disc & Digital)",
+    retailPrice: 149,
+    costPrice: 18,
+    turnaroundTag: "Same Day",
+    warrantyTag: "6-Month HDMI Warranty",
+    stockStatus: "In Stock",
+    isPopular: true,
+  },
+  {
+    id: "srv-10",
+    name: "Internal Thermal Fan & Liquid Metal Repaste",
+    category: "console",
+    brand: "Sony",
+    model: "PS5 Overheating Fix",
+    retailPrice: 79,
+    costPrice: 12,
+    turnaroundTag: "45 Mins",
+    warrantyTag: "Bench Certified",
+    stockStatus: "In Stock",
+    isPopular: false,
+  },
+];
+
+// 3. NAVIGATION & MENUS MANAGER DATA
+interface NavMenuItem {
+  id: string;
+  label: string;
+  href: string;
+  highlightPill?: string;
+  hasDropdown: boolean;
+  subItems?: { label: string; href: string; badge?: string }[];
+}
+
+const INITIAL_NAV_ITEMS: NavMenuItem[] = [
+  {
+    id: "nav-repairs",
+    label: "Repair Devices",
+    href: "/repairs",
+    hasDropdown: true,
+    subItems: [
+      { label: "iPhone Screen & Battery", href: "/repairs/iphone", badge: "30 Min" },
+      { label: "Samsung Galaxy & Android", href: "/repairs/smartphone", badge: "OEM Parts" },
+      { label: "iPad & Tablet Repair", href: "/repairs/ipad" },
+      { label: "MacBook & Laptop Service", href: "/repairs/mac" },
+      { label: "PS5 & Console HDMI Soldering", href: "/repairs/computer", badge: "Specialty" },
+    ],
+  },
+  {
+    id: "nav-estimate",
+    label: "Free Instant Estimate",
+    href: "/schedule-repair",
+    highlightPill: "Free",
+    hasDropdown: false,
+  },
+  {
+    id: "nav-locations",
+    label: "Locations & Hours",
+    href: "/locations",
+    hasDropdown: false,
+  },
+  {
+    id: "nav-track",
+    label: "Track Repair Status",
+    href: "/track",
+    highlightPill: "Live",
+    hasDropdown: false,
+  },
+  {
+    id: "nav-about",
+    label: "About Us",
+    href: "/about",
+    hasDropdown: false,
+  },
+];
 
 export default function ContentEditorPage() {
   const { stores } = useStoreContext();
-  const [activeTab, setActiveTab] = useState<"hero" | "announcement" | "benefits" | "faqs" | "locations">("hero");
-  const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
-  const [savedToast, setSavedToast] = useState<string | null>(null);
+  const [mainMode, setMainMode] = useState<"pages" | "services" | "menus" | "seo">("pages");
+  
+  // Pages Manager State
+  const [pages, setPages] = useState<SitePageConfig[]>(INITIAL_PAGES);
+  const [selectedPageId, setSelectedPageId] = useState<string>("home");
+  const [searchPage, setSearchPage] = useState("");
+
+  // Services & Pricing State
+  const [services, setServices] = useState<ServiceItem[]>(INITIAL_SERVICES_CATALOG);
+  const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [searchService, setSearchService] = useState("");
+  const [showAddServiceModal, setShowAddServiceModal] = useState(false);
+
+  // New Service Form State
+  const [newServiceName, setNewServiceName] = useState("");
+  const [newServiceCategory, setNewServiceCategory] = useState<ServiceItem["category"]>("smartphone");
+  const [newServiceBrand, setNewServiceBrand] = useState("Apple");
+  const [newServiceModel, setNewServiceModel] = useState("");
+  const [newServiceRetail, setNewServiceRetail] = useState(129);
+  const [newServiceCost, setNewServiceCost] = useState(40);
+  const [newServiceTurnaround, setNewServiceTurnaround] = useState("30 Mins");
+  const [newServiceWarranty, setNewServiceWarranty] = useState("90-Day Free Warranty");
+
+  // Menus Manager State
+  const [navItems, setNavItems] = useState<NavMenuItem[]>(INITIAL_NAV_ITEMS);
+
+  // UI States
   const [isSaving, setIsSaving] = useState(false);
+  const [savedToast, setSavedToast] = useState<string | null>(null);
 
-  // 1. Hero State
-  const [heroPill, setHeroPill] = useState("Philadelphia's Trusted Leader in");
-  const [heroHeadline, setHeroHeadline] = useState(
-    "Fast, reliable repairs that keep your tech working when it matters."
-  );
-  const [heroSubtitle, setHeroSubtitle] = useState(
-    "Repair services for smartphones, tablets, computers and game consoles, backed by certified technicians and a 90-day free warranty."
-  );
-  const [primaryCtaText, setPrimaryCtaText] = useState("Book your repair");
-  const [primaryCtaLink, setPrimaryCtaLink] = useState("/schedule-repair");
-  const [secondaryCtaText, setSecondaryCtaText] = useState("Call (215) 598-2090");
-  const [secondaryCtaLink, setSecondaryCtaLink] = useState("tel:+12155982090");
+  const selectedPage = pages.find((p) => p.id === selectedPageId) || pages[0];
 
-  // 2. Announcement Bar State
-  const [announcementEnabled, setAnnouncementEnabled] = useState(true);
-  const [announcementText, setAnnouncementText] = useState(
-    "Philadelphia's Trusted Device Repair Experts · Walk-ins Welcome Mon–Sat"
-  );
-  const [promoBadge, setPromoBadge] = useState("Free Glass Screen Protector with any Screen Repair");
-  const [phoneNumber, setPhoneNumber] = useState("+1 (215) 598-2090");
-
-  // 3. Benefits State
-  const [benefits, setBenefits] = useState<BenefitItem[]>([
-    {
-      id: "b1",
-      icon: "clock",
-      title: "30-Minute Turnaround",
-      description: "Most iPhone and Samsung screen & battery replacements completed in under 45 minutes.",
-    },
-    {
-      id: "b2",
-      icon: "shield",
-      title: "90-Day Free Warranty",
-      description: "Every repair backed by comprehensive coverage on parts and bench workmanship.",
-    },
-    {
-      id: "b3",
-      icon: "sparkles",
-      title: "OEM-Grade Certified Parts",
-      description: "Highest-grade OLED panels, authentic capacity batteries, and precision micro-soldering.",
-    },
-    {
-      id: "b4",
-      icon: "map-pin",
-      title: "3 Philadelphia Locations",
-      description: "Convenient repair shops on 52nd St and Lancaster Ave with dedicated walk-in technicians.",
-    },
-  ]);
-
-  // 4. FAQs State
-  const [faqs, setFaqs] = useState<FaqItem[]>([
-    {
-      id: "faq-1",
-      question: "How long does an iPhone or Samsung screen replacement take?",
-      answer: "Most phone screen replacements take 25 to 45 minutes while you wait in store—no appointment necessary.",
-    },
-    {
-      id: "faq-2",
-      question: "Do you offer a warranty on screen and battery repairs?",
-      answer: "Yes! Every repair includes our 90-day warranty covering replacement parts and labor across all 3 stores.",
-    },
-    {
-      id: "faq-3",
-      question: "Do I need to back up my phone before bringing it in?",
-      answer: "We always recommend backing up your data, though screen and battery repairs do not erase your storage.",
-    },
-    {
-      id: "faq-4",
-      question: "Can you fix water damage and broken HDMI ports on game consoles?",
-      answer: "Yes, our technicians specialize in ultrasonic board cleaning and micro-soldering HDMI ports on PS5 and Xbox.",
-    },
-  ]);
-
-  const handleAddFaq = () => {
-    const newId = `faq-${Date.now()}`;
-    setFaqs([...faqs, { id: newId, question: "New Question?", answer: "Provide helpful answer here." }]);
-  };
-
-  const handleDeleteFaq = (id: string) => {
-    setFaqs(faqs.filter((f) => f.id !== id));
-  };
-
-  const handleUpdateFaq = (id: string, field: "question" | "answer", val: string) => {
-    setFaqs(faqs.map((f) => (f.id === id ? { ...f, [field]: val } : f)));
+  const handleUpdatePage = (field: keyof SitePageConfig, val: string) => {
+    setPages(
+      pages.map((p) => (p.id === selectedPageId ? { ...p, [field]: val, lastEdited: "Just now" } : p))
+    );
   };
 
   const handleSaveAll = () => {
     setIsSaving(true);
     setTimeout(() => {
       setIsSaving(false);
-      setSavedToast("Website content and SEO metadata successfully published to public site!");
+      setSavedToast("All CMS changes (Pages, Pricing Tags, and Menus) published to live site!");
       setTimeout(() => setSavedToast(null), 4000);
     }, 600);
   };
 
-  const handleResetDefaults = () => {
-    if (confirm("Reset all fields to default recommended copy?")) {
-      setHeroPill("Philadelphia's Trusted Leader in");
-      setHeroHeadline("Fast, reliable repairs that keep your tech working when it matters.");
-      setHeroSubtitle(
-        "Repair services for smartphones, tablets, computers and game consoles, backed by certified technicians and a 90-day free warranty."
-      );
-      setPromoBadge("Free Glass Screen Protector with any Screen Repair");
-    }
+  const filteredPages = pages.filter(
+    (p) =>
+      p.name.toLowerCase().includes(searchPage.toLowerCase()) ||
+      p.path.toLowerCase().includes(searchPage.toLowerCase())
+  );
+
+  const filteredServices = services.filter((s) => {
+    const matchCategory = filterCategory === "all" || s.category === filterCategory;
+    const matchSearch =
+      s.name.toLowerCase().includes(searchService.toLowerCase()) ||
+      s.model.toLowerCase().includes(searchService.toLowerCase()) ||
+      s.brand.toLowerCase().includes(searchService.toLowerCase());
+    return matchCategory && matchSearch;
+  });
+
+  const handleCreateService = (e: React.FormEvent) => {
+    e.preventDefault();
+    const created: ServiceItem = {
+      id: `srv-${Date.now()}`,
+      name: newServiceName || "Repair Service",
+      category: newServiceCategory,
+      brand: newServiceBrand,
+      model: newServiceModel || "Universal Model",
+      retailPrice: Number(newServiceRetail),
+      costPrice: Number(newServiceCost),
+      turnaroundTag: newServiceTurnaround,
+      warrantyTag: newServiceWarranty,
+      stockStatus: "In Stock",
+      isPopular: false,
+    };
+    setServices([created, ...services]);
+    setShowAddServiceModal(false);
+    setSavedToast(`Added new pricing card for "${created.name}"`);
+    setTimeout(() => setSavedToast(null), 3000);
+  };
+
+  const handleDeleteService = (id: string) => {
+    setServices(services.filter((s) => s.id !== id));
   };
 
   return (
     <div className="flex-1 min-w-0 w-full px-4 sm:px-6 py-5 flex flex-col gap-5 overflow-x-hidden">
-      {/* 1. TOP HEADER & ACTION CONTROLS */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-[#e8e8e8]">
+      {/* 1. TOP HEADER & MAIN NAVIGATION MODE CONTROLS */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-2 border-b border-[#e8e8e8]">
         <div>
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#009691] animate-pulse" />
             <h1 className="text-[22px] sm:text-[24px] font-bold text-[#111111] tracking-[-0.02em]">
-              Website CMS &amp; Content Editor
+              Central CMS &amp; Content Management Suite
             </h1>
           </div>
           <p className="text-[13px] text-[#5f6368] mt-0.5">
-            Real-time visual editor for public website hero, promotional banner, benefits, and FAQ schema
+            Dedicated multi-page editor, category &amp; brand pricing engine, and header/footer navigation manager
           </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <button
-            type="button"
-            onClick={handleResetDefaults}
-            className="h-[34px] px-3 rounded-[6px] border border-[#d1d5db] bg-white hover:bg-[#f9f9f9] text-[12px] font-medium text-[#5f6368] hover:text-[#111111] inline-flex items-center gap-1.5 transition-colors cursor-pointer"
-            title="Reset to recommended copy"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset Defaults</span>
-          </button>
-
           <Link
             href="/"
             target="_blank"
             rel="noreferrer"
             className="h-[34px] px-3.5 rounded-[6px] border border-[#d1d5db] bg-white hover:bg-[#f9f9f9] text-[12px] font-medium text-[#111111] inline-flex items-center gap-1.5 transition-colors shadow-2xs"
           >
-            <span>Live Site</span>
+            <span>Live Website</span>
             <ExternalLink className="w-3.5 h-3.5 text-[#5f6368]" />
           </Link>
 
@@ -197,20 +550,17 @@ export default function ContentEditorPage() {
             ) : (
               <Save className="w-3.5 h-3.5" />
             )}
-            <span>{isSaving ? "Publishing..." : "Publish to Site"}</span>
+            <span>{isSaving ? "Publishing..." : "Publish All Changes"}</span>
           </button>
         </div>
       </div>
 
-      {/* SUCCESS TOAST NOTIFICATION */}
+      {/* TOAST MESSAGE */}
       {savedToast && (
-        <div
-          role="status"
-          className="bg-[#dcfae5] border border-[#86efac] text-[#065f46] rounded-[8px] px-4 py-3 flex items-center justify-between gap-3 text-[13px] shadow-sm transition-all"
-        >
+        <div className="bg-[#dcfae5] border border-[#86efac] text-[#065f46] rounded-[8px] px-4 py-3 flex items-center justify-between gap-3 text-[13px] shadow-sm animate-in fade-in">
           <div className="flex items-center gap-2">
             <Check className="w-4 h-4 text-[#059669] shrink-0" />
-            <span className="font-medium">{savedToast}</span>
+            <span className="font-semibold">{savedToast}</span>
           </div>
           <button
             type="button"
@@ -222,475 +572,665 @@ export default function ContentEditorPage() {
         </div>
       )}
 
-      {/* 2. SECTION TABS */}
+      {/* 2. CMS MODE SWITCHER TABS */}
       <div className="flex items-center gap-2 border-b border-[#e5e7eb] overflow-x-auto no-scrollbar pb-px">
         {[
-          { id: "hero", label: "Hero & Headline", icon: Layout },
-          { id: "announcement", label: "Announcement & Promo", icon: Megaphone },
-          { id: "benefits", label: "Value Props & Guarantee", icon: Shield },
-          { id: "faqs", label: "FAQ & Schema", icon: FaqIcon },
-          { id: "locations", label: "Store Info", icon: Store },
+          { id: "pages", label: "Pages Manager (1-by-1 Editor)", icon: FileText, badge: `${pages.length} Pages` },
+          { id: "services", label: "Services, Brands & Price Tags", icon: Tag, badge: `${services.length} Rates` },
+          { id: "menus", label: "Menus & Mega-Dropdowns", icon: MenuIcon },
+          { id: "seo", label: "LocalBusiness SEO & Schema", icon: Globe },
         ].map((tab) => {
           const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
+          const isActive = mainMode === tab.id;
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`h-[38px] px-3.5 rounded-t-[6px] text-[13px] font-medium inline-flex items-center gap-2 whitespace-nowrap transition-colors border-b-2 cursor-pointer ${
+              onClick={() => setMainMode(tab.id as any)}
+              className={`h-[40px] px-4 rounded-t-[6px] text-[13px] font-medium inline-flex items-center gap-2.5 whitespace-nowrap transition-colors border-b-2 cursor-pointer ${
                 isActive
-                  ? "border-[#009691] text-[#009691] bg-white font-semibold"
+                  ? "border-[#009691] text-[#009691] bg-white font-bold"
                   : "border-transparent text-[#6b7280] hover:text-[#111111] hover:bg-[#f3f4f6]"
               }`}
             >
               <Icon className={`w-4 h-4 ${isActive ? "text-[#009691]" : "text-[#9ca3af]"}`} />
               <span>{tab.label}</span>
+              {tab.badge && (
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${isActive ? "bg-[#009691]/10 text-[#009691]" : "bg-gray-100 text-gray-500"}`}>
+                  {tab.badge}
+                </span>
+              )}
             </button>
           );
         })}
       </div>
 
-      {/* 3. MAIN WORKSPACE (SPLIT VIEW: FORM ON LEFT, REAL-TIME PREVIEW ON RIGHT) */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-        
-        {/* LEFT COLUMN: EDITOR FORM (7 Cols on XL) */}
-        <div className="xl:col-span-7 bg-white border border-[#e8e8e8] rounded-[10px] p-5 shadow-2xs flex flex-col gap-5">
+      {/* ======================================================== */}
+      {/* MODE 1: DEDICATED ONE-BY-ONE PAGE EDITOR                 */}
+      {/* ======================================================== */}
+      {mainMode === "pages" && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
-          {/* TAB 1: HERO */}
-          {activeTab === "hero" && (
-            <div className="flex flex-col gap-4">
-              <div className="pb-3 border-b border-[#f2f2f2]">
-                <h2 className="text-[15px] font-semibold text-[#111111]">Homepage Hero Banner</h2>
-                <p className="text-[12px] text-[#5f6368]">
-                  The first visual element customers see on desktop and mobile phones.
-                </p>
+          {/* LEFT 4 COLS: PAGE DIRECTORY LIST */}
+          <div className="lg:col-span-4 bg-white border border-[#e8e8e8] rounded-[10px] p-4 shadow-2xs flex flex-col gap-3">
+            <div className="flex items-center justify-between pb-2 border-b border-[#f2f2f2]">
+              <div>
+                <h2 className="text-[14px] font-bold text-[#111111]">Site Pages Directory</h2>
+                <p className="text-[11px] text-[#5f6368]">Select a page to edit its content &amp; SEO</p>
+              </div>
+              <span className="text-[11px] font-semibold text-[#009691] bg-[#009691]/10 px-2 py-0.5 rounded-full">
+                {filteredPages.length} Active
+              </span>
+            </div>
+
+            {/* Search Box */}
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-2.5" />
+              <input
+                type="text"
+                value={searchPage}
+                onChange={(e) => setSearchPage(e.target.value)}
+                placeholder="Search page by name or /slug..."
+                className="w-full h-[32px] pl-8 pr-3 rounded-[6px] border border-[#d1d5db] bg-white text-[12px] focus:outline-none focus:border-[#009691]"
+              />
+            </div>
+
+            {/* Page List */}
+            <div className="flex flex-col gap-1 max-h-[560px] overflow-y-auto no-scrollbar pr-1">
+              {filteredPages.map((page) => {
+                const isSelected = selectedPageId === page.id;
+                return (
+                  <button
+                    key={page.id}
+                    onClick={() => setSelectedPageId(page.id)}
+                    className={`text-left p-2.5 rounded-[6px] transition-all flex items-start justify-between gap-2 border cursor-pointer ${
+                      isSelected
+                        ? "bg-[#e6f7f6] border-[#009691] text-[#009691] shadow-2xs"
+                        : "bg-white border-transparent hover:bg-[#f9fafb] text-[#111111]"
+                    }`}
+                  >
+                    <div className="min-w-0">
+                      <div className="text-[13px] font-semibold truncate flex items-center gap-1.5">
+                        <span>{page.name}</span>
+                        {page.category === "Repairs" && (
+                          <span className="text-[9px] bg-purple-50 text-purple-700 px-1 rounded font-bold">
+                            Repair
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-gray-500 font-mono mt-0.5 truncate">
+                        {page.path}
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-medium">
+                        {page.status}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* RIGHT 8 COLS: DEDICATED PAGE CONTENT & SEO EDITOR */}
+          <div className="lg:col-span-8 bg-white border border-[#e8e8e8] rounded-[10px] p-5 shadow-2xs flex flex-col gap-5">
+            
+            {/* Page Header Info */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#f2f2f2]">
+              <div>
+                <span className="text-[11px] font-bold text-[#009691] uppercase tracking-wider">
+                  Editing: {selectedPage.category} Page
+                </span>
+                <h2 className="text-[18px] font-bold text-[#111111]">{selectedPage.name}</h2>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-[12px] font-mono text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                    {selectedPage.path}
+                  </span>
+                  <Link
+                    href={selectedPage.path}
+                    target="_blank"
+                    className="text-[12px] text-[#009691] hover:underline inline-flex items-center gap-1"
+                  >
+                    <span>View on site</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </Link>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-[13px] font-medium text-[#111111] mb-1">
-                  Top Pill Badge / Eyebrow
-                </label>
-                <input
-                  type="text"
-                  value={heroPill}
-                  onChange={(e) => setHeroPill(e.target.value)}
-                  placeholder="e.g. Philadelphia's Trusted Leader in"
-                  className="w-full h-[38px] px-3 rounded-[6px] border border-[#d1d5db] bg-white text-[13px] text-[#111111] focus:outline-none focus:border-[#009691] transition-colors"
-                />
-              </div>
+              <button
+                type="button"
+                onClick={handleSaveAll}
+                className="h-[32px] px-3.5 rounded-[6px] bg-[#009691] text-white text-[12px] font-semibold inline-flex items-center gap-1.5 shadow-2xs hover:bg-[#007f7b] cursor-pointer"
+              >
+                <Save className="w-3.5 h-3.5" />
+                <span>Save Page Content</span>
+              </button>
+            </div>
 
-              <div>
-                <label className="block text-[13px] font-medium text-[#111111] mb-1">
-                  Main H1 Headline <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={heroHeadline}
-                  onChange={(e) => setHeroHeadline(e.target.value)}
-                  placeholder="Primary headline..."
-                  className="w-full h-[38px] px-3 rounded-[6px] border border-[#d1d5db] bg-white text-[13px] text-[#111111] font-semibold focus:outline-none focus:border-[#009691] transition-colors"
-                />
-                <span className="text-[11px] text-[#6b7280] mt-1 block">
-                  Character count: {heroHeadline.length} (optimal for SEO: 50–70 characters)
+            {/* Section 1: Hero Section for this Page */}
+            <div className="flex flex-col gap-3 p-4 rounded-[8px] bg-[#fafafa] border border-[#e5e7eb]">
+              <div className="flex items-center justify-between">
+                <span className="text-[13px] font-bold text-[#111111] flex items-center gap-1.5">
+                  <Layout className="w-4 h-4 text-[#009691]" />
+                  <span>Page Hero &amp; Banner Copy</span>
                 </span>
               </div>
 
               <div>
-                <label className="block text-[13px] font-medium text-[#111111] mb-1">
-                  Supporting Subtitle
+                <label className="block text-[12px] font-medium text-[#111111] mb-1">
+                  Top Eyebrow / Pill Badge
                 </label>
-                <textarea
-                  rows={3}
-                  value={heroSubtitle}
-                  onChange={(e) => setHeroSubtitle(e.target.value)}
-                  placeholder="Detailed description of repair services and guarantee..."
-                  className="w-full p-3 rounded-[6px] border border-[#d1d5db] bg-white text-[13px] text-[#111111] leading-relaxed focus:outline-none focus:border-[#009691] transition-colors resize-y"
+                <input
+                  type="text"
+                  value={selectedPage.heroBadge}
+                  onChange={(e) => handleUpdatePage("heroBadge", e.target.value)}
+                  className="w-full h-[36px] px-3 rounded-[6px] border border-[#d1d5db] bg-white text-[13px] focus:outline-none focus:border-[#009691]"
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <div>
-                  <label className="block text-[12px] font-medium text-[#111111] mb-1">
-                    Primary Button Text
-                  </label>
-                  <input
-                    type="text"
-                    value={primaryCtaText}
-                    onChange={(e) => setPrimaryCtaText(e.target.value)}
-                    className="w-full h-[36px] px-3 rounded-[6px] border border-[#d1d5db] bg-white text-[13px] focus:outline-none focus:border-[#009691]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[12px] font-medium text-[#111111] mb-1">
-                    Primary Button URL Link
-                  </label>
-                  <input
-                    type="text"
-                    value={primaryCtaLink}
-                    onChange={(e) => setPrimaryCtaLink(e.target.value)}
-                    className="w-full h-[36px] px-3 rounded-[6px] border border-[#d1d5db] bg-white text-[13px] focus:outline-none focus:border-[#009691]"
-                  />
-                </div>
+              <div>
+                <label className="block text-[12px] font-medium text-[#111111] mb-1">
+                  Main Headline (H1)
+                </label>
+                <input
+                  type="text"
+                  value={selectedPage.heroHeadline}
+                  onChange={(e) => handleUpdatePage("heroHeadline", e.target.value)}
+                  className="w-full h-[36px] px-3 rounded-[6px] border border-[#d1d5db] bg-white text-[13px] font-semibold focus:outline-none focus:border-[#009691]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[12px] font-medium text-[#111111] mb-1">
+                  Supporting Subtitle / Paragraph
+                </label>
+                <textarea
+                  rows={3}
+                  value={selectedPage.heroSubtitle}
+                  onChange={(e) => handleUpdatePage("heroSubtitle", e.target.value)}
+                  className="w-full p-2.5 rounded-[6px] border border-[#d1d5db] bg-white text-[13px] leading-relaxed focus:outline-none focus:border-[#009691]"
+                />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[12px] font-medium text-[#111111] mb-1">
-                    Secondary Button Text (Call CTA)
+                    Primary CTA Button Text
                   </label>
                   <input
                     type="text"
-                    value={secondaryCtaText}
-                    onChange={(e) => setSecondaryCtaText(e.target.value)}
-                    className="w-full h-[36px] px-3 rounded-[6px] border border-[#d1d5db] bg-white text-[13px] focus:outline-none focus:border-[#009691]"
+                    value={selectedPage.primaryCtaText}
+                    onChange={(e) => handleUpdatePage("primaryCtaText", e.target.value)}
+                    className="w-full h-[34px] px-3 rounded-[6px] border border-[#d1d5db] bg-white text-[12px] focus:outline-none focus:border-[#009691]"
                   />
                 </div>
                 <div>
                   <label className="block text-[12px] font-medium text-[#111111] mb-1">
-                    Phone Link (tel:)
+                    Primary CTA Target URL
                   </label>
                   <input
                     type="text"
-                    value={secondaryCtaLink}
-                    onChange={(e) => setSecondaryCtaLink(e.target.value)}
-                    className="w-full h-[36px] px-3 rounded-[6px] border border-[#d1d5db] bg-white text-[13px] focus:outline-none focus:border-[#009691]"
+                    value={selectedPage.primaryCtaLink}
+                    onChange={(e) => handleUpdatePage("primaryCtaLink", e.target.value)}
+                    className="w-full h-[34px] px-3 rounded-[6px] border border-[#d1d5db] bg-white text-[12px] focus:outline-none focus:border-[#009691]"
                   />
                 </div>
               </div>
             </div>
-          )}
 
-          {/* TAB 2: ANNOUNCEMENT */}
-          {activeTab === "announcement" && (
-            <div className="flex flex-col gap-4">
-              <div className="pb-3 border-b border-[#f2f2f2] flex items-center justify-between">
-                <div>
-                  <h2 className="text-[15px] font-semibold text-[#111111]">Top Announcement Bar &amp; Promo</h2>
-                  <p className="text-[12px] text-[#5f6368]">
-                    Displayed on the green top header across every page of the public website.
-                  </p>
-                </div>
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <span className="text-[12px] font-medium text-[#5f6368]">Status:</span>
-                  <input
-                    type="checkbox"
-                    checked={announcementEnabled}
-                    onChange={(e) => setAnnouncementEnabled(e.target.checked)}
-                    className="w-4 h-4 text-[#009691] rounded accent-[#009691]"
-                  />
-                  <span className={`text-[12px] font-semibold ${announcementEnabled ? "text-emerald-700" : "text-gray-400"}`}>
-                    {announcementEnabled ? "Active" : "Hidden"}
+            {/* Section 2: SEO Meta & Google Search Snippet Preview */}
+            <div className="flex flex-col gap-3 p-4 rounded-[8px] bg-[#fafafa] border border-[#e5e7eb]">
+              <span className="text-[13px] font-bold text-[#111111] flex items-center gap-1.5">
+                <Globe className="w-4 h-4 text-[#009691]" />
+                <span>Google Search Engine Optimization (SEO &amp; SERP)</span>
+              </span>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[12px] font-medium text-[#111111]">
+                    Page Title Tag (&lt;title&gt;)
+                  </label>
+                  <span className="text-[11px] text-gray-500">
+                    {selectedPage.title.length}/60 chars (Optimal)
                   </span>
-                </label>
-              </div>
-
-              <div>
-                <label className="block text-[13px] font-medium text-[#111111] mb-1">
-                  Location Notice &amp; Schedule
-                </label>
+                </div>
                 <input
                   type="text"
-                  value={announcementText}
-                  onChange={(e) => setAnnouncementText(e.target.value)}
-                  placeholder="e.g. Philadelphia's Trusted Device Repair Experts · Walk-ins Welcome Mon–Sat"
-                  className="w-full h-[38px] px-3 rounded-[6px] border border-[#d1d5db] bg-white text-[13px] focus:outline-none focus:border-[#009691]"
+                  value={selectedPage.title}
+                  onChange={(e) => handleUpdatePage("title", e.target.value)}
+                  className="w-full h-[36px] px-3 rounded-[6px] border border-[#d1d5db] bg-white text-[13px] font-medium focus:outline-none focus:border-[#009691]"
                 />
               </div>
 
               <div>
-                <label className="block text-[13px] font-medium text-[#111111] mb-1">
-                  Promotional Offer Tag (Highlight Pill)
-                </label>
-                <input
-                  type="text"
-                  value={promoBadge}
-                  onChange={(e) => setPromoBadge(e.target.value)}
-                  placeholder="e.g. Free Glass Screen Protector with any Screen Repair"
-                  className="w-full h-[38px] px-3 rounded-[6px] border border-[#d1d5db] bg-white text-[13px] text-[#111111] font-medium focus:outline-none focus:border-[#009691]"
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[12px] font-medium text-[#111111]">
+                    Meta Description Tag
+                  </label>
+                  <span className="text-[11px] text-gray-500">
+                    {selectedPage.metaDesc.length}/160 chars
+                  </span>
+                </div>
+                <textarea
+                  rows={2}
+                  value={selectedPage.metaDesc}
+                  onChange={(e) => handleUpdatePage("metaDesc", e.target.value)}
+                  className="w-full p-2.5 rounded-[6px] border border-[#d1d5db] bg-white text-[13px] leading-relaxed focus:outline-none focus:border-[#009691]"
                 />
               </div>
 
-              <div>
-                <label className="block text-[13px] font-medium text-[#111111] mb-1">
-                  Top Bar Direct Contact Phone
-                </label>
-                <input
-                  type="text"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="w-full h-[38px] px-3 rounded-[6px] border border-[#d1d5db] bg-white text-[13px] focus:outline-none focus:border-[#009691]"
-                />
+              {/* LIVE GOOGLE SERP PREVIEW BOX */}
+              <div className="mt-2 p-3.5 rounded-[6px] bg-white border border-gray-200 shadow-2xs">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+                  Google Search Result Preview
+                </span>
+                <div className="text-[11px] text-gray-600 flex items-center gap-1 truncate font-mono">
+                  <span>https://smartfonedoctor.com{selectedPage.path}</span>
+                </div>
+                <div className="text-[16px] text-[#1a0dab] font-medium leading-snug line-clamp-1 hover:underline cursor-pointer mt-0.5">
+                  {selectedPage.title}
+                </div>
+                <div className="text-[12px] text-[#4d5156] leading-relaxed line-clamp-2 mt-1">
+                  {selectedPage.metaDesc}
+                </div>
               </div>
+
             </div>
-          )}
 
-          {/* TAB 3: BENEFITS */}
-          {activeTab === "benefits" && (
-            <div className="flex flex-col gap-4">
-              <div className="pb-3 border-b border-[#f2f2f2]">
-                <h2 className="text-[15px] font-semibold text-[#111111]">Core Value Propositions &amp; Guarantees</h2>
-                <p className="text-[12px] text-[#5f6368]">
-                  4 hallmark reasons why customers in Philadelphia choose SmartFoneDoctor.
-                </p>
+          </div>
+
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* MODE 2: SERVICES, BRANDS & PRICE TAGS ENGINE             */}
+      {/* ======================================================== */}
+      {mainMode === "services" && (
+        <div className="flex flex-col gap-5">
+          
+          {/* Filter Bar & Add Service Button */}
+          <div className="bg-white border border-[#e8e8e8] rounded-[10px] p-4 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              {[
+                { id: "all", label: "All Devices" },
+                { id: "smartphone", label: "📱 Smartphones" },
+                { id: "tablet", label: "📟 Tablets & iPads" },
+                { id: "computer", label: "💻 Computers & Laptops" },
+                { id: "console", label: "🎮 Gaming Consoles" },
+              ].map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => setFilterCategory(c.id)}
+                  className={`h-[32px] px-3 rounded-[6px] text-[12px] font-medium transition-colors cursor-pointer border ${
+                    filterCategory === c.id
+                      ? "bg-[#009691] text-white border-[#009691] font-semibold"
+                      : "bg-[#f9fafb] text-[#5f6368] border-[#e5e7eb] hover:text-[#111111]"
+                  }`}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-2.5" />
+                <input
+                  type="text"
+                  value={searchService}
+                  onChange={(e) => setSearchService(e.target.value)}
+                  placeholder="Filter by model, service, or brand..."
+                  className="h-[32px] pl-8 pr-3 rounded-[6px] border border-[#d1d5db] bg-white text-[12px] focus:outline-none focus:border-[#009691]"
+                />
               </div>
 
-              <div className="flex flex-col gap-3">
-                {benefits.map((b, index) => (
-                  <div key={b.id} className="p-3.5 rounded-[8px] border border-[#e5e7eb] bg-[#fdfdfd] flex flex-col gap-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[12px] font-bold text-[#009691] uppercase tracking-wider">
-                        Benefit #{index + 1}
+              <button
+                type="button"
+                onClick={() => setShowAddServiceModal(true)}
+                className="h-[32px] px-3.5 rounded-[6px] bg-[#009691] hover:bg-[#007f7b] text-white text-[12px] font-semibold inline-flex items-center gap-1.5 shadow-2xs cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Repair Rate</span>
+              </button>
+            </div>
+          </div>
+
+          {/* PRICING & SERVICE CARDS GRID */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {filteredServices.map((item) => {
+              const margin = Math.round(((item.retailPrice - item.costPrice) / item.retailPrice) * 100);
+              return (
+                <div
+                  key={item.id}
+                  className="bg-white border border-[#e8e8e8] rounded-[10px] p-4 shadow-2xs hover:shadow-sm transition-all flex flex-col justify-between gap-3 relative"
+                >
+                  <div>
+                    {/* Brand & Stock Status Row */}
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <span className="text-[11px] font-bold text-[#009691] uppercase tracking-wider bg-[#009691]/10 px-2 py-0.5 rounded">
+                        {item.brand} · {item.model}
+                      </span>
+                      <span
+                        className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                          item.stockStatus === "In Stock"
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            : "bg-amber-50 text-amber-700 border border-amber-200"
+                        }`}
+                      >
+                        {item.stockStatus}
                       </span>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      <input
-                        type="text"
-                        value={b.title}
-                        onChange={(e) => {
-                          const updated = [...benefits];
-                          updated[index].title = e.target.value;
-                          setBenefits(updated);
-                        }}
-                        placeholder="Title"
-                        className="sm:col-span-1 h-[34px] px-2.5 rounded-[5px] border border-[#d1d5db] bg-white text-[12px] font-semibold focus:outline-none focus:border-[#009691]"
-                      />
-                      <input
-                        type="text"
-                        value={b.description}
-                        onChange={(e) => {
-                          const updated = [...benefits];
-                          updated[index].description = e.target.value;
-                          setBenefits(updated);
-                        }}
-                        placeholder="Description"
-                        className="sm:col-span-2 h-[34px] px-2.5 rounded-[5px] border border-[#d1d5db] bg-white text-[12px] focus:outline-none focus:border-[#009691]"
-                      />
+
+                    <h3 className="text-[15px] font-bold text-[#111111] leading-snug">
+                      {item.name}
+                    </h3>
+                  </div>
+
+                  {/* PRICE TAGS ROW */}
+                  <div className="bg-[#f9fafb] p-3 rounded-[8px] border border-[#f2f2f2] flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-gray-500 font-medium uppercase block">Retail Customer Price</span>
+                      <div className="text-[20px] font-bold text-[#111111] tracking-tight">
+                        ${item.retailPrice}
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <span className="text-[10px] text-gray-500 font-medium uppercase block">Parts Cost / Margin</span>
+                      <div className="text-[13px] font-semibold text-gray-700">
+                        ${item.costPrice}{" "}
+                        <span className="text-emerald-600 font-bold">({margin}% margin)</span>
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
 
-          {/* TAB 4: FAQS */}
-          {activeTab === "faqs" && (
-            <div className="flex flex-col gap-4">
-              <div className="pb-3 border-b border-[#f2f2f2] flex items-center justify-between">
-                <div>
-                  <h2 className="text-[15px] font-semibold text-[#111111]">FAQ &amp; Google SEO Schema</h2>
-                  <p className="text-[12px] text-[#5f6368]">
-                    Questions appear on the public site accordion and feed Google FAQPage Rich Snippets.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleAddFaq}
-                  className="h-[32px] px-3 rounded-[6px] bg-[#009691] hover:bg-[#007f7b] text-white text-[12px] font-medium inline-flex items-center gap-1.5 shadow-2xs cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add FAQ</span>
-                </button>
-              </div>
+                  {/* TAGS (Turnaround & Warranty) */}
+                  <div className="flex items-center gap-2 text-[11px] flex-wrap">
+                    <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 px-2 py-1 rounded-[4px] font-medium">
+                      <Clock className="w-3 h-3 text-[#009691]" />
+                      <span>{item.turnaroundTag}</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 px-2 py-1 rounded-[4px] font-medium">
+                      <Shield className="w-3 h-3 text-[#009691]" />
+                      <span>{item.warrantyTag}</span>
+                    </span>
+                  </div>
 
-              <div className="flex flex-col gap-3">
-                {faqs.map((faq, index) => (
-                  <div key={faq.id} className="p-3.5 rounded-[8px] border border-[#e5e7eb] bg-[#fafafa] flex flex-col gap-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[12px] font-bold text-[#111111]">
-                        Q{index + 1}:
-                      </span>
-                      <input
-                        type="text"
-                        value={faq.question}
-                        onChange={(e) => handleUpdateFaq(faq.id, "question", e.target.value)}
-                        placeholder="Question..."
-                        className="flex-1 h-[34px] px-2.5 rounded-[5px] border border-[#d1d5db] bg-white text-[13px] font-medium focus:outline-none focus:border-[#009691]"
-                      />
+                  {/* ACTION CONTROLS */}
+                  <div className="pt-2 border-t border-[#f2f2f2] flex items-center justify-between">
+                    <span className="text-[11px] text-gray-400">ID: {item.id}</span>
+                    <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => handleDeleteFaq(faq.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-600 rounded-[4px] hover:bg-red-50 cursor-pointer"
-                        title="Delete FAQ"
+                        onClick={() => handleDeleteService(item.id)}
+                        className="text-gray-400 hover:text-red-600 text-xs p-1 cursor-pointer transition-colors"
+                        title="Remove Service"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                    <textarea
-                      rows={2}
-                      value={faq.answer}
-                      onChange={(e) => handleUpdateFaq(faq.id, "answer", e.target.value)}
-                      placeholder="Answer..."
-                      className="w-full p-2.5 rounded-[5px] border border-[#d1d5db] bg-white text-[12px] leading-relaxed focus:outline-none focus:border-[#009691]"
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* MODE 3: MENUS & MEGA-DROPDOWNS MANAGER                   */}
+      {/* ======================================================== */}
+      {mainMode === "menus" && (
+        <div className="bg-white border border-[#e8e8e8] rounded-[10px] p-5 shadow-2xs flex flex-col gap-5">
+          <div className="pb-3 border-b border-[#f2f2f2] flex items-center justify-between">
+            <div>
+              <h2 className="text-[16px] font-bold text-[#111111]">Header &amp; Mega-Menu Architecture</h2>
+              <p className="text-[12px] text-[#5f6368]">
+                Configure navigation links, device dropdowns, and header call-to-action buttons
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleSaveAll}
+              className="h-[32px] px-3.5 rounded-[6px] bg-[#009691] text-white text-[12px] font-semibold inline-flex items-center gap-1.5 shadow-2xs hover:bg-[#007f7b] cursor-pointer"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>Save Menu Tree</span>
+            </button>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            {navItems.map((item, idx) => (
+              <div key={item.id} className="p-4 rounded-[8px] border border-[#e5e7eb] bg-[#fafafa] flex flex-col gap-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-[#111111] text-white text-[11px] font-bold flex items-center justify-center">
+                      {idx + 1}
+                    </span>
+                    <input
+                      type="text"
+                      value={item.label}
+                      onChange={(e) => {
+                        const updated = [...navItems];
+                        updated[idx].label = e.target.value;
+                        setNavItems(updated);
+                      }}
+                      className="h-[34px] px-2.5 rounded-[5px] border border-[#d1d5db] bg-white text-[13px] font-semibold text-[#111111] focus:outline-none focus:border-[#009691]"
+                    />
+                    <input
+                      type="text"
+                      value={item.href}
+                      onChange={(e) => {
+                        const updated = [...navItems];
+                        updated[idx].href = e.target.value;
+                        setNavItems(updated);
+                      }}
+                      className="h-[34px] px-2.5 rounded-[5px] border border-[#d1d5db] bg-white text-[12px] font-mono text-gray-600 focus:outline-none focus:border-[#009691]"
                     />
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
 
-          {/* TAB 5: LOCATIONS */}
-          {activeTab === "locations" && (
-            <div className="flex flex-col gap-4">
-              <div className="pb-3 border-b border-[#f2f2f2]">
-                <h2 className="text-[15px] font-semibold text-[#111111]">Store Addresses &amp; Hours</h2>
-                <p className="text-[12px] text-[#5f6368]">
-                  Direct information for all 3 West Philadelphia locations.
-                </p>
-              </div>
+                  <span className={`text-[11px] font-medium px-2 py-0.5 rounded ${item.hasDropdown ? "bg-purple-100 text-purple-800" : "bg-gray-100 text-gray-700"}`}>
+                    {item.hasDropdown ? "Mega-Dropdown" : "Direct Link"}
+                  </span>
+                </div>
 
-              <div className="grid grid-cols-1 gap-3">
-                {stores.map((store) => (
-                  <div key={store.id} className="p-4 rounded-[8px] border border-[#e5e7eb] bg-[#fdfdfd] flex flex-col gap-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-[13px] text-[#111111]">{store.name}</span>
-                      <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        Active Walk-ins
-                      </span>
+                {/* Sub-menu items (if dropdown) */}
+                {item.subItems && (
+                  <div className="pl-6 border-l-2 border-[#009691] flex flex-col gap-2 mt-1">
+                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                      Dropdown Sub-Menu Links:
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                      {item.subItems.map((sub, sIdx) => (
+                        <div key={sIdx} className="p-2.5 rounded-[6px] bg-white border border-gray-200 shadow-2xs flex items-center justify-between">
+                          <div>
+                            <span className="text-[12px] font-medium text-[#111111] block">{sub.label}</span>
+                            <span className="text-[10px] text-gray-400 font-mono block">{sub.href}</span>
+                          </div>
+                          {sub.badge && (
+                            <span className="text-[9px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-1 rounded">
+                              {sub.badge}
+                            </span>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                    <p className="text-[12px] text-[#5f6368]">{store.address}, {store.cityStateZip}</p>
-                    <p className="text-[12px] text-[#5f6368]">Phone: <span className="text-[#111111] font-medium">{store.phone}</span> · Hours: Mon–Sat 10AM–7PM</p>
                   </div>
-                ))}
+                )}
               </div>
-            </div>
-          )}
-
+            ))}
+          </div>
         </div>
+      )}
 
-        {/* RIGHT COLUMN: LIVE INTERACTIVE PREVIEW PANEL (5 Cols on XL) */}
-        <div className="xl:col-span-5 sticky top-16 flex flex-col gap-3">
-          
-          <div className="bg-white border border-[#e8e8e8] rounded-[10px] p-3 flex items-center justify-between shadow-2xs">
-            <div className="flex items-center gap-2">
-              <Eye className="w-4 h-4 text-[#009691]" />
-              <span className="text-[13px] font-semibold text-[#111111]">Live Customer View</span>
-            </div>
-            <div className="flex items-center gap-1 bg-[#f3f4f6] p-0.5 rounded-[6px]">
-              <button
-                type="button"
-                onClick={() => setPreviewDevice("desktop")}
-                className={`h-[24px] px-2 rounded-[4px] text-[11px] font-medium transition-colors cursor-pointer ${
-                  previewDevice === "desktop" ? "bg-white text-[#111111] shadow-2xs" : "text-[#6b7280]"
-                }`}
-              >
-                Desktop
-              </button>
-              <button
-                type="button"
-                onClick={() => setPreviewDevice("mobile")}
-                className={`h-[24px] px-2 rounded-[4px] text-[11px] font-medium transition-colors cursor-pointer ${
-                  previewDevice === "mobile" ? "bg-white text-[#111111] shadow-2xs" : "text-[#6b7280]"
-                }`}
-              >
-                Mobile
-              </button>
-            </div>
+      {/* ======================================================== */}
+      {/* MODE 4: LOCALBUSINESS SEO & SCHEMA.ORG                   */}
+      {/* ======================================================== */}
+      {mainMode === "seo" && (
+        <div className="bg-white border border-[#e8e8e8] rounded-[10px] p-5 shadow-2xs flex flex-col gap-5">
+          <div className="pb-3 border-b border-[#f2f2f2]">
+            <h2 className="text-[16px] font-bold text-[#111111]">Philadelphia LocalBusiness Schema.org SEO</h2>
+            <p className="text-[12px] text-[#5f6368]">
+              Automated structured data feed injected into Google Search Console &amp; Google Maps
+            </p>
           </div>
 
-          {/* SIMULATED BROWSER WINDOW */}
-          <div
-            className={`mx-auto w-full transition-all duration-300 border border-[#d1d5db] rounded-[12px] overflow-hidden bg-white shadow-md ${
-              previewDevice === "mobile" ? "max-w-[340px]" : "w-full"
-            }`}
-          >
-            {/* Simulated Browser Bar */}
-            <div className="bg-[#f3f4f6] px-3 py-2 border-b border-[#e5e7eb] flex items-center gap-2">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
-                <span className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
-                <span className="w-2.5 h-2.5 rounded-full bg-green-400" />
-              </div>
-              <div className="flex-1 bg-white text-[11px] text-[#6b7280] py-0.5 px-2 rounded text-center truncate font-mono">
-                smartfonedoctor.com
-              </div>
-            </div>
-
-            {/* PREVIEW 1: GREEN TOP BAR */}
-            {announcementEnabled && (
-              <div className="bg-[#009691] text-white py-1.5 px-3 text-[11px] flex items-center justify-between gap-2">
-                <span className="truncate">{announcementText}</span>
-                <span className="hidden sm:inline bg-white/20 px-1.5 py-0.5 rounded text-[10px] font-bold whitespace-nowrap">
-                  {promoBadge}
-                </span>
-              </div>
-            )}
-
-            {/* PREVIEW 2: NAVBAR */}
-            <div className="bg-white py-2 px-3 border-b border-gray-100 flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <span className="w-5 h-5 rounded bg-[#009691] text-white text-[10px] font-bold flex items-center justify-center">
-                  SF
-                </span>
-                <span className="font-bold text-[12px] text-[#111111]">SmartFoneDoctor</span>
-              </div>
-              <span className="bg-[#009691] text-white text-[10px] font-bold px-2 py-1 rounded-full">
-                START REPAIR
-              </span>
-            </div>
-
-            {/* PREVIEW 3: HERO BANNER */}
-            <div className="relative bg-[#111111] text-white p-4 sm:p-6 overflow-hidden min-h-[220px] flex flex-col justify-center">
-              <div
-                className="absolute inset-0 bg-cover bg-center opacity-30"
-                style={{
-                  backgroundImage:
-                    "url('https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80')",
-                }}
-              />
-              <div className="relative z-10 flex flex-col gap-2">
-                <span className="inline-block bg-white/20 text-white rounded-full px-2 py-0.5 text-[10px] font-medium w-fit">
-                  {heroPill}
-                </span>
-                <h3 className="text-[16px] sm:text-[18px] font-bold leading-snug line-clamp-2">
-                  {heroHeadline}
-                </h3>
-                <p className="text-[11px] text-gray-300 leading-relaxed line-clamp-3">
-                  {heroSubtitle}
-                </p>
-                <div className="flex items-center gap-2 pt-2">
-                  <span className="bg-[#009691] text-white text-[11px] font-bold px-3 py-1.5 rounded-full shadow-sm">
-                    {primaryCtaText}
-                  </span>
-                  <span className="border border-white/30 text-white text-[10px] font-medium px-2.5 py-1.5 rounded-full">
-                    {secondaryCtaText}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {stores.map((s) => (
+              <div key={s.id} className="p-4 rounded-[8px] border border-[#e5e7eb] bg-[#fafafa] flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] font-bold text-[#111111]">{s.name}</span>
+                  <span className="text-[10px] font-semibold bg-blue-50 text-blue-700 px-2 py-0.5 rounded">
+                    Store #{s.id}
                   </span>
                 </div>
-              </div>
-            </div>
-
-            {/* PREVIEW 4: BENEFITS MINI CARDS */}
-            <div className="p-3 bg-[#f9fafb] border-t border-gray-100 grid grid-cols-2 gap-2 text-[10px]">
-              {benefits.slice(0, 4).map((b) => (
-                <div key={b.id} className="p-2 bg-white rounded border border-gray-200 shadow-2xs">
-                  <span className="font-bold text-[#111111] block truncate">{b.title}</span>
-                  <span className="text-gray-500 text-[9px] line-clamp-1">{b.description}</span>
+                <p className="text-[12px] text-gray-600">{s.address}, Philadelphia, PA</p>
+                <div className="text-[11px] text-gray-500 font-mono mt-2 bg-white p-2 rounded border border-gray-200">
+                  <div>@type: "LocalBusiness"</div>
+                  <div>telephone: "{s.phone}"</div>
+                  <div>priceRange: "$$"</div>
+                  <div>aggregateRating: 4.9 (1,524 Reviews)</div>
                 </div>
-              ))}
-            </div>
-
-            {/* PREVIEW 5: FAQ ACCORDION SNIPPET */}
-            <div className="p-3 bg-white border-t border-gray-200">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">
-                FAQ Accordion Preview
-              </span>
-              <div className="divide-y divide-gray-100 text-[11px]">
-                {faqs.slice(0, 2).map((f) => (
-                  <div key={f.id} className="py-1">
-                    <span className="font-semibold text-[#111111] block">{f.question}</span>
-                    <span className="text-gray-500 text-[10px] line-clamp-1">{f.answer}</span>
-                  </div>
-                ))}
               </div>
-            </div>
-
+            ))}
           </div>
-
-          <p className="text-[11px] text-center text-[#6b7280]">
-            ⚡ Real-time preview updates instantly as you edit content on the left.
-          </p>
         </div>
+      )}
 
-      </div>
+      {/* MODAL: ADD NEW REPAIR RATE */}
+      {showAddServiceModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-[12px] border border-gray-200 shadow-xl max-w-lg w-full p-6 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
+              <h3 className="text-[16px] font-bold text-[#111111]">Add New Repair Service Card</h3>
+              <button
+                type="button"
+                onClick={() => setShowAddServiceModal(false)}
+                className="text-gray-400 hover:text-black font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateService} className="flex flex-col gap-3.5 text-[13px]">
+              <div>
+                <label className="block font-medium mb-1">Service Name</label>
+                <input
+                  type="text"
+                  required
+                  value={newServiceName}
+                  onChange={(e) => setNewServiceName(e.target.value)}
+                  placeholder="e.g. Laser Back Glass Replacement"
+                  className="w-full h-[36px] px-3 rounded-[6px] border border-gray-300 focus:outline-none focus:border-[#009691]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-medium mb-1">Category</label>
+                  <select
+                    value={newServiceCategory}
+                    onChange={(e) => setNewServiceCategory(e.target.value as any)}
+                    className="w-full h-[36px] px-2.5 rounded-[6px] border border-gray-300 focus:outline-none focus:border-[#009691]"
+                  >
+                    <option value="smartphone">Smartphone</option>
+                    <option value="tablet">Tablet / iPad</option>
+                    <option value="computer">MacBook / PC</option>
+                    <option value="console">Game Console</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-medium mb-1">Brand</label>
+                  <input
+                    type="text"
+                    required
+                    value={newServiceBrand}
+                    onChange={(e) => setNewServiceBrand(e.target.value)}
+                    placeholder="e.g. Apple, Samsung, Sony"
+                    className="w-full h-[36px] px-3 rounded-[6px] border border-gray-300 focus:outline-none focus:border-[#009691]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-medium mb-1">Device Model(s)</label>
+                <input
+                  type="text"
+                  required
+                  value={newServiceModel}
+                  onChange={(e) => setNewServiceModel(e.target.value)}
+                  placeholder="e.g. iPhone 15 Pro, PS5, iPad Pro"
+                  className="w-full h-[36px] px-3 rounded-[6px] border border-gray-300 focus:outline-none focus:border-[#009691]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-medium mb-1">Customer Retail Price ($)</label>
+                  <input
+                    type="number"
+                    required
+                    value={newServiceRetail}
+                    onChange={(e) => setNewServiceRetail(Number(e.target.value))}
+                    className="w-full h-[36px] px-3 rounded-[6px] border border-gray-300 focus:outline-none focus:border-[#009691]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium mb-1">Internal Parts Cost ($)</label>
+                  <input
+                    type="number"
+                    required
+                    value={newServiceCost}
+                    onChange={(e) => setNewServiceCost(Number(e.target.value))}
+                    className="w-full h-[36px] px-3 rounded-[6px] border border-gray-300 focus:outline-none focus:border-[#009691]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-medium mb-1">Turnaround Tag</label>
+                  <input
+                    type="text"
+                    value={newServiceTurnaround}
+                    onChange={(e) => setNewServiceTurnaround(e.target.value)}
+                    placeholder="e.g. 30 Mins, Same Day"
+                    className="w-full h-[36px] px-3 rounded-[6px] border border-gray-300 focus:outline-none focus:border-[#009691]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium mb-1">Warranty Tag</label>
+                  <input
+                    type="text"
+                    value={newServiceWarranty}
+                    onChange={(e) => setNewServiceWarranty(e.target.value)}
+                    placeholder="e.g. 90-Day Free Warranty"
+                    className="w-full h-[36px] px-3 rounded-[6px] border border-gray-300 focus:outline-none focus:border-[#009691]"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-gray-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddServiceModal(false)}
+                  className="h-[34px] px-4 rounded-[6px] border border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="h-[34px] px-4 rounded-[6px] bg-[#009691] hover:bg-[#007f7b] text-white font-semibold cursor-pointer shadow-sm"
+                >
+                  Save Repair Card
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
