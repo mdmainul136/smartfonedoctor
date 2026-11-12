@@ -11,12 +11,12 @@ export default function DashboardLayout({
   return (
     <StoreProvider>
       <div className="min-h-screen w-full flex bg-[#f9fafb] text-[#111111] antialiased">
-        {/* Left Sidebar — 220px on lg+, 52px icon rail on mobile/tablet, sticky full-height */}
+        {/* Left Sidebar — 220px on lg+, 52px icon rail on mobile/tablet */}
         <aside className="sticky top-0 h-screen w-[52px] lg:w-[220px] shrink-0 bg-[#f9fafb] border-r border-[#e8e8e8] flex flex-col justify-between overflow-y-auto no-scrollbar select-none pb-16">
           <div className="p-2 lg:px-3 lg:py-4">
             {/* Brand Mark & Workspace Scope */}
             <Link
-              href="/portal"
+              href="/admin"
               className="flex items-center justify-center lg:justify-start gap-2.5 px-1.5 py-1 rounded-[6px] hover:bg-[#eeeeee]/60 transition-colors"
             >
               <span
@@ -39,7 +39,7 @@ export default function DashboardLayout({
           </div>
         </aside>
 
-        {/* Right Canvas Area — Full document height, zero bottom white cutoff */}
+        {/* Right Canvas Area */}
         <div className="flex-1 min-w-0 min-h-screen bg-[#f9fafb] flex flex-col">
           <Navbar />
           <main className="flex-1 min-w-0 w-full flex flex-col pb-12">

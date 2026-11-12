@@ -1,10 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import TopBar from "@/components/layout/TopBar";
-import Navbar from "@/components/layout/Navbar";
-import CookieYesIntegration from "@/components/compliance/CookieYesIntegration";
-import AnalyticsScripts from "@/components/analytics/AnalyticsScripts";
-import UserWayWidget from "@/components/accessibility/UserWayWidget";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://smartfonedoctor.com";
 
@@ -82,7 +77,6 @@ export const metadata: Metadata = {
   },
 };
 
-// JSON-LD Structured Data for LocalBusiness SEO
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "LocalBusiness",
@@ -152,36 +146,6 @@ const jsonLd = {
     "https://facebook.com",
     "https://instagram.com",
   ],
-  hasOfferCatalog: {
-    "@type": "OfferCatalog",
-    name: "Repair Services",
-    itemListElement: [
-      {
-        "@type": "Offer",
-        itemOffered: {
-          "@type": "Service",
-          name: "iPhone Screen Repair",
-          description: "Same-day cracked screen replacement with OEM-grade display",
-        },
-      },
-      {
-        "@type": "Offer",
-        itemOffered: {
-          "@type": "Service",
-          name: "Phone Battery Replacement",
-          description: "New lithium-ion battery replacement in 30 minutes",
-        },
-      },
-      {
-        "@type": "Offer",
-        itemOffered: {
-          "@type": "Service",
-          name: "Console & Computer Repair",
-          description: "HDMI port repair, SSD upgrades, and liquid damage diagnostic",
-        },
-      },
-    ],
-  },
 };
 
 export default function RootLayout({
@@ -192,7 +156,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Schema.org LocalBusiness Structured Data */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

@@ -244,14 +244,14 @@ export default function AdminOverviewPage() {
 
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           <Link
-            href="/portal/listings"
+            href="/admin/listings"
             className="h-[32px] px-3 rounded-[6px] border border-[#d1d5db] bg-white hover:bg-[#f9f9f9] text-[13px] font-medium text-[#111111] inline-flex items-center gap-1.5 transition-colors"
           >
             <span>Directory listings</span>
           </Link>
 
           <Link
-            href="/portal/leads"
+            href="/admin/leads"
             className="h-[32px] px-3.5 rounded-[6px] bg-[#1d1f20] hover:bg-[#111111] text-white text-[13px] font-medium inline-flex items-center gap-1.5 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" aria-hidden="true" />
@@ -493,7 +493,7 @@ export default function AdminOverviewPage() {
               </p>
             </div>
             <Link
-              href="/portal/leads"
+              href="/admin/leads"
               className="text-[13px] font-medium text-[#111111] hover:underline inline-flex items-center gap-1"
             >
               <span>All leads</span>
@@ -548,7 +548,7 @@ export default function AdminOverviewPage() {
               </p>
             </div>
             <Link
-              href="/portal/listings/ai-visibility"
+              href="/admin/listings/ai-visibility"
               className="text-[13px] font-medium text-[#111111] hover:underline inline-flex items-center gap-1"
             >
               <span>AI visibility</span>
@@ -567,7 +567,7 @@ export default function AdminOverviewPage() {
                 </div>
               </div>
               <Link
-                href="/portal/listings"
+                href="/admin/listings"
                 className="h-[28px] px-2.5 rounded-[5px] border border-[#d1d5db] bg-white hover:bg-[#f9f9f9] text-[12px] font-medium text-[#111111] inline-flex items-center shrink-0"
               >
                 Fix NAP
@@ -584,7 +584,7 @@ export default function AdminOverviewPage() {
                 </div>
               </div>
               <Link
-                href="/portal/listings/ai-visibility"
+                href="/admin/listings/ai-visibility"
                 className="h-[28px] px-2.5 rounded-[5px] bg-[#1d1f20] hover:bg-[#111111] text-white text-[12px] font-medium inline-flex items-center shrink-0"
               >
                 Run agent fix
@@ -601,7 +601,7 @@ export default function AdminOverviewPage() {
                 </div>
               </div>
               <Link
-                href="/portal/reviews"
+                href="/admin/reviews"
                 className="h-[28px] px-2.5 rounded-[5px] border border-[#d1d5db] bg-white hover:bg-[#f9f9f9] text-[12px] font-medium text-[#111111] inline-flex items-center shrink-0"
               >
                 Reply now

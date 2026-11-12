@@ -214,24 +214,12 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Quick Link to Payload CMS (/admin) */}
-        <Link
-          href="/admin"
-          target="_blank"
-          rel="noreferrer"
-          className="h-[30px] px-2.5 rounded-[6px] border border-[#d1d5db] bg-white hover:bg-[#f3f4f6] text-[12px] font-medium text-[#111111] inline-flex items-center gap-1.5 transition-colors shrink-0 shadow-sm"
-          title="Open Payload CMS Admin Panel in a new tab"
-        >
-          <span className="w-2 h-2 rounded-full bg-emerald-500" aria-hidden="true" />
-          <span>Payload CMS</span>
-        </Link>
-
         {/* Quick Link to Customer Website (/) */}
         <Link
           href="/"
           target="_blank"
           rel="noreferrer"
-          className="hidden md:inline-flex h-[30px] px-2.5 rounded-[6px] border border-[#d1d5db] bg-white hover:bg-[#f3f4f6] text-[12px] font-medium text-[#5f6368] hover:text-[#111111] items-center gap-1.5 transition-colors shrink-0"
+          className="inline-flex h-[30px] px-2.5 rounded-[6px] border border-[#d1d5db] bg-white hover:bg-[#f3f4f6] text-[12px] font-medium text-[#5f6368] hover:text-[#111111] items-center gap-1.5 transition-colors shrink-0 shadow-sm"
           title="Open Customer Website in a new tab"
         >
           <span>Live site</span>

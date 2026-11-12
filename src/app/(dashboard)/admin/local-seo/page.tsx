@@ -187,7 +187,7 @@ export default function LocalSEOPage() {
             </a>
 
             <Link
-              href="/portal/reviews"
+              href="/admin/reviews"
               className="h-[32px] px-3 rounded-[6px] bg-[#1d1f20] hover:bg-[#111111] text-white text-[13px] font-medium inline-flex items-center gap-1.5 transition-colors"
             >
               <span>Reply to reviews ({data.unrepliedReviews})</span>
@@ -415,7 +415,7 @@ export default function LocalSEOPage() {
               </p>
             </div>
             <Link
-              href="/portal/local-seo/posts"
+              href="/admin/local-seo/posts"
               className="text-[13px] font-medium text-[#111111] hover:underline inline-flex items-center gap-1"
             >
               <span>Publish offer</span>
@@ -455,7 +455,7 @@ export default function LocalSEOPage() {
               </p>
             </div>
             <Link
-              href="/portal/listings"
+              href="/admin/listings"
               className="text-[13px] font-medium text-[#111111] hover:underline inline-flex items-center gap-1"
             >
               <span>Check citations</span>

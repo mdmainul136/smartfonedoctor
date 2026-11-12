@@ -207,7 +207,7 @@ export default function ListingsPage() {
             </button>
 
             <Link
-              href="/portal/listings/catalog"
+              href="/admin/listings/catalog"
               className="h-[32px] px-3 rounded-[6px] bg-[#1d1f20] hover:bg-[#111111] text-white text-[13px] font-medium inline-flex items-center gap-1.5 transition-colors"
             >
               <Plus className="w-3.5 h-3.5" aria-hidden="true" />

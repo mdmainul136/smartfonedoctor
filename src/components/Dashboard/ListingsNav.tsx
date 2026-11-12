@@ -6,9 +6,9 @@ import { useListings, CATALOG_DIRECTORIES } from "@/lib/listingsContext";
 import { useStoreContext } from "@/lib/storeContext";
 
 export const LISTINGS_SUB_LINKS = [
-  { label: "Active listings", href: "/portal/listings" },
-  { label: "Missing & catalog", href: "/portal/listings/catalog" },
-  { label: "API & auto-sync", href: "/portal/listings/api-sync" },
+  { label: "Active listings", href: "/admin/listings" },
+  { label: "Missing & catalog", href: "/admin/listings/catalog" },
+  { label: "API & auto-sync", href: "/admin/listings/api-sync" },
 ] as const;
 
 export default function ListingsNav() {
@@ -26,18 +26,18 @@ export default function ListingsNav() {
   const tabs = [
     {
       label: `Active listings (${directories.length})`,
-      href: "/portal/listings",
+      href: "/admin/listings",
       alertCount: 0,
     },
     {
       label: `Missing & catalog (+${untrackedCatalogCount})`,
-      href: "/portal/listings/catalog",
+      href: "/admin/listings/catalog",
       alertCount: missingForStoreCount,
       alertLabel: `${missingForStoreCount} unclaimed`,
     },
     {
       label: "API & auto-sync",
-      href: "/portal/listings/api-sync",
+      href: "/admin/listings/api-sync",
       alertCount: 0,
     },
   ];

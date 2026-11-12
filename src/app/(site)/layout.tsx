@@ -11,22 +11,12 @@ export default function SiteLayout({
 }) {
   return (
     <>
-      {/* Tracking Scripts (GTM, GA4, Meta Pixel, Microsoft Clarity) */}
       <AnalyticsScripts />
-
-      {/* Global Header */}
       <TopBar />
       <Navbar />
-
-      {/* Main Public Page Content */}
       <div className="flex-1 flex flex-col">{children}</div>
-
-      {/* UserWay Accessibility Floating Widget (Bottom-Left) */}
       <UserWayWidget />
-
-      {/* Official CookieYes / Cookiebot Integration */}
       <CookieYesIntegration />
     </>
   );
 }
-

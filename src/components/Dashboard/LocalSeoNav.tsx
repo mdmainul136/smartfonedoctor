@@ -4,8 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 export const LOCAL_SEO_LINKS = [
-  { label: "Overview", href: "/portal/local-seo" },
-  { label: "Posts & offers", href: "/portal/local-seo/posts" },
+  { label: "Overview", href: "/admin/local-seo" },
+  { label: "Posts & offers", href: "/admin/local-seo/posts" },
 ] as const;
 
 export default function LocalSeoNav() {

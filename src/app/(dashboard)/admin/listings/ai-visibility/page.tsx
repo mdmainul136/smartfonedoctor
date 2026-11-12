@@ -728,7 +728,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
 
           <div className="flex items-center gap-2 shrink-0">
             <Link
-              href="/portal/listings"
+              href="/admin/listings"
               className="h-[30px] px-3 rounded-[6px] border border-[#d1d5db] bg-white hover:bg-[#f9f9f9] text-[12px] font-medium text-[#111111] inline-flex items-center gap-1.5 transition-colors"
             >
               <span>Directory listings</span>
@@ -1104,7 +1104,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                     </p>
                   </div>
                   <Link
-                    href="/portal/listings"
+                    href="/admin/listings"
                     className="text-[12px] font-medium text-[#111111] hover:underline inline-flex items-center gap-1 shrink-0"
                   >
                     <span>All 11 directories</span>
@@ -1194,7 +1194,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
               <div className="px-4 py-2.5 bg-[#f9fafb] border-t border-[#eaeaea] flex items-center justify-between text-[12px] text-[#5f6368]">
                 <span>Connected via Google OAuth, Yelp Fusion &amp; Schema</span>
                 <Link
-                  href="/portal/listings/api-sync"
+                  href="/admin/listings/api-sync"
                   className="font-medium text-[#111111] hover:underline"
                 >
                   API connections →

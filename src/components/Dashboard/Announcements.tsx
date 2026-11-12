@@ -32,7 +32,7 @@ const Announcements = () => {
           <h1 className="text-base font-bold text-gray-800">Shop Announcements</h1>
           <p className="text-[11px] text-gray-400">Parts alerts &amp; updates</p>
         </div>
-        <Link href="/portal/content" className="text-xs text-teal-600 hover:underline font-semibold">
+        <Link href="/admin/content" className="text-xs text-teal-600 hover:underline font-semibold">
           Manage →
         </Link>
       </div>
