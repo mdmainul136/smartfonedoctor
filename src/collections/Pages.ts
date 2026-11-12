@@ -1,4 +1,11 @@
 import type { CollectionConfig } from 'payload'
+import {
+  HeroBlock,
+  BenefitsBlock,
+  ServicesBlock,
+  FaqBlock,
+  CtaBlock,
+} from '../blocks'
 
 export const Pages: CollectionConfig = {
   slug: 'pages',
@@ -11,48 +18,19 @@ export const Pages: CollectionConfig = {
       name: 'title',
       type: 'text',
       required: true,
+      label: 'Page Title',
     },
     {
       name: 'slug',
       type: 'text',
       required: true,
       unique: true,
-    },
-    {
-      name: 'hero',
-      type: 'group',
-      fields: [
-        {
-          name: 'topPillTag',
-          type: 'text',
-          defaultValue: "Philadelphia's Trusted Leader in",
-        },
-        {
-          name: 'headline',
-          type: 'text',
-          defaultValue: 'Fast, reliable repairs that keep your tech working when it matters.',
-        },
-        {
-          name: 'subtitle',
-          type: 'textarea',
-          defaultValue:
-            'Repair services for smartphones, tablets, computers and game consoles, backed by certified technicians and a 90-day free warranty.',
-        },
-        {
-          name: 'ctaText',
-          type: 'text',
-          defaultValue: 'Book your repair',
-        },
-        {
-          name: 'ctaLink',
-          type: 'text',
-          defaultValue: '/schedule-repair',
-        },
-      ],
+      label: 'URL Slug (e.g. "home", "about")',
     },
     {
       name: 'announcementBar',
       type: 'group',
+      label: 'Top Announcement Bar',
       fields: [
         {
           name: 'enabled',
@@ -77,6 +55,17 @@ export const Pages: CollectionConfig = {
         },
       ],
     },
+    {
+      name: 'layout',
+      type: 'blocks',
+      label: 'Page Builder (Drag & Drop Sections)',
+      blocks: [
+        HeroBlock,
+        BenefitsBlock,
+        ServicesBlock,
+        FaqBlock,
+        CtaBlock,
+      ],
+    },
   ],
 }
-
