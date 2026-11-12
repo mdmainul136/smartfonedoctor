@@ -32,7 +32,7 @@ type MenuLink = {
 
 const menuItems: { title: string; items: MenuLink[] }[] = [
   {
-    title: "Operations",
+    title: "Store Operations",
     items: [
       {
         icon: LayoutDashboard,
@@ -47,15 +47,44 @@ const menuItems: { title: string; items: MenuLink[] }[] = [
         visible: ["admin", "teacher"],
       },
       {
-        icon: Wrench,
-        label: "Services & pricing",
-        href: "/admin/services",
+        icon: Star,
+        label: "Reviews & reputation",
+        href: "/admin/reviews",
         visible: ["admin", "teacher"],
       },
     ],
   },
   {
-    title: "Local SEO & citations",
+    title: "Website CMS",
+    items: [
+      {
+        icon: FileText,
+        label: "Pages & SEO",
+        href: "/admin/pages",
+        visible: ["admin"],
+      },
+      {
+        icon: Wrench,
+        label: "Services & Pricing",
+        href: "/admin/services",
+        visible: ["admin", "teacher"],
+      },
+      {
+        icon: Globe,
+        label: "Navigation & Menus",
+        href: "/admin/navigation",
+        visible: ["admin"],
+      },
+      {
+        icon: Sparkles,
+        label: "Google Schema & SEO",
+        href: "/admin/seo",
+        visible: ["admin"],
+      },
+    ],
+  },
+  {
+    title: "Growth & Visibility",
     items: [
       {
         icon: MapPin,
@@ -63,12 +92,6 @@ const menuItems: { title: string; items: MenuLink[] }[] = [
         href: "/admin/local-seo",
         visible: ["admin", "teacher"],
         children: LOCAL_SEO_LINKS,
-      },
-      {
-        icon: Star,
-        label: "Reviews & reputation",
-        href: "/admin/reviews",
-        visible: ["admin", "teacher"],
       },
       {
         icon: Globe,
@@ -82,12 +105,6 @@ const menuItems: { title: string; items: MenuLink[] }[] = [
         label: "Search & AI visibility",
         href: "/admin/listings/ai-visibility",
         visible: ["admin", "teacher"],
-      },
-      {
-        icon: FileText,
-        label: "Website content",
-        href: "/admin/content",
-        visible: ["admin"],
       },
     ],
   },
