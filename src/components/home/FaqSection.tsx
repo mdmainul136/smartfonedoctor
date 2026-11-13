@@ -1,14 +1,15 @@
 "use client";
 
 import React, { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import Link from "next/link";
+import { ChevronDown, ArrowRight } from "lucide-react";
 
-interface FaqItem {
+export interface FaqItem {
   question: string;
   answer: string;
 }
 
-const FAQS_COL1: FaqItem[] = [
+export const HOMEPAGE_FAQS: FaqItem[] = [
   {
     question: "How do I book a repair at a SmartFoneDoctor store?",
     answer:
@@ -24,9 +25,6 @@ const FAQS_COL1: FaqItem[] = [
     answer:
       "Pricing depends on the specific device model and type of repair needed. We provide a completely free diagnostic inspection and upfront estimate before any work begins, so you know the exact cost with no surprise fees.",
   },
-];
-
-const FAQS_COL2: FaqItem[] = [
   {
     question: "How long will my repair take?",
     answer:
@@ -43,6 +41,9 @@ const FAQS_COL2: FaqItem[] = [
       "Yes! Many of our SmartFoneDoctor locations carry a wide selection of fully inspected, cleaned, and tested Certified Pre-Owned smartphones, tablets, and laptops. Each device comes backed with a warranty for your peace of mind.",
   },
 ];
+
+const FAQS_COL1 = HOMEPAGE_FAQS.slice(0, 3);
+const FAQS_COL2 = HOMEPAGE_FAQS.slice(3, 6);
 
 export function FaqSection() {
   const [openIndex, setOpenIndex] = useState<string | null>(null);
@@ -135,6 +136,17 @@ export function FaqSection() {
             })}
           </div>
 
+        </div>
+
+        {/* View All FAQs CTA */}
+        <div className="text-center mt-10">
+          <Link
+            href="/faq"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-bold transition border border-neutral-200/80"
+          >
+            <span>View All 24 Repair FAQs</span>
+            <ArrowRight className="w-3.5 h-3.5 text-sfd-teal" />
+          </Link>
         </div>
 
       </div>

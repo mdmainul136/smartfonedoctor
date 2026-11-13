@@ -13,13 +13,22 @@ import {
   ChevronRight,
   ShieldCheck,
   User,
+  Calendar,
+  Wrench,
+  MapPin,
 } from "lucide-react";
+import Footer from "@/components/layout/Footer";
 import {
   BlogArticle,
   BlogCategoryTaxonomy,
   getStoredBlogArticles,
   getStoredBlogCategories,
 } from "@/lib/blogData";
+import {
+  JsonLd,
+  buildBreadcrumbSchema,
+  buildCollectionPageSchema,
+} from "@/lib/schema";
 
 export default function PublicBlogHubPage() {
   const [articles, setArticles] = useState<BlogArticle[]>([]);
@@ -52,8 +61,22 @@ export default function PublicBlogHubPage() {
     return isPublished && matchesCat && matchesSearch;
   });
 
+  const breadcrumbSchema = buildBreadcrumbSchema([
+    { name: "Home", url: "/" },
+    { name: "Hardware Guides & Repair Insights", url: "/blog" },
+  ]);
+
+  const collectionSchema = buildCollectionPageSchema(
+    "SmartFoneDoctor Hardware Repair Guides & Diagnostics",
+    "Written by certified technicians on Philadelphia repair benches. Free diagnostics advice, battery care, and micro-soldering guides.",
+    "/blog"
+  );
+
   return (
-    <div className="min-h-screen bg-[#fafbfc]">
+    <div className="min-h-screen bg-[#fafbfc] flex flex-col justify-between">
+      {/* ── JSON-LD Structured Data ── */}
+      <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={collectionSchema} />
       
       {/* 1. HERO HEADER */}
       <section className="bg-gradient-to-b from-[#1d1c1a] to-[#2b2926] text-white py-14 sm:py-20 px-4 sm:px-6 lg:px-8 border-b border-neutral-800">
@@ -141,10 +164,11 @@ export default function PublicBlogHubPage() {
                   href={`/blog/${article.slug}`}
                   className="block relative aspect-video bg-gray-100 overflow-hidden"
                 >
-                  <img
+                  <Image
                     src={article.featuredImage}
                     alt={article.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   <span className="absolute top-3 left-3 bg-[#1d1c1a]/85 backdrop-blur-xs text-white text-[11px] font-semibold px-2.5 py-1 rounded-md shadow-xs">
                     {article.categoryName}
@@ -202,7 +226,7 @@ export default function PublicBlogHubPage() {
               No articles found
             </h3>
             <p className="text-xs text-gray-500 max-w-sm mx-auto">
-              We couldn't find any guides matching "{search}". Try searching for batteries, screens, or water damage.
+              We couldn&apos;t find any guides matching &ldquo;{search}&rdquo;. Try searching for batteries, screens, or water damage.
             </p>
             <button
               type="button"
@@ -217,8 +241,42 @@ export default function PublicBlogHubPage() {
           </div>
         )}
 
+        {/* 4. Conversion & Service Hub Linking Banner */}
+        <div className="mt-16 rounded-[24px] bg-[#1d1c1a] text-white p-8 sm:p-12 shadow-md flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4dd0e1]">
+              <Wrench className="w-4 h-4 text-sfd-teal" />
+              <span>Certified Repair Bench Services</span>
+            </div>
+            <h3 className="text-xl sm:text-2xl font-bold tracking-tight">
+              Need Immediate Professional Hardware Repair?
+            </h3>
+            <p className="text-xs sm:text-sm text-neutral-400 max-w-xl">
+              From 20-minute screen and battery replacements to component micro-soldering, our Philadelphia technicians are ready to restore your device.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full sm:w-auto">
+            <Link
+              href="/schedule-repair"
+              className="w-full sm:w-auto text-center px-6 py-3.5 rounded-full bg-[#c8102e] hover:bg-[#a00c24] text-white font-bold text-xs uppercase tracking-wider transition shadow-sm active:scale-95 flex items-center justify-center gap-2"
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              <span>Book Repair Online</span>
+            </Link>
+            <Link
+              href="/repairs"
+              className="w-full sm:w-auto text-center px-5 py-3.5 rounded-full bg-neutral-800 hover:bg-neutral-700 text-white font-semibold text-xs transition border border-neutral-700 flex items-center justify-center gap-2"
+            >
+              <span>Explore All Services</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+
       </main>
 
+      <Footer />
     </div>
   );
 }

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, use } from "react";
+import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { INITIAL_CMS_PAGES, CMSPage } from "@/lib/cmsData";
+import { INITIAL_CMS_PAGES, CMSPage, getStoredCMSPages, saveStoredCMSPages } from "@/lib/cmsData";
 import {
   ArrowLeft,
   Save,
@@ -42,17 +42,33 @@ export default function DedicatedPageEditor({
   const [isSaving, setIsSaving] = useState(false);
   const [savedToast, setSavedToast] = useState<string | null>(null);
 
+  useEffect(() => {
+    const list = getStoredCMSPages();
+    const found = list.find((p) => p.slug === slug);
+    if (found) {
+      setPage(found);
+    }
+  }, [slug]);
+
   const handleUpdate = (field: keyof CMSPage, value: any) => {
     setPage((prev) => ({ ...prev, [field]: value, lastEdited: "Just now" }));
   };
 
   const handleSave = () => {
     setIsSaving(true);
+    const allPages = getStoredCMSPages();
+    const updated = allPages.map((p) =>
+      p.id === page.id || p.slug === page.slug
+        ? { ...page, lastEdited: "Just now" }
+        : p
+    );
+    saveStoredCMSPages(updated);
+
     setTimeout(() => {
       setIsSaving(false);
-      setSavedToast(`Changes published for "${page.name}"!`);
+      setSavedToast(`Changes & SEO metadata published for "${page.name}"!`);
       setTimeout(() => setSavedToast(null), 3500);
-    }, 500);
+    }, 400);
   };
 
   return (
@@ -363,6 +379,43 @@ export default function DedicatedPageEditor({
                 value={page.metaDesc}
                 onChange={(e) => handleUpdate("metaDesc", e.target.value)}
                 className="w-full p-2.5 rounded-[5px] border border-gray-300 text-[12px] text-[#111111] leading-relaxed focus:outline-none focus:border-[#009691]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-medium text-gray-700 mb-1">
+                Focus Target Keyword
+              </label>
+              <input
+                type="text"
+                value={page.focusKeyword || ""}
+                onChange={(e) => handleUpdate("focusKeyword", e.target.value)}
+                placeholder="e.g. phone repair philadelphia"
+                className="w-full h-[34px] px-2.5 rounded-[5px] border border-gray-300 text-[12px] text-[#009691] font-semibold focus:outline-none focus:border-[#009691]"
+              />
+              <span className="text-[10px] text-gray-400 mt-0.5 block">
+                Powers the live RankMath SEO checklist score.
+              </span>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-medium text-gray-700 mb-1">
+                Secondary Target Keywords (Comma separated)
+              </label>
+              <input
+                type="text"
+                value={(page.keywords || []).join(", ")}
+                onChange={(e) =>
+                  handleUpdate(
+                    "keywords",
+                    e.target.value
+                      .split(",")
+                      .map((k) => k.trim())
+                      .filter(Boolean)
+                  )
+                }
+                placeholder="e.g. screen repair, battery fix, 19139"
+                className="w-full h-[34px] px-2.5 rounded-[5px] border border-gray-300 text-[12px] text-[#111111] focus:outline-none focus:border-[#009691]"
               />
             </div>
 

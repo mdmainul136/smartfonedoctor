@@ -16,6 +16,7 @@ export interface CMSPage {
   author: string;
   contentHtml?: string;
   focusKeyword?: string;
+  keywords?: string[];
   featuredImage?: string;
 }
 
@@ -209,6 +210,7 @@ export const INITIAL_CMS_PAGES: CMSPage[] = [
   },
 ];
 
+
 export interface CatalogServiceItem {
   id: string;
   name: string;
@@ -355,4 +357,30 @@ export const INITIAL_SERVICES_CATALOG: CatalogServiceItem[] = [
     isPopular: false,
   },
 ];
+
+const CMS_PAGES_STORAGE_KEY = "sfd_cms_pages_v1";
+
+export function getStoredCMSPages(): CMSPage[] {
+  if (typeof window === "undefined") return INITIAL_CMS_PAGES;
+  try {
+    const raw = localStorage.getItem(CMS_PAGES_STORAGE_KEY);
+    if (!raw) {
+      localStorage.setItem(CMS_PAGES_STORAGE_KEY, JSON.stringify(INITIAL_CMS_PAGES));
+      return INITIAL_CMS_PAGES;
+    }
+    return JSON.parse(raw);
+  } catch (err) {
+    return INITIAL_CMS_PAGES;
+  }
+}
+
+export function saveStoredCMSPages(pages: CMSPage[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(CMS_PAGES_STORAGE_KEY, JSON.stringify(pages));
+  } catch (err) {
+    console.error("Failed to save CMS pages", err);
+  }
+}
+
 
