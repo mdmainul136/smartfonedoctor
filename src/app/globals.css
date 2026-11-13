@@ -490,4 +490,301 @@ html.sfd-highlight-links a {
   border-radius: 8px !important;
 }
 
+.sfd-step-body {
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+.sfd-step-title {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: #111827 !important;
+  margin: 0 0 4px 0 !important;
+}
+
+.sfd-step-desc {
+  font-size: 14px !important;
+  color: #4b5563 !important;
+  margin: 0 !important;
+  line-height: 1.6 !important;
+}
+
+/* Diagnostic Section Block */
+.sfd-section-block {
+  margin: 1.75rem 0 !important;
+  padding-bottom: 1rem !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+.sfd-section-title {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  color: #111827 !important;
+  margin: 0 0 8px 0 !important;
+  letter-spacing: -0.01em !important;
+}
+
+.sfd-section-desc {
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  color: #374151 !important;
+  margin: 0 0 12px 0 !important;
+}
+
+/* Tools & Parts Header, Icon, Title, and List */
+.sfd-tools-header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-bottom: 10px !important;
+}
+
+.sfd-tools-icon {
+  color: #4b5563 !important;
+  display: flex !important;
+  align-items: center !important;
+  user-select: none !important;
+}
+
+.sfd-tools-title {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #111827 !important;
+  margin: 0 !important;
+}
+
+.sfd-tools-list {
+  margin: 0 !important;
+  padding-left: 20px !important;
+  color: #4b5563 !important;
+  font-size: 14px !important;
+  line-height: 1.8 !important;
+}
+
+/* Comparison Table Block */
+.sfd-comparison-wrapper {
+  margin: 1.5rem 0 !important;
+  overflow-x: auto !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+}
+
+.sfd-comparison-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  font-size: 14px !important;
+  text-align: left !important;
+}
+
+.sfd-comparison-table th {
+  padding: 10px 14px !important;
+  font-weight: 600 !important;
+  color: #374151 !important;
+  background-color: #f9fafb !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+.sfd-comparison-table td {
+  padding: 10px 14px !important;
+  border-bottom: 1px solid #f3f4f6 !important;
+}
+
+.sfd-comp-highlight {
+  color: #166534 !important;
+  font-weight: 600 !important;
+}
+
+.sfd-comp-muted {
+  color: #6b7280 !important;
+}
+
+.sfd-comp-warning {
+  color: #92400e !important;
+}
+
+/* FAQ Accordion Block */
+.sfd-faq-accordion {
+  margin: 1.25rem 0 !important;
+  padding: 12px 16px !important;
+  background-color: #fafafa !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+}
+
+.sfd-faq-summary {
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  color: #111827 !important;
+  outline: none !important;
+}
+
+.sfd-faq-answer {
+  margin-top: 8px !important;
+  font-size: 14px !important;
+  color: #4b5563 !important;
+  line-height: 1.6 !important;
+}
+
+/* Code Snippet Block */
+.sfd-code-block {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+  padding: 16px !important;
+  border: 1px solid #1e293b !important;
+  border-radius: 8px !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-size: 13px !important;
+  margin: 1.25rem 0 !important;
+  overflow-x: auto !important;
+  line-height: 1.6 !important;
+}
+
+/* pSEO Juicy Internal Link & Badge */
+.sfd-juicy-link {
+  color: #00897b !important;
+  font-weight: 700 !important;
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+}
+
+.sfd-juicy-badge {
+  font-size: 11px !important;
+  background-color: #e6fffa !important;
+  color: #00897b !important;
+  border: 1px solid #b2f5ea !important;
+  padding: 2px 7px !important;
+  border-radius: 9999px !important;
+  font-weight: 600 !important;
+  margin-left: 4px !important;
+  text-decoration: none !important;
+  display: inline-block !important;
+}
+
+/* pSEO Repair Hero Card */
+.sfd-pseo-card {
+  background: linear-gradient(135deg, #1d1c1a 0%, #2e2a25 100%) !important;
+  color: #ffffff !important;
+  border-radius: 14px !important;
+  padding: 20px !important;
+  margin: 1.5rem 0 !important;
+  border: 1px solid #3f3f46 !important;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1) !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  flex-wrap: wrap !important;
+  gap: 16px !important;
+}
+
+.sfd-pseo-card-main {
+  max-width: 500px !important;
+}
+
+.sfd-pseo-badge {
+  background: rgba(77, 208, 225, 0.15) !important;
+  color: #4dd0e1 !important;
+  border: 1px solid rgba(77, 208, 225, 0.3) !important;
+  padding: 3px 9px !important;
+  border-radius: 9999px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  display: inline-block !important;
+}
+
+.sfd-pseo-title {
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  margin: 8px 0 4px 0 !important;
+}
+
+.sfd-pseo-desc {
+  font-size: 13px !important;
+  color: #d4d4d8 !important;
+  margin: 0 !important;
+  line-height: 1.5 !important;
+}
+
+.sfd-pseo-card-side {
+  text-align: right !important;
+  min-width: 130px !important;
+}
+
+.sfd-pseo-price {
+  font-size: 22px !important;
+  font-weight: 900 !important;
+  color: #4dd0e1 !important;
+  display: block !important;
+}
+
+.sfd-pseo-turnaround {
+  font-size: 11px !important;
+  color: #a1a1aa !important;
+  display: block !important;
+  margin-bottom: 8px !important;
+}
+
+.sfd-pseo-btn {
+  display: inline-block !important;
+  background-color: #00897b !important;
+  color: #ffffff !important;
+  padding: 8px 18px !important;
+  border-radius: 9999px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  text-decoration: none !important;
+  letter-spacing: 0.05em !important;
+}
+
+/* pSEO Matrix */
+.sfd-pseo-matrix {
+  background-color: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+  margin: 1.5rem 0 !important;
+}
+
+.sfd-pseo-matrix-title {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  color: #00897b !important;
+  letter-spacing: 0.05em !important;
+  display: block !important;
+  margin-bottom: 10px !important;
+}
+
+.sfd-pseo-matrix-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+  gap: 10px !important;
+}
+
+.sfd-pseo-matrix-item {
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  padding: 10px 12px !important;
+  text-decoration: none !important;
+  color: #0f172a !important;
+  display: block !important;
+}
+
+.sfd-pseo-matrix-item-name {
+  font-size: 13px !important;
+  display: block !important;
+  color: #0f172a !important;
+  margin-bottom: 3px !important;
+}
+
+.sfd-pseo-matrix-item-meta {
+  font-size: 11px !important;
+  color: #64748b !important;
+}
+
 

@@ -638,9 +638,9 @@ export default function RichTextEditor({
     let html = "";
     if (type === "section") {
       html = `
-        <div style="margin: 24px 0; padding-bottom: 16px; border-bottom: 1px solid #e5e7eb;">
-          <h2 style="font-size: 20px; font-weight: 700; color: #111827; margin: 0 0 8px 0; letter-spacing: -0.01em;">New Diagnostic Section</h2>
-          <p style="font-size: 14px; line-height: 1.6; color: #374151; margin: 0 0 12px 0;">Describe the hardware symptoms, bench diagnosis, and repair procedure steps here...</p>
+        <div class="sfd-section-block">
+          <h2 class="sfd-section-title">New Diagnostic Section</h2>
+          <p class="sfd-section-desc">Describe the hardware symptoms, bench diagnosis, and repair procedure steps here...</p>
           <div class="sfd-callout sfd-callout-tip">
             <div class="sfd-callout-icon" contenteditable="false">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
@@ -656,22 +656,22 @@ export default function RichTextEditor({
       html = `
         <div class="sfd-step-card">
           <div class="sfd-step-badge" contenteditable="false">1</div>
-          <div style="flex: 1; min-width: 0;">
-            <h3 style="font-size: 15px; font-weight: 700; color: #111827; margin: 0 0 4px 0;">Step 1: Soft Prying with Anti-Static Spudger</h3>
-            <p style="font-size: 14px; color: #4b5563; margin: 0; line-height: 1.6;">Carefully release perimeter adhesive seal using gentle heat and nylon pry tool...</p>
+          <div class="sfd-step-body">
+            <h3 class="sfd-step-title">Step 1: Soft Prying with Anti-Static Spudger</h3>
+            <p class="sfd-step-desc">Carefully release perimeter adhesive seal using gentle heat and nylon pry tool...</p>
           </div>
         </div>
       `;
     } else if (type === "tools") {
       html = `
         <div class="sfd-tools-card">
-          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-            <div contenteditable="false" style="user-select: none; color: #4b5563;">
+          <div class="sfd-tools-header">
+            <div class="sfd-tools-icon" contenteditable="false">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
             </div>
-            <h4 style="font-size: 14px; font-weight: 700; color: #111827; margin: 0;">Required Bench Tools &amp; Materials</h4>
+            <h4 class="sfd-tools-title">Required Bench Tools &amp; Materials</h4>
           </div>
-          <ul style="margin: 0; padding-left: 20px; color: #4b5563; font-size: 14px; line-height: 1.8;">
+          <ul class="sfd-tools-list">
             <li><strong>Driver:</strong> Precision P2 Pentalobe &amp; Tri-point Y000</li>
             <li><strong>Thermal:</strong> Heat Mat or Hot Air Station (75°C - 80°C)</li>
             <li><strong>Chemical:</strong> 99% Pure Isopropyl Alcohol (IPA)</li>
@@ -681,25 +681,25 @@ export default function RichTextEditor({
       `;
     } else if (type === "comparison") {
       html = `
-        <div style="margin: 20px 0; overflow-x: auto; border: 1px solid #e5e7eb; border-radius: 8px;">
-          <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
+        <div class="sfd-comparison-wrapper">
+          <table class="sfd-comparison-table">
             <thead>
-              <tr style="background: #f9fafb; border-bottom: 1px solid #e5e7eb;">
-                <th style="padding: 10px 14px; font-weight: 600; color: #374151;">Component Metric</th>
-                <th style="padding: 10px 14px; font-weight: 600; color: #111827;">OEM Grade Part</th>
-                <th style="padding: 10px 14px; font-weight: 500; color: #6b7280;">Standard Aftermarket</th>
+              <tr>
+                <th>Component Metric</th>
+                <th>OEM Grade Part</th>
+                <th>Standard Aftermarket</th>
               </tr>
             </thead>
             <tbody>
-              <tr style="border-bottom: 1px solid #f3f4f6;">
-                <td style="padding: 10px 14px; font-weight: 500; color: #111827;">Battery Cycle Capacity</td>
-                <td style="padding: 10px 14px; color: #166534; font-weight: 600;">800 – 1000 Full Cycles</td>
-                <td style="padding: 10px 14px; color: #6b7280;">300 – 500 Cycles</td>
+              <tr>
+                <td>Battery Cycle Capacity</td>
+                <td class="sfd-comp-highlight">800 – 1000 Full Cycles</td>
+                <td class="sfd-comp-muted">300 – 500 Cycles</td>
               </tr>
               <tr>
-                <td style="padding: 10px 14px; font-weight: 500; color: #111827;">TrueTone &amp; Sensor Pairing</td>
-                <td style="padding: 10px 14px; color: #166534; font-weight: 600;">100% Genuine Calibration</td>
-                <td style="padding: 10px 14px; color: #92400e;">Non-serialized Warning</td>
+                <td>TrueTone &amp; Sensor Pairing</td>
+                <td class="sfd-comp-highlight">100% Genuine Calibration</td>
+                <td class="sfd-comp-warning">Non-serialized Warning</td>
               </tr>
             </tbody>
           </table>
@@ -707,14 +707,14 @@ export default function RichTextEditor({
       `;
     } else if (type === "faq") {
       html = `
-        <details style="margin: 16px 0; padding: 14px 16px; background: #fafafa; border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer;">
-          <summary style="font-weight: 600; font-size: 14px; color: #111827; outline: none;">Will an aftermarket screen replacement disable Face ID?</summary>
-          <div style="margin-top: 8px; font-size: 14px; color: #4b5563; line-height: 1.6;">No. As long as the original ambient light sensor and ear speaker flex are transferred safely to the new assembly, Face ID remains 100% functional.</div>
+        <details class="sfd-faq-accordion">
+          <summary class="sfd-faq-summary">Will an aftermarket screen replacement disable Face ID?</summary>
+          <div class="sfd-faq-answer">No. As long as the original ambient light sensor and ear speaker flex are transferred safely to the new assembly, Face ID remains 100% functional.</div>
         </details>
       `;
     } else if (type === "code") {
       html = `
-        <pre style="background: #0f172a; color: #e2e8f0; padding: 16px; border: 1px solid #1e293b; border-radius: 8px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; margin: 16px 0; overflow-x: auto; line-height: 1.6;"><code>// Example EEPROM serialization code&#10;read_sensor_id(FPC_BUS_0);</code></pre>
+        <pre class="sfd-code-block"><code>// Example EEPROM serialization code&#10;read_sensor_id(FPC_BUS_0);</code></pre>
       `;
     }
 
@@ -914,50 +914,48 @@ export default function RichTextEditor({
 
     if (linkingStrategy === "inline") {
       const anchorText = customAnchorText.trim() || `${device.name} ${issue.shortName} in Philadelphia`;
-      html = `<a href="${targetUrl}" class="sfd-juicy-link" style="color: #00897b; font-weight: 700; text-decoration: underline; text-underline-offset: 3px;">${anchorText} <span style="font-size: 11px; background: #e6fffa; color: #00897b; border: 1px solid #b2f5ea; padding: 2px 7px; border-radius: 9999px; font-weight: 600; margin-left: 4px; text-decoration: none; display: inline-block;">$${price} · ${issue.turnaroundDisplay}</span></a> `;
+      html = `<a href="${targetUrl}" class="sfd-juicy-link">${anchorText} <span class="sfd-juicy-badge">$${price} · ${issue.turnaroundDisplay}</span></a> `;
+      document.execCommand("insertHTML", false, html);
     } else if (linkingStrategy === "card") {
       html = `
-        <div class="sfd-pseo-card" style="background: linear-gradient(135deg, #1d1c1a 0%, #2e2a25 100%); color: #ffffff; border-radius: 16px; padding: 24px; margin: 24px 0; border: 1px solid #3f3f46; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
-          <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 16px;">
-            <div style="max-width: 500px;">
-              <span style="background: rgba(77, 208, 225, 0.15); color: #4dd0e1; border: 1px solid rgba(77, 208, 225, 0.3); padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Philadelphia Bench Service</span>
-              <h4 style="font-size: 20px; font-weight: 800; color: #ffffff; margin: 8px 0 4px 0;">${device.name} ${issue.name}</h4>
-              <p style="font-size: 13px; color: #d4d4d8; margin: 0; line-height: 1.5;">${device.specs} · Backed by 90-day parts &amp; labor warranty · Walk-ins welcome at 33 S 52nd St.</p>
-            </div>
-            <div style="text-align: right; min-width: 140px;">
-              <span style="font-size: 24px; font-weight: 900; color: #4dd0e1; display: block;">From $${price}</span>
-              <span style="font-size: 11px; color: #a1a1aa; display: block; margin-bottom: 10px;">⏱️ ${issue.turnaroundDisplay}</span>
-              <a href="${targetUrl}" style="display: inline-block; background: #00897b; color: #ffffff; padding: 9px 20px; border-radius: 9999px; font-size: 12px; font-weight: 700; text-transform: uppercase; text-decoration: none; letter-spacing: 0.05em;">Book Repair →</a>
-            </div>
+        <div class="sfd-pseo-card">
+          <div class="sfd-pseo-card-main">
+            <span class="sfd-pseo-badge">Philadelphia Bench Service</span>
+            <h4 class="sfd-pseo-title">${device.name} ${issue.name}</h4>
+            <p class="sfd-pseo-desc">${device.specs} · Backed by 90-day parts &amp; labor warranty · Walk-ins welcome at 33 S 52nd St.</p>
+          </div>
+          <div class="sfd-pseo-card-side">
+            <span class="sfd-pseo-price">From $${price}</span>
+            <span class="sfd-pseo-turnaround">⏱️ ${issue.turnaroundDisplay}</span>
+            <a href="${targetUrl}" class="sfd-pseo-btn">Book Repair →</a>
           </div>
         </div>
-        <p><br></p>
       `;
+      insertCustomBlockNode(html);
     } else if (linkingStrategy === "matrix") {
       const siblings = PSEO_ISSUES.filter((i) => i.category === device.category).slice(0, 3);
       html = `
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px; margin: 20px 0;">
-          <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #00897b; letter-spacing: 0.05em; display: block; margin-bottom: 8px;">Popular Hardware Repairs for ${device.name}</span>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+        <div class="sfd-pseo-matrix">
+          <span class="sfd-pseo-matrix-title">Popular Hardware Repairs for ${device.name}</span>
+          <div class="sfd-pseo-matrix-grid">
             ${siblings
               .map((sib) => {
                 const sPrice = sib.basePrice + (device.releaseYear >= 2024 ? 20 : 0);
                 const sUrl = `/repairs/${device.category}/${device.slug}/${sib.slug}`;
                 return `
-                  <a href="${sUrl}" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px; text-decoration: none; color: #0f172a; display: block;">
-                    <strong style="font-size: 13px; display: block; color: #0f172a; margin-bottom: 4px;">${sib.shortName}</strong>
-                    <span style="font-size: 11px; color: #64748b;">From $${sPrice} · ${sib.turnaroundDisplay}</span>
+                  <a href="${sUrl}" class="sfd-pseo-matrix-item">
+                    <strong class="sfd-pseo-matrix-item-name">${sib.shortName}</strong>
+                    <span class="sfd-pseo-matrix-item-meta">From $${sPrice} · ${sib.turnaroundDisplay}</span>
                   </a>
                 `;
               })
               .join("")}
           </div>
         </div>
-        <p><br></p>
       `;
+      insertCustomBlockNode(html);
     }
 
-    document.execCommand("insertHTML", false, html);
     handleInput();
     setPseoModalOpen(false);
     setCustomAnchorText("");
