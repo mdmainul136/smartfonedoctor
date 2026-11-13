@@ -620,8 +620,8 @@ export default function RichTextEditor({
           ${svgs[type]}
         </div>
         <div class="sfd-callout-body">
-          <div class="sfd-callout-title" contenteditable="false">${titles[type]}</div>
-          <div class="sfd-callout-content">Enter advice or technical notes here...</div>
+          <span class="sfd-callout-title" contenteditable="false">${titles[type]}:</span>
+          <span class="sfd-callout-content">Enter advice or technical notes here...</span>
         </div>
       </div>
     `;
@@ -646,8 +646,8 @@ export default function RichTextEditor({
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
             </div>
             <div class="sfd-callout-body">
-              <div class="sfd-callout-title" contenteditable="false">Tip</div>
-              <div class="sfd-callout-content">Always disconnect the battery connector before removing display cables.</div>
+              <span class="sfd-callout-title" contenteditable="false">Tip:</span>
+              <span class="sfd-callout-content">Always disconnect the battery connector before removing display cables.</span>
             </div>
           </div>
         </div>
