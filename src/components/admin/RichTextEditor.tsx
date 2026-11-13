@@ -77,25 +77,26 @@ interface SlashCommandItem {
 
 const TEXT_COLORS = [
   { label: "Default Dark", color: "#111827" },
-  { label: "SFD Teal", color: "#00897b" },
-  { label: "Crimson Red", color: "#dc2626" },
+  { label: "Slate Gray", color: "#475569" },
+  { label: "SmartFone Teal", color: "#00897b" },
   { label: "Royal Blue", color: "#2563eb" },
-  { label: "Emerald Green", color: "#059669" },
-  { label: "Amber Orange", color: "#d97706" },
-  { label: "Purple", color: "#7c3aed" },
-  { label: "Muted Gray", color: "#6b7280" },
+  { label: "Vivid Indigo", color: "#4f46e5" },
+  { label: "Vibrant Purple", color: "#9333ea" },
+  { label: "Crimson Red", color: "#dc2626" },
+  { label: "Amber Orange", color: "#ea580c" },
+  { label: "Emerald Green", color: "#16a34a" },
   { label: "Pure White", color: "#ffffff" },
 ];
 
 const HIGHLIGHT_COLORS = [
-  { label: "Soft Yellow", color: "#fef08a" },
-  { label: "Soft Teal", color: "#ccfbf1" },
-  { label: "Soft Green", color: "#dcfce7" },
-  { label: "Soft Blue", color: "#dbeafe" },
-  { label: "Soft Red", color: "#fee2e2" },
-  { label: "Soft Purple", color: "#f3e8ff" },
-  { label: "Soft Amber", color: "#ffedd5" },
-  { label: "Muted Gray", color: "#f3f4f6" },
+  { label: "Yellow", color: "#fef08a" },
+  { label: "Teal", color: "#ccfbf1" },
+  { label: "Green", color: "#dcfce7" },
+  { label: "Blue", color: "#dbeafe" },
+  { label: "Purple", color: "#f3e8ff" },
+  { label: "Pink", color: "#ffe4e6" },
+  { label: "Orange", color: "#ffedd5" },
+  { label: "Slate", color: "#f1f5f9" },
 ];
 
 const BLOCK_BG_STYLES = [
@@ -240,21 +241,96 @@ export default function RichTextEditor({
     updateCounts();
   };
 
+  const saveCurrentSelection = useCallback(() => {
+    if (typeof window === "undefined" || mode !== "visual") return;
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0 && editorRef.current) {
+      const anchor = sel.anchorNode;
+      if (editorRef.current.contains(anchor)) {
+        savedRangeRef.current = sel.getRangeAt(0).cloneRange();
+      }
+    }
+  }, [mode]);
+
+  const restoreSelection = useCallback(() => {
+    if (savedRangeRef.current && typeof window !== "undefined") {
+      const sel = window.getSelection();
+      if (sel) {
+        sel.removeAllRanges();
+        sel.addRange(savedRangeRef.current);
+      }
+    }
+  }, []);
+
   const executeCommand = (command: string, val: string | undefined = undefined) => {
     if (mode !== "visual") return;
     editorRef.current?.focus();
+    restoreSelection();
     document.execCommand(command, false, val);
+    saveCurrentSelection();
     handleInput();
   };
 
   const formatHeading = (tag: "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "p") => {
     if (mode !== "visual") return;
     editorRef.current?.focus();
+    restoreSelection();
+
+    const sel = typeof window !== "undefined" ? window.getSelection() : null;
+    let ok = false;
+
+    // 1. Try native execCommand formatBlock
     try {
-      document.execCommand("formatBlock", false, `<${tag}>`);
+      ok = document.execCommand("formatBlock", false, `<${tag}>`);
+      if (!ok) {
+        ok = document.execCommand("formatBlock", false, tag);
+      }
+      if (!ok) {
+        ok = document.execCommand("formatBlock", false, tag.toUpperCase());
+      }
     } catch {
-      document.execCommand("formatBlock", false, tag);
+      ok = false;
     }
+
+    // 2. If execCommand didn't transform or selection exists, directly transform DOM
+    if (!ok && sel && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      let container: Node | null = range.commonAncestorContainer;
+      if (container.nodeType === Node.TEXT_NODE) {
+        container = container.parentNode;
+      }
+
+      if (
+        container &&
+        container !== editorRef.current &&
+        editorRef.current?.contains(container) &&
+        /^(P|H1|H2|H3|H4|H5|H6|DIV|BLOCKQUOTE)$/i.test((container as HTMLElement).tagName)
+      ) {
+        const newEl = document.createElement(tag);
+        newEl.innerHTML = (container as HTMLElement).innerHTML;
+        (container as HTMLElement).parentNode?.replaceChild(newEl, container);
+        const newRange = document.createRange();
+        newRange.selectNodeContents(newEl);
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+        savedRangeRef.current = newRange.cloneRange();
+      } else {
+        const selectedText = sel.toString();
+        if (selectedText) {
+          const newEl = document.createElement(tag);
+          newEl.textContent = selectedText;
+          range.deleteContents();
+          range.insertNode(newEl);
+          const newRange = document.createRange();
+          newRange.selectNodeContents(newEl);
+          sel.removeAllRanges();
+          sel.addRange(newRange);
+          savedRangeRef.current = newRange.cloneRange();
+        }
+      }
+    }
+
+    saveCurrentSelection();
     handleInput();
     setBlockMenuOpen(false);
   };
@@ -1113,8 +1189,10 @@ export default function RichTextEditor({
   const applyTextColor = (color: string) => {
     if (mode !== "visual") return;
     editorRef.current?.focus();
+    restoreSelection();
     document.execCommand("foreColor", false, color);
     setActiveColor(color);
+    saveCurrentSelection();
     handleInput();
     setTextColorMenuOpen(false);
   };
@@ -1122,7 +1200,9 @@ export default function RichTextEditor({
   const applyHighlightColor = (color: string) => {
     if (mode !== "visual") return;
     editorRef.current?.focus();
+    restoreSelection();
     document.execCommand("hiliteColor", false, color);
+    saveCurrentSelection();
     handleInput();
     setBgColorMenuOpen(false);
   };
@@ -1130,7 +1210,10 @@ export default function RichTextEditor({
   const removeHighlight = () => {
     if (mode !== "visual") return;
     editorRef.current?.focus();
+    restoreSelection();
     document.execCommand("hiliteColor", false, "transparent");
+    document.execCommand("removeFormat", false, undefined);
+    saveCurrentSelection();
     handleInput();
     setBgColorMenuOpen(false);
   };
@@ -1182,6 +1265,10 @@ export default function RichTextEditor({
           <div className="relative">
             <button
               type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                saveCurrentSelection();
+              }}
               onClick={() => setBlockMenuOpen((prev) => !prev)}
               className="h-[28px] px-2 rounded-md hover:bg-gray-200 text-gray-800 text-xs font-semibold inline-flex items-center gap-1 border border-gray-300 bg-white cursor-pointer shadow-2xs"
               title="Change Block Heading / Format (H1-H6, P)"
@@ -1197,55 +1284,62 @@ export default function RichTextEditor({
                 </div>
                 <button
                   type="button"
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => formatHeading("h1")}
                   className="w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs font-black text-gray-900 cursor-pointer"
                 >
-                  <span className="text-sm">Heading 1 (H1)</span>
-                  <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">28px</span>
+                  <span className="text-base font-extrabold text-gray-900">Heading 1 (H1)</span>
+                  <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">32px</span>
                 </button>
                 <button
                   type="button"
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => formatHeading("h2")}
                   className="w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs font-bold text-gray-800 cursor-pointer"
                 >
-                  <span className="text-sm">Heading 2 (H2)</span>
-                  <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">22px</span>
+                  <span className="text-sm font-bold text-gray-800">Heading 2 (H2)</span>
+                  <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">24px</span>
                 </button>
                 <button
                   type="button"
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => formatHeading("h3")}
                   className="w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs font-semibold text-gray-800 cursor-pointer"
                 >
-                  <span>Heading 3 (H3)</span>
+                  <span className="text-sm font-semibold text-gray-800">Heading 3 (H3)</span>
+                  <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">20px</span>
+                </button>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => formatHeading("h4")}
+                  className="w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs font-medium text-gray-800 cursor-pointer"
+                >
+                  <span className="text-xs font-semibold text-gray-800">Heading 4 (H4)</span>
                   <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">18px</span>
                 </button>
                 <button
                   type="button"
-                  onClick={() => formatHeading("h4")}
-                  className="w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs font-medium text-gray-800 cursor-pointer"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => formatHeading("h5")}
+                  className="w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs font-medium text-gray-700 cursor-pointer"
                 >
-                  <span>Heading 4 (H4)</span>
+                  <span className="text-xs font-medium text-gray-700">Heading 5 (H5)</span>
                   <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">16px</span>
                 </button>
                 <button
                   type="button"
-                  onClick={() => formatHeading("h5")}
-                  className="w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs font-medium text-gray-700 cursor-pointer"
-                >
-                  <span>Heading 5 (H5)</span>
-                  <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">14px</span>
-                </button>
-                <button
-                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => formatHeading("h6")}
                   className="w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs font-medium text-gray-600 cursor-pointer"
                 >
-                  <span>Heading 6 (H6)</span>
-                  <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">12px</span>
+                  <span className="text-xs font-medium uppercase tracking-wider text-gray-600">Heading 6 (H6)</span>
+                  <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">14px</span>
                 </button>
                 <div className="my-1 border-t border-gray-100" />
                 <button
                   type="button"
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => formatHeading("p")}
                   className="w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs text-gray-700 cursor-pointer"
                 >
@@ -1254,6 +1348,7 @@ export default function RichTextEditor({
                 </button>
                 <button
                   type="button"
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={insertBlockquote}
                   className="w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs text-gray-700 cursor-pointer"
                 >
@@ -1267,41 +1362,46 @@ export default function RichTextEditor({
           {/* Quick Direct Buttons */}
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => formatHeading("p")}
             className="px-2 py-1 rounded text-xs font-semibold hover:bg-gray-200 text-gray-700 cursor-pointer"
-            title="Convert to Normal Paragraph"
+            title="Convert to Normal Paragraph (P)"
           >
             P
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => formatHeading("h1")}
             className="p-1.5 rounded hover:bg-gray-200 text-gray-900 font-black cursor-pointer text-xs"
-            title="Heading 1 (H1)"
+            title="Heading 1 (H1 - 32px)"
           >
             <Heading1 className="w-4 h-4" />
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => formatHeading("h2")}
             className="p-1.5 rounded hover:bg-gray-200 text-gray-800 font-bold cursor-pointer"
-            title="Heading 2 (H2)"
+            title="Heading 2 (H2 - 24px)"
           >
             <Heading2 className="w-4 h-4" />
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => formatHeading("h3")}
             className="p-1.5 rounded hover:bg-gray-200 text-gray-800 font-bold cursor-pointer"
-            title="Heading 3 (H3)"
+            title="Heading 3 (H3 - 20px)"
           >
             <Heading3 className="w-4 h-4" />
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => formatHeading("h4")}
             className="p-1.5 rounded hover:bg-gray-200 text-gray-800 font-bold cursor-pointer"
-            title="Heading 4 (H4)"
+            title="Heading 4 (H4 - 18px)"
           >
             <Heading4 className="w-4 h-4" />
           </button>
@@ -1311,6 +1411,7 @@ export default function RichTextEditor({
         <div className="flex items-center border-r border-gray-200 pr-1.5 mr-1 gap-0.5">
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand("bold")}
             className="p-1.5 rounded hover:bg-gray-200 text-gray-800 font-bold cursor-pointer"
             title="Bold (Ctrl+B)"
@@ -1319,6 +1420,7 @@ export default function RichTextEditor({
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand("italic")}
             className="p-1.5 rounded hover:bg-gray-200 text-gray-800 italic cursor-pointer"
             title="Italic (Ctrl+I)"
@@ -1327,6 +1429,7 @@ export default function RichTextEditor({
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand("underline")}
             className="p-1.5 rounded hover:bg-gray-200 text-gray-800 underline cursor-pointer"
             title="Underline (Ctrl+U)"
@@ -1335,6 +1438,7 @@ export default function RichTextEditor({
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand("strikeThrough")}
             className="p-1.5 rounded hover:bg-gray-200 text-gray-700 line-through cursor-pointer"
             title="Strikethrough"
@@ -1342,21 +1446,25 @@ export default function RichTextEditor({
             <Strikethrough className="w-3.5 h-3.5" />
           </button>
 
-          {/* 1. TEXT COLOR SELECTOR DROPDOWN */}
+          {/* 1. TEXT COLOR SELECTOR DROPDOWN (User-Friendly Grid) */}
           <div className="relative" ref={textColorMenuRef}>
             <button
               type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                saveCurrentSelection();
+              }}
               onClick={() => {
                 setTextColorMenuOpen(!textColorMenuOpen);
                 setBgColorMenuOpen(false);
               }}
-              className="px-1.5 py-1 rounded hover:bg-gray-200 text-gray-800 flex items-center gap-0.5 cursor-pointer"
+              className="px-1.5 py-1 rounded hover:bg-gray-200 text-gray-800 flex items-center gap-1 cursor-pointer border border-transparent hover:border-gray-300"
               title="Text Color"
             >
               <div className="flex flex-col items-center leading-none">
                 <span className="font-bold text-[13px] leading-tight">A</span>
                 <span
-                  className="w-3.5 h-[3px] rounded-full mt-0.5"
+                  className="w-4 h-[3px] rounded-full mt-0.5 shadow-2xs"
                   style={{ backgroundColor: activeColor }}
                 />
               </div>
@@ -1364,37 +1472,40 @@ export default function RichTextEditor({
             </button>
 
             {textColorMenuOpen && (
-              <div className="absolute left-0 top-full mt-1.5 w-56 bg-white rounded-xl shadow-xl border border-gray-200 p-3 z-30 animate-in fade-in zoom-in-95 duration-150">
-                <div className="flex items-center justify-between text-xs font-bold text-gray-800 pb-2 border-b border-gray-100 mb-2">
-                  <span>Text Color</span>
+              <div className="absolute left-0 top-full mt-1.5 w-60 bg-white rounded-xl shadow-xl border border-gray-200 p-3 z-30 animate-in fade-in zoom-in-95 duration-150">
+                <div className="flex items-center justify-between text-xs font-bold text-gray-800 pb-2 border-b border-gray-100 mb-2.5">
+                  <span className="flex items-center gap-1">
+                    <Baseline className="w-3.5 h-3.5 text-gray-700" />
+                    <span>Text Color</span>
+                  </span>
                   <button
                     type="button"
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => applyTextColor("#111827")}
-                    className="text-[11px] text-gray-400 hover:text-black font-normal"
+                    className="text-[11px] text-teal-700 hover:text-teal-900 font-semibold px-1.5 py-0.5 rounded hover:bg-teal-50 cursor-pointer"
                   >
                     Reset
                   </button>
                 </div>
 
-                <div className="grid grid-cols-4 gap-2 mb-3">
+                {/* 10 Clean Circle Color Swatches */}
+                <div className="grid grid-cols-5 gap-2 mb-3">
                   {TEXT_COLORS.map((col) => (
                     <button
                       key={col.color}
                       type="button"
+                      onMouseDown={(e) => e.preventDefault()}
                       onClick={() => applyTextColor(col.color)}
-                      className="group flex flex-col items-center gap-1 p-1 rounded hover:bg-gray-50 cursor-pointer"
+                      className="group flex items-center justify-center p-1 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
                       title={col.label}
                     >
                       <span
-                        className="w-6 h-6 rounded-full border border-gray-300 shadow-2xs group-hover:scale-110 transition-transform flex items-center justify-center"
+                        className="w-6 h-6 rounded-full border border-gray-300/80 shadow-2xs group-hover:scale-115 transition-transform flex items-center justify-center ring-offset-1 group-hover:ring-2 group-hover:ring-teal-500"
                         style={{ backgroundColor: col.color }}
                       >
-                        {activeColor === col.color && (
+                        {activeColor.toLowerCase() === col.color.toLowerCase() && (
                           <Check className={`w-3.5 h-3.5 ${col.color === "#ffffff" ? "text-black" : "text-white"}`} />
                         )}
-                      </span>
-                      <span className="text-[10px] text-gray-500 truncate w-full text-center">
-                        {col.label.split(" ")[0]}
                       </span>
                     </button>
                   ))}
@@ -1402,7 +1513,7 @@ export default function RichTextEditor({
 
                 {/* Custom Color Input */}
                 <div className="pt-2 border-t border-gray-100 flex items-center justify-between gap-2">
-                  <span className="text-[11px] text-gray-500 font-medium">Custom Hex:</span>
+                  <span className="text-[11px] text-gray-500 font-medium">Custom Color:</span>
                   <div className="flex items-center gap-1.5">
                     <input
                       type="color"
@@ -1411,9 +1522,9 @@ export default function RichTextEditor({
                         setCustomTextColor(e.target.value);
                         applyTextColor(e.target.value);
                       }}
-                      className="w-6 h-6 rounded border border-gray-300 cursor-pointer p-0 bg-transparent"
+                      className="w-7 h-7 rounded-lg border border-gray-300 cursor-pointer p-0 bg-transparent overflow-hidden"
                     />
-                    <span className="text-[11px] font-mono text-gray-600 uppercase">
+                    <span className="text-[11px] font-mono text-gray-700 uppercase font-semibold">
                       {customTextColor}
                     </span>
                   </div>
@@ -1422,20 +1533,24 @@ export default function RichTextEditor({
             )}
           </div>
 
-          {/* 2. BLOCK & HIGHLIGHT BACKGROUND COLOR DROPDOWN */}
+          {/* 2. HIGHLIGHT & BACKGROUND COLOR DROPDOWN (User-Friendly Pastel Grid) */}
           <div className="relative" ref={bgColorMenuRef}>
             <button
               type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                saveCurrentSelection();
+              }}
               onClick={() => {
                 setBgColorMenuOpen(!bgColorMenuOpen);
                 setTextColorMenuOpen(false);
               }}
-              className="px-1.5 py-1 rounded hover:bg-gray-200 text-gray-800 flex items-center gap-0.5 cursor-pointer"
-              title="Highlight & Block Background Color"
+              className="px-1.5 py-1 rounded hover:bg-gray-200 text-gray-800 flex items-center gap-1 cursor-pointer border border-transparent hover:border-gray-300"
+              title="Text Highlight & Background Color"
             >
               <div className="flex flex-col items-center leading-none">
-                <Palette className="w-3.5 h-3.5 text-gray-700" />
-                <span className="w-3.5 h-[3px] rounded-full mt-0.5 bg-yellow-400" />
+                <Highlighter className="w-3.5 h-3.5 text-amber-500" />
+                <span className="w-4 h-[3px] rounded-full mt-0.5 bg-yellow-400 shadow-2xs" />
               </div>
               <ChevronDown className="w-3 h-3 text-gray-400" />
             </button>
@@ -1444,16 +1559,17 @@ export default function RichTextEditor({
               <div className="absolute left-0 top-full mt-1.5 w-72 bg-white rounded-xl shadow-xl border border-gray-200 p-3 z-30 animate-in fade-in zoom-in-95 duration-150 max-h-96 overflow-y-auto">
                 
                 {/* Section A: Text Highlight Color */}
-                <div className="pb-2 border-b border-gray-100">
+                <div className="pb-2.5 border-b border-gray-100">
                   <div className="flex items-center justify-between text-xs font-bold text-gray-800 mb-2">
-                    <span className="flex items-center gap-1">
+                    <span className="flex items-center gap-1 text-gray-800">
                       <Highlighter className="w-3.5 h-3.5 text-amber-500" />
                       <span>Text Highlight</span>
                     </span>
                     <button
                       type="button"
+                      onMouseDown={(e) => e.preventDefault()}
                       onClick={removeHighlight}
-                      className="text-[11px] text-gray-400 hover:text-black font-normal"
+                      className="text-[11px] text-red-600 hover:text-red-800 font-semibold px-1.5 py-0.5 rounded hover:bg-red-50 cursor-pointer"
                     >
                       Clear
                     </button>
@@ -1464,17 +1580,19 @@ export default function RichTextEditor({
                       <button
                         key={col.color}
                         type="button"
+                        onMouseDown={(e) => e.preventDefault()}
                         onClick={() => applyHighlightColor(col.color)}
-                        className="flex items-center gap-1.5 px-2 py-1 rounded text-left hover:opacity-80 text-xs font-medium text-gray-800 border border-gray-200 transition cursor-pointer"
+                        className="h-7 rounded-lg text-center font-bold text-[11px] text-gray-800 border border-gray-200 hover:border-teal-600 hover:scale-105 transition-all cursor-pointer flex items-center justify-center shadow-2xs"
                         style={{ backgroundColor: col.color }}
+                        title={col.label}
                       >
-                        <span className="text-[10px] truncate">{col.label}</span>
+                        <span>{col.label}</span>
                       </button>
                     ))}
                   </div>
 
                   <div className="pt-2 flex items-center justify-between text-xs">
-                    <span className="text-[11px] text-gray-400">Custom Highlight:</span>
+                    <span className="text-[11px] text-gray-500 font-medium">Custom Highlight:</span>
                     <input
                       type="color"
                       value={customBgColor}
@@ -1482,27 +1600,28 @@ export default function RichTextEditor({
                         setCustomBgColor(e.target.value);
                         applyHighlightColor(e.target.value);
                       }}
-                      className="w-5 h-5 rounded cursor-pointer p-0 bg-transparent"
+                      className="w-6 h-6 rounded-lg cursor-pointer p-0 bg-transparent border border-gray-300"
                     />
                   </div>
                 </div>
 
                 {/* Section B: Wrap Selection in Full Block Card Background */}
-                <div className="pt-3">
-                  <div className="text-xs font-bold text-gray-800 mb-2 flex items-center gap-1">
+                <div className="pt-2.5">
+                  <div className="text-xs font-bold text-gray-800 mb-1.5 flex items-center gap-1">
                     <Layers className="w-3.5 h-3.5 text-[#00897b]" />
-                    <span>Block Background Card</span>
+                    <span>Callout Container Box</span>
                   </div>
 
                   <div className="space-y-1.5">
-                    {BLOCK_BG_STYLES.map((block) => (
+                    {BLOCK_BG_STYLES.slice(0, 4).map((block) => (
                       <button
                         key={block.label}
                         type="button"
+                        onMouseDown={(e) => e.preventDefault()}
                         onClick={() => applyBlockBackground(block.style)}
-                        className="w-full text-left p-2 rounded-lg border border-gray-200 hover:border-teal-500 hover:bg-gray-50 transition cursor-pointer group"
+                        className="w-full text-left px-2.5 py-1.5 rounded-lg border border-gray-200 hover:border-teal-500 hover:bg-teal-50/40 transition cursor-pointer group"
                       >
-                        <span className="text-xs font-bold text-gray-800 block group-hover:text-teal-700">
+                        <span className="text-xs font-bold text-gray-800 block group-hover:text-teal-700 leading-tight">
                           {block.label}
                         </span>
                         <span className="text-[10px] text-gray-400 block truncate">
@@ -2027,8 +2146,14 @@ export default function RichTextEditor({
           ref={editorRef}
           contentEditable
           onInput={handleInput}
-          onBlur={handleInput}
+          onBlur={() => {
+            saveCurrentSelection();
+            handleInput();
+          }}
           onKeyDown={handleKeyDown}
+          onKeyUp={saveCurrentSelection}
+          onMouseUp={saveCurrentSelection}
+          onSelect={saveCurrentSelection}
           className="sfd-editor-content p-6 sm:p-8 outline-none text-[#1d1c1a] leading-relaxed text-sm font-normal focus:bg-white transition-colors overflow-y-auto selection:bg-teal-100 selection:text-teal-900"
           style={{ minHeight }}
           data-placeholder={placeholder}
