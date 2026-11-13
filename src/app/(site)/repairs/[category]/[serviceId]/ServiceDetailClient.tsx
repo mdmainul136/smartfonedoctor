@@ -165,7 +165,7 @@ export default function ServiceDetailClient({ service }: Props) {
               {filteredModels.map((item) => (
                 <Link
                   key={item.id}
-                  href={`/schedule-repair?model=${encodeURIComponent(item.title)}`}
+                  href={`/repairs/${service.categoryId}/${item.id}`}
                   className="group flex flex-col justify-between p-4 rounded-2xl bg-white border border-neutral-200 hover:border-sfd-teal/50 hover:shadow-lg transition-all duration-200"
                 >
                   <div className="relative w-full h-40 rounded-xl overflow-hidden bg-neutral-50 mb-3 flex items-center justify-center">
@@ -188,7 +188,7 @@ export default function ServiceDetailClient({ service }: Props) {
                     <div className="flex items-center justify-between mt-3 pt-2 border-t border-neutral-100">
                       <span className="text-[11px] text-neutral-400">{item.turnaround}</span>
                       <span className="text-xs font-semibold text-[#c8102e] group-hover:underline">
-                        Learn more &gt;
+                        View repairs &gt;
                       </span>
                     </div>
                   </div>
@@ -201,7 +201,7 @@ export default function ServiceDetailClient({ service }: Props) {
               {filteredIssues.map((item) => (
                 <Link
                   key={item.id}
-                  href={`/schedule-repair?issue=${encodeURIComponent(item.title)}`}
+                  href={`/repairs/${service.categoryId}/${service.serviceId}/${item.id}`}
                   className="group flex items-start gap-3.5 p-4 rounded-2xl bg-white border border-neutral-200 hover:border-sfd-teal/50 hover:shadow-md transition-all duration-200"
                 >
                   <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-neutral-100 shrink-0">
@@ -222,7 +222,7 @@ export default function ServiceDetailClient({ service }: Props) {
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-[10px] text-neutral-400">{item.turnaround}</span>
                       <span className="text-xs font-semibold text-[#c8102e] group-hover:underline">
-                        Book fix &gt;
+                        Pricing &amp; Fix &gt;
                       </span>
                     </div>
                   </div>

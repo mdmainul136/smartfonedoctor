@@ -80,33 +80,33 @@ const CATEGORY_SERVICE_LINKS: Record<
   { label: string; url: string; badge?: string }[]
 > = {
   "cat-iphone": [
-    { label: "iPhone Screen Repair", url: "/repairs/iphone", badge: "30 min" },
+    { label: "iPhone 16 Pro Screen Repair", url: "/repairs/smartphone/iphone-16-pro/screen-repair", badge: "20–30 min" },
     {
       label: "iPhone Battery Replacement",
-      url: "/repairs/iphone",
-      badge: "$69+",
+      url: "/repairs/smartphone/iphone-16-pro/battery-replacement",
+      badge: "From $69",
     },
-    { label: "iPhone Back Glass Fix", url: "/repairs/iphone" },
-    { label: "iPhone Charging Port", url: "/repairs/iphone" },
+    { label: "iPhone Back Glass Laser Fix", url: "/repairs/smartphone/iphone-16-pro/back-glass-repair", badge: "Laser Spec" },
+    { label: "iPhone Charging Port Fix", url: "/repairs/smartphone/iphone-16-pro/charging-port-repair", badge: "Micro-Solder" },
   ],
   "cat-android": [
     {
-      label: "Samsung Screen Repair",
-      url: "/repairs/smartphone",
-      badge: "AMOLED",
+      label: "Galaxy S25 AMOLED Screen Repair",
+      url: "/repairs/smartphone/galaxy-s25/screen-repair",
+      badge: "AMOLED 120Hz",
     },
-    { label: "Android Battery Swap", url: "/repairs/smartphone" },
-    { label: "Water Damage Recovery", url: "/repairs/smartphone", badge: "Emergency" },
+    { label: "Galaxy Battery Replacement", url: "/repairs/smartphone/galaxy-s25/battery-replacement", badge: "OEM Grade" },
+    { label: "Water Damage Recovery", url: "/repairs/smartphone/galaxy-s25/water-damage-repair", badge: "Ultrasonic" },
   ],
   "cat-consoles": [
-    { label: "PS5 HDMI Port Repair", url: "/repairs/console/playstation-repair", badge: "Micro-solder" },
-    { label: "Xbox Overheating Fix", url: "/repairs/console/xbox-repair" },
-    { label: "Switch Joy-Con Drift", url: "/repairs/console/nintendo-switch-repair" },
+    { label: "PS5 HDMI Port Replacement", url: "/repairs/console/playstation-5/hdmi-port-replacement", badge: "4K 120Hz" },
+    { label: "PlayStation 5 Bench Service", url: "/repairs/console/playstation-5", badge: "Liquid Metal" },
+    { label: "Nintendo Switch OLED Fix", url: "/repairs/console/nintendo-switch-oled", badge: "Joy-Con" },
   ],
   "cat-emergency": [
-    { label: "Water Damage Recovery", url: "/repairs/smartphone", badge: "Urgent" },
-    { label: "Cracked Screen Repair", url: "/repairs/smartphone" },
-    { label: "Emergency Diagnostics", url: "/schedule-repair", badge: "Same Day" },
+    { label: "Water Damage Ultrasonic Bath", url: "/repairs/smartphone/iphone-16-pro/water-damage-repair", badge: "Urgent" },
+    { label: "Express Screen Replacement", url: "/repairs/smartphone/iphone-16-pro/screen-repair", badge: "30 Min" },
+    { label: "Emergency Bench Diagnostics", url: "/schedule-repair", badge: "Free" },
   ],
 };
 
