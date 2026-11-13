@@ -183,9 +183,14 @@ export default function RichTextEditor({
   const [linkingStrategy, setLinkingStrategy] = useState<"inline" | "card" | "matrix">("inline");
   const [customAnchorText, setCustomAnchorText] = useState("");
 
-  // Toolbar Block Menu
-  const [blockMenuOpen, setBlockMenuOpen] = useState(false);
-  const blockMenuRef = useRef<HTMLDivElement>(null);
+  // Separate Heading & Insert Dropdown Menus (Independent states)
+  const [headingMenuOpen, setHeadingMenuOpen] = useState(false);
+  const headingMenuRef = useRef<HTMLDivElement>(null);
+
+  const [insertMenuOpen, setInsertMenuOpen] = useState(false);
+  const insertMenuRef = useRef<HTMLDivElement>(null);
+
+  const bubbleRef = useRef<HTMLDivElement>(null);
 
   // Text & Block Color Selectors
   const [textColorMenuOpen, setTextColorMenuOpen] = useState(false);
@@ -437,7 +442,7 @@ export default function RichTextEditor({
     saveCurrentSelection();
     handleInput();
     updateActiveFormats();
-    setBlockMenuOpen(false);
+    setHeadingMenuOpen(false);
   };
 
   const clearFormatting = () => {
@@ -546,7 +551,7 @@ export default function RichTextEditor({
   const insertStructuredBlock = (type: "section" | "step" | "tools" | "comparison" | "faq" | "code") => {
     if (mode !== "visual") return;
     editorRef.current?.focus();
-    setBlockMenuOpen(false);
+    setInsertMenuOpen(false);
 
     let html = "";
     if (type === "section") {
@@ -924,10 +929,27 @@ export default function RichTextEditor({
     const containerRect = containerRef.current?.getBoundingClientRect();
 
     if (containerRect && rect.width > 0) {
+      // Measured or fallback width of floating bubble toolbar
+      const bubbleWidth = bubbleRef.current?.offsetWidth || 390;
+
+      // Ideal center position relative to selection
+      const idealLeft = (rect.left - containerRect.left) + (rect.width / 2) - (bubbleWidth / 2);
+
+      // Strict clamping: never allow toolbar to leak past left (min 12px) or right (max containerWidth - bubbleWidth - 12px)
+      const minLeft = 12;
+      const maxLeft = Math.max(minLeft, containerRect.width - bubbleWidth - 12);
+      const clampedLeft = Math.max(minLeft, Math.min(maxLeft, idealLeft));
+
+      // Vertical position: if too close to editor top, display below selection instead of getting hidden behind toolbar
+      const isNearTop = (rect.top - containerRect.top) < 55;
+      const posY = isNearTop
+        ? rect.bottom - containerRect.top + 8
+        : rect.top - containerRect.top - 46;
+
       setBubbleToolbar({
         visible: true,
-        x: rect.left - containerRect.left + rect.width / 2,
-        y: rect.top - containerRect.top - 46,
+        x: clampedLeft,
+        y: posY,
       });
     }
   }, [mode]);
@@ -1316,8 +1338,11 @@ export default function RichTextEditor({
   // Close menus on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (blockMenuRef.current && !blockMenuRef.current.contains(event.target as Node)) {
-        setBlockMenuOpen(false);
+      if (headingMenuRef.current && !headingMenuRef.current.contains(event.target as Node)) {
+        setHeadingMenuOpen(false);
+      }
+      if (insertMenuRef.current && !insertMenuRef.current.contains(event.target as Node)) {
+        setInsertMenuOpen(false);
       }
       if (textColorMenuRef.current && !textColorMenuRef.current.contains(event.target as Node)) {
         setTextColorMenuOpen(false);
@@ -1399,14 +1424,17 @@ export default function RichTextEditor({
         </div>
 
         {/* Dynamic Block Selector (Dropdown) */}
-        <div className="relative border-r border-gray-200 pr-1.5">
+        <div className="relative border-r border-gray-200 pr-1.5" ref={headingMenuRef}>
           <button
             type="button"
             onMouseDown={(e) => {
               e.preventDefault();
               saveCurrentSelection();
             }}
-            onClick={() => setBlockMenuOpen((prev) => !prev)}
+            onClick={() => {
+              setHeadingMenuOpen((prev) => !prev);
+              setInsertMenuOpen(false);
+            }}
             className="h-[28px] px-2 rounded-md hover:bg-gray-100 text-gray-800 text-xs font-medium inline-flex items-center gap-1.5 border border-gray-200 bg-white cursor-pointer shadow-2xs transition"
             title="Change Text Style"
           >
@@ -1414,7 +1442,7 @@ export default function RichTextEditor({
             <ChevronDown className="w-3 h-3 text-gray-400" />
           </button>
 
-          {blockMenuOpen && (
+          {headingMenuOpen && (
             <div className="absolute left-0 top-full mt-1.5 w-52 bg-white rounded-xl shadow-xl border border-gray-200 py-1.5 z-30 animate-in fade-in zoom-in-95 duration-150">
               <button
                 type="button"
@@ -1804,10 +1832,13 @@ export default function RichTextEditor({
           </button>
 
           {/* Clean Insert Menu */}
-          <div className="relative" ref={blockMenuRef}>
+          <div className="relative" ref={insertMenuRef}>
             <button
               type="button"
-              onClick={() => setBlockMenuOpen(!blockMenuOpen)}
+              onClick={() => {
+                setInsertMenuOpen((prev) => !prev);
+                setHeadingMenuOpen(false);
+              }}
               className="h-[28px] px-2 rounded-md hover:bg-gray-100 text-gray-700 hover:text-black text-xs font-medium inline-flex items-center gap-1 border border-gray-200 bg-white cursor-pointer shadow-2xs transition"
               title="Insert Component"
             >
@@ -1815,7 +1846,7 @@ export default function RichTextEditor({
               <ChevronDown className="w-3 h-3 text-gray-400" />
             </button>
 
-            {blockMenuOpen && (
+            {insertMenuOpen && (
               <div className="absolute left-0 top-full mt-1.5 w-56 bg-white rounded-xl shadow-xl border border-gray-200 py-1.5 z-30 animate-in fade-in zoom-in-95 duration-150">
                 <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">
                   Callout Boxes
@@ -1936,8 +1967,9 @@ export default function RichTextEditor({
       {/* 2. MINIMAL FLOATING SELECTION BUBBLE (Notion / Medium Style) */}
       {bubbleToolbar.visible && (
         <div
-          className="absolute z-30 bg-neutral-900 text-white rounded-lg px-2 py-1 flex items-center gap-1 shadow-xl border border-neutral-800 -translate-x-1/2 animate-in fade-in zoom-in-95 duration-100 select-none text-xs"
-          style={{ left: bubbleToolbar.x, top: Math.max(8, bubbleToolbar.y) }}
+          ref={bubbleRef}
+          className="absolute z-30 bg-neutral-900 text-white rounded-lg px-2 py-1 flex items-center gap-1 shadow-xl border border-neutral-800 animate-in fade-in zoom-in-95 duration-100 select-none text-xs whitespace-nowrap"
+          style={{ left: `${bubbleToolbar.x}px`, top: `${bubbleToolbar.y}px` }}
         >
           <button
             type="button"
