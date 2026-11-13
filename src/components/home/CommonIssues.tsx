@@ -4,14 +4,14 @@ import React from "react";
 import { FeatureCard } from "./FeatureCard";
 
 const issues = [
-  { label: "Phone Screen Repair",       href: "/repairs/iphone",                                  highlighted: true  },
-  { label: "Phone Battery Replacement", href: "/common-issues/smartphone/battery-replacement",      highlighted: true  },
-  { label: "Tablet Repair",             href: "/repairs/tablet",                                  highlighted: true  },
-  { label: "Computer & Laptop Repair",  href: "/repairs/computer",                                highlighted: true  },
-  { label: "Game Console Repair",       href: "/repairs/console/playstation-repair",              highlighted: false },
-  { label: "Charging Port Repair",      href: "/common-issues/smartphone/charging-port-replacement", highlighted: false },
-  { label: "Water Damage Repair",       href: "/common-issues",                                   highlighted: false },
-  { label: "Back Glass Repair",         href: "/common-issues/smartphone/cracked-glass-replacement", highlighted: false },
+  { label: "iPhone Screen Repair",       href: "/repairs/smartphone/iphone-16-pro/screen-repair",       highlighted: true  },
+  { label: "iPhone Battery Replacement", href: "/repairs/smartphone/iphone-16-pro/battery-replacement",  highlighted: true  },
+  { label: "Galaxy AMOLED Repair",       href: "/repairs/smartphone/galaxy-s25/screen-repair",          highlighted: true  },
+  { label: "Computer & Mac Repair",      href: "/repairs/computer/macbook-pro",                         highlighted: true  },
+  { label: "PS5 HDMI Port Repair",       href: "/repairs/console/playstation-5/hdmi-port-replacement",  highlighted: false },
+  { label: "Charging Port Repair",      href: "/repairs/smartphone/iphone-16-pro/charging-port-repair", highlighted: false },
+  { label: "Water Damage Recovery",      href: "/repairs/smartphone/iphone-16-pro/water-damage-repair", highlighted: false },
+  { label: "Back Glass Laser Repair",   href: "/repairs/smartphone/iphone-16-pro/back-glass-repair",   highlighted: false },
 ];
 
 export function CommonIssues() {

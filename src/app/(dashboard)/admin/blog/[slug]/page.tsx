@@ -35,6 +35,7 @@ import {
 } from "@/lib/blogData";
 import RichTextEditor from "@/components/admin/RichTextEditor";
 import MediaModal from "@/components/admin/MediaModal";
+import RankMathSeoSuite from "@/components/admin/RankMathSeoSuite";
 
 interface EditorPageProps {
   params: Promise<{
@@ -383,6 +384,23 @@ export default function BlogPostEditorPage({ params }: EditorPageProps) {
               minHeight="460px"
             />
           </div>
+
+          {/* RANKMATH LIVE SEO ANALYSIS SUITE */}
+          <RankMathSeoSuite
+            title={article.seo.metaTitle || article.title}
+            slug={article.slug}
+            excerpt={article.seo.metaDescription || article.excerpt}
+            contentHtml={article.contentHtml || ""}
+            focusKeyword={article.seo.focusKeyword || ""}
+            featuredImage={article.featuredImage}
+            canonicalUrl={article.seo.canonicalUrl}
+            onKeywordChange={(kw) =>
+              setArticle((prev) => ({
+                ...prev,
+                seo: { ...prev.seo, focusKeyword: kw },
+              }))
+            }
+          />
 
           {/* Connected Service Booking Box */}
           <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-2xs space-y-3">
