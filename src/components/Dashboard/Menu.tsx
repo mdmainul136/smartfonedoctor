@@ -13,6 +13,7 @@ import {
   Sparkles,
   Star,
   FileText,
+  Image as ImageIcon,
   Layers,
   FolderTree,
   Tag,
@@ -66,6 +67,12 @@ const menuItems: { title: string; items: MenuLink[] }[] = [
         icon: FileText,
         label: "Pages",
         href: "/admin/pages",
+        visible: ["admin"],
+      },
+      {
+        icon: ImageIcon,
+        label: "Media Library",
+        href: "/admin/media",
         visible: ["admin"],
       },
       {

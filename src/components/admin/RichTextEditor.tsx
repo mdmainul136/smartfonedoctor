@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
+import MediaModal, { SelectedMediaPayload } from "./MediaModal";
 import {
   Bold,
   Italic,
@@ -142,19 +143,43 @@ export default function RichTextEditor({
     handleInput();
   };
 
-  // Image Insertion
-  const handleInsertImage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!imageUrl) return;
+  // Media Library Integration
+  const handleSelectMedia = (payload: SelectedMediaPayload) => {
+    if (!payload.url) return;
     editorRef.current?.focus();
 
-    const imgHtml = `<figure style="margin: 20px 0; text-align: center;"><img src="${imageUrl}" alt="${imageAlt || 'Hardware repair photo'}" style="max-width: 100%; height: auto; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin: 0 auto;" />${imageAlt ? `<figcaption style="font-size: 12px; color: #6b7280; margin-top: 6px;">${imageAlt}</figcaption>` : ''}</figure><p><br></p>`;
-    document.execCommand("insertHTML", false, imgHtml);
+    let imgStyle = "max-width: 100%; height: auto; border-radius: 10px; box-shadow: 0 4px 14px rgba(0,0,0,0.08); display: block;";
+    let figureStyle = "margin: 24px 0;";
 
-    setImageModalOpen(false);
-    setImageUrl("");
-    setImageAlt("");
+    if (payload.size === "small") {
+      imgStyle += " width: 320px;";
+    } else if (payload.size === "medium") {
+      imgStyle += " width: 640px;";
+    } else {
+      imgStyle += " width: 100%;";
+    }
+
+    if (payload.alignment === "center") {
+      figureStyle += " text-align: center; margin-left: auto; margin-right: auto;";
+      imgStyle += " margin-left: auto; margin-right: auto;";
+    } else if (payload.alignment === "left") {
+      figureStyle += " text-align: left;";
+    } else if (payload.alignment === "right") {
+      figureStyle += " text-align: right;";
+      imgStyle += " margin-left: auto;";
+    } else if (payload.alignment === "full") {
+      imgStyle += " width: 100%;";
+    }
+
+    const captionHtml = payload.caption
+      ? `<figcaption style="font-size: 13px; color: #6b7280; margin-top: 8px; font-style: italic; text-align: inherit;">${payload.caption}</figcaption>`
+      : "";
+
+    const figureHtml = `<figure style="${figureStyle}" class="sfd-article-figure"><img src="${payload.url}" alt="${payload.alt || 'Hardware repair photo'}" style="${imgStyle}" />${captionHtml}</figure><p><br></p>`;
+
+    document.execCommand("insertHTML", false, figureHtml);
     handleInput();
+    setImageModalOpen(false);
   };
 
   return (
@@ -487,69 +512,16 @@ export default function RichTextEditor({
         </div>
       )}
 
-      {/* MODAL: INSERT IMAGE */}
-      {imageModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-5 border border-gray-200 space-y-4 animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b pb-2">
-              <h4 className="font-bold text-xs text-gray-800">Insert In-Article Image</h4>
-              <button
-                type="button"
-                onClick={() => setImageModalOpen(false)}
-                className="text-gray-400 hover:text-black"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleInsertImage} className="space-y-3">
-              <div>
-                <label className="text-[11px] font-semibold text-gray-600 block mb-1">
-                  Image Source URL *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  placeholder="https://images.unsplash.com/..."
-                  className="w-full h-[32px] px-2.5 rounded border border-gray-300 text-xs focus:outline-none focus:border-[#00897b]"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-semibold text-gray-600 block mb-1">
-                  Caption / Alt Text
-                </label>
-                <input
-                  type="text"
-                  value={imageAlt}
-                  onChange={(e) => setImageAlt(e.target.value)}
-                  placeholder="e.g. Swollen battery bulging from iPhone chassis"
-                  className="w-full h-[32px] px-2.5 rounded border border-gray-300 text-xs focus:outline-none focus:border-[#00897b]"
-                />
-              </div>
-
-              <div className="pt-2 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setImageModalOpen(false)}
-                  className="h-[30px] px-3 rounded border text-xs font-semibold text-gray-600"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="h-[30px] px-3 rounded bg-[#00897b] text-white text-xs font-semibold"
-                >
-                  Insert Image
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* FULL MEDIA MANAGEMENT MODAL INTEGRATION */}
+      <MediaModal
+        isOpen={imageModalOpen}
+        onClose={() => setImageModalOpen(false)}
+        onSelect={handleSelectMedia}
+        title="Insert In-Article Media"
+        selectButtonText="Insert into Article"
+      />
 
     </div>
   );
 }
+

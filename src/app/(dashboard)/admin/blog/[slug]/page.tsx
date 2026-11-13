@@ -34,6 +34,7 @@ import {
   getStoredBlogCategories,
 } from "@/lib/blogData";
 import RichTextEditor from "@/components/admin/RichTextEditor";
+import MediaModal from "@/components/admin/MediaModal";
 
 interface EditorPageProps {
   params: Promise<{
@@ -47,6 +48,7 @@ export default function BlogPostEditorPage({ params }: EditorPageProps) {
   const isNew = resolvedParams.slug === "new";
 
   const [editorMode, setEditorMode] = useState<"richtext" | "blocks">("richtext");
+  const [featuredMediaOpen, setFeaturedMediaOpen] = useState(false);
 
   const [article, setArticle] = useState<BlogArticle>({
     id: `post-${Date.now()}`,
@@ -339,29 +341,47 @@ export default function BlogPostEditorPage({ params }: EditorPageProps) {
           <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-2xs space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
-                <ImageIcon className="w-4 h-4 text-gray-500" />
-                Featured Hero Image URL
+                <ImageIcon className="w-4 h-4 text-[#00897b]" />
+                Featured Hero Image (Media Library)
               </span>
               <span className="text-[11px] text-gray-400">
                 1200x630px recommended (16:9 ratio)
               </span>
             </div>
 
-            <input
-              type="text"
-              value={article.featuredImage}
-              onChange={(e) => setArticle({ ...article, featuredImage: e.target.value })}
-              placeholder="https://images.unsplash.com/..."
-              className="w-full h-[34px] px-3 rounded-[5px] border border-gray-300 text-xs font-mono focus:outline-none focus:border-[#00897b]"
-            />
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                value={article.featuredImage}
+                onChange={(e) => setArticle({ ...article, featuredImage: e.target.value })}
+                placeholder="https://images.unsplash.com/... or /uploads/..."
+                className="flex-1 h-[34px] px-3 rounded-[5px] border border-gray-300 text-xs font-mono focus:outline-none focus:border-[#00897b]"
+              />
+              <button
+                type="button"
+                onClick={() => setFeaturedMediaOpen(true)}
+                className="h-[34px] px-3.5 rounded-[5px] bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition cursor-pointer shrink-0"
+              >
+                <ImageIcon className="w-3.5 h-3.5" />
+                <span>Browse Media Library</span>
+              </button>
+            </div>
 
             {article.featuredImage && (
-              <div className="aspect-21/9 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 max-h-48">
+              <div className="aspect-21/9 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 max-h-48 relative group">
                 <img
                   src={article.featuredImage}
                   alt="Featured preview"
                   className="w-full h-full object-cover"
                 />
+                <button
+                  type="button"
+                  onClick={() => setFeaturedMediaOpen(true)}
+                  className="absolute inset-0 bg-black/40 text-white font-semibold text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5"
+                >
+                  <ImageIcon className="w-4 h-4" />
+                  <span>Change Image</span>
+                </button>
               </div>
             )}
           </div>
@@ -762,6 +782,25 @@ export default function BlogPostEditorPage({ params }: EditorPageProps) {
         </div>
 
       </div>
+
+      {/* FEATURED MEDIA LIBRARY MODAL */}
+      <MediaModal
+        isOpen={featuredMediaOpen}
+        onClose={() => setFeaturedMediaOpen(false)}
+        onSelect={(payload) => {
+          setArticle((prev) => ({
+            ...prev,
+            featuredImage: payload.url,
+            seo: {
+              ...prev.seo,
+              ogImage: payload.url,
+            },
+          }));
+        }}
+        title="Select Featured Hero Image"
+        selectButtonText="Set as Featured Image"
+        initialSelectedUrl={article.featuredImage}
+      />
 
     </div>
   );
