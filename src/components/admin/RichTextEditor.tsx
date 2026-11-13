@@ -526,10 +526,79 @@ export default function RichTextEditor({
     executeCommand("hiliteColor", "#fef08a");
   };
 
+  // Payload CMS Lexical / Notion Block Insertion Engine
+  const insertCustomBlockNode = (htmlString: string) => {
+    if (mode !== "visual") return;
+    editorRef.current?.focus();
+    restoreSelection();
+
+    const sel = typeof window !== "undefined" ? window.getSelection() : null;
+    if (!sel || !editorRef.current) return;
+
+    // 1. Clean DOM parser for the block
+    const temp = document.createElement("div");
+    temp.innerHTML = htmlString.trim();
+    const newBlock = temp.firstElementChild as HTMLElement | null;
+    if (!newBlock) return;
+
+    // 2. Trailing paragraph for subsequent typing (Ensures you can always type on the line below!)
+    const trailingP = document.createElement("p");
+    trailingP.innerHTML = "<br>";
+
+    // 3. Locate current block container
+    let currentBlockEl: HTMLElement | null = null;
+    if (sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      let node: Node | null = range.commonAncestorContainer;
+      while (node && node !== editorRef.current) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          const tag = (node as HTMLElement).tagName.toLowerCase();
+          if (["p", "h1", "h2", "h3", "h4", "h5", "h6", "div", "blockquote", "ul", "ol", "table", "details"].includes(tag)) {
+            currentBlockEl = node as HTMLElement;
+            break;
+          }
+        }
+        node = node.parentNode;
+      }
+    }
+
+    if (currentBlockEl && currentBlockEl.parentNode && currentBlockEl !== editorRef.current) {
+      const isEmpty = !currentBlockEl.textContent?.trim() && currentBlockEl.tagName.toLowerCase() === "p";
+      if (isEmpty) {
+        currentBlockEl.parentNode.insertBefore(newBlock, currentBlockEl);
+        currentBlockEl.parentNode.insertBefore(trailingP, currentBlockEl);
+        currentBlockEl.parentNode.removeChild(currentBlockEl);
+      } else {
+        if (currentBlockEl.nextSibling) {
+          currentBlockEl.parentNode.insertBefore(newBlock, currentBlockEl.nextSibling);
+          currentBlockEl.parentNode.insertBefore(trailingP, newBlock.nextSibling);
+        } else {
+          currentBlockEl.parentNode.appendChild(newBlock);
+          currentBlockEl.parentNode.appendChild(trailingP);
+        }
+      }
+    } else {
+      editorRef.current.appendChild(newBlock);
+      editorRef.current.appendChild(trailingP);
+    }
+
+    // 4. Place caret inside the new block's editable area
+    const editableTarget = newBlock.querySelector(".sfd-callout-content") || newBlock;
+    const range = document.createRange();
+    range.selectNodeContents(editableTarget);
+    range.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    savedRangeRef.current = range.cloneRange();
+
+    handleInput();
+    saveCurrentSelection();
+  };
+
   // Custom Callout Alert Boxes (/awesome-design - Modern Editorial & Swiss Modernism Standard)
   const insertCallout = (type: "tip" | "warning" | "note" | "danger") => {
     if (mode !== "visual") return;
-    editorRef.current?.focus();
+    setInsertMenuOpen(false);
 
     const configs = {
       tip: {
@@ -581,15 +650,13 @@ export default function RichTextEditor({
           ${cfg.svg}
         </div>
         <div style="flex: 1; min-width: 0;">
-          <div style="font-size: 12px; font-weight: 700; color: ${cfg.titleColor}; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px;">${cfg.title}</div>
-          <div style="color: ${cfg.textColor};">${cfg.desc}</div>
+          <div contenteditable="false" style="user-select: none; font-size: 12px; font-weight: 700; color: ${cfg.titleColor}; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px;">${cfg.title}</div>
+          <div class="sfd-callout-content" style="color: ${cfg.textColor}; outline: none;">${cfg.desc}</div>
         </div>
       </div>
-      <p><br></p>
     `;
 
-    document.execCommand("insertHTML", false, calloutHtml);
-    handleInput();
+    insertCustomBlockNode(calloutHtml);
   };
 
   // Structured Blocks Inserter (/awesome-design Standard)
@@ -687,8 +754,7 @@ export default function RichTextEditor({
       `;
     }
 
-    document.execCommand("insertHTML", false, html);
-    handleInput();
+    insertCustomBlockNode(html);
   };
 
   // Advance SEO Link Insertion (Dofollow, Nofollow, Sponsored, UGC)
@@ -1324,6 +1390,60 @@ export default function RichTextEditor({
       }
     }
 
+    // Break out of Callout Box, Details, or Blockquote on Enter (Payload Lexical & Notion standard)
+    if (e.key === "Enter" && !e.shiftKey) {
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0 && editorRef.current) {
+        const range = sel.getRangeAt(0);
+        let node: Node | null = range.commonAncestorContainer;
+        let calloutBlock: HTMLElement | null = null;
+
+        while (node && node !== editorRef.current) {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            const el = node as HTMLElement;
+            if (
+              el.classList?.contains("sfd-callout") ||
+              el.classList?.contains("sfd-callout-content") ||
+              el.classList?.contains("sfd-step-card") ||
+              el.tagName.toLowerCase() === "details" ||
+              el.tagName.toLowerCase() === "blockquote"
+            ) {
+              calloutBlock = el.classList?.contains("sfd-callout")
+                ? el
+                : (el.closest?.(".sfd-callout") as HTMLElement) || el;
+              break;
+            }
+          }
+          node = node.parentNode;
+        }
+
+        if (calloutBlock && calloutBlock.parentNode) {
+          e.preventDefault();
+          // Create a new normal paragraph directly after the callout block
+          const newP = document.createElement("p");
+          newP.innerHTML = "<br>";
+
+          if (calloutBlock.nextSibling) {
+            calloutBlock.parentNode.insertBefore(newP, calloutBlock.nextSibling);
+          } else {
+            calloutBlock.parentNode.appendChild(newP);
+          }
+
+          // Move cursor directly into the new paragraph
+          const newRange = document.createRange();
+          newRange.setStart(newP, 0);
+          newRange.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(newRange);
+          savedRangeRef.current = newRange.cloneRange();
+
+          handleInput();
+          saveCurrentSelection();
+          return;
+        }
+      }
+    }
+
     // Ctrl+K -> Link Modal
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
       e.preventDefault();
@@ -1398,6 +1518,33 @@ export default function RichTextEditor({
           }
         }
       }, 10);
+    }
+  };
+
+  // Clicking empty whitespace in the editor ensures there is a paragraph to type in
+  const handleEditorAreaClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === editorRef.current && editorRef.current) {
+      const lastChild = editorRef.current.lastElementChild;
+      if (
+        !lastChild ||
+        lastChild.classList?.contains("sfd-callout") ||
+        lastChild.tagName.toLowerCase() !== "p" ||
+        lastChild.textContent?.trim() !== ""
+      ) {
+        const newP = document.createElement("p");
+        newP.innerHTML = "<br>";
+        editorRef.current.appendChild(newP);
+        const sel = window.getSelection();
+        if (sel) {
+          const range = document.createRange();
+          range.setStart(newP, 0);
+          range.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range);
+          savedRangeRef.current = range.cloneRange();
+        }
+        handleInput();
+      }
     }
   };
 
@@ -2275,6 +2422,7 @@ export default function RichTextEditor({
         <div
           ref={editorRef}
           contentEditable
+          onClick={handleEditorAreaClick}
           onInput={handleInput}
           onBlur={() => {
             saveCurrentSelection();
