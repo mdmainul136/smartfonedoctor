@@ -595,63 +595,33 @@ export default function RichTextEditor({
     saveCurrentSelection();
   };
 
-  // Custom Callout Alert Boxes (/awesome-design - Modern Editorial & Swiss Modernism Standard)
+  // Custom Callout Alert Boxes (Payload CMS & Notion Standard - Minimalist & Customizable via globals.css)
   const insertCallout = (type: "tip" | "warning" | "note" | "danger") => {
     if (mode !== "visual") return;
     setInsertMenuOpen(false);
 
-    const configs = {
-      tip: {
-        title: "Technician Tip",
-        desc: "Always back up customer data and disconnect the battery before unsealing display cables.",
-        bg: "#f0fdf4",
-        border: "#bbf7d0",
-        accent: "#16a34a",
-        titleColor: "#14532d",
-        textColor: "#15803d",
-        svg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: block;"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>`,
-      },
-      warning: {
-        title: "Technician Warning",
-        desc: "Handle Li-ion battery pull tabs at a shallow 15° angle. Puncturing or bending cells creates thermal risk.",
-        bg: "#fffbeb",
-        border: "#fde68a",
-        accent: "#d97706",
-        titleColor: "#78350f",
-        textColor: "#92400e",
-        svg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: block;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
-      },
-      note: {
-        title: "Important Note",
-        desc: "True Tone and ambient light sensor calibration requires transferring serial data with an EEPROM programmer.",
-        bg: "#f8fafc",
-        border: "#e2e8f0",
-        accent: "#2563eb",
-        titleColor: "#1e3a8a",
-        textColor: "#334155",
-        svg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: block;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`,
-      },
-      danger: {
-        title: "Critical Hazard",
-        desc: "Never heat swollen batteries above 45°C. Discharge battery below 25% before starting bench disassembly.",
-        bg: "#fef2f2",
-        border: "#fecdd3",
-        accent: "#e11d48",
-        titleColor: "#881337",
-        textColor: "#9f1239",
-        svg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: block;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
-      },
+    const titles = {
+      tip: "Tip",
+      warning: "Warning",
+      note: "Note",
+      danger: "Caution",
     };
 
-    const cfg = configs[type];
+    const svgs = {
+      tip: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>`,
+      warning: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+      note: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`,
+      danger: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+    };
+
     const calloutHtml = `
-      <div class="sfd-callout sfd-callout-${type}" style="display: flex; gap: 14px; padding: 14px 18px; margin: 20px 0; background-color: ${cfg.bg}; border: 1px solid ${cfg.border}; border-left: 4px solid ${cfg.accent}; border-radius: 8px; color: ${cfg.textColor}; font-size: 14px; line-height: 1.6;">
-        <div contenteditable="false" style="user-select: none; flex-shrink: 0; padding-top: 2px;">
-          ${cfg.svg}
+      <div class="sfd-callout sfd-callout-${type}">
+        <div class="sfd-callout-icon" contenteditable="false">
+          ${svgs[type]}
         </div>
-        <div style="flex: 1; min-width: 0;">
-          <div contenteditable="false" style="user-select: none; font-size: 12px; font-weight: 700; color: ${cfg.titleColor}; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px;">${cfg.title}</div>
-          <div class="sfd-callout-content" style="color: ${cfg.textColor}; outline: none;">${cfg.desc}</div>
+        <div class="sfd-callout-body">
+          <div class="sfd-callout-title" contenteditable="false">${titles[type]}</div>
+          <div class="sfd-callout-content">Enter advice or technical notes here...</div>
         </div>
       </div>
     `;
@@ -659,7 +629,7 @@ export default function RichTextEditor({
     insertCustomBlockNode(calloutHtml);
   };
 
-  // Structured Blocks Inserter (/awesome-design Standard)
+  // Structured Blocks Inserter (Payload CMS & Notion Minimalist Standard)
   const insertStructuredBlock = (type: "section" | "step" | "tools" | "comparison" | "faq" | "code") => {
     if (mode !== "visual") return;
     editorRef.current?.focus();
@@ -668,89 +638,83 @@ export default function RichTextEditor({
     let html = "";
     if (type === "section") {
       html = `
-        <div style="margin: 28px 0; padding-bottom: 20px; border-bottom: 1px solid #e5e7eb;">
-          <h2 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 10px 0; letter-spacing: -0.01em;">New Diagnostic Section</h2>
-          <p style="font-size: 15px; line-height: 1.7; color: #374151; margin: 0 0 14px 0;">Describe the hardware symptoms, bench diagnosis, and repair procedure steps here...</p>
-          <div class="sfd-callout sfd-callout-tip" style="display: flex; gap: 14px; padding: 14px 18px; margin: 16px 0; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-left: 4px solid #16a34a; border-radius: 8px; color: #15803d; font-size: 14px; line-height: 1.6;">
-            <div contenteditable="false" style="user-select: none; flex-shrink: 0; padding-top: 2px;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: block;"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+        <div style="margin: 24px 0; padding-bottom: 16px; border-bottom: 1px solid #e5e7eb;">
+          <h2 style="font-size: 20px; font-weight: 700; color: #111827; margin: 0 0 8px 0; letter-spacing: -0.01em;">New Diagnostic Section</h2>
+          <p style="font-size: 14px; line-height: 1.6; color: #374151; margin: 0 0 12px 0;">Describe the hardware symptoms, bench diagnosis, and repair procedure steps here...</p>
+          <div class="sfd-callout sfd-callout-tip">
+            <div class="sfd-callout-icon" contenteditable="false">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
             </div>
-            <div style="flex: 1; min-width: 0;">
-              <div style="font-size: 12px; font-weight: 700; color: #14532d; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px;">Technician Tip</div>
-              <div style="color: #15803d;">Always disconnect the battery connector before removing display cables.</div>
+            <div class="sfd-callout-body">
+              <div class="sfd-callout-title" contenteditable="false">Tip</div>
+              <div class="sfd-callout-content">Always disconnect the battery connector before removing display cables.</div>
             </div>
           </div>
         </div>
-        <p><br></p>
       `;
     } else if (type === "step") {
       html = `
-        <div style="display: flex; gap: 16px; margin: 20px 0; padding: 18px 20px; background: #fafafa; border: 1px solid #e5e7eb; border-radius: 12px;">
-          <div contenteditable="false" style="user-select: none; width: 28px; height: 28px; border-radius: 8px; background: #111827; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; font-family: ui-monospace, SFMono-Regular, monospace; flex-shrink: 0;">1</div>
+        <div class="sfd-step-card">
+          <div class="sfd-step-badge" contenteditable="false">1</div>
           <div style="flex: 1; min-width: 0;">
-            <h3 style="font-size: 16px; font-weight: 700; color: #111827; margin: 0 0 6px 0; letter-spacing: -0.01em;">Step 1: Soft Prying with Anti-Static Spudger</h3>
-            <p style="font-size: 14px; color: #4b5563; margin: 0; line-height: 1.6;">Carefully release the perimeter adhesive seal using gentle 75°C heat and a non-conductive nylon pry tool...</p>
+            <h3 style="font-size: 15px; font-weight: 700; color: #111827; margin: 0 0 4px 0;">Step 1: Soft Prying with Anti-Static Spudger</h3>
+            <p style="font-size: 14px; color: #4b5563; margin: 0; line-height: 1.6;">Carefully release perimeter adhesive seal using gentle heat and nylon pry tool...</p>
           </div>
         </div>
-        <p><br></p>
       `;
     } else if (type === "tools") {
       html = `
-        <div style="margin: 22px 0; padding: 20px 22px; background: #fafafa; border: 1px solid #e5e7eb; border-radius: 12px;">
-          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-            <div contenteditable="false" style="user-select: none;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: block;"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        <div class="sfd-tools-card">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+            <div contenteditable="false" style="user-select: none; color: #4b5563;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
             </div>
-            <h4 style="font-size: 15px; font-weight: 700; color: #111827; margin: 0; letter-spacing: -0.01em;">Required Bench Tools &amp; Materials</h4>
+            <h4 style="font-size: 14px; font-weight: 700; color: #111827; margin: 0;">Required Bench Tools &amp; Materials</h4>
           </div>
           <ul style="margin: 0; padding-left: 20px; color: #4b5563; font-size: 14px; line-height: 1.8;">
-            <li><strong style="color: #111827;">Driver:</strong> Precision P2 Pentalobe &amp; Tri-point Y000</li>
-            <li><strong style="color: #111827;">Thermal:</strong> Heat Mat or Hot Air Rework Station (75°C - 80°C)</li>
-            <li><strong style="color: #111827;">Chemical:</strong> 99% Pure Isopropyl Alcohol (IPA)</li>
-            <li><strong style="color: #111827;">Replacement:</strong> Genuine OEM Pull-Tab Battery Adhesive Strips</li>
+            <li><strong>Driver:</strong> Precision P2 Pentalobe &amp; Tri-point Y000</li>
+            <li><strong>Thermal:</strong> Heat Mat or Hot Air Station (75°C - 80°C)</li>
+            <li><strong>Chemical:</strong> 99% Pure Isopropyl Alcohol (IPA)</li>
+            <li><strong>Adhesive:</strong> Genuine OEM Pull-Tab Battery Adhesive</li>
           </ul>
         </div>
-        <p><br></p>
       `;
     } else if (type === "comparison") {
       html = `
-        <div style="margin: 22px 0; overflow-x: auto; border: 1px solid #e5e7eb; border-radius: 10px;">
+        <div style="margin: 20px 0; overflow-x: auto; border: 1px solid #e5e7eb; border-radius: 8px;">
           <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
             <thead>
               <tr style="background: #f9fafb; border-bottom: 1px solid #e5e7eb;">
-                <th style="padding: 12px 16px; font-weight: 600; color: #374151;">Component Metric</th>
-                <th style="padding: 12px 16px; font-weight: 700; color: #00897b;">OEM Grade Part</th>
-                <th style="padding: 12px 16px; font-weight: 600; color: #6b7280;">Standard Aftermarket</th>
+                <th style="padding: 10px 14px; font-weight: 600; color: #374151;">Component Metric</th>
+                <th style="padding: 10px 14px; font-weight: 600; color: #111827;">OEM Grade Part</th>
+                <th style="padding: 10px 14px; font-weight: 500; color: #6b7280;">Standard Aftermarket</th>
               </tr>
             </thead>
             <tbody>
               <tr style="border-bottom: 1px solid #f3f4f6;">
-                <td style="padding: 12px 16px; font-weight: 500; color: #111827;">Battery Cycle Capacity</td>
-                <td style="padding: 12px 16px; color: #047857; font-weight: 600;">800 – 1000 Full Cycles</td>
-                <td style="padding: 12px 16px; color: #6b7280;">300 – 500 Cycles</td>
+                <td style="padding: 10px 14px; font-weight: 500; color: #111827;">Battery Cycle Capacity</td>
+                <td style="padding: 10px 14px; color: #166534; font-weight: 600;">800 – 1000 Full Cycles</td>
+                <td style="padding: 10px 14px; color: #6b7280;">300 – 500 Cycles</td>
               </tr>
               <tr>
-                <td style="padding: 12px 16px; font-weight: 500; color: #111827;">TrueTone &amp; Sensor Pairing</td>
-                <td style="padding: 12px 16px; color: #047857; font-weight: 600;">100% Genuine Calibration</td>
-                <td style="padding: 12px 16px; color: #b45309;">Non-serialized Warning</td>
+                <td style="padding: 10px 14px; font-weight: 500; color: #111827;">TrueTone &amp; Sensor Pairing</td>
+                <td style="padding: 10px 14px; color: #166534; font-weight: 600;">100% Genuine Calibration</td>
+                <td style="padding: 10px 14px; color: #92400e;">Non-serialized Warning</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <p><br></p>
       `;
     } else if (type === "faq") {
       html = `
-        <details style="margin: 18px 0; padding: 16px 18px; background: #fafafa; border: 1px solid #e5e7eb; border-radius: 10px; cursor: pointer;">
-          <summary style="font-weight: 700; font-size: 15px; color: #111827; outline: none; letter-spacing: -0.01em;">Will an aftermarket screen replacement disable Face ID?</summary>
-          <div style="margin-top: 10px; font-size: 14px; color: #4b5563; line-height: 1.6;">No. As long as the original ambient light sensor and ear speaker flex are transferred safely to the new assembly, Face ID remains 100% functional.</div>
+        <details style="margin: 16px 0; padding: 14px 16px; background: #fafafa; border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer;">
+          <summary style="font-weight: 600; font-size: 14px; color: #111827; outline: none;">Will an aftermarket screen replacement disable Face ID?</summary>
+          <div style="margin-top: 8px; font-size: 14px; color: #4b5563; line-height: 1.6;">No. As long as the original ambient light sensor and ear speaker flex are transferred safely to the new assembly, Face ID remains 100% functional.</div>
         </details>
-        <p><br></p>
       `;
     } else if (type === "code") {
       html = `
-        <pre style="background: #0f172a; color: #e2e8f0; padding: 18px; border: 1px solid #1e293b; border-radius: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; margin: 20px 0; overflow-x: auto; line-height: 1.6;"><code>// Example EEPROM serialization code&#10;read_sensor_id(FPC_BUS_0);</code></pre>
-        <p><br></p>
+        <pre style="background: #0f172a; color: #e2e8f0; padding: 16px; border: 1px solid #1e293b; border-radius: 8px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; margin: 16px 0; overflow-x: auto; line-height: 1.6;"><code>// Example EEPROM serialization code&#10;read_sensor_id(FPC_BUS_0);</code></pre>
       `;
     }
 
@@ -2060,117 +2024,87 @@ export default function RichTextEditor({
             </button>
 
             {insertMenuOpen && (
-              <div className="absolute left-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-30 animate-in fade-in zoom-in-95 duration-150 select-none">
-                <div className="px-3.5 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-400 select-none pointer-events-none">
-                  Callout Alert Boxes
+              <div className="absolute left-0 top-full mt-1.5 w-56 bg-white rounded-xl shadow-xl border border-gray-200 py-1.5 z-30 animate-in fade-in zoom-in-95 duration-150 select-none">
+                <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 select-none pointer-events-none">
+                  Callouts
                 </div>
                 <button
                   type="button"
                   onClick={() => insertCallout("tip")}
-                  className="w-full px-3.5 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs cursor-pointer group transition"
+                  className="w-full px-3 py-1.5 text-left hover:bg-gray-100 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-5 h-5 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
-                      <Lightbulb className="w-3.5 h-3.5" />
-                    </span>
-                    <span className="font-medium text-gray-800 group-hover:text-black">Tip Box</span>
-                  </div>
-                  <span className="text-[10px] font-mono text-emerald-700 font-medium">Tip</span>
+                  <Lightbulb className="w-3.5 h-3.5 text-gray-500" />
+                  <span>Tip Callout</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => insertCallout("warning")}
-                  className="w-full px-3.5 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs cursor-pointer group transition"
+                  className="w-full px-3 py-1.5 text-left hover:bg-gray-100 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-5 h-5 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
-                      <AlertTriangle className="w-3.5 h-3.5" />
-                    </span>
-                    <span className="font-medium text-gray-800 group-hover:text-black">Warning Box</span>
-                  </div>
-                  <span className="text-[10px] font-mono text-amber-700 font-medium">Caution</span>
+                  <AlertTriangle className="w-3.5 h-3.5 text-gray-500" />
+                  <span>Warning Callout</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => insertCallout("note")}
-                  className="w-full px-3.5 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs cursor-pointer group transition"
+                  className="w-full px-3 py-1.5 text-left hover:bg-gray-100 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-5 h-5 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
-                      <Info className="w-3.5 h-3.5" />
-                    </span>
-                    <span className="font-medium text-gray-800 group-hover:text-black">Note Box</span>
-                  </div>
-                  <span className="text-[10px] font-mono text-blue-700 font-medium">Info</span>
+                  <Info className="w-3.5 h-3.5 text-gray-500" />
+                  <span>Note Callout</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => insertCallout("danger")}
-                  className="w-full px-3.5 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs cursor-pointer group transition"
+                  className="w-full px-3 py-1.5 text-left hover:bg-gray-100 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-5 h-5 rounded-md bg-rose-50 text-rose-600 flex items-center justify-center flex-shrink-0">
-                      <ShieldAlert className="w-3.5 h-3.5" />
-                    </span>
-                    <span className="font-medium text-gray-800 group-hover:text-black">Danger Box</span>
-                  </div>
-                  <span className="text-[10px] font-mono text-rose-700 font-medium">Hazard</span>
+                  <ShieldAlert className="w-3.5 h-3.5 text-gray-500" />
+                  <span>Danger Callout</span>
                 </button>
 
-                <div className="my-1.5 border-t border-gray-100" />
-                <div className="px-3.5 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-400 select-none pointer-events-none">
-                  Hardware &amp; Guide Blocks
+                <div className="my-1 border-t border-gray-100" />
+                <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 select-none pointer-events-none">
+                  Blocks
                 </div>
                 <button
                   type="button"
                   onClick={() => insertStructuredBlock("step")}
-                  className="w-full px-3.5 py-1.5 text-left hover:bg-gray-50 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition"
+                  className="w-full px-3 py-1.5 text-left hover:bg-gray-100 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition"
                 >
-                  <span className="w-5 h-5 rounded-md bg-gray-100 text-gray-600 flex items-center justify-center flex-shrink-0">
-                    <ListChecks className="w-3.5 h-3.5" />
-                  </span>
-                  <span className="font-medium">Step-by-Step Procedure</span>
+                  <ListChecks className="w-3.5 h-3.5 text-gray-500" />
+                  <span>Step Procedure</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => insertStructuredBlock("tools")}
-                  className="w-full px-3.5 py-1.5 text-left hover:bg-gray-50 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition"
+                  className="w-full px-3 py-1.5 text-left hover:bg-gray-100 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition"
                 >
-                  <span className="w-5 h-5 rounded-md bg-gray-100 text-gray-600 flex items-center justify-center flex-shrink-0">
-                    <Wrench className="w-3.5 h-3.5" />
-                  </span>
-                  <span className="font-medium">Tools &amp; Parts Checklist</span>
+                  <Wrench className="w-3.5 h-3.5 text-gray-500" />
+                  <span>Tools Checklist</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => insertStructuredBlock("faq")}
-                  className="w-full px-3.5 py-1.5 text-left hover:bg-gray-50 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition"
+                  className="w-full px-3 py-1.5 text-left hover:bg-gray-100 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition"
                 >
-                  <span className="w-5 h-5 rounded-md bg-gray-100 text-gray-600 flex items-center justify-center flex-shrink-0">
-                    <HelpCircle className="w-3.5 h-3.5" />
-                  </span>
-                  <span className="font-medium">FAQ Accordion</span>
+                  <HelpCircle className="w-3.5 h-3.5 text-gray-500" />
+                  <span>FAQ Accordion</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setVideoModalOpen(true)}
-                  className="w-full px-3.5 py-1.5 text-left hover:bg-gray-50 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition"
+                  className="w-full px-3 py-1.5 text-left hover:bg-gray-100 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition"
                 >
-                  <span className="w-5 h-5 rounded-md bg-gray-100 text-gray-600 flex items-center justify-center flex-shrink-0">
-                    <Video className="w-3.5 h-3.5" />
-                  </span>
-                  <span className="font-medium">YouTube Video Embed</span>
+                  <Video className="w-3.5 h-3.5 text-gray-500" />
+                  <span>YouTube Video</span>
                 </button>
-                <div className="my-1.5 border-t border-gray-100" />
+                <div className="my-1 border-t border-gray-100" />
                 <button
                   type="button"
                   onClick={() => setPseoModalOpen(true)}
-                  className="w-full px-3.5 py-1.5 text-left hover:bg-gray-50 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition"
+                  className="w-full px-3 py-1.5 text-left hover:bg-gray-100 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition"
                 >
-                  <span className="w-5 h-5 rounded-md bg-teal-50 text-teal-600 flex items-center justify-center flex-shrink-0">
-                    <LinkIcon className="w-3.5 h-3.5" />
-                  </span>
-                  <span className="font-medium">Repair Service Link / Card</span>
+                  <LinkIcon className="w-3.5 h-3.5 text-gray-500" />
+                  <span>Repair Service Link</span>
                 </button>
               </div>
             )}
