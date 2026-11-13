@@ -10,36 +10,27 @@ import {
   Trash2,
   ExternalLink,
   Check,
-  X,
   Clock,
   Calendar,
+  Sparkles,
+  FileText,
 } from "lucide-react";
 import {
-  BlogPostTaxonomy,
-  getStoredBlogs,
-  saveStoredBlogs,
-} from "@/lib/taxonomy";
+  BlogArticle,
+  getStoredBlogArticles,
+  saveStoredBlogArticles,
+  getStoredBlogCategories,
+} from "@/lib/blogData";
 
-export default function BlogGuidesCRUDPage() {
-  const [posts, setPosts] = useState<BlogPostTaxonomy[]>([]);
+export default function BlogGuidesDirectoryPage() {
+  const [articles, setArticles] = useState<BlogArticle[]>([]);
   const [search, setSearch] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingPost, setEditingPost] = useState<BlogPostTaxonomy | null>(null);
-
-  // Form State
-  const [formData, setFormData] = useState<Partial<BlogPostTaxonomy>>({
-    title: "",
-    slug: "",
-    categorySlug: "smartphone",
-    categoryName: "Hardware Diagnostics",
-    url: "/blog/",
-    readTime: "4 min read",
-    excerpt: "",
-  });
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    setPosts(getStoredBlogs());
+    setArticles(getStoredBlogArticles());
   }, []);
 
   const showToast = (msg: string) => {
@@ -47,82 +38,27 @@ export default function BlogGuidesCRUDPage() {
     setTimeout(() => setToastMessage(null), 2500);
   };
 
-  const handleOpenAdd = () => {
-    setEditingPost(null);
-    setFormData({
-      title: "",
-      slug: "",
-      categorySlug: "smartphone",
-      categoryName: "Hardware Diagnostics",
-      url: "/blog/",
-      readTime: "5 min read",
-      excerpt: "",
-    });
-    setIsModalOpen(true);
-  };
-
-  const handleOpenEdit = (post: BlogPostTaxonomy) => {
-    setEditingPost(post);
-    setFormData({ ...post });
-    setIsModalOpen(true);
-  };
-
-  const handleTitleChange = (val: string) => {
-    const slug = val.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-    setFormData((prev) => ({
-      ...prev,
-      title: val,
-      slug,
-      url: `/common-issues/${prev.categorySlug || "smartphone"}/${slug}`,
-    }));
-  };
-
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.title?.trim()) return;
-
-    let updated: BlogPostTaxonomy[];
-    if (editingPost) {
-      updated = posts.map((p) =>
-        p.id === editingPost.id ? ({ ...p, ...formData } as BlogPostTaxonomy) : p
-      );
-      showToast(`Updated "${formData.title}"`);
-    } else {
-      const newPost: BlogPostTaxonomy = {
-        id: `post-${Date.now()}`,
-        title: formData.title || "",
-        slug: formData.slug || formData.title.toLowerCase().replace(/\s+/g, "-"),
-        categorySlug: formData.categorySlug || "smartphone",
-        categoryName: formData.categoryName || "Hardware Guide",
-        url: formData.url || `/blog/${formData.slug}`,
-        date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-        readTime: formData.readTime || "4 min read",
-        excerpt: formData.excerpt || "",
-      };
-      updated = [...posts, newPost];
-      showToast(`Published article "${formData.title}"`);
-    }
-
-    setPosts(updated);
-    saveStoredBlogs(updated);
-    setIsModalOpen(false);
-  };
-
   const handleDelete = (id: string, title: string) => {
     if (confirm(`Are you sure you want to delete article "${title}"?`)) {
-      const updated = posts.filter((p) => p.id !== id);
-      setPosts(updated);
-      saveStoredBlogs(updated);
+      const updated = articles.filter((a) => a.id !== id);
+      setArticles(updated);
+      saveStoredBlogArticles(updated);
       showToast(`Deleted "${title}"`);
     }
   };
 
-  const filtered = posts.filter(
-    (p) =>
-      p.title.toLowerCase().includes(search.toLowerCase()) ||
-      p.categoryName.toLowerCase().includes(search.toLowerCase()) ||
-      p.excerpt.toLowerCase().includes(search.toLowerCase())
-  );
+  const categories = getStoredBlogCategories();
+
+  const filtered = articles.filter((a) => {
+    const matchesSearch =
+      a.title.toLowerCase().includes(search.toLowerCase()) ||
+      a.excerpt.toLowerCase().includes(search.toLowerCase());
+    const matchesCat =
+      categoryFilter === "all" || a.categoryId === categoryFilter;
+    const matchesStatus =
+      statusFilter === "all" || a.status === statusFilter;
+    return matchesSearch && matchesCat && matchesStatus;
+  });
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
@@ -135,7 +71,7 @@ export default function BlogGuidesCRUDPage() {
         </div>
       )}
 
-      {/* Header (Shopify Blog / WordPress Posts Style) */}
+      {/* Header (WordPress Posts & Shopify Blog Posts Style) */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-gray-200">
         <div>
           <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
@@ -147,7 +83,7 @@ export default function BlogGuidesCRUDPage() {
             Repair Bench Guides &amp; Blog Posts
           </h1>
           <p className="text-xs text-gray-500 mt-0.5">
-            Manage educational hardware articles, emergency care tips, and diagnostic guides for customers.
+            Every single article has its own dedicated page with rich writing canvas, taxonomy category, and Google SERP SEO preview.
           </p>
         </div>
 
@@ -160,106 +96,177 @@ export default function BlogGuidesCRUDPage() {
             <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
             <span>View Public /blog</span>
           </Link>
-          <button
-            type="button"
-            onClick={handleOpenAdd}
-            className="h-[36px] px-4 rounded-[6px] bg-[#00897b] hover:bg-[#00796b] text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+          <Link
+            href="/admin/blog/new"
+            className="h-[36px] px-4 rounded-[6px] bg-[#00897b] hover:bg-[#00796b] text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm transition-colors"
           >
             <Plus className="w-4 h-4" />
-            <span>Add New Post</span>
-          </button>
+            <span>Write New Article</span>
+          </Link>
         </div>
       </div>
 
-      {/* Search Bar */}
+      {/* Filters Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 rounded-lg border border-gray-200">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search articles by title, topic or excerpt..."
-            className="w-full h-[34px] pl-9 pr-3 rounded-[5px] border border-gray-300 text-xs focus:outline-none focus:border-[#00897b]"
-          />
+        <div className="flex flex-wrap items-center gap-2 flex-1 max-w-xl">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search guides by title or keyword..."
+              className="w-full h-[34px] pl-9 pr-3 rounded-[5px] border border-gray-300 text-xs focus:outline-none focus:border-[#00897b]"
+            />
+          </div>
+
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="h-[34px] px-3 rounded-[5px] border border-gray-300 text-xs bg-white text-gray-700 focus:outline-none focus:border-[#00897b]"
+          >
+            <option value="all">All Categories</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-[34px] px-3 rounded-[5px] border border-gray-300 text-xs bg-white text-gray-700 focus:outline-none focus:border-[#00897b]"
+          >
+            <option value="all">All Statuses</option>
+            <option value="Published">Published</option>
+            <option value="Draft">Draft</option>
+          </select>
         </div>
+
         <div className="text-xs text-gray-500 font-medium">
-          Showing <span className="font-bold text-black">{filtered.length}</span> published guides
+          Showing <span className="font-bold text-black">{filtered.length}</span> articles
         </div>
       </div>
 
-      {/* Articles Table */}
+      {/* Articles Directory Table (WordPress & Shopify Style) */}
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-2xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-[#f9fafb] text-gray-600 font-semibold uppercase tracking-wider border-b border-gray-200">
               <tr>
-                <th className="py-3 px-4">Article Title</th>
-                <th className="py-3 px-4">Topic / Category</th>
+                <th className="py-3 px-4">Article</th>
+                <th className="py-3 px-4">Category</th>
+                <th className="py-3 px-4">Status</th>
                 <th className="py-3 px-4">Date</th>
-                <th className="py-3 px-4">Read Time</th>
-                <th className="py-3 px-4">Canonical Public URL</th>
+                <th className="py-3 px-4">Author</th>
+                <th className="py-3 px-4">SEO Score &amp; Route</th>
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {filtered.map((post) => (
-                <tr key={post.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="py-3.5 px-4 font-bold text-gray-900 max-w-md">
-                    <div className="space-y-0.5">
-                      <span className="block">{post.title}</span>
-                      <span className="text-[11px] text-gray-400 font-normal line-clamp-1">
-                        {post.excerpt}
-                      </span>
+              {filtered.map((article) => (
+                <tr key={article.id} className="hover:bg-gray-50 transition-colors">
+                  
+                  {/* Title & Thumbnail */}
+                  <td className="py-3.5 px-4 font-bold text-gray-900 max-w-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-10 rounded bg-gray-100 overflow-hidden shrink-0 border border-gray-200">
+                        <img
+                          src={article.featuredImage}
+                          alt={article.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="space-y-0.5 min-w-0">
+                        <Link
+                          href={`/admin/blog/${article.slug}`}
+                          className="text-gray-900 hover:text-[#00897b] transition-colors block truncate"
+                          title={article.title}
+                        >
+                          {article.title}
+                        </Link>
+                        <span className="text-[11px] text-gray-400 font-normal block truncate">
+                          {article.excerpt}
+                        </span>
+                      </div>
                     </div>
                   </td>
+
+                  {/* Category */}
                   <td className="py-3.5 px-4">
                     <span className="text-[10px] font-semibold text-teal-800 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded">
-                      {post.categoryName}
+                      {article.categoryName}
                     </span>
                   </td>
-                  <td className="py-3.5 px-4 text-gray-500">
-                    {post.date}
-                  </td>
-                  <td className="py-3.5 px-4 text-gray-500">
-                    {post.readTime}
-                  </td>
-                  <td className="py-3.5 px-4 font-mono text-[11px] text-[#00897b]">
-                    <Link
-                      href={post.url}
-                      target="_blank"
-                      className="hover:underline inline-flex items-center gap-1"
+
+                  {/* Status */}
+                  <td className="py-3.5 px-4">
+                    <span
+                      className={`text-[10px] font-semibold px-2 py-0.5 rounded ${
+                        article.status === "Published"
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          : "bg-gray-100 text-gray-600 border border-gray-200"
+                      }`}
                     >
-                      <span>{post.url}</span>
-                      <ExternalLink className="w-3 h-3 text-gray-400" />
-                    </Link>
+                      {article.status}
+                    </span>
                   </td>
+
+                  {/* Date & Read Time */}
+                  <td className="py-3.5 px-4 text-gray-500">
+                    <div>{article.publishedAt}</div>
+                    <div className="text-[10px] text-gray-400">{article.readTime}</div>
+                  </td>
+
+                  {/* Author */}
+                  <td className="py-3.5 px-4 font-medium text-gray-700">
+                    {article.author.name}
+                  </td>
+
+                  {/* Route & SERP */}
+                  <td className="py-3.5 px-4 font-mono text-[11px] text-[#00897b]">
+                    <div className="flex items-center gap-1">
+                      <span>/blog/{article.slug}</span>
+                      <Link
+                        href={`/blog/${article.slug}`}
+                        target="_blank"
+                        className="text-gray-400 hover:text-[#00897b] p-0.5"
+                        title="View live article"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                      </Link>
+                    </div>
+                  </td>
+
+                  {/* Action Buttons */}
                   <td className="py-3.5 px-4 text-right">
                     <div className="inline-flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEdit(post)}
-                        className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-black cursor-pointer"
-                        title="Edit post"
+                      <Link
+                        href={`/admin/blog/${article.slug}`}
+                        className="h-[28px] px-2.5 rounded bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 font-semibold inline-flex items-center gap-1 shadow-2xs"
+                        title="Open in full-screen editor"
                       >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
+                        <Edit2 className="w-3 h-3 text-gray-500" />
+                        <span>Edit</span>
+                      </Link>
                       <button
                         type="button"
-                        onClick={() => handleDelete(post.id, post.title)}
+                        onClick={() => handleDelete(article.id, article.title)}
                         className="p-1.5 rounded hover:bg-red-50 text-gray-400 hover:text-red-600 cursor-pointer"
-                        title="Delete post"
+                        title="Delete article"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </td>
+
                 </tr>
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-gray-400 text-xs">
-                    No articles found matching your search.
+                  <td colSpan={7} className="text-center py-10 text-gray-400 text-xs">
+                    No articles found matching your filter.
                   </td>
                 </tr>
               )}
@@ -267,115 +274,6 @@ export default function BlogGuidesCRUDPage() {
           </table>
         </div>
       </div>
-
-      {/* MODAL: ADD / EDIT BLOG POST */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-xl w-full border border-gray-200 overflow-hidden animate-in zoom-in-95 duration-150">
-            <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
-              <h3 className="font-bold text-sm text-[#111111]">
-                {editingPost ? "Edit Guide / Article" : "Add New Blog Article"}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="text-gray-400 hover:text-black p-1"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSave} className="p-5 space-y-4">
-              <div>
-                <label className="text-xs font-semibold text-gray-700 block mb-1">
-                  Article Title *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.title || ""}
-                  onChange={(e) => handleTitleChange(e.target.value)}
-                  placeholder="e.g. When to Replace Your iPhone Battery"
-                  className="w-full h-[36px] px-3 rounded-[5px] border border-gray-300 text-xs focus:outline-none focus:border-[#00897b]"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-gray-700 block mb-1">
-                    Category Topic Label *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.categoryName || ""}
-                    onChange={(e) => setFormData({ ...formData, categoryName: e.target.value })}
-                    placeholder="e.g. iPhone Repair Guide"
-                    className="w-full h-[36px] px-3 rounded-[5px] border border-gray-300 text-xs focus:outline-none focus:border-[#00897b]"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-gray-700 block mb-1">
-                    Estimated Read Time
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.readTime || ""}
-                    onChange={(e) => setFormData({ ...formData, readTime: e.target.value })}
-                    placeholder="e.g. 5 min read"
-                    className="w-full h-[36px] px-3 rounded-[5px] border border-gray-300 text-xs focus:outline-none focus:border-[#00897b]"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-gray-700 block mb-1">
-                  Article Summary / Excerpt *
-                </label>
-                <textarea
-                  rows={3}
-                  required
-                  value={formData.excerpt || ""}
-                  onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                  placeholder="Key summary or takeaway for customers before checking in their device..."
-                  className="w-full p-2.5 rounded-[5px] border border-gray-300 text-xs focus:outline-none focus:border-[#00897b]"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-gray-700 block mb-1">
-                  Canonical URL / Target Guide Route *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.url || ""}
-                  onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                  placeholder="/common-issues/smartphone/battery-depleting-quickly"
-                  className="w-full h-[36px] px-3 rounded-[5px] border border-gray-300 text-xs font-mono focus:outline-none focus:border-[#00897b]"
-                />
-              </div>
-
-              <div className="pt-3 border-t border-gray-100 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="h-[34px] px-3.5 rounded-[5px] border border-gray-300 text-xs font-semibold text-gray-600 hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="h-[34px] px-4 rounded-[5px] bg-[#00897b] hover:bg-[#00796b] text-white text-xs font-semibold"
-                >
-                  {editingPost ? "Save Changes" : "Publish Article"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
     </div>
   );

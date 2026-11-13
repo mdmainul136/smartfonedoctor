@@ -1,163 +1,224 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Metadata } from "next";
-import { BLOG_POSTS_TAXONOMY, SERVICE_ISSUES_TAXONOMY, BRANDS_TAXONOMY } from "@/lib/taxonomy";
-import { BookOpen, Clock, ArrowRight, Wrench, ShieldCheck, Tag } from "lucide-react";
+import Image from "next/image";
+import {
+  BookOpen,
+  Clock,
+  ArrowRight,
+  Search,
+  Tag,
+  Sparkles,
+  ChevronRight,
+  ShieldCheck,
+  User,
+} from "lucide-react";
+import {
+  BlogArticle,
+  BlogCategoryTaxonomy,
+  getStoredBlogArticles,
+  getStoredBlogCategories,
+} from "@/lib/blogData";
 
-export const metadata: Metadata = {
-  title: "Repair Guides, Blog & Troubleshooting Hub | SmartFoneDoctor",
-  description:
-    "Expert troubleshooting tips, hardware diagnostics, and step-by-step guides for iPhone, Samsung, iPad, PlayStation, and laptops from certified Philadelphia bench technicians.",
-};
+export default function PublicBlogHubPage() {
+  const [articles, setArticles] = useState<BlogArticle[]>([]);
+  const [categories, setCategories] = useState<BlogCategoryTaxonomy[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [search, setSearch] = useState("");
 
-export default function BlogHubPage() {
+  useEffect(() => {
+    setArticles(getStoredBlogArticles());
+    setCategories(getStoredBlogCategories());
+
+    const handleUpdate = () => {
+      setArticles(getStoredBlogArticles());
+      setCategories(getStoredBlogCategories());
+    };
+    window.addEventListener("sfd-blog-updated", handleUpdate);
+    return () => window.removeEventListener("sfd-blog-updated", handleUpdate);
+  }, []);
+
+  const filtered = articles.filter((a) => {
+    const isPublished = a.status === "Published";
+    const matchesCat =
+      selectedCategory === "all" ||
+      a.categoryId === selectedCategory ||
+      a.categoryName.toLowerCase().includes(selectedCategory.toLowerCase());
+    const matchesSearch =
+      a.title.toLowerCase().includes(search.toLowerCase()) ||
+      a.excerpt.toLowerCase().includes(search.toLowerCase()) ||
+      a.tags.some((t) => t.toLowerCase().includes(search.toLowerCase()));
+    return isPublished && matchesCat && matchesSearch;
+  });
+
   return (
     <div className="min-h-screen bg-[#fafbfc]">
       
-      {/* Hero Section */}
-      <section className="bg-gradient-to-b from-[#1d1c1a] to-[#2b2926] text-white py-16 px-4 sm:px-6 lg:px-8 border-b border-neutral-800">
-        <div className="max-w-[1200px] mx-auto text-center space-y-4">
+      {/* 1. HERO HEADER */}
+      <section className="bg-gradient-to-b from-[#1d1c1a] to-[#2b2926] text-white py-14 sm:py-20 px-4 sm:px-6 lg:px-8 border-b border-neutral-800">
+        <div className="max-w-[1250px] mx-auto text-center space-y-4">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#00897b]/20 border border-[#00897b]/40 text-[#4dd0e1] text-xs font-semibold uppercase tracking-wider">
             <BookOpen className="w-3.5 h-3.5" />
-            <span>Repair Bench Knowledge Base &amp; Blog</span>
+            <span>Repair Bench Knowledge Base &amp; Guides</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight">
-            Hardware Guides &amp; Tech Insights
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight">
+            Hardware Guides &amp; Repair Insights
           </h1>
 
-          <p className="text-base sm:text-lg text-neutral-300 max-w-2xl mx-auto leading-relaxed">
-            Written directly by certified technicians working on our Philadelphia repair benches. Upfront troubleshooting and repair advice before you walk into the store.
+          <p className="text-sm sm:text-base text-neutral-300 max-w-2xl mx-auto leading-relaxed">
+            Written by certified technicians on Philadelphia repair benches. Free diagnostics advice, battery care, and micro-soldering guides.
           </p>
+
+          {/* Search Bar */}
+          <div className="pt-4 max-w-lg mx-auto">
+            <div className="relative">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search troubleshooting guides, battery tips, HDMI fixes..."
+                className="w-full h-[44px] pl-10 pr-4 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder:text-gray-400 text-sm focus:outline-none focus:bg-white focus:text-[#111] focus:placeholder:text-gray-500 transition-all shadow-lg"
+              />
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Main Grid Section */}
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
-        
-        {/* Featured Posts */}
-        <div>
-          <h2 className="text-2xl font-bold text-[#1d1c1a] mb-6 flex items-center gap-2">
-            <span>Featured Repair Articles</span>
-          </h2>
+      {/* 2. CATEGORY PILLS BAR */}
+      <div className="bg-white border-b border-gray-200 sticky top-16 z-30 shadow-2xs">
+        <div className="max-w-[1250px] mx-auto px-4 sm:px-6 py-3 flex items-center gap-2 overflow-x-auto no-scrollbar">
+          <button
+            type="button"
+            onClick={() => setSelectedCategory("all")}
+            className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+              selectedCategory === "all"
+                ? "bg-[#00897b] text-white shadow-xs"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            All Guides ({articles.filter((a) => a.status === "Published").length})
+          </button>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {BLOG_POSTS_TAXONOMY.map((post) => (
-              <article
-                key={post.id}
-                className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between"
+          {categories.map((cat) => {
+            const count = articles.filter(
+              (a) => a.categoryId === cat.id && a.status === "Published"
+            ).length;
+            const isSelected = selectedCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                  isSelected
+                    ? "bg-[#00897b] text-white shadow-xs"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
               >
-                <div className="p-6 space-y-3">
-                  <div className="flex items-center justify-between text-xs text-gray-500">
-                    <span className="font-semibold text-[#00897b] bg-[#00897b]/10 px-2 py-0.5 rounded">
-                      {post.categoryName}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {post.readTime}
-                    </span>
+                <span>{cat.name}</span>
+                {count > 0 && <span className="ml-1.5 opacity-80">({count})</span>}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 3. ARTICLES GRID */}
+      <main className="max-w-[1250px] mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+        
+        {filtered.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
+            {filtered.map((article) => (
+              <article
+                key={article.id}
+                className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs hover:shadow-lg transition-all flex flex-col group"
+              >
+                {/* Featured Thumbnail */}
+                <Link
+                  href={`/blog/${article.slug}`}
+                  className="block relative aspect-video bg-gray-100 overflow-hidden"
+                >
+                  <img
+                    src={article.featuredImage}
+                    alt={article.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <span className="absolute top-3 left-3 bg-[#1d1c1a]/85 backdrop-blur-xs text-white text-[11px] font-semibold px-2.5 py-1 rounded-md shadow-xs">
+                    {article.categoryName}
+                  </span>
+                </Link>
+
+                {/* Article Body */}
+                <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3 text-xs text-gray-400">
+                      <span className="flex items-center gap-1 font-medium text-gray-600">
+                        <Clock className="w-3.5 h-3.5 text-[#00897b]" />
+                        {article.readTime}
+                      </span>
+                      <span>•</span>
+                      <span>{article.publishedAt}</span>
+                    </div>
+
+                    <h2 className="text-lg font-bold text-[#1d1c1a] group-hover:text-[#00897b] transition-colors line-clamp-2 leading-snug">
+                      <Link href={`/blog/${article.slug}`}>{article.title}</Link>
+                    </h2>
+
+                    <p className="text-xs text-gray-600 line-clamp-3 leading-relaxed">
+                      {article.excerpt}
+                    </p>
                   </div>
 
-                  <h3 className="text-lg font-bold text-[#1d1c1a] hover:text-[#00897b] transition-colors leading-snug">
-                    <Link href={post.url}>{post.title}</Link>
-                  </h3>
+                  {/* Author & Read More Bar */}
+                  <div className="pt-4 border-t border-gray-100 flex items-center justify-between mt-auto">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full bg-teal-50 border border-teal-200 text-[#00897b] text-[10px] font-bold flex items-center justify-center">
+                        {article.author.avatar || article.author.name.slice(0, 2)}
+                      </span>
+                      <span className="text-xs font-semibold text-gray-700">
+                        {article.author.name}
+                      </span>
+                    </div>
 
-                  <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">
-                    {post.excerpt}
-                  </p>
-                </div>
-
-                <div className="p-6 pt-0 border-t border-gray-100 flex items-center justify-between mt-auto">
-                  <span className="text-xs text-gray-400">{post.date}</span>
-                  <Link
-                    href={post.url}
-                    className="inline-flex items-center gap-1 text-sm font-bold text-[#00897b] hover:underline"
-                  >
-                    <span>Read Guide</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
+                    <Link
+                      href={`/blog/${article.slug}`}
+                      className="text-xs font-bold text-[#00897b] group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-1"
+                    >
+                      <span>Read Guide</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
                 </div>
               </article>
             ))}
           </div>
-        </div>
-
-        {/* Common Issues Cross-Taxonomy Grid */}
-        <div className="pt-8 border-t border-gray-200">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-[#1d1c1a]">
-                Direct Hardware Issue Fix Guides
-              </h2>
-              <p className="text-sm text-gray-500">
-                Detailed diagnostics and symptoms for cracked screens, water damage, batteries, and HDMI ports.
-              </p>
-            </div>
-            <Link
-              href="/common-issues"
-              className="text-sm font-bold text-[#00897b] hover:underline inline-flex items-center gap-1 shrink-0"
+        ) : (
+          <div className="text-center py-16 bg-white rounded-2xl border border-gray-200 p-8 space-y-3">
+            <BookOpen className="w-10 h-10 text-gray-300 mx-auto" />
+            <h3 className="text-base font-bold text-gray-800">
+              No articles found
+            </h3>
+            <p className="text-xs text-gray-500 max-w-sm mx-auto">
+              We couldn't find any guides matching "{search}". Try searching for batteries, screens, or water damage.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setSearch("");
+                setSelectedCategory("all");
+              }}
+              className="mt-2 text-xs font-semibold text-[#00897b] underline"
             >
-              <span>View All 15+ Issue Guides</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+              Reset filters
+            </button>
           </div>
+        )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {SERVICE_ISSUES_TAXONOMY.slice(0, 8).map((issue) => (
-              <Link
-                key={issue.id}
-                href={issue.url}
-                className="p-4 rounded-lg bg-white border border-gray-200 hover:border-[#00897b] hover:shadow-xs transition-all flex flex-col justify-between group"
-              >
-                <div>
-                  <div className="flex items-center justify-between text-xs mb-2">
-                    <span className="font-semibold text-gray-500 uppercase tracking-wider text-[10px]">
-                      {issue.categorySlug}
-                    </span>
-                    <span className="font-bold text-[#00897b]">
-                      From ${issue.startingPrice}
-                    </span>
-                  </div>
-                  <h4 className="text-sm font-bold text-[#1d1c1a] group-hover:text-[#00897b] transition-colors">
-                    {issue.title}
-                  </h4>
-                </div>
-
-                <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400">
-                  <span>⏱ {issue.turnaround}</span>
-                  <span className="text-[#00897b] font-semibold group-hover:translate-x-0.5 transition-transform">
-                    View →
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        {/* Hardware Brands Directory */}
-        <div className="pt-8 border-t border-gray-200">
-          <h2 className="text-2xl font-bold text-[#1d1c1a] mb-4">
-            Supported Device Brands
-          </h2>
-          <div className="flex flex-wrap gap-2.5">
-            {BRANDS_TAXONOMY.map((brand) => (
-              <Link
-                key={brand.id}
-                href={brand.url}
-                className="px-3.5 py-2 rounded-lg bg-white border border-gray-200 hover:border-gray-400 text-sm font-medium text-gray-800 hover:text-black transition-colors flex items-center gap-2 shadow-2xs"
-              >
-                <Tag className="w-3.5 h-3.5 text-gray-400" />
-                <span>{brand.name}</span>
-                <span className="text-xs text-gray-400 font-normal">
-                  ({brand.tagline})
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-      </div>
+      </main>
 
     </div>
   );
 }
-
