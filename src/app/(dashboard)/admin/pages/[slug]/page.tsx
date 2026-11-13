@@ -22,9 +22,13 @@ import {
   ChevronDown,
   Info,
   PenTool,
+  Monitor,
+  Tablet,
+  Smartphone,
 } from "lucide-react";
 import RichTextEditor from "@/components/admin/RichTextEditor";
 import RankMathSeoSuite from "@/components/admin/RankMathSeoSuite";
+import ElementorPageBuilder from "@/components/admin/ElementorPageBuilder";
 
 export default function DedicatedPageEditor({
   params,
@@ -41,6 +45,8 @@ export default function DedicatedPageEditor({
   const [page, setPage] = useState<CMSPage>(initialPage);
   const [isSaving, setIsSaving] = useState(false);
   const [savedToast, setSavedToast] = useState<string | null>(null);
+  const [editorMode, setEditorMode] = useState<"visual" | "seo">("visual");
+  const [viewport, setViewport] = useState<"desktop" | "tablet" | "mobile">("desktop");
 
   useEffect(() => {
     const list = getStoredCMSPages();
@@ -99,7 +105,71 @@ export default function DedicatedPageEditor({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Elementor Mode Switcher */}
+          <div className="flex items-center bg-gray-100 p-0.5 rounded-[6px] border border-gray-200 text-[12px]">
+            <button
+              type="button"
+              onClick={() => setEditorMode("visual")}
+              className={`px-3 py-1 rounded-[5px] font-semibold inline-flex items-center gap-1.5 transition cursor-pointer ${
+                editorMode === "visual"
+                  ? "bg-white text-[#009691] shadow-2xs"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Visual On-Page</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditorMode("seo")}
+              className={`px-3 py-1 rounded-[5px] font-semibold inline-flex items-center gap-1.5 transition cursor-pointer ${
+                editorMode === "seo"
+                  ? "bg-white text-[#111111] shadow-2xs"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              <Globe className="w-3.5 h-3.5" />
+              <span>SEO &amp; Settings</span>
+            </button>
+          </div>
+
+          {/* Responsive Viewport Switcher (Elementor Style) */}
+          {editorMode === "visual" && (
+            <div className="hidden sm:flex items-center bg-gray-100 p-0.5 rounded-[6px] border border-gray-200">
+              <button
+                type="button"
+                onClick={() => setViewport("desktop")}
+                className={`p-1.5 rounded-[4px] transition cursor-pointer ${
+                  viewport === "desktop" ? "bg-white text-[#009691] shadow-2xs" : "text-gray-500 hover:text-black"
+                }`}
+                title="Desktop View"
+              >
+                <Monitor className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewport("tablet")}
+                className={`p-1.5 rounded-[4px] transition cursor-pointer ${
+                  viewport === "tablet" ? "bg-white text-[#009691] shadow-2xs" : "text-gray-500 hover:text-black"
+                }`}
+                title="Tablet View"
+              >
+                <Tablet className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewport("mobile")}
+                className={`p-1.5 rounded-[4px] transition cursor-pointer ${
+                  viewport === "mobile" ? "bg-white text-[#009691] shadow-2xs" : "text-gray-500 hover:text-black"
+                }`}
+                title="Mobile View"
+              >
+                <Smartphone className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
           <Link
             href={page.path}
             target="_blank"
@@ -142,7 +212,14 @@ export default function DedicatedPageEditor({
         </div>
       )}
 
-      {/* 2. DEDICATED TWO-COLUMN WORKSPACE (CANVAS ON LEFT, INSPECTOR ON RIGHT) */}
+      {/* 2. ELEMENTOR VISUAL ON-PAGE EDITOR vs SEO SETTINGS */}
+      {editorMode === "visual" ? (
+        <ElementorPageBuilder
+          page={page}
+          viewport={viewport}
+          onChangePage={setPage}
+        />
+      ) : (
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         {/* LEFT COLUMN: VISUAL CONTENT CANVAS (7.5 cols on LG) */}
@@ -436,6 +513,7 @@ export default function DedicatedPageEditor({
         </div>
 
       </div>
+      )}
     </div>
   );
 }

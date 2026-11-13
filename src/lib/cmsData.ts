@@ -1,3 +1,44 @@
+export interface PageSectionItem {
+  id: string;
+  title: string;
+  description: string;
+  badge?: string;
+  price?: string;
+}
+
+export interface PageSection {
+  id: string;
+  type: "services_grid" | "benefits" | "split_banner" | "faq" | "cta_banner" | "richtext";
+  label: string;
+  heading: string;
+  subheading?: string;
+  bodyHtml?: string;
+  ctaText?: string;
+  ctaLink?: string;
+  items?: PageSectionItem[];
+  columns?: 2 | 3 | 4;
+  style?: {
+    bgColor?: string;
+    textColor?: string;
+    cardBgColor?: string;
+    cardBorderColor?: string;
+    accentColor?: string;
+    padding?: string;
+    align?: "left" | "center";
+    borderRadius?: string;
+  };
+}
+
+export interface HeroStyle {
+  bgColor?: string;
+  textColor?: string;
+  accentColor?: string;
+  badgeBg?: string;
+  badgeColor?: string;
+  padding?: string;
+  align?: "left" | "center";
+}
+
 export interface CMSPage {
   id: string;
   slug: string;
@@ -18,6 +59,8 @@ export interface CMSPage {
   focusKeyword?: string;
   keywords?: string[];
   featuredImage?: string;
+  heroStyle?: HeroStyle;
+  sections?: PageSection[];
 }
 
 export const INITIAL_CMS_PAGES: CMSPage[] = [
