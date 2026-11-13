@@ -692,18 +692,25 @@ export function buildPSeoPageData(
 
   const localBusinessSchema = {
     "@context": "https://schema.org",
-    "@type": "RepairShop",
-    name: "SmartFoneDoctor Philadelphia",
+    "@type": ["LocalBusiness", "ElectronicsStore"],
+    "@id": "https://smartfonedoctor.com/#store-phl-01",
+    name: "SmartFoneDoctor - Flagship HQ (West Philadelphia)",
     image: "https://smartfonedoctor.com/logo-png.jpg",
-    telephone: "+1-215-387-1700",
+    telephone: "+1-215-598-2090",
     url: "https://smartfonedoctor.com",
+    priceRange: "$$",
     address: {
       "@type": "PostalAddress",
-      streetAddress: "33 S 52nd St",
+      streetAddress: "33 S 52nd St, Fl 2nd",
       addressLocality: "Philadelphia",
       addressRegion: "PA",
       postalCode: "19139",
       addressCountry: "US",
+    },
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: 39.9576,
+      longitude: -75.2268,
     },
     openingHoursSpecification: [
       {
@@ -712,17 +719,13 @@ export function buildPSeoPageData(
         opens: "10:00",
         closes: "19:00",
       },
-      {
-        "@type": "OpeningHoursSpecification",
-        dayOfWeek: "Sunday",
-        opens: "11:00",
-        closes: "17:00",
-      },
     ],
     aggregateRating: {
       "@type": "AggregateRating",
       ratingValue: "4.9",
       reviewCount: "420",
+      bestRating: "5",
+      worstRating: "1",
     },
   };
 
@@ -755,23 +758,129 @@ export function buildPSeoPageData(
       image: d.image,
     }));
 
-  const relatedBlogGuides = [
-    {
-      title: "When to Replace Your iPhone Battery: Signs & Performance",
-      url: "/blog/iphone-battery-health-guide",
-      readTime: "4 min read",
-    },
-    {
-      title: "Dropped Phone in Water? 4 Critical First Aid Steps",
-      url: "/blog/what-to-do-water-damaged-phone",
-      readTime: "5 min read",
-    },
-    {
-      title: "Common Charging Port Issues & Clean Bench Fixes",
-      url: "/common-issues/smartphone/charging-port-replacement",
-      readTime: "3 min read",
-    },
-  ];
+  // Dynamic matching of authoritative blog and diagnostic guides based on category and issue
+  const getDynamicRelatedGuides = (): { title: string; url: string; readTime: string }[] => {
+    if (device.category === "console" || issue.slug === "hdmi-port-replacement") {
+      return [
+        {
+          title: "PS5 White Light of Death or No Signal: HDMI Port vs Encoder IC",
+          url: "/blog/ps5-hdmi-port-no-signal-fix",
+          readTime: "6 min read",
+        },
+        {
+          title: "Console HDMI Port Replacement & Micro-Soldering Bench Procedures",
+          url: "/common-issues/console/hdmi-port-repair",
+          readTime: "5 min read",
+        },
+        {
+          title: "Dropped Device in Water? 4 Critical Emergency First Aid Steps",
+          url: "/blog/what-to-do-water-damaged-phone",
+          readTime: "4 min read",
+        },
+      ];
+    }
+
+    if (issue.slug === "battery-replacement") {
+      return [
+        {
+          title: "When to Replace Your Phone Battery: Signs, Cycles & Peak Performance",
+          url: "/blog/iphone-battery-health-guide",
+          readTime: "4 min read",
+        },
+        {
+          title: "Phone Battery Replacement & Power Degradation Diagnosis",
+          url: "/common-issues/smartphone/battery-replacement",
+          readTime: "4 min read",
+        },
+        {
+          title: "Common Charging Port Issues & Clean Bench Fixes",
+          url: "/common-issues/smartphone/charging-port-replacement",
+          readTime: "3 min read",
+        },
+      ];
+    }
+
+    if (issue.slug === "screen-repair" || issue.slug === "back-glass-repair") {
+      return [
+        {
+          title: "Cracked Glass Replacement vs Full OLED Assembly: Bench Standards",
+          url: "/common-issues/smartphone/cracked-glass-replacement",
+          readTime: "4 min read",
+        },
+        {
+          title: "When to Replace Your Phone Battery: Signs, Cycles & Performance",
+          url: "/blog/iphone-battery-health-guide",
+          readTime: "4 min read",
+        },
+        {
+          title: "Dropped Phone in Water? 4 Critical First Aid Steps Before Repair",
+          url: "/blog/what-to-do-water-damaged-phone",
+          readTime: "5 min read",
+        },
+      ];
+    }
+
+    if (issue.slug === "water-damage-repair") {
+      return [
+        {
+          title: "Dropped Phone in Water? 4 Critical Steps Before Bringing to Shop",
+          url: "/blog/what-to-do-water-damaged-phone",
+          readTime: "5 min read",
+        },
+        {
+          title: "Water & Liquid Damaged Phone Repair: Ultrasonic Decontamination",
+          url: "/common-issues/smartphone/water-damaged-phone-repair",
+          readTime: "5 min read",
+        },
+        {
+          title: "When to Replace Your Phone Battery: Signs, Cycles & Performance",
+          url: "/blog/iphone-battery-health-guide",
+          readTime: "4 min read",
+        },
+      ];
+    }
+
+    if (device.category === "computer") {
+      return [
+        {
+          title: "MacBook Pro Logic Board Replacement & Component Micro-Soldering",
+          url: "/common-issues/computer/macbook-pro-logic-board-replacement",
+          readTime: "7 min read",
+        },
+        {
+          title: "Dropped Device in Water? 4 Critical Emergency Steps",
+          url: "/blog/what-to-do-water-damaged-phone",
+          readTime: "5 min read",
+        },
+        {
+          title: "When to Replace Your Battery: Signs, Cycles & Health",
+          url: "/blog/iphone-battery-health-guide",
+          readTime: "4 min read",
+        },
+      ];
+    }
+
+    // Default / Smartphone Charging Port / General Issues
+    return [
+      {
+        title: "Common Charging Port Issues & Clean Bench Fixes",
+        url: "/common-issues/smartphone/charging-port-replacement",
+        readTime: "3 min read",
+      },
+      {
+        title: "When to Replace Your iPhone Battery: Signs & Performance",
+        url: "/blog/iphone-battery-health-guide",
+        readTime: "4 min read",
+      },
+      {
+        title: "Dropped Phone in Water? 4 Critical First Aid Steps",
+        url: "/blog/what-to-do-water-damaged-phone",
+        readTime: "5 min read",
+      },
+    ];
+  };
+
+  const relatedBlogGuides = getDynamicRelatedGuides();
 
   return {
     device,

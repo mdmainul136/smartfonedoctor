@@ -19,6 +19,9 @@ import {
   BookOpen,
   ArrowRight,
   Sparkles,
+  Activity,
+  HelpCircle,
+  MessageSquare,
 } from "lucide-react";
 import type { PSeoPageData } from "@/lib/pSeoEngine";
 
@@ -143,7 +146,7 @@ export default function DeviceIssueClient({ data }: Props) {
               {/* Action Buttons */}
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 <Link
-                  href={`/schedule-repair?device=${encodeURIComponent(device.name)}&issue=${encodeURIComponent(issue.shortName)}`}
+                  href={`/schedule-repair?device=${device.category}&make=${encodeURIComponent(device.brand)}&model=${encodeURIComponent(device.name)}&issue=${encodeURIComponent(issue.slug)}`}
                   className="px-7 py-3.5 rounded-full bg-[#00897b] hover:bg-[#00796b] text-white font-bold text-xs sm:text-sm tracking-wide uppercase transition shadow-md active:scale-95 flex items-center gap-2"
                 >
                   <Calendar className="w-4 h-4" />
@@ -526,7 +529,7 @@ export default function DeviceIssueClient({ data }: Props) {
 
               <div className="space-y-2 pt-1">
                 <Link
-                  href={`/schedule-repair?device=${encodeURIComponent(device.name)}&issue=${encodeURIComponent(issue.shortName)}`}
+                  href={`/schedule-repair?device=${device.category}&make=${encodeURIComponent(device.brand)}&model=${encodeURIComponent(device.name)}&issue=${encodeURIComponent(issue.slug)}`}
                   className="block w-full text-center px-4 py-3 rounded-xl bg-[#00897b] hover:bg-[#00796b] text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-sm"
                 >
                   Schedule Appointment
@@ -568,6 +571,63 @@ export default function DeviceIssueClient({ data }: Props) {
               </a>
             </div>
 
+            {/* Quick Links & Customer Services */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs space-y-3">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">
+                Quick Navigation &amp; Help
+              </span>
+              <ul className="space-y-2 text-xs font-medium text-gray-700">
+                <li>
+                  <Link
+                    href="/track"
+                    className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 hover:text-[#00897b] transition-colors border border-gray-100"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Activity className="w-3.5 h-3.5 text-[#00897b]" />
+                      Track Ongoing Ticket
+                    </span>
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/locations/i/book-repair"
+                    className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 hover:text-[#00897b] transition-colors border border-gray-100"
+                  >
+                    <span className="flex items-center gap-2">
+                      <MapPin className="w-3.5 h-3.5 text-[#00897b]" />
+                      All 3 Store Locations
+                    </span>
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/review"
+                    className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 hover:text-[#00897b] transition-colors border border-gray-100"
+                  >
+                    <span className="flex items-center gap-2">
+                      <MessageSquare className="w-3.5 h-3.5 text-[#00897b]" />
+                      Customer Reviews (4.9★)
+                    </span>
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/faq"
+                    className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 hover:text-[#00897b] transition-colors border border-gray-100"
+                  >
+                    <span className="flex items-center gap-2">
+                      <HelpCircle className="w-3.5 h-3.5 text-[#00897b]" />
+                      Hardware Repair FAQ
+                    </span>
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
             {/* Neighborhoods Served */}
             <div className="bg-gray-50 rounded-2xl border border-gray-200 p-5 space-y-2">
               <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">
@@ -600,7 +660,7 @@ export default function DeviceIssueClient({ data }: Props) {
           </div>
         </div>
         <Link
-          href={`/schedule-repair?device=${encodeURIComponent(device.name)}&issue=${encodeURIComponent(issue.shortName)}`}
+          href={`/schedule-repair?device=${device.category}&make=${encodeURIComponent(device.brand)}&model=${encodeURIComponent(device.name)}&issue=${encodeURIComponent(issue.slug)}`}
           className="px-5 py-2.5 rounded-full bg-[#00897b] text-white text-xs font-bold uppercase tracking-wider active:scale-95 transition-transform"
         >
           Book Now

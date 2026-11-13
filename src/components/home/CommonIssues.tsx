@@ -1,6 +1,8 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { FeatureCard } from "./FeatureCard";
 
 const issues = [
@@ -46,6 +48,20 @@ export function CommonIssues() {
               highlighted={issue.highlighted}
             />
           ))}
+        </div>
+
+        {/* Explore All Services Link */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-neutral-100">
+          <span className="text-xs text-neutral-500 font-medium">
+            Need service for another device brand or specific hardware issue?
+          </span>
+          <Link
+            href="/repairs"
+            className="text-xs font-bold text-sfd-teal hover:underline inline-flex items-center gap-1 group"
+          >
+            <span>Explore All Repair Services &amp; Device Models</span>
+            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
         </div>
 
       </div>

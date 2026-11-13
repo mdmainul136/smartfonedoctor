@@ -14,8 +14,13 @@ import {
   Search,
   CheckCircle2,
   Calendar,
+  Activity,
+  HelpCircle,
+  Star,
+  Wrench,
 } from "lucide-react";
 import Footer from "@/components/layout/Footer";
+import { JsonLd, buildBreadcrumbSchema } from "@/lib/schema";
 
 // Store Data
 const STORES = [
@@ -206,18 +211,70 @@ function ScheduleRepairWizard() {
   const storeIdParam = Number(searchParams.get("store")) || 1;
   const store = STORES.find((s) => s.id === storeIdParam) || STORES[0];
 
+  // Resolve query parameters from pSEO and service pages
+  const paramDevice = searchParams.get("device") || "";
+  const paramMake = searchParams.get("make") || "";
+  const paramModel = searchParams.get("model") || "";
+  const paramIssue = searchParams.get("issue") || "";
+
+  const initialCategory = useMemo(() => {
+    const raw = paramDevice.toLowerCase();
+    if (raw === "tablet" || raw.includes("ipad")) return "tablet";
+    if (raw === "console" || raw.includes("ps5") || raw.includes("xbox") || raw.includes("switch")) return "console";
+    if (raw === "computer" || raw.includes("mac") || raw.includes("laptop")) return "computer";
+    if (raw === "other") return "other";
+    return "smartphone";
+  }, [paramDevice]);
+
+  const initialMake = useMemo(() => {
+    if (paramMake) return paramMake;
+    const lowerModel = paramModel.toLowerCase();
+    if (lowerModel.includes("iphone") || lowerModel.includes("macbook") || lowerModel.includes("ipad")) return "Apple";
+    if (lowerModel.includes("galaxy") || lowerModel.includes("samsung")) return "Samsung";
+    if (lowerModel.includes("pixel")) return "Google";
+    if (lowerModel.includes("playstation") || lowerModel.includes("ps5")) return "Sony";
+    if (lowerModel.includes("xbox")) return "Microsoft";
+    if (lowerModel.includes("switch")) return "Nintendo";
+    return "Apple";
+  }, [paramMake, paramModel]);
+
+  const initialModel = useMemo(() => {
+    if (paramModel) return paramModel;
+    return "iPhone 17e";
+  }, [paramModel]);
+
+  const initialIssues = useMemo(() => {
+    if (!paramIssue) return ["screen"];
+    const raw = paramIssue.toLowerCase();
+    const mapped: string[] = [];
+    if (raw.includes("screen") || raw.includes("glass") || raw.includes("oled") || raw.includes("display")) mapped.push("screen");
+    if (raw.includes("battery")) mapped.push("battery");
+    if (raw.includes("charging") || raw.includes("dock") || raw.includes("port")) mapped.push("charging");
+    if (raw.includes("back") || raw.includes("housing")) mapped.push("back_glass");
+    if (raw.includes("power") || raw.includes("button")) mapped.push("power_button");
+    if (raw.includes("camera") || raw.includes("lens")) mapped.push("camera");
+    if (raw.includes("water") || raw.includes("hdmi") || raw.includes("liquid") || raw.includes("soldering") || raw.includes("board")) mapped.push("other_issue");
+    return mapped.length > 0 ? mapped : ["screen"];
+  }, [paramIssue]);
+
+  const initialStep = useMemo(() => {
+    if (paramModel) return 3;
+    if (paramDevice) return 2;
+    return 1;
+  }, [paramModel, paramDevice]);
+
   // Wizard Step: 1 = Device, 2 = Make & Model, 3 = Issues, 4 = Contact, 5 = Thank You
-  const [currentStep, setCurrentStep] = useState<number>(1);
+  const [currentStep, setCurrentStep] = useState<number>(initialStep);
 
   // Selections
-  const [selectedDevice, setSelectedDevice] = useState<string>("smartphone");
-  const [selectedMake, setSelectedMake] = useState<string>("Apple");
-  const [selectedModel, setSelectedModel] = useState<string>("iPhone 17e");
+  const [selectedDevice, setSelectedDevice] = useState<string>(initialCategory);
+  const [selectedMake, setSelectedMake] = useState<string>(initialMake);
+  const [selectedModel, setSelectedModel] = useState<string>(initialModel);
   const [modelDropdownOpen, setModelDropdownOpen] = useState<boolean>(false);
   const [modelSearch, setModelSearch] = useState<string>("");
 
   // Step 3 Selections (Multi-select)
-  const [selectedIssues, setSelectedIssues] = useState<string[]>(["screen"]);
+  const [selectedIssues, setSelectedIssues] = useState<string[]>(initialIssues);
 
   // Step 4 Contact form
   const [firstName, setFirstName] = useState("");
@@ -229,6 +286,12 @@ function ScheduleRepairWizard() {
 
   // Sidebar toggle
   const [summaryOpen, setSummaryOpen] = useState(true);
+
+  // Breadcrumb schema
+  const breadcrumbSchema = buildBreadcrumbSchema([
+    { name: "Home", url: "/" },
+    { name: "Schedule Repair", url: "/schedule-repair" },
+  ]);
 
   // Available makes & models for active device
   const availableMakes = useMemo(() => {
@@ -262,23 +325,61 @@ function ScheduleRepairWizard() {
 
   return (
     <div className="bg-[#f7f8fa] min-h-screen py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
+      <JsonLd data={breadcrumbSchema} />
       <div className="max-w-[1240px] mx-auto">
 
-        {/* 1. Back to Store link */}
-        <div className="mb-4">
-          <Link
-            href="/locations/i/book-repair"
-            className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-neutral-600 hover:text-sfd-teal transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Back to the Store
-          </Link>
-        </div>
+        {/* 1. Breadcrumb Navigation */}
+        <nav aria-label="Breadcrumb" className="mb-4 text-[12px] text-neutral-500 font-normal">
+          <ol className="flex items-center gap-1.5 flex-wrap">
+            <li>
+              <Link href="/" className="hover:text-sfd-teal transition-colors">
+                Home
+              </Link>
+            </li>
+            <li>&gt;</li>
+            <li className="text-neutral-700 font-medium" aria-current="page">
+              Schedule Repair
+            </li>
+          </ol>
+        </nav>
 
-        {/* 2. Page Title */}
-        <h1 className="text-[26px] sm:text-[30px] font-bold text-[#1d1c1a] tracking-tight mb-6">
-          Request a Repair
-        </h1>
+        {/* 2. Header & Utility Quick Links */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <h1 className="text-[26px] sm:text-[30px] font-bold text-[#1d1c1a] tracking-tight">
+            Request a Repair
+          </h1>
+
+          <div className="flex items-center gap-3 flex-wrap text-xs font-medium text-neutral-600">
+            <Link
+              href="/track"
+              className="inline-flex items-center gap-1.5 hover:text-sfd-teal transition-colors bg-white px-3 py-1.5 rounded-lg border border-neutral-200/80 shadow-2xs"
+            >
+              <Activity className="w-3.5 h-3.5 text-sfd-teal" />
+              <span>Track Ticket</span>
+            </Link>
+            <Link
+              href="/faq"
+              className="inline-flex items-center gap-1.5 hover:text-sfd-teal transition-colors bg-white px-3 py-1.5 rounded-lg border border-neutral-200/80 shadow-2xs"
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-sfd-teal" />
+              <span>Repair FAQ</span>
+            </Link>
+            <Link
+              href="/review"
+              className="inline-flex items-center gap-1.5 hover:text-sfd-teal transition-colors bg-white px-3 py-1.5 rounded-lg border border-neutral-200/80 shadow-2xs"
+            >
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+              <span>4.9 Reviews</span>
+            </Link>
+            <Link
+              href="/locations/i/book-repair"
+              className="inline-flex items-center gap-1.5 hover:text-sfd-teal transition-colors bg-white px-3 py-1.5 rounded-lg border border-neutral-200/80 shadow-2xs"
+            >
+              <MapPin className="w-3.5 h-3.5 text-sfd-teal" />
+              <span>Store Branches</span>
+            </Link>
+          </div>
+        </div>
 
         {/* 3. Main 2-Column Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">

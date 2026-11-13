@@ -15,9 +15,21 @@ import {
   Tablet,
   Laptop,
   Gamepad2,
+  BookOpen,
+  Star,
+  HelpCircle,
+  Activity,
+  MapPin,
+  Calendar,
+  ChevronRight,
 } from "lucide-react";
 import Footer from "@/components/layout/Footer";
 import type { ServiceCMSData } from "@/data/servicesData";
+import {
+  JsonLd,
+  buildBreadcrumbSchema,
+  buildServiceSchema,
+} from "@/lib/schema";
 
 interface Props {
   service: ServiceCMSData;
@@ -39,8 +51,95 @@ export default function ServiceDetailClient({ service }: Props) {
       item.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const breadcrumbSchema = buildBreadcrumbSchema([
+    { name: "Home", url: "/" },
+    { name: service.categoryName, url: `/repairs/${service.categoryId}` },
+    {
+      name: service.serviceName,
+      url: `/repairs/${service.categoryId}/${service.serviceId}`,
+    },
+  ]);
+
+  const serviceSchema = buildServiceSchema({
+    name: service.serviceName,
+    category: service.categoryName,
+    description:
+      service.heroSubtitle ||
+      `${service.serviceName} certified bench repair in Philadelphia.`,
+    url: `/repairs/${service.categoryId}/${service.serviceId}`,
+    priceAftermarket: 89,
+    priceOem: 149,
+  });
+
+  const diagnosticGuides =
+    service.categoryId === "console"
+      ? [
+          {
+            title: "PS5 White Light of Death or No Signal: HDMI Port vs Encoder IC",
+            url: "/blog/ps5-hdmi-port-no-signal-fix",
+            readTime: "6 min read",
+            category: "Console Repair",
+          },
+          {
+            title: "Console HDMI Port Replacement & Micro-Soldering Bench Procedures",
+            url: "/common-issues/console/hdmi-port-repair",
+            readTime: "5 min read",
+            category: "Diagnostic Guide",
+          },
+          {
+            title: "Dropped Device in Water? 4 Critical Emergency First Aid Steps",
+            url: "/blog/what-to-do-water-damaged-phone",
+            readTime: "4 min read",
+            category: "Emergency Care",
+          },
+        ]
+      : service.categoryId === "computer"
+      ? [
+          {
+            title: "MacBook Pro Logic Board Replacement & Component Micro-Soldering",
+            url: "/common-issues/computer/macbook-pro-logic-board-replacement",
+            readTime: "7 min read",
+            category: "Logic Board Bench",
+          },
+          {
+            title: "When to Replace Your Battery: Signs, Cycles & Health",
+            url: "/blog/iphone-battery-health-guide",
+            readTime: "4 min read",
+            category: "Battery Care",
+          },
+          {
+            title: "Dropped Laptop in Water? Critical Drying & Decontamination Steps",
+            url: "/blog/what-to-do-water-damaged-phone",
+            readTime: "5 min read",
+            category: "Emergency Care",
+          },
+        ]
+      : [
+          {
+            title: "When to Replace Your Phone Battery: Signs, Cycles & Peak Performance",
+            url: "/blog/iphone-battery-health-guide",
+            readTime: "4 min read",
+            category: "Battery Care",
+          },
+          {
+            title: "Cracked Glass vs OLED Replacement: Bench Guide & TrueTone",
+            url: "/common-issues/smartphone/cracked-glass-replacement",
+            readTime: "4 min read",
+            category: "Display Tech",
+          },
+          {
+            title: "Dropped Phone in Water? 4 Critical Steps Before Bringing to Shop",
+            url: "/blog/what-to-do-water-damaged-phone",
+            readTime: "5 min read",
+            category: "Emergency Care",
+          },
+        ];
+
   return (
     <main className="bg-[#fcfcfc] min-h-screen">
+      {/* ── JSON-LD Structured Data ── */}
+      <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={serviceSchema} />
       <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-16">
         {/* 1. Breadcrumbs */}
         <nav aria-label="Breadcrumb" className="mb-4 text-[12px] text-neutral-500 font-normal">
@@ -104,9 +203,47 @@ export default function ServiceDetailClient({ service }: Props) {
                 href="/repair-status"
                 className="px-5 py-3 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-xs sm:text-sm backdrop-blur-md transition flex items-center gap-2 border border-white/20"
               >
-                <span>Already have a repair with us? Check status &gt;</span>
+                <span>Check Ongoing Status &gt;</span>
               </Link>
             </div>
+          </div>
+        </div>
+
+        {/* Quick Utility Links Bar */}
+        <div className="mb-12 bg-white rounded-2xl border border-neutral-200/90 p-4 shadow-2xs flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-xs font-bold text-neutral-800">
+            <span className="w-2 h-2 rounded-full bg-sfd-teal" />
+            <span>SmartFoneDoctor Bench Quick Links:</span>
+          </div>
+          <div className="flex items-center gap-3 flex-wrap text-xs font-semibold text-neutral-600">
+            <Link
+              href="/track"
+              className="inline-flex items-center gap-1.5 hover:text-sfd-teal transition-colors px-3 py-1.5 rounded-lg bg-neutral-50 border border-neutral-200/60"
+            >
+              <Activity className="w-3.5 h-3.5 text-sfd-teal" />
+              <span>Track Repair Ticket</span>
+            </Link>
+            <Link
+              href="/review"
+              className="inline-flex items-center gap-1.5 hover:text-sfd-teal transition-colors px-3 py-1.5 rounded-lg bg-neutral-50 border border-neutral-200/60"
+            >
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+              <span>Customer Reviews (4.9★)</span>
+            </Link>
+            <Link
+              href="/faq"
+              className="inline-flex items-center gap-1.5 hover:text-sfd-teal transition-colors px-3 py-1.5 rounded-lg bg-neutral-50 border border-neutral-200/60"
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-sfd-teal" />
+              <span>Repair FAQ</span>
+            </Link>
+            <Link
+              href="/locations/i/book-repair"
+              className="inline-flex items-center gap-1.5 hover:text-sfd-teal transition-colors px-3 py-1.5 rounded-lg bg-neutral-50 border border-neutral-200/60"
+            >
+              <MapPin className="w-3.5 h-3.5 text-sfd-teal" />
+              <span>Philadelphia Benches</span>
+            </Link>
           </div>
         </div>
 
@@ -330,7 +467,60 @@ export default function ServiceDetailClient({ service }: Props) {
           </div>
         </section>
 
-        {/* 5. Bottom Call to Action Banner */}
+        {/* 5. Related Diagnostic & Bench Troubleshooting Guides */}
+        <section className="mb-16 bg-white rounded-[24px] border border-neutral-200/90 p-6 sm:p-8 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <BookOpen className="w-4 h-4 text-sfd-teal" />
+                <span className="text-xs font-bold uppercase tracking-wider text-sfd-teal">
+                  Technical Knowledge Base
+                </span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-bold text-[#1d1c1a] tracking-tight">
+                Related Diagnostic &amp; Hardware Guides
+              </h3>
+            </div>
+            <Link
+              href="/blog"
+              className="text-xs font-bold text-sfd-teal hover:underline inline-flex items-center gap-1 self-start sm:self-auto"
+            >
+              <span>Explore All Guides &amp; Articles</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {diagnosticGuides.map((guide) => (
+              <Link
+                key={guide.url}
+                href={guide.url}
+                className="p-5 rounded-2xl border border-neutral-200/80 bg-neutral-50/50 hover:bg-white hover:border-sfd-teal hover:shadow-xs transition-all group flex flex-col justify-between"
+              >
+                <div className="space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-sfd-teal bg-sfd-teal/10 px-2 py-0.5 rounded-full inline-block">
+                    {guide.category}
+                  </span>
+                  <h4 className="text-xs sm:text-sm font-bold text-neutral-900 group-hover:text-sfd-teal transition-colors leading-snug line-clamp-2">
+                    {guide.title}
+                  </h4>
+                </div>
+                <div className="pt-3 mt-3 border-t border-neutral-200/60 flex items-center justify-between text-xs text-neutral-500">
+                  <span className="flex items-center gap-1 text-[11px]">
+                    <Clock className="w-3 h-3 text-sfd-teal" />
+                    {guide.readTime}
+                  </span>
+                  <span className="text-xs font-bold text-sfd-teal group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-0.5">
+                    <span>Read</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* 6. Bottom Call to Action Banner */}
         <section className="w-full rounded-2xl sm:rounded-3xl bg-[#1d1c1a] text-white p-6 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-md mb-8">
           <div>
             <h3 className="text-lg sm:text-2xl font-bold tracking-tight">

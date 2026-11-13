@@ -18,8 +18,12 @@ import {
   Sparkles,
   ExternalLink,
   ChevronRight,
+  Star,
+  Calendar,
+  MessageSquare,
 } from "lucide-react";
 import Footer from "@/components/layout/Footer";
+import { JsonLd, buildBreadcrumbSchema } from "@/lib/schema";
 
 interface TimelineStep {
   title: string;
@@ -147,8 +151,14 @@ export default function RepairStatusPage() {
     }
   };
 
+  const breadcrumbSchema = buildBreadcrumbSchema([
+    { name: "Home", url: "/" },
+    { name: "Repair Status", url: "/repair-status" },
+  ]);
+
   return (
     <main className="bg-[#fcfcfc] min-h-screen">
+      <JsonLd data={breadcrumbSchema} />
       <div className="max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20">
         
         {/* 1. Clean Breadcrumb */}
@@ -564,12 +574,77 @@ export default function RepairStatusPage() {
                   </p>
                 </div>
 
+                {/* Post-Repair Retention & Review CTAs */}
+                <div className="bg-white rounded-[24px] border border-neutral-200/90 p-5 shadow-xs space-y-3">
+                  <div className="flex items-center gap-2 text-[#1d1c1a] font-bold text-sm">
+                    <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                    <span>Customer Experience &amp; Next Steps</span>
+                  </div>
+
+                  <p className="text-xs text-neutral-600 leading-relaxed">
+                    Once your device is back in your hands, share your feedback or schedule maintenance for other family devices:
+                  </p>
+
+                  <div className="space-y-2 pt-1">
+                    <Link
+                      href="/review"
+                      className="w-full py-2.5 px-4 rounded-xl bg-sfd-teal hover:bg-sfd-dark text-white font-bold text-xs text-center transition flex items-center justify-center gap-2 shadow-xs"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      <span>Rate Technician &amp; Leave Review</span>
+                    </Link>
+
+                    <Link
+                      href="/schedule-repair"
+                      className="w-full py-2.5 px-4 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-semibold text-xs text-center transition border border-neutral-200/80 flex items-center justify-center gap-2"
+                    >
+                      <Calendar className="w-3.5 h-3.5 text-neutral-500" />
+                      <span>Book Another Device Repair</span>
+                    </Link>
+                  </div>
+                </div>
+
               </div>
 
             </div>
 
           </div>
         )}
+
+        {/* Global Post-Tracking Helpful Resources */}
+        <div className="mt-12 rounded-[24px] bg-neutral-900 text-white p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-sm">
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-sfd-teal block mb-1">
+              SmartFoneDoctor Customer Care
+            </span>
+            <h3 className="text-lg sm:text-xl font-bold tracking-tight">
+              Have questions about your repair or warranty?
+            </h3>
+            <p className="text-xs text-neutral-400 mt-1 max-w-lg">
+              Check our repair FAQs or visit our store branches across West Philadelphia and University City.
+            </p>
+          </div>
+          <div className="flex items-center gap-3 shrink-0 flex-wrap">
+            <Link
+              href="/review"
+              className="px-5 py-2.5 rounded-full bg-sfd-teal hover:bg-sfd-dark text-white font-bold text-xs uppercase tracking-wider transition"
+            >
+              Customer Reviews
+            </Link>
+            <Link
+              href="/faq"
+              className="px-5 py-2.5 rounded-full bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-semibold text-xs transition border border-neutral-700"
+            >
+              View Repair FAQ
+            </Link>
+            <Link
+              href="/schedule-repair"
+              className="px-5 py-2.5 rounded-full bg-[#c8102e] hover:bg-[#a00c24] text-white font-bold text-xs uppercase tracking-wider transition"
+            >
+              New Appointment
+            </Link>
+          </div>
+        </div>
 
       </div>
 

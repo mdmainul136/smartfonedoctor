@@ -21,7 +21,10 @@ import {
   Layers,
   ChevronDown,
   Info,
+  PenTool,
 } from "lucide-react";
+import RichTextEditor from "@/components/admin/RichTextEditor";
+import RankMathSeoSuite from "@/components/admin/RankMathSeoSuite";
 
 export default function DedicatedPageEditor({
   params,
@@ -204,7 +207,42 @@ export default function DedicatedPageEditor({
             </div>
           </div>
 
-          {/* BLOCK 2: PAGE BLOCKS ARCHITECTURE */}
+          {/* BLOCK 2: RICH TEXT WRITING CANVAS */}
+          <div className="bg-white border border-[#e8e8e8] rounded-[10px] p-5 shadow-2xs flex flex-col gap-3">
+            <div className="flex items-center justify-between pb-3 border-b border-[#f2f2f2]">
+              <div className="flex items-center gap-2">
+                <PenTool className="w-4 h-4 text-[#009691]" />
+                <h2 className="text-[15px] font-bold text-[#111111]">Page Body &amp; Rich Content</h2>
+              </div>
+              <span className="text-[10px] text-teal-700 bg-teal-50 border border-teal-200 px-2.5 py-0.5 rounded-full font-semibold">
+                WYSIWYG &amp; Slash Commands
+              </span>
+            </div>
+
+            <p className="text-[11px] text-gray-400">
+              Format full rich text content, troubleshooting steps, and policy terms. Use the <strong className="text-teal-700 font-semibold">+ Add Block</strong> button or type <strong className="font-mono text-gray-700">/</strong> for instant diagnostic blocks, tools, and tables.
+            </p>
+
+            <RichTextEditor
+              value={page.contentHtml || ""}
+              onChange={(html) => handleUpdate("contentHtml", html)}
+              placeholder="Write or format full rich text content, policy guidelines, or service descriptions for this page..."
+              minHeight="380px"
+            />
+          </div>
+
+          {/* BLOCK 3: RANKMATH LIVE SEO ANALYSIS SUITE */}
+          <RankMathSeoSuite
+            title={page.title}
+            slug={page.slug}
+            excerpt={page.metaDesc}
+            contentHtml={page.contentHtml || ""}
+            focusKeyword={page.focusKeyword || ""}
+            canonicalUrl={page.path}
+            onKeywordChange={(kw) => handleUpdate("focusKeyword", kw)}
+          />
+
+          {/* BLOCK 4: PAGE BLOCKS ARCHITECTURE */}
           <div className="bg-white border border-[#e8e8e8] rounded-[10px] p-5 shadow-2xs flex flex-col gap-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#f2f2f2]">
               <div className="flex items-center gap-2">

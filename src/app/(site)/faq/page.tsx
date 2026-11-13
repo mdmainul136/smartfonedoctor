@@ -3,8 +3,9 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronDown, HelpCircle } from "lucide-react";
+import { ChevronDown, HelpCircle, Calendar, MapPin, Wrench, ArrowRight } from "lucide-react";
 import Footer from "@/components/layout/Footer";
+import { JsonLd, buildFaqSchema, buildBreadcrumbSchema } from "@/lib/schema";
 
 interface FaqItem {
   question: string;
@@ -119,8 +120,19 @@ export default function FaqPage() {
     }));
   };
 
+  const breadcrumbSchema = buildBreadcrumbSchema([
+    { name: "Home", url: "/" },
+    { name: "Frequently Asked Questions", url: "/faq" },
+  ]);
+
+  const faqSchema = buildFaqSchema(FAQS);
+
   return (
     <main className="bg-[#fcfcfc] min-h-screen">
+      {/* ── JSON-LD Structured Data ── */}
+      <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={faqSchema} />
+
       <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20">
 
         {/* 1. Breadcrumbs */}
@@ -222,6 +234,39 @@ export default function FaqPage() {
               </div>
             );
           })}
+        </div>
+
+        {/* 5. Conversion & Cross-Linking CTA Banner */}
+        <div className="max-w-[1000px] mx-auto mt-16 rounded-[24px] bg-[#1d1c1a] text-white p-8 sm:p-10 shadow-md flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="space-y-2 text-center sm:text-left">
+            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4dd0e1]">
+              <Wrench className="w-4 h-4 text-sfd-teal" />
+              <span>Have a Specific Device Issue?</span>
+            </div>
+            <h3 className="text-xl sm:text-2xl font-bold tracking-tight">
+              Get an Upfront Diagnostic &amp; Price Quote
+            </h3>
+            <p className="text-xs sm:text-sm text-neutral-400 max-w-lg">
+              Walk in to any of our 3 Philadelphia store branches or schedule online to hold replacement parts and skip the queue.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full sm:w-auto">
+            <Link
+              href="/schedule-repair"
+              className="w-full sm:w-auto text-center px-6 py-3.5 rounded-full bg-[#c8102e] hover:bg-[#a00c24] text-white font-bold text-xs uppercase tracking-wider transition shadow-sm active:scale-95 flex items-center justify-center gap-2"
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              <span>Schedule Repair</span>
+            </Link>
+            <Link
+              href="/locations/i/book-repair"
+              className="w-full sm:w-auto text-center px-5 py-3.5 rounded-full bg-neutral-800 hover:bg-neutral-700 text-white font-semibold text-xs transition border border-neutral-700 flex items-center justify-center gap-2"
+            >
+              <MapPin className="w-3.5 h-3.5" />
+              <span>Find Nearest Store</span>
+            </Link>
+          </div>
         </div>
 
       </div>

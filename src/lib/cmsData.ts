@@ -14,6 +14,9 @@ export interface CMSPage {
   status: "Published" | "Draft";
   lastEdited: string;
   author: string;
+  contentHtml?: string;
+  focusKeyword?: string;
+  featuredImage?: string;
 }
 
 export const INITIAL_CMS_PAGES: CMSPage[] = [
