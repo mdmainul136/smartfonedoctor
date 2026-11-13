@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import MediaModal, { SelectedMediaPayload } from "./MediaModal";
+import { PSEO_DEVICES, PSEO_ISSUES } from "@/lib/pSeoEngine";
 import {
   Bold,
   Italic,
@@ -148,6 +149,13 @@ export default function RichTextEditor({
   // YouTube Embed Dialog
   const [videoModalOpen, setVideoModalOpen] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
+
+  // Advance pSEO Juicy Linking Dialog
+  const [pseoModalOpen, setPseoModalOpen] = useState(false);
+  const [selectedDeviceSlug, setSelectedDeviceSlug] = useState(PSEO_DEVICES[0]?.slug || "iphone-16-pro");
+  const [selectedIssueSlug, setSelectedIssueSlug] = useState(PSEO_ISSUES[0]?.slug || "screen-repair");
+  const [linkingStrategy, setLinkingStrategy] = useState<"inline" | "card" | "matrix">("inline");
+  const [customAnchorText, setCustomAnchorText] = useState("");
 
   // Toolbar Block Menu
   const [blockMenuOpen, setBlockMenuOpen] = useState(false);
@@ -423,6 +431,70 @@ export default function RichTextEditor({
     setVideoUrl("");
   };
 
+  // Advance pSEO Juicy Linking Insertion
+  const handleInsertPseoLink = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (mode !== "visual") return;
+    editorRef.current?.focus();
+
+    const device = PSEO_DEVICES.find((d) => d.slug === selectedDeviceSlug) || PSEO_DEVICES[0];
+    const issue = PSEO_ISSUES.find((i) => i.slug === selectedIssueSlug) || PSEO_ISSUES[0];
+    const price = issue.basePrice + (device.releaseYear >= 2024 ? 20 : 0);
+    const targetUrl = `/repairs/${device.category}/${device.slug}/${issue.slug}`;
+
+    let html = "";
+
+    if (linkingStrategy === "inline") {
+      const anchorText = customAnchorText.trim() || `${device.name} ${issue.shortName} in Philadelphia`;
+      html = `<a href="${targetUrl}" class="sfd-juicy-link" style="color: #00897b; font-weight: 700; text-decoration: underline; text-underline-offset: 3px;">${anchorText} <span style="font-size: 11px; background: #e6fffa; color: #00897b; border: 1px solid #b2f5ea; padding: 2px 7px; border-radius: 9999px; font-weight: 600; margin-left: 4px; text-decoration: none; display: inline-block;">$${price} · ${issue.turnaroundDisplay}</span></a> `;
+    } else if (linkingStrategy === "card") {
+      html = `
+        <div class="sfd-pseo-card" style="background: linear-gradient(135deg, #1d1c1a 0%, #2e2a25 100%); color: #ffffff; border-radius: 16px; padding: 24px; margin: 24px 0; border: 1px solid #3f3f46; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
+          <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 16px;">
+            <div style="max-width: 500px;">
+              <span style="background: rgba(77, 208, 225, 0.15); color: #4dd0e1; border: 1px solid rgba(77, 208, 225, 0.3); padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Philadelphia Bench Service</span>
+              <h4 style="font-size: 20px; font-weight: 800; color: #ffffff; margin: 8px 0 4px 0;">${device.name} ${issue.name}</h4>
+              <p style="font-size: 13px; color: #d4d4d8; margin: 0; line-height: 1.5;">${device.specs} · Backed by 90-day parts &amp; labor warranty · Walk-ins welcome at 33 S 52nd St.</p>
+            </div>
+            <div style="text-align: right; min-width: 140px;">
+              <span style="font-size: 24px; font-weight: 900; color: #4dd0e1; display: block;">From $${price}</span>
+              <span style="font-size: 11px; color: #a1a1aa; display: block; margin-bottom: 10px;">⏱️ ${issue.turnaroundDisplay}</span>
+              <a href="${targetUrl}" style="display: inline-block; background: #00897b; color: #ffffff; padding: 9px 20px; border-radius: 9999px; font-size: 12px; font-weight: 700; text-transform: uppercase; text-decoration: none; letter-spacing: 0.05em;">Book Repair →</a>
+            </div>
+          </div>
+        </div>
+        <p><br></p>
+      `;
+    } else if (linkingStrategy === "matrix") {
+      const siblings = PSEO_ISSUES.filter((i) => i.category === device.category).slice(0, 3);
+      html = `
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px; margin: 20px 0;">
+          <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #00897b; letter-spacing: 0.05em; display: block; margin-bottom: 8px;">Popular Hardware Repairs for ${device.name}</span>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+            ${siblings
+              .map((sib) => {
+                const sPrice = sib.basePrice + (device.releaseYear >= 2024 ? 20 : 0);
+                const sUrl = `/repairs/${device.category}/${device.slug}/${sib.slug}`;
+                return `
+                  <a href="${sUrl}" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px; text-decoration: none; color: #0f172a; display: block;">
+                    <strong style="font-size: 13px; display: block; color: #0f172a; margin-bottom: 4px;">${sib.shortName}</strong>
+                    <span style="font-size: 11px; color: #64748b;">From $${sPrice} · ${sib.turnaroundDisplay}</span>
+                  </a>
+                `;
+              })
+              .join("")}
+          </div>
+        </div>
+        <p><br></p>
+      `;
+    }
+
+    document.execCommand("insertHTML", false, html);
+    handleInput();
+    setPseoModalOpen(false);
+    setCustomAnchorText("");
+  };
+
   // Media Library Integration
   const handleSelectMedia = (payload: SelectedMediaPayload) => {
     if (!payload.url) return;
@@ -627,6 +699,39 @@ export default function RichTextEditor({
       badge: "HR",
       icon: Minus,
       action: insertHorizontalRule,
+    },
+    {
+      id: "pseo-link",
+      title: "⚡ pSEO Contextual Juicy Link",
+      description: "Smart link to device/issue repair page with live price & turnaround badge",
+      badge: "pSEO",
+      icon: Sparkles,
+      action: () => {
+        setLinkingStrategy("inline");
+        setPseoModalOpen(true);
+      },
+    },
+    {
+      id: "repair-card",
+      title: "🛠️ Bench Service CTA Card",
+      description: "High-converting dark repair card with pricing, specs & booking button",
+      badge: "Convert",
+      icon: Wrench,
+      action: () => {
+        setLinkingStrategy("card");
+        setPseoModalOpen(true);
+      },
+    },
+    {
+      id: "sibling-matrix",
+      title: "🗺️ Sibling Repairs Matrix",
+      description: "Cross-link Screen, Battery, Port, Back Glass for this device",
+      badge: "Matrix",
+      icon: Layers,
+      action: () => {
+        setLinkingStrategy("matrix");
+        setPseoModalOpen(true);
+      },
     },
   ];
 
@@ -1319,6 +1424,19 @@ export default function RichTextEditor({
           )}
         </div>
 
+        {/* ⚡ ADVANCE pSEO JUICY LINK INSERTER BUTTON */}
+        <div className="flex items-center pl-1">
+          <button
+            type="button"
+            onClick={() => setPseoModalOpen(true)}
+            className="h-[28px] px-2.5 rounded-md bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+            title="Insert Advance pSEO Juicy Link, Repair Card or Matrix"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
+            <span>⚡ pSEO Link</span>
+          </button>
+        </div>
+
         {/* View Toggle Mode (Visual vs HTML Code) */}
         <div className="ml-auto flex items-center gap-1 bg-white p-0.5 rounded border border-gray-200">
           <button
@@ -1812,6 +1930,168 @@ export default function RichTextEditor({
         title="Insert In-Article Media"
         selectButtonText="Insert into Article"
       />
+
+      {/* MODAL: ADVANCE pSEO JUICY LINKING INSERTER */}
+      {pseoModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 border border-gray-200 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-teal-50 border border-teal-200 flex items-center justify-center text-[#00897b]">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-gray-900 leading-tight">
+                    Insert Advance pSEO Juicy Link &amp; Strategy
+                  </h3>
+                  <span className="text-[11px] text-gray-400">
+                    High-authority internal links connecting devices, issues &amp; prices
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPseoModalOpen(false)}
+                className="text-gray-400 hover:text-black cursor-pointer p-1 rounded-lg hover:bg-gray-100"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleInsertPseoLink} className="space-y-4">
+              {/* Select Device & Issue */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-gray-600 block mb-1">
+                    Target Device Model
+                  </label>
+                  <select
+                    value={selectedDeviceSlug}
+                    onChange={(e) => setSelectedDeviceSlug(e.target.value)}
+                    className="w-full h-[34px] px-2.5 rounded-lg border border-gray-300 text-xs font-semibold bg-white focus:outline-none focus:border-[#00897b]"
+                  >
+                    {PSEO_DEVICES.map((d) => (
+                      <option key={d.slug} value={d.slug}>
+                        {d.brand}: {d.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-gray-600 block mb-1">
+                    Hardware Issue
+                  </label>
+                  <select
+                    value={selectedIssueSlug}
+                    onChange={(e) => setSelectedIssueSlug(e.target.value)}
+                    className="w-full h-[34px] px-2.5 rounded-lg border border-gray-300 text-xs font-semibold bg-white focus:outline-none focus:border-[#00897b]"
+                  >
+                    {PSEO_ISSUES.map((i) => (
+                      <option key={i.slug} value={i.slug}>
+                        {i.name} (from ${i.basePrice})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Linking Strategy Tabs */}
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-gray-600 block mb-1.5">
+                  Juicy Linking Strategy
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setLinkingStrategy("inline")}
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      linkingStrategy === "inline"
+                        ? "border-[#00897b] bg-teal-50/50 shadow-2xs"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <span className="text-xs font-bold text-gray-900 block mb-0.5">Inline Badge</span>
+                    <span className="text-[10px] text-gray-500 block leading-tight">In-text link + price pill</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setLinkingStrategy("card")}
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      linkingStrategy === "card"
+                        ? "border-[#00897b] bg-teal-50/50 shadow-2xs"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <span className="text-xs font-bold text-gray-900 block mb-0.5">Service CTA Card</span>
+                    <span className="text-[10px] text-gray-500 block leading-tight">Dark high-conversion card</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setLinkingStrategy("matrix")}
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      linkingStrategy === "matrix"
+                        ? "border-[#00897b] bg-teal-50/50 shadow-2xs"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <span className="text-xs font-bold text-gray-900 block mb-0.5">Sibling Matrix</span>
+                    <span className="text-[10px] text-gray-500 block leading-tight">3-box cross repair grid</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Optional Custom Anchor Text (for inline) */}
+              {linkingStrategy === "inline" && (
+                <div>
+                  <label className="text-[11px] font-semibold text-gray-600 block mb-1">
+                    Custom Anchor Text (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={customAnchorText}
+                    onChange={(e) => setCustomAnchorText(e.target.value)}
+                    placeholder={`e.g. ${
+                      (PSEO_DEVICES.find((d) => d.slug === selectedDeviceSlug) || PSEO_DEVICES[0]).name
+                    } ${(PSEO_ISSUES.find((i) => i.slug === selectedIssueSlug) || PSEO_ISSUES[0]).shortName}`}
+                    className="w-full h-[32px] px-2.5 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-[#00897b]"
+                  />
+                </div>
+              )}
+
+              {/* Target Destination Preview */}
+              <div className="p-3 rounded-xl bg-gray-50 border border-gray-200 text-xs space-y-1">
+                <span className="text-[10px] uppercase font-bold text-gray-400 block">Link Destination (pSEO Canonical)</span>
+                <span className="font-mono text-gray-800 text-[11px] font-semibold block truncate">
+                  /repairs/
+                  {(PSEO_DEVICES.find((d) => d.slug === selectedDeviceSlug) || PSEO_DEVICES[0]).category}/
+                  {selectedDeviceSlug}/{selectedIssueSlug}
+                </span>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-2 border-t border-gray-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPseoModalOpen(false)}
+                  className="h-[32px] px-4 rounded-lg border text-xs font-semibold text-gray-600 hover:bg-gray-50 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="h-[32px] px-4 rounded-lg bg-[#00897b] hover:bg-[#00796b] text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
+                  <span>Insert pSEO Link</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );
