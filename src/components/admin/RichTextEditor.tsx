@@ -60,6 +60,9 @@ import {
   ArrowUpRight,
   RefreshCw,
   Copy,
+  Trash2,
+  Plus,
+  Sliders,
 } from "lucide-react";
 
 interface RichTextEditorProps {
@@ -223,6 +226,46 @@ export default function RichTextEditor({
     x: number;
     y: number;
   }>({ visible: false, x: 0, y: 0 });
+
+  // Elementor-style Floating Block Customizer / Inspector State
+  const [activeBlockInfo, setActiveBlockInfo] = useState<{
+    visible: boolean;
+    element: HTMLElement | null;
+    type: "callout" | "tools" | "step" | "comparison" | "faq" | "pseo" | "section" | null;
+    calloutVariant?: "tip" | "warning" | "note" | "danger" | "pro";
+    calloutStyle?: "accent" | "pill" | "glass";
+    isFullWidth: boolean;
+    x: number;
+    y: number;
+  }>({
+    visible: false,
+    element: null,
+    type: null,
+    isFullWidth: false,
+    x: 0,
+    y: 0,
+  });
+
+  // Elementor Side Style Inspector State
+  const [sideInspectorOpen, setSideInspectorOpen] = useState(true);
+  const [selectedBlockNode, setSelectedBlockNode] = useState<HTMLElement | null>(null);
+  const [blockStyleProps, setBlockStyleProps] = useState({
+    tag: "",
+    type: "block",
+    bg: "",
+    textColor: "",
+    borderColor: "",
+    borderWidth: "",
+    borderRadius: "",
+    padding: "",
+    isFullWidth: false,
+    customCss: "",
+    customClass: "",
+    tableHeaderBg: "",
+    tableStriped: false,
+    stepNumber: "1",
+    toolCols: 2,
+  });
 
   // Slash Command Menu State
   const [slashMenu, setSlashMenu] = useState<{
@@ -595,8 +638,8 @@ export default function RichTextEditor({
     saveCurrentSelection();
   };
 
-  // Custom Callout Alert Boxes (Payload CMS & Notion Standard - Minimalist & Customizable via globals.css)
-  const insertCallout = (type: "tip" | "warning" | "note" | "danger") => {
+  // Custom Callout Alert Boxes (Editable Templates like MS Word + Customizable via Elementor Inspector)
+  const insertCallout = (type: "tip" | "warning" | "note" | "danger" | "pro") => {
     if (mode !== "visual") return;
     setInsertMenuOpen(false);
 
@@ -605,6 +648,7 @@ export default function RichTextEditor({
       warning: "Warning",
       note: "Note",
       danger: "Caution",
+      pro: "Pro Tip",
     };
 
     const svgs = {
@@ -612,6 +656,7 @@ export default function RichTextEditor({
       warning: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
       note: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`,
       danger: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+      pro: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
     };
 
     const calloutHtml = `
@@ -620,7 +665,7 @@ export default function RichTextEditor({
           ${svgs[type]}
         </div>
         <div class="sfd-callout-body">
-          <span class="sfd-callout-title" contenteditable="false">${titles[type]}:</span>
+          <span class="sfd-callout-title">${titles[type]}:</span>
           <span class="sfd-callout-content">Enter advice or technical notes here...</span>
         </div>
       </div>
@@ -646,7 +691,7 @@ export default function RichTextEditor({
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
             </div>
             <div class="sfd-callout-body">
-              <span class="sfd-callout-title" contenteditable="false">Tip:</span>
+              <span class="sfd-callout-title">Tip:</span>
               <span class="sfd-callout-content">Always disconnect the battery connector before removing display cables.</span>
             </div>
           </div>
@@ -655,7 +700,7 @@ export default function RichTextEditor({
     } else if (type === "step") {
       html = `
         <div class="sfd-step-card">
-          <div class="sfd-step-badge" contenteditable="false">1</div>
+          <div class="sfd-step-badge">1</div>
           <div class="sfd-step-body">
             <h3 class="sfd-step-title">Step 1: Soft Prying with Anti-Static Spudger</h3>
             <p class="sfd-step-desc">Carefully release perimeter adhesive seal using gentle heat and nylon pry tool...</p>
@@ -1040,14 +1085,283 @@ export default function RichTextEditor({
     }
   }, [mode]);
 
+  // Elementor Side Style Inspector Helpers
+  const refreshBlockStyleProps = useCallback((el: HTMLElement | null) => {
+    if (!el) {
+      setSelectedBlockNode(null);
+      return;
+    }
+    setSelectedBlockNode(el);
+
+    let type = "block";
+    if (el.classList.contains("sfd-callout")) type = "callout";
+    else if (el.classList.contains("sfd-tools-card")) type = "tools";
+    else if (el.classList.contains("sfd-step-card")) type = "step";
+    else if (el.classList.contains("sfd-comparison-wrapper") || el.tagName.toLowerCase() === "table") type = "table";
+    else if (el.classList.contains("sfd-faq-accordion") || el.tagName.toLowerCase() === "details") type = "faq";
+    else if (el.classList.contains("sfd-section-block")) type = "section";
+    else if (el.classList.contains("sfd-pseo-card")) type = "card";
+
+    const bg = el.style.backgroundColor || "";
+    const textColor = el.style.color || "";
+    const borderColor = el.style.borderColor || "";
+    const borderWidth = el.style.borderWidth || "";
+    const borderRadius = el.style.borderRadius || "";
+    const padding = el.style.padding || "";
+    const isFullWidth = el.classList.contains("sfd-full") || el.style.width === "100%";
+    const customCss = el.getAttribute("style") || "";
+    const customClass = el.className || "";
+
+    let tableHeaderBg = "";
+    const th = el.querySelector("th");
+    if (th) tableHeaderBg = th.style.backgroundColor || "";
+
+    let stepNumber = "1";
+    const badge = el.querySelector(".sfd-step-badge");
+    if (badge) stepNumber = badge.textContent?.trim() || "1";
+
+    setBlockStyleProps({
+      tag: el.tagName.toLowerCase(),
+      type,
+      bg,
+      textColor,
+      borderColor,
+      borderWidth,
+      borderRadius,
+      padding,
+      isFullWidth,
+      customCss,
+      customClass,
+      tableHeaderBg,
+      tableStriped: el.classList.contains("sfd-table-striped"),
+      stepNumber,
+      toolCols: el.classList.contains("sfd-tools-1col") ? 1 : 2,
+    });
+  }, []);
+
+  const updateSelectedBlockFromSelection = useCallback(() => {
+    if (typeof window === "undefined" || mode !== "visual") return;
+    const sel = window.getSelection();
+    if (!sel || !editorRef.current?.contains(sel.anchorNode)) return;
+    const anchorEl = sel.anchorNode instanceof Element ? sel.anchorNode : sel.anchorNode?.parentElement;
+    const blockEl = anchorEl?.closest<HTMLElement>(
+      ".sfd-callout, .sfd-tools-card, .sfd-step-card, .sfd-comparison-wrapper, table, .sfd-faq-accordion, .sfd-pseo-card, .sfd-section-block, pre, blockquote"
+    );
+    if (blockEl) {
+      refreshBlockStyleProps(blockEl);
+    }
+  }, [mode, refreshBlockStyleProps]);
+
+  const handleEditorBlockClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    const blockEl = target.closest<HTMLElement>(
+      ".sfd-callout, .sfd-tools-card, .sfd-step-card, .sfd-comparison-wrapper, table, .sfd-faq-accordion, .sfd-pseo-card, .sfd-section-block, pre, blockquote"
+    );
+    if (blockEl) {
+      refreshBlockStyleProps(blockEl);
+    } else if (e.target === editorRef.current) {
+      setSelectedBlockNode(null);
+    }
+  };
+
+  const handleUpdateBg = (color: string) => {
+    if (!selectedBlockNode) return;
+    selectedBlockNode.style.backgroundColor = color;
+    handleInput();
+    refreshBlockStyleProps(selectedBlockNode);
+  };
+
+  const handleUpdateTextColor = (color: string) => {
+    if (!selectedBlockNode) return;
+    selectedBlockNode.style.color = color;
+    const content = selectedBlockNode.querySelectorAll<HTMLElement>(".sfd-callout-content, .sfd-callout-title, p, h2, h3, h4, li, td, summary, .sfd-faq-answer");
+    content.forEach((el) => {
+      el.style.color = color;
+    });
+    handleInput();
+    refreshBlockStyleProps(selectedBlockNode);
+  };
+
+  const handleUpdateBorderColor = (color: string) => {
+    if (!selectedBlockNode) return;
+    selectedBlockNode.style.borderColor = color;
+    if (!selectedBlockNode.style.borderWidth || selectedBlockNode.style.borderWidth === "0px") {
+      selectedBlockNode.style.borderWidth = "1px";
+      selectedBlockNode.style.borderStyle = "solid";
+    }
+    handleInput();
+    refreshBlockStyleProps(selectedBlockNode);
+  };
+
+  const handleUpdateBorderWidth = (width: string) => {
+    if (!selectedBlockNode) return;
+    selectedBlockNode.style.borderWidth = width;
+    if (width !== "0px") selectedBlockNode.style.borderStyle = "solid";
+    handleInput();
+    refreshBlockStyleProps(selectedBlockNode);
+  };
+
+  const handleUpdateBorderRadius = (radius: string) => {
+    if (!selectedBlockNode) return;
+    selectedBlockNode.style.borderRadius = radius;
+    handleInput();
+    refreshBlockStyleProps(selectedBlockNode);
+  };
+
+  const handleUpdatePadding = (pad: string) => {
+    if (!selectedBlockNode) return;
+    selectedBlockNode.style.padding = pad;
+    handleInput();
+    refreshBlockStyleProps(selectedBlockNode);
+  };
+
+  const handleToggleWidth = (wMode: "snug" | "full") => {
+    if (!selectedBlockNode) return;
+    if (wMode === "snug") {
+      selectedBlockNode.classList.remove("sfd-full");
+      selectedBlockNode.classList.add("sfd-snug");
+      selectedBlockNode.style.width = "fit-content";
+      selectedBlockNode.style.maxWidth = "100%";
+      if (selectedBlockNode.classList.contains("sfd-callout")) {
+        selectedBlockNode.style.display = "inline-flex";
+      }
+    } else {
+      selectedBlockNode.classList.remove("sfd-snug");
+      selectedBlockNode.classList.add("sfd-full");
+      selectedBlockNode.style.width = "100%";
+      if (selectedBlockNode.classList.contains("sfd-callout")) {
+        selectedBlockNode.style.display = "flex";
+      }
+    }
+    handleInput();
+    refreshBlockStyleProps(selectedBlockNode);
+  };
+
+  const handleUpdateCustomCss = (cssString: string) => {
+    if (!selectedBlockNode) return;
+    selectedBlockNode.setAttribute("style", cssString);
+    handleInput();
+    refreshBlockStyleProps(selectedBlockNode);
+  };
+
+  const handleUpdateTableHeaderBg = (color: string) => {
+    if (!selectedBlockNode) return;
+    const ths = selectedBlockNode.querySelectorAll<HTMLElement>("th");
+    ths.forEach((th) => {
+      th.style.backgroundColor = color;
+    });
+    handleInput();
+    refreshBlockStyleProps(selectedBlockNode);
+  };
+
+  const handleAddTableRow = () => {
+    if (!selectedBlockNode) return;
+    const tbody = selectedBlockNode.querySelector("tbody") || selectedBlockNode.querySelector("table");
+    if (tbody) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>New Spec Metric</td><td class="sfd-comp-highlight">OEM Spec</td><td class="sfd-comp-muted">Aftermarket</td>`;
+      tbody.appendChild(tr);
+      handleInput();
+    }
+  };
+
+  const handleDeleteTableRow = () => {
+    if (!selectedBlockNode) return;
+    const rows = selectedBlockNode.querySelectorAll("tbody tr");
+    if (rows.length > 1) {
+      rows[rows.length - 1].remove();
+      handleInput();
+    }
+  };
+
+  const handleToggleToolCols = () => {
+    if (!selectedBlockNode) return;
+    const ul = selectedBlockNode.querySelector<HTMLElement>("ul");
+    if (ul) {
+      if (selectedBlockNode.classList.contains("sfd-tools-1col")) {
+        selectedBlockNode.classList.remove("sfd-tools-1col");
+        ul.style.gridTemplateColumns = "repeat(auto-fit, minmax(260px, 1fr))";
+      } else {
+        selectedBlockNode.classList.add("sfd-tools-1col");
+        ul.style.gridTemplateColumns = "1fr";
+      }
+      handleInput();
+      refreshBlockStyleProps(selectedBlockNode);
+    }
+  };
+
+  const handleAddToolItem = () => {
+    if (!selectedBlockNode) return;
+    const ul = selectedBlockNode.querySelector("ul");
+    if (ul) {
+      const newLi = document.createElement("li");
+      newLi.innerHTML = `<strong>Tool:</strong> Specify tool or part...`;
+      ul.appendChild(newLi);
+      handleInput();
+      refreshBlockStyleProps(selectedBlockNode);
+    }
+  };
+
+  const handleUpdateStepNumber = (newNum: string) => {
+    if (!selectedBlockNode) return;
+    const badge = selectedBlockNode.querySelector(".sfd-step-badge");
+    if (badge) badge.textContent = newNum;
+    const title = selectedBlockNode.querySelector(".sfd-step-title");
+    if (title && title.textContent?.startsWith("Step ")) {
+      title.textContent = `Step ${newNum}: ` + title.textContent.replace(/^Step \d+:\s*/, "");
+    }
+    handleInput();
+    refreshBlockStyleProps(selectedBlockNode);
+  };
+
+  const handleAddNextStep = () => {
+    if (!selectedBlockNode) return;
+    const badge = selectedBlockNode.querySelector(".sfd-step-badge");
+    const currentNum = parseInt(badge?.textContent?.trim() || "1", 10) || 1;
+    const nextNum = currentNum + 1;
+    const nextStepHtml = `
+      <div class="sfd-step-card">
+        <div class="sfd-step-badge">${nextNum}</div>
+        <div class="sfd-step-body">
+          <h3 class="sfd-step-title">Step ${nextNum}: Enter procedure step</h3>
+          <p class="sfd-step-desc">Describe hardware disassembly or bench testing step...</p>
+        </div>
+      </div>
+    `;
+    const temp = document.createElement("div");
+    temp.innerHTML = nextStepHtml.trim();
+    const newStepCard = temp.firstElementChild as HTMLElement | null;
+    if (newStepCard) {
+      selectedBlockNode.insertAdjacentElement("afterend", newStepCard);
+      handleInput();
+      refreshBlockStyleProps(newStepCard);
+    }
+  };
+
+  const handleDuplicateBlock = () => {
+    if (!selectedBlockNode) return;
+    const clone = selectedBlockNode.cloneNode(true) as HTMLElement;
+    selectedBlockNode.insertAdjacentElement("afterend", clone);
+    handleInput();
+    refreshBlockStyleProps(clone);
+  };
+
+  const handleDeleteBlock = () => {
+    if (!selectedBlockNode) return;
+    selectedBlockNode.remove();
+    setSelectedBlockNode(null);
+    handleInput();
+  };
+
   useEffect(() => {
     const handleSelectionChange = () => {
       updateBubblePosition();
       updateActiveFormats();
+      updateSelectedBlockFromSelection();
     };
     document.addEventListener("selectionchange", handleSelectionChange);
     return () => document.removeEventListener("selectionchange", handleSelectionChange);
-  }, [updateBubblePosition, updateActiveFormats]);
+  }, [updateBubblePosition, updateActiveFormats, updateSelectedBlockFromSelection]);
 
   // 2. SLASH COMMANDS LIST
   const slashCommands: SlashCommandItem[] = [
@@ -2058,6 +2372,14 @@ export default function RichTextEditor({
                   <ShieldAlert className="w-3.5 h-3.5 text-gray-500" />
                   <span>Danger Callout</span>
                 </button>
+                <button
+                  type="button"
+                  onClick={() => insertCallout("pro")}
+                  className="w-full px-3 py-1.5 text-left hover:bg-gray-100 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+                  <span>Pro Tip Callout</span>
+                </button>
 
                 <div className="my-1 border-t border-gray-100" />
                 <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 select-none pointer-events-none">
@@ -2120,30 +2442,49 @@ export default function RichTextEditor({
           <span>Assist</span>
         </button>
 
-        {/* View Toggle Mode (Visual vs HTML Code) */}
-        <div className="ml-auto flex items-center gap-0.5 bg-gray-100 p-0.5 rounded-md border border-gray-200 text-xs">
+        {/* View Toggle & Elementor Block Styler */}
+        <div className="ml-auto flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setMode("visual")}
-            className={`px-2.5 py-1 rounded text-[11px] font-medium transition cursor-pointer ${
-              mode === "visual"
-                ? "bg-white text-gray-900 shadow-2xs"
-                : "text-gray-500 hover:text-gray-900"
+            onClick={() => setSideInspectorOpen((prev) => !prev)}
+            className={`h-[28px] px-2.5 rounded-md border text-[11px] font-semibold inline-flex items-center gap-1.5 cursor-pointer transition ${
+              sideInspectorOpen
+                ? "bg-teal-600 text-white border-teal-700 shadow-2xs"
+                : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
             }`}
+            title="Toggle Elementor-style Block CSS & Design Inspector"
           >
-            Visual
+            <Sliders className="w-3 h-3" />
+            <span>Block Styler</span>
+            {selectedBlockNode && (
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
+            )}
           </button>
-          <button
-            type="button"
-            onClick={() => setMode("html")}
-            className={`px-2.5 py-1 rounded text-[11px] font-medium transition cursor-pointer ${
-              mode === "html"
-                ? "bg-white text-gray-900 shadow-2xs"
-                : "text-gray-500 hover:text-gray-900"
-            }`}
-          >
-            HTML
-          </button>
+
+          <div className="flex items-center gap-0.5 bg-gray-100 p-0.5 rounded-md border border-gray-200 text-xs">
+            <button
+              type="button"
+              onClick={() => setMode("visual")}
+              className={`px-2.5 py-1 rounded text-[11px] font-medium transition cursor-pointer ${
+                mode === "visual"
+                  ? "bg-white text-gray-900 shadow-2xs"
+                  : "text-gray-500 hover:text-gray-900"
+              }`}
+            >
+              Visual
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("html")}
+              className={`px-2.5 py-1 rounded text-[11px] font-medium transition cursor-pointer ${
+                mode === "html"
+                  ? "bg-white text-gray-900 shadow-2xs"
+                  : "text-gray-500 hover:text-gray-900"
+              }`}
+            >
+              HTML
+            </button>
+          </div>
         </div>
 
       </div>
@@ -2349,34 +2690,506 @@ export default function RichTextEditor({
         </div>
       )}
 
-      {/* 4. WRITING WORKSPACE */}
+      {/* 4. WRITING WORKSPACE + ELEMENTOR SIDE INSPECTOR */}
       {mode === "visual" ? (
-        <div
-          ref={editorRef}
-          contentEditable
-          onClick={handleEditorAreaClick}
-          onInput={handleInput}
-          onBlur={() => {
-            saveCurrentSelection();
-            handleInput();
-          }}
-          onKeyDown={handleKeyDown}
-          onKeyUp={() => {
-            saveCurrentSelection();
-            updateActiveFormats();
-          }}
-          onMouseUp={() => {
-            saveCurrentSelection();
-            updateActiveFormats();
-          }}
-          onSelect={() => {
-            saveCurrentSelection();
-            updateActiveFormats();
-          }}
-          className="sfd-editor-content p-6 sm:p-8 outline-none text-[#1d1c1a] leading-relaxed text-sm font-normal focus:bg-white transition-colors overflow-y-auto selection:bg-teal-100 selection:text-teal-900"
-          style={{ minHeight }}
-          data-placeholder={placeholder}
-        />
+        <div className="flex flex-col lg:flex-row relative items-stretch">
+          <div
+            ref={editorRef}
+            contentEditable
+            onClick={(e) => {
+              handleEditorAreaClick(e);
+              handleEditorBlockClick(e);
+            }}
+            onInput={handleInput}
+            onBlur={() => {
+              saveCurrentSelection();
+              handleInput();
+            }}
+            onKeyDown={handleKeyDown}
+            onKeyUp={() => {
+              saveCurrentSelection();
+              updateActiveFormats();
+              updateSelectedBlockFromSelection();
+            }}
+            onMouseUp={() => {
+              saveCurrentSelection();
+              updateActiveFormats();
+              updateSelectedBlockFromSelection();
+            }}
+            onSelect={() => {
+              saveCurrentSelection();
+              updateActiveFormats();
+              updateSelectedBlockFromSelection();
+            }}
+            className="flex-1 min-w-0 sfd-editor-content p-6 sm:p-8 outline-none text-[#1d1c1a] leading-relaxed text-sm font-normal focus:bg-white transition-colors overflow-y-auto selection:bg-teal-100 selection:text-teal-900"
+            style={{ minHeight }}
+            data-placeholder={placeholder}
+          />
+
+          {/* Elementor Side Style Inspector */}
+          {sideInspectorOpen && (
+            <aside
+              onMouseDown={(e) => e.stopPropagation()}
+              className="w-full lg:w-72 xl:w-80 border-t lg:border-t-0 lg:border-l border-gray-200 bg-[#fdfdfd] p-4 shrink-0 flex flex-col gap-4 text-xs select-none max-h-[850px] overflow-y-auto"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between pb-2.5 border-b border-gray-200">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded bg-teal-600 text-white flex items-center justify-center">
+                    <Sliders className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-900 leading-tight text-xs">Block Style Inspector</h4>
+                    <span className="text-[10px] text-gray-400">Elementor-style CSS &amp; Layout</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSideInspectorOpen(false)}
+                  className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 cursor-pointer"
+                  title="Close Inspector"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {selectedBlockNode ? (
+                <div className="space-y-4">
+                  {/* Active Element Badge */}
+                  <div className="p-2.5 rounded-lg bg-teal-50 border border-teal-200 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-teal-700 tracking-wider">Active Block</span>
+                      <div className="text-xs font-bold text-gray-900 flex items-center gap-1.5 mt-0.5">
+                        <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
+                        <span className="capitalize">{blockStyleProps.type}</span>
+                        <code className="text-[10px] text-gray-400 font-mono">&lt;{blockStyleProps.tag}&gt;</code>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleDuplicateBlock}
+                      className="px-2 py-1 rounded bg-white hover:bg-teal-100 border border-teal-200 text-teal-800 text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
+                      title="Clone / Duplicate this block"
+                    >
+                      <Copy className="w-3 h-3" />
+                      <span>Clone</span>
+                    </button>
+                  </div>
+
+                  {/* 1. LAYOUT & GEOMETRY */}
+                  <div className="space-y-2.5">
+                    <span className="text-[11px] font-bold text-gray-700 uppercase tracking-wider block">Layout &amp; Width</span>
+
+                    <div>
+                      <div className="grid grid-cols-2 gap-1.5 bg-gray-100 p-1 rounded-lg">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleWidth("snug")}
+                          className={`py-1 rounded text-center text-[11px] font-semibold transition cursor-pointer ${
+                            !blockStyleProps.isFullWidth ? "bg-white text-teal-700 shadow-2xs" : "text-gray-600 hover:text-black"
+                          }`}
+                          title="Hugs content snugly (eliminates empty right space)"
+                        >
+                          Snug (Fit)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleWidth("full")}
+                          className={`py-1 rounded text-center text-[11px] font-semibold transition cursor-pointer ${
+                            blockStyleProps.isFullWidth ? "bg-white text-teal-700 shadow-2xs" : "text-gray-600 hover:text-black"
+                          }`}
+                        >
+                          Full Width
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Corner Radius */}
+                    <div>
+                      <label className="text-[10px] text-gray-500 block mb-1">Corner Radius</label>
+                      <div className="grid grid-cols-4 gap-1">
+                        {[
+                          { label: "Sharp", val: "0px" },
+                          { label: "6px", val: "6px" },
+                          { label: "12px", val: "12px" },
+                          { label: "Pill", val: "9999px" },
+                        ].map((r) => (
+                          <button
+                            key={r.val}
+                            type="button"
+                            onClick={() => handleUpdateBorderRadius(r.val)}
+                            className="py-1 rounded border border-gray-200 bg-white hover:bg-gray-50 text-[10px] font-medium text-gray-700 text-center transition cursor-pointer"
+                          >
+                            {r.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Padding */}
+                    <div>
+                      <label className="text-[10px] text-gray-500 block mb-1">Inner Padding</label>
+                      <div className="grid grid-cols-3 gap-1">
+                        {[
+                          { label: "Compact", val: "8px 12px" },
+                          { label: "Normal", val: "12px 18px" },
+                          { label: "Spacious", val: "20px 24px" },
+                        ].map((p) => (
+                          <button
+                            key={p.label}
+                            type="button"
+                            onClick={() => handleUpdatePadding(p.val)}
+                            className="py-1 rounded border border-gray-200 bg-white hover:bg-gray-50 text-[10px] font-medium text-gray-700 text-center transition cursor-pointer"
+                          >
+                            {p.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2. COLORS & BORDER */}
+                  <div className="space-y-2.5 pt-2 border-t border-gray-200">
+                    <span className="text-[11px] font-bold text-gray-700 uppercase tracking-wider block">Background, Text &amp; Border</span>
+
+                    {/* Background Color */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-[10px] text-gray-500">Background Color (bg)</label>
+                        <input
+                          type="color"
+                          value={blockStyleProps.bg && blockStyleProps.bg.startsWith("#") ? blockStyleProps.bg : "#ffffff"}
+                          onChange={(e) => handleUpdateBg(e.target.value)}
+                          className="w-5 h-5 rounded cursor-pointer border border-gray-200 p-0"
+                          title="Pick custom background color"
+                        />
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {[
+                          { name: "White", val: "#ffffff" },
+                          { name: "Off White", val: "#fafafa" },
+                          { name: "Mint", val: "#f0fdf4" },
+                          { name: "Amber", val: "#fffbeb" },
+                          { name: "Sky", val: "#eff6ff" },
+                          { name: "Rose", val: "#fff1f2" },
+                          { name: "Purple", val: "#faf5ff" },
+                          { name: "Dark", val: "#0f172a" },
+                        ].map((c) => (
+                          <button
+                            key={c.val}
+                            type="button"
+                            onClick={() => handleUpdateBg(c.val)}
+                            className="w-6 h-6 rounded-md border border-gray-300 shadow-2xs hover:scale-110 transition shrink-0 cursor-pointer"
+                            style={{ backgroundColor: c.val }}
+                            title={c.name}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Text Color */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-[10px] text-gray-500">Text Color</label>
+                        <input
+                          type="color"
+                          value={blockStyleProps.textColor && blockStyleProps.textColor.startsWith("#") ? blockStyleProps.textColor : "#1f2937"}
+                          onChange={(e) => handleUpdateTextColor(e.target.value)}
+                          className="w-5 h-5 rounded cursor-pointer border border-gray-200 p-0"
+                          title="Pick custom text color"
+                        />
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {[
+                          { name: "Charcoal", val: "#1f2937" },
+                          { name: "Black", val: "#000000" },
+                          { name: "Emerald", val: "#15803d" },
+                          { name: "Amber", val: "#b45309" },
+                          { name: "Blue", val: "#1d4ed8" },
+                          { name: "Red", val: "#b91c1c" },
+                          { name: "Purple", val: "#7e22ce" },
+                          { name: "White", val: "#ffffff" },
+                        ].map((c) => (
+                          <button
+                            key={c.val}
+                            type="button"
+                            onClick={() => handleUpdateTextColor(c.val)}
+                            className="w-6 h-6 rounded-md border border-gray-300 shadow-2xs hover:scale-110 transition shrink-0 cursor-pointer"
+                            style={{ backgroundColor: c.val }}
+                            title={c.name}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Border */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-[10px] text-gray-500">Border Color &amp; Thickness</label>
+                        <input
+                          type="color"
+                          value={blockStyleProps.borderColor && blockStyleProps.borderColor.startsWith("#") ? blockStyleProps.borderColor : "#e5e7eb"}
+                          onChange={(e) => handleUpdateBorderColor(e.target.value)}
+                          className="w-5 h-5 rounded cursor-pointer border border-gray-200 p-0"
+                          title="Pick border color"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 gap-1">
+                        {[
+                          { label: "None", val: "0px" },
+                          { label: "1px", val: "1px" },
+                          { label: "2px", val: "2px" },
+                          { label: "4px", val: "4px" },
+                        ].map((b) => (
+                          <button
+                            key={b.val}
+                            type="button"
+                            onClick={() => handleUpdateBorderWidth(b.val)}
+                            className="py-1 rounded border border-gray-200 bg-white hover:bg-gray-50 text-[10px] font-medium text-gray-700 text-center transition cursor-pointer"
+                          >
+                            {b.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 3. CONTEXTUAL CONTROLS (Table / Tools / Step) */}
+                  {blockStyleProps.type === "table" && (
+                    <div className="space-y-2.5 pt-2 border-t border-gray-200">
+                      <span className="text-[11px] font-bold text-gray-700 uppercase tracking-wider block">Table Controls</span>
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] text-gray-500">Header Background</label>
+                        <input
+                          type="color"
+                          value={blockStyleProps.tableHeaderBg && blockStyleProps.tableHeaderBg.startsWith("#") ? blockStyleProps.tableHeaderBg : "#f9fafb"}
+                          onChange={(e) => handleUpdateTableHeaderBg(e.target.value)}
+                          className="w-5 h-5 rounded cursor-pointer border border-gray-200 p-0"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleAddTableRow}
+                          className="flex-1 py-1 rounded bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-800 text-[10px] font-semibold transition cursor-pointer"
+                        >
+                          + Add Row
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleDeleteTableRow}
+                          className="py-1 px-2.5 rounded bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 text-[10px] font-semibold transition cursor-pointer"
+                        >
+                          - Row
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {blockStyleProps.type === "tools" && (
+                    <div className="space-y-2.5 pt-2 border-t border-gray-200">
+                      <span className="text-[11px] font-bold text-gray-700 uppercase tracking-wider block">Tools Grid Controls</span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleAddToolItem}
+                          className="flex-1 py-1 rounded bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-800 text-[10px] font-semibold transition cursor-pointer"
+                        >
+                          + Add Tool
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleToggleToolCols}
+                          className="py-1 px-2.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] font-semibold transition cursor-pointer"
+                        >
+                          {blockStyleProps.toolCols === 1 ? "2-Col Grid" : "1-Col List"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {blockStyleProps.type === "step" && (
+                    <div className="space-y-2.5 pt-2 border-t border-gray-200">
+                      <span className="text-[11px] font-bold text-gray-700 uppercase tracking-wider block">Step Controls</span>
+                      <div className="flex items-center gap-2">
+                        <label className="text-[10px] text-gray-500 whitespace-nowrap">Step #:</label>
+                        <input
+                          type="number"
+                          value={blockStyleProps.stepNumber}
+                          onChange={(e) => handleUpdateStepNumber(e.target.value)}
+                          className="w-16 h-6 px-2 rounded border border-gray-300 text-xs font-bold"
+                          min="1"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAddNextStep}
+                          className="flex-1 py-1 rounded bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-800 text-[10px] font-semibold transition cursor-pointer"
+                        >
+                          + Next Step
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 4. ONE-CLICK DESIGN PRESETS */}
+                  <div className="space-y-2 pt-2 border-t border-gray-200">
+                    <span className="text-[11px] font-bold text-gray-700 uppercase tracking-wider block">1-Click Design Presets</span>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleUpdateBg("#f0fdf4");
+                          handleUpdateBorderColor("#16a34a");
+                          handleUpdateTextColor("#15803d");
+                          handleUpdateBorderRadius("8px");
+                        }}
+                        className="p-1.5 rounded border border-emerald-200 bg-emerald-50 text-[10px] font-semibold text-emerald-800 hover:bg-emerald-100 text-left transition cursor-pointer"
+                      >
+                        💡 Soft Tip
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleUpdateBg("#fffbeb");
+                          handleUpdateBorderColor("#d97706");
+                          handleUpdateTextColor("#b45309");
+                          handleUpdateBorderRadius("8px");
+                        }}
+                        className="p-1.5 rounded border border-amber-200 bg-amber-50 text-[10px] font-semibold text-amber-800 hover:bg-amber-100 text-left transition cursor-pointer"
+                      >
+                        ⚠️ Soft Warning
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleUpdateBg("#eff6ff");
+                          handleUpdateBorderColor("#2563eb");
+                          handleUpdateTextColor("#1d4ed8");
+                          handleUpdateBorderRadius("8px");
+                        }}
+                        className="p-1.5 rounded border border-blue-200 bg-blue-50 text-[10px] font-semibold text-blue-800 hover:bg-blue-100 text-left transition cursor-pointer"
+                      >
+                        ℹ️ Soft Note
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleUpdateBg("#fff1f2");
+                          handleUpdateBorderColor("#dc2626");
+                          handleUpdateTextColor("#b91c1c");
+                          handleUpdateBorderRadius("8px");
+                        }}
+                        className="p-1.5 rounded border border-red-200 bg-red-50 text-[10px] font-semibold text-red-800 hover:bg-red-100 text-left transition cursor-pointer"
+                      >
+                        🛑 Caution
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleUpdateBg("#faf5ff");
+                          handleUpdateBorderColor("#9333ea");
+                          handleUpdateTextColor("#7e22ce");
+                          handleUpdateBorderRadius("8px");
+                        }}
+                        className="p-1.5 rounded border border-purple-200 bg-purple-50 text-[10px] font-semibold text-purple-800 hover:bg-purple-100 text-left transition cursor-pointer"
+                      >
+                        ⭐ Pro Tip
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleUpdateBg("#0f172a");
+                          handleUpdateBorderColor("#334155");
+                          handleUpdateTextColor("#f8fafc");
+                          handleUpdateBorderRadius("10px");
+                        }}
+                        className="p-1.5 rounded border border-slate-700 bg-slate-900 text-[10px] font-semibold text-white hover:bg-slate-800 text-left transition cursor-pointer"
+                      >
+                        🧰 Dark Bench
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 5. CUSTOM CSS / INLINE STYLE */}
+                  <div className="space-y-1.5 pt-2 border-t border-gray-200">
+                    <label className="text-[11px] font-bold text-gray-700 uppercase tracking-wider block">
+                      Custom CSS (Inline Style)
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={blockStyleProps.customCss}
+                      onChange={(e) => handleUpdateCustomCss(e.target.value)}
+                      placeholder="e.g. box-shadow: 0 8px 24px rgba(0,0,0,0.08); border-left: 5px solid teal;"
+                      className="w-full p-2 font-mono text-[10px] text-gray-800 bg-white border border-gray-300 rounded focus:outline-none focus:border-teal-500 leading-tight"
+                    />
+                  </div>
+
+                  {/* Delete Block */}
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={handleDeleteBlock}
+                      className="w-full py-1.5 rounded border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Delete This Block</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Empty Selection State */
+                <div className="py-10 px-2 text-center space-y-3">
+                  <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mx-auto text-gray-400">
+                    <Paintbrush className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h5 className="font-semibold text-gray-800 text-xs">No Block Selected</h5>
+                    <p className="text-[11px] text-gray-400 mt-1 max-w-[210px] mx-auto leading-relaxed">
+                      Click on any Callout, Tools Grid, Step, or Table in the editor to customize its background, text, borders &amp; CSS like Elementor.
+                    </p>
+                  </div>
+                  <div className="pt-2">
+                    <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold block mb-2">Or Insert Template:</span>
+                    <div className="flex flex-col gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => insertCallout("tip")}
+                        className="w-full py-1.5 px-3 rounded-lg border border-gray-200 hover:border-teal-400 hover:bg-teal-50/50 text-[11px] font-medium text-gray-700 text-left flex items-center gap-2 transition cursor-pointer"
+                      >
+                        <Lightbulb className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Insert Callout Box</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => insertStructuredBlock("tools")}
+                        className="w-full py-1.5 px-3 rounded-lg border border-gray-200 hover:border-teal-400 hover:bg-teal-50/50 text-[11px] font-medium text-gray-700 text-left flex items-center gap-2 transition cursor-pointer"
+                      >
+                        <Wrench className="w-3.5 h-3.5 text-slate-700" />
+                        <span>Insert Tools Bento Grid</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => insertStructuredBlock("step")}
+                        className="w-full py-1.5 px-3 rounded-lg border border-gray-200 hover:border-teal-400 hover:bg-teal-50/50 text-[11px] font-medium text-gray-700 text-left flex items-center gap-2 transition cursor-pointer"
+                      >
+                        <ListChecks className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Insert Repair Step</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => insertStructuredBlock("comparison")}
+                        className="w-full py-1.5 px-3 rounded-lg border border-gray-200 hover:border-teal-400 hover:bg-teal-50/50 text-[11px] font-medium text-gray-700 text-left flex items-center gap-2 transition cursor-pointer"
+                      >
+                        <TableIcon className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Insert Comparison Table</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </aside>
+          )}
+        </div>
       ) : (
         <textarea
           value={value}
