@@ -42,6 +42,9 @@ import {
   FileCode2,
   Maximize2,
   Minimize2,
+  Palette,
+  Paintbrush,
+  Baseline,
 } from "lucide-react";
 
 interface RichTextEditorProps {
@@ -59,6 +62,62 @@ interface SlashCommandItem {
   badge?: string;
   action: () => void;
 }
+
+const TEXT_COLORS = [
+  { label: "Default Dark", color: "#111827" },
+  { label: "SFD Teal", color: "#00897b" },
+  { label: "Crimson Red", color: "#dc2626" },
+  { label: "Royal Blue", color: "#2563eb" },
+  { label: "Emerald Green", color: "#059669" },
+  { label: "Amber Orange", color: "#d97706" },
+  { label: "Purple", color: "#7c3aed" },
+  { label: "Muted Gray", color: "#6b7280" },
+  { label: "Pure White", color: "#ffffff" },
+];
+
+const HIGHLIGHT_COLORS = [
+  { label: "Soft Yellow", color: "#fef08a" },
+  { label: "Soft Teal", color: "#ccfbf1" },
+  { label: "Soft Green", color: "#dcfce7" },
+  { label: "Soft Blue", color: "#dbeafe" },
+  { label: "Soft Red", color: "#fee2e2" },
+  { label: "Soft Purple", color: "#f3e8ff" },
+  { label: "Soft Amber", color: "#ffedd5" },
+  { label: "Muted Gray", color: "#f3f4f6" },
+];
+
+const BLOCK_BG_STYLES = [
+  {
+    label: "Soft Teal Bench Box",
+    desc: "Light teal background with green-teal border",
+    style: "background: #f0fdfa; border: 1px solid #99f6e4; color: #134e48; padding: 16px 20px; border-radius: 8px; margin: 18px 0;",
+  },
+  {
+    label: "Light Gray Card",
+    desc: "Clean bordered container card",
+    style: "background: #f8fafc; border: 1px solid #e2e8f0; color: #1e293b; padding: 16px 20px; border-radius: 8px; margin: 18px 0;",
+  },
+  {
+    label: "Warm Amber Callout",
+    desc: "Warning/Attention amber container",
+    style: "background: #fffbeb; border: 1px solid #fde68a; color: #92400e; padding: 16px 20px; border-radius: 8px; margin: 18px 0;",
+  },
+  {
+    label: "Soft Blue Notice",
+    desc: "Informational sky blue container",
+    style: "background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a; padding: 16px 20px; border-radius: 8px; margin: 18px 0;",
+  },
+  {
+    label: "Soft Red Danger Card",
+    desc: "High priority warning container",
+    style: "background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 16px 20px; border-radius: 8px; margin: 18px 0;",
+  },
+  {
+    label: "Dark Sleek Terminal Box",
+    desc: "Dark charcoal background with light text",
+    style: "background: #1e293b; border: 1px solid #334155; color: #f8fafc; padding: 16px 20px; border-radius: 8px; margin: 18px 0;",
+  },
+];
 
 export default function RichTextEditor({
   value,
@@ -93,6 +152,15 @@ export default function RichTextEditor({
   // Toolbar Block Menu
   const [blockMenuOpen, setBlockMenuOpen] = useState(false);
   const blockMenuRef = useRef<HTMLDivElement>(null);
+
+  // Text & Block Color Selectors
+  const [textColorMenuOpen, setTextColorMenuOpen] = useState(false);
+  const [bgColorMenuOpen, setBgColorMenuOpen] = useState(false);
+  const [activeColor, setActiveColor] = useState("#111827");
+  const [customTextColor, setCustomTextColor] = useState("#00897b");
+  const [customBgColor, setCustomBgColor] = useState("#ccfbf1");
+  const textColorMenuRef = useRef<HTMLDivElement>(null);
+  const bgColorMenuRef = useRef<HTMLDivElement>(null);
 
   // Floating Bubble Selection Toolbar
   const [bubbleToolbar, setBubbleToolbar] = useState<{
@@ -705,16 +773,59 @@ export default function RichTextEditor({
     }
   };
 
-  // Close block menu on outside click
+  // Close menus on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (blockMenuRef.current && !blockMenuRef.current.contains(event.target as Node)) {
         setBlockMenuOpen(false);
       }
+      if (textColorMenuRef.current && !textColorMenuRef.current.contains(event.target as Node)) {
+        setTextColorMenuOpen(false);
+      }
+      if (bgColorMenuRef.current && !bgColorMenuRef.current.contains(event.target as Node)) {
+        setBgColorMenuOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const applyTextColor = (color: string) => {
+    if (mode !== "visual") return;
+    editorRef.current?.focus();
+    document.execCommand("foreColor", false, color);
+    setActiveColor(color);
+    handleInput();
+    setTextColorMenuOpen(false);
+  };
+
+  const applyHighlightColor = (color: string) => {
+    if (mode !== "visual") return;
+    editorRef.current?.focus();
+    document.execCommand("hiliteColor", false, color);
+    handleInput();
+    setBgColorMenuOpen(false);
+  };
+
+  const removeHighlight = () => {
+    if (mode !== "visual") return;
+    editorRef.current?.focus();
+    document.execCommand("hiliteColor", false, "transparent");
+    handleInput();
+    setBgColorMenuOpen(false);
+  };
+
+  const applyBlockBackground = (cardStyle: string) => {
+    if (mode !== "visual") return;
+    editorRef.current?.focus();
+    const sel = window.getSelection();
+    const selectedText = sel ? sel.toString() : "";
+    const inner = selectedText.trim() ? selectedText : "Enter highlighted block text here...";
+    const html = `<div style="${cardStyle}">${inner}</div><p><br></p>`;
+    document.execCommand("insertHTML", false, html);
+    handleInput();
+    setBgColorMenuOpen(false);
+  };
 
   return (
     <div
@@ -807,14 +918,181 @@ export default function RichTextEditor({
           >
             <Strikethrough className="w-3.5 h-3.5" />
           </button>
-          <button
-            type="button"
-            onClick={toggleHighlight}
-            className="p-1.5 rounded hover:bg-yellow-100 text-yellow-700 cursor-pointer"
-            title="Highlight Text"
-          >
-            <Highlighter className="w-3.5 h-3.5" />
-          </button>
+
+          {/* 1. TEXT COLOR SELECTOR DROPDOWN */}
+          <div className="relative" ref={textColorMenuRef}>
+            <button
+              type="button"
+              onClick={() => {
+                setTextColorMenuOpen(!textColorMenuOpen);
+                setBgColorMenuOpen(false);
+              }}
+              className="px-1.5 py-1 rounded hover:bg-gray-200 text-gray-800 flex items-center gap-0.5 cursor-pointer"
+              title="Text Color"
+            >
+              <div className="flex flex-col items-center leading-none">
+                <span className="font-bold text-[13px] leading-tight">A</span>
+                <span
+                  className="w-3.5 h-[3px] rounded-full mt-0.5"
+                  style={{ backgroundColor: activeColor }}
+                />
+              </div>
+              <ChevronDown className="w-3 h-3 text-gray-400" />
+            </button>
+
+            {textColorMenuOpen && (
+              <div className="absolute left-0 top-full mt-1.5 w-56 bg-white rounded-xl shadow-xl border border-gray-200 p-3 z-30 animate-in fade-in zoom-in-95 duration-150">
+                <div className="flex items-center justify-between text-xs font-bold text-gray-800 pb-2 border-b border-gray-100 mb-2">
+                  <span>Text Color</span>
+                  <button
+                    type="button"
+                    onClick={() => applyTextColor("#111827")}
+                    className="text-[11px] text-gray-400 hover:text-black font-normal"
+                  >
+                    Reset
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-4 gap-2 mb-3">
+                  {TEXT_COLORS.map((col) => (
+                    <button
+                      key={col.color}
+                      type="button"
+                      onClick={() => applyTextColor(col.color)}
+                      className="group flex flex-col items-center gap-1 p-1 rounded hover:bg-gray-50 cursor-pointer"
+                      title={col.label}
+                    >
+                      <span
+                        className="w-6 h-6 rounded-full border border-gray-300 shadow-2xs group-hover:scale-110 transition-transform flex items-center justify-center"
+                        style={{ backgroundColor: col.color }}
+                      >
+                        {activeColor === col.color && (
+                          <Check className={`w-3.5 h-3.5 ${col.color === "#ffffff" ? "text-black" : "text-white"}`} />
+                        )}
+                      </span>
+                      <span className="text-[10px] text-gray-500 truncate w-full text-center">
+                        {col.label.split(" ")[0]}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Custom Color Input */}
+                <div className="pt-2 border-t border-gray-100 flex items-center justify-between gap-2">
+                  <span className="text-[11px] text-gray-500 font-medium">Custom Hex:</span>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="color"
+                      value={customTextColor}
+                      onChange={(e) => {
+                        setCustomTextColor(e.target.value);
+                        applyTextColor(e.target.value);
+                      }}
+                      className="w-6 h-6 rounded border border-gray-300 cursor-pointer p-0 bg-transparent"
+                    />
+                    <span className="text-[11px] font-mono text-gray-600 uppercase">
+                      {customTextColor}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 2. BLOCK & HIGHLIGHT BACKGROUND COLOR DROPDOWN */}
+          <div className="relative" ref={bgColorMenuRef}>
+            <button
+              type="button"
+              onClick={() => {
+                setBgColorMenuOpen(!bgColorMenuOpen);
+                setTextColorMenuOpen(false);
+              }}
+              className="px-1.5 py-1 rounded hover:bg-gray-200 text-gray-800 flex items-center gap-0.5 cursor-pointer"
+              title="Highlight & Block Background Color"
+            >
+              <div className="flex flex-col items-center leading-none">
+                <Palette className="w-3.5 h-3.5 text-gray-700" />
+                <span className="w-3.5 h-[3px] rounded-full mt-0.5 bg-yellow-400" />
+              </div>
+              <ChevronDown className="w-3 h-3 text-gray-400" />
+            </button>
+
+            {bgColorMenuOpen && (
+              <div className="absolute left-0 top-full mt-1.5 w-72 bg-white rounded-xl shadow-xl border border-gray-200 p-3 z-30 animate-in fade-in zoom-in-95 duration-150 max-h-96 overflow-y-auto">
+                
+                {/* Section A: Text Highlight Color */}
+                <div className="pb-2 border-b border-gray-100">
+                  <div className="flex items-center justify-between text-xs font-bold text-gray-800 mb-2">
+                    <span className="flex items-center gap-1">
+                      <Highlighter className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Text Highlight</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={removeHighlight}
+                      className="text-[11px] text-gray-400 hover:text-black font-normal"
+                    >
+                      Clear
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {HIGHLIGHT_COLORS.map((col) => (
+                      <button
+                        key={col.color}
+                        type="button"
+                        onClick={() => applyHighlightColor(col.color)}
+                        className="flex items-center gap-1.5 px-2 py-1 rounded text-left hover:opacity-80 text-xs font-medium text-gray-800 border border-gray-200 transition cursor-pointer"
+                        style={{ backgroundColor: col.color }}
+                      >
+                        <span className="text-[10px] truncate">{col.label}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="pt-2 flex items-center justify-between text-xs">
+                    <span className="text-[11px] text-gray-400">Custom Highlight:</span>
+                    <input
+                      type="color"
+                      value={customBgColor}
+                      onChange={(e) => {
+                        setCustomBgColor(e.target.value);
+                        applyHighlightColor(e.target.value);
+                      }}
+                      className="w-5 h-5 rounded cursor-pointer p-0 bg-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* Section B: Wrap Selection in Full Block Card Background */}
+                <div className="pt-3">
+                  <div className="text-xs font-bold text-gray-800 mb-2 flex items-center gap-1">
+                    <Layers className="w-3.5 h-3.5 text-[#00897b]" />
+                    <span>Block Background Card</span>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    {BLOCK_BG_STYLES.map((block) => (
+                      <button
+                        key={block.label}
+                        type="button"
+                        onClick={() => applyBlockBackground(block.style)}
+                        className="w-full text-left p-2 rounded-lg border border-gray-200 hover:border-teal-500 hover:bg-gray-50 transition cursor-pointer group"
+                      >
+                        <span className="text-xs font-bold text-gray-800 block group-hover:text-teal-700">
+                          {block.label}
+                        </span>
+                        <span className="text-[10px] text-gray-400 block truncate">
+                          {block.desc}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Text Alignment */}
@@ -1153,6 +1431,44 @@ export default function RichTextEditor({
           >
             H3
           </button>
+          <div className="w-[1px] h-3.5 bg-gray-700 mx-0.5" />
+          {/* Quick Color Swatches in Bubble Toolbar */}
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              applyTextColor("#00897b");
+            }}
+            className="w-3.5 h-3.5 rounded-full bg-[#00897b] border border-gray-500 hover:scale-125 transition-transform"
+            title="SFD Teal Text"
+          />
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              applyTextColor("#dc2626");
+            }}
+            className="w-3.5 h-3.5 rounded-full bg-[#dc2626] border border-gray-500 hover:scale-125 transition-transform"
+            title="Crimson Red Text"
+          />
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              applyHighlightColor("#fef08a");
+            }}
+            className="w-3.5 h-3.5 rounded-full bg-[#fef08a] border border-gray-500 hover:scale-125 transition-transform"
+            title="Soft Yellow Highlight"
+          />
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              applyHighlightColor("#ccfbf1");
+            }}
+            className="w-3.5 h-3.5 rounded-full bg-[#ccfbf1] border border-gray-500 hover:scale-125 transition-transform"
+            title="Soft Teal Highlight"
+          />
         </div>
       )}
 
