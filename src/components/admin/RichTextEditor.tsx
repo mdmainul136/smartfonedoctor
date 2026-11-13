@@ -43,6 +43,8 @@ import {
   Video,
   HelpCircle,
   Highlighter,
+  Eraser,
+  RemoveFormatting,
   Command,
   FileCode2,
   Maximize2,
@@ -194,6 +196,21 @@ export default function RichTextEditor({
   const textColorMenuRef = useRef<HTMLDivElement>(null);
   const bgColorMenuRef = useRef<HTMLDivElement>(null);
 
+  // Active Formatting & Detected Block Detection
+  const [activeFormats, setActiveFormats] = useState({
+    bold: false,
+    italic: false,
+    underline: false,
+    strikeThrough: false,
+  });
+  const [currentBlock, setCurrentBlock] = useState<{
+    tag: string;
+    label: string;
+  }>({
+    tag: "p",
+    label: "Paragraph",
+  });
+
   // Floating Bubble Selection Toolbar
   const [bubbleToolbar, setBubbleToolbar] = useState<{
     visible: boolean;
@@ -262,6 +279,78 @@ export default function RichTextEditor({
     }
   }, []);
 
+  const updateActiveFormats = useCallback(() => {
+    if (typeof window === "undefined" || mode !== "visual") return;
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || !editorRef.current?.contains(sel.anchorNode)) {
+      return;
+    }
+
+    try {
+      setActiveFormats({
+        bold: document.queryCommandState("bold"),
+        italic: document.queryCommandState("italic"),
+        underline: document.queryCommandState("underline"),
+        strikeThrough: document.queryCommandState("strikeThrough"),
+      });
+    } catch {
+      // Ignore if document query is unavailable
+    }
+
+    // Detect block element
+    let node: Node | null = sel.anchorNode;
+    if (node && node.nodeType === Node.TEXT_NODE) {
+      node = node.parentNode;
+    }
+
+    let detectedTag = "p";
+    let detectedLabel = "Paragraph";
+
+    while (node && node !== editorRef.current) {
+      const tag = (node as HTMLElement).tagName?.toLowerCase();
+      if (tag === "h1") {
+        detectedTag = "h1";
+        detectedLabel = "Heading 1";
+        break;
+      } else if (tag === "h2") {
+        detectedTag = "h2";
+        detectedLabel = "Heading 2";
+        break;
+      } else if (tag === "h3") {
+        detectedTag = "h3";
+        detectedLabel = "Heading 3";
+        break;
+      } else if (tag === "h4") {
+        detectedTag = "h4";
+        detectedLabel = "Heading 4";
+        break;
+      } else if (tag === "h5") {
+        detectedTag = "h5";
+        detectedLabel = "Heading 5";
+        break;
+      } else if (tag === "h6") {
+        detectedTag = "h6";
+        detectedLabel = "Heading 6";
+        break;
+      } else if (tag === "blockquote") {
+        detectedTag = "blockquote";
+        detectedLabel = "Blockquote";
+        break;
+      } else if (tag === "pre") {
+        detectedTag = "pre";
+        detectedLabel = "Code Block";
+        break;
+      } else if (tag === "p") {
+        detectedTag = "p";
+        detectedLabel = "Paragraph";
+        break;
+      }
+      node = node.parentNode;
+    }
+
+    setCurrentBlock({ tag: detectedTag, label: detectedLabel });
+  }, [mode]);
+
   const executeCommand = (command: string, val: string | undefined = undefined) => {
     if (mode !== "visual") return;
     editorRef.current?.focus();
@@ -269,6 +358,7 @@ export default function RichTextEditor({
     document.execCommand(command, false, val);
     saveCurrentSelection();
     handleInput();
+    updateActiveFormats();
   };
 
   const formatHeading = (tag: "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "p") => {
@@ -277,62 +367,112 @@ export default function RichTextEditor({
     restoreSelection();
 
     const sel = typeof window !== "undefined" ? window.getSelection() : null;
-    let ok = false;
+    if (!sel || sel.rangeCount === 0 || !editorRef.current) return;
 
-    // 1. Try native execCommand formatBlock
-    try {
-      ok = document.execCommand("formatBlock", false, `<${tag}>`);
-      if (!ok) {
-        ok = document.execCommand("formatBlock", false, tag);
-      }
-      if (!ok) {
-        ok = document.execCommand("formatBlock", false, tag.toUpperCase());
-      }
-    } catch {
-      ok = false;
+    const range = sel.getRangeAt(0);
+
+    // 1. Locate the nearest enclosing block node
+    let block: HTMLElement | null = null;
+    let node: Node | null = range.commonAncestorContainer;
+    if (node.nodeType === Node.TEXT_NODE) {
+      node = node.parentNode;
     }
 
-    // 2. If execCommand didn't transform or selection exists, directly transform DOM
-    if (!ok && sel && sel.rangeCount > 0) {
-      const range = sel.getRangeAt(0);
-      let container: Node | null = range.commonAncestorContainer;
-      if (container.nodeType === Node.TEXT_NODE) {
-        container = container.parentNode;
-      }
-
+    while (node && node !== editorRef.current) {
+      const tagName = (node as HTMLElement).tagName?.toLowerCase();
       if (
-        container &&
-        container !== editorRef.current &&
-        editorRef.current?.contains(container) &&
-        /^(P|H1|H2|H3|H4|H5|H6|DIV|BLOCKQUOTE)$/i.test((container as HTMLElement).tagName)
+        [
+          "p",
+          "h1",
+          "h2",
+          "h3",
+          "h4",
+          "h5",
+          "h6",
+          "blockquote",
+          "pre",
+          "div",
+          "li",
+        ].includes(tagName)
       ) {
+        block = node as HTMLElement;
+        break;
+      }
+      node = node.parentNode;
+    }
+
+    if (block && block !== editorRef.current) {
+      if (block.tagName.toLowerCase() === "li") {
+        document.execCommand("formatBlock", false, `<${tag}>`);
+      } else {
         const newEl = document.createElement(tag);
-        newEl.innerHTML = (container as HTMLElement).innerHTML;
-        (container as HTMLElement).parentNode?.replaceChild(newEl, container);
+        newEl.innerHTML = block.innerHTML;
+        block.parentNode?.replaceChild(newEl, block);
+
+        const newRange = document.createRange();
+        newRange.selectNodeContents(newEl);
+        if (sel.isCollapsed) {
+          newRange.collapse(false);
+        }
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+        savedRangeRef.current = newRange.cloneRange();
+      }
+    } else {
+      if (!sel.isCollapsed) {
+        const newEl = document.createElement(tag);
+        newEl.innerHTML = range.toString() || range.cloneContents().textContent || "";
+        range.deleteContents();
+        range.insertNode(newEl);
         const newRange = document.createRange();
         newRange.selectNodeContents(newEl);
         sel.removeAllRanges();
         sel.addRange(newRange);
         savedRangeRef.current = newRange.cloneRange();
       } else {
-        const selectedText = sel.toString();
-        if (selectedText) {
-          const newEl = document.createElement(tag);
-          newEl.textContent = selectedText;
-          range.deleteContents();
-          range.insertNode(newEl);
-          const newRange = document.createRange();
-          newRange.selectNodeContents(newEl);
-          sel.removeAllRanges();
-          sel.addRange(newRange);
-          savedRangeRef.current = newRange.cloneRange();
+        document.execCommand("formatBlock", false, `<${tag}>`);
+      }
+    }
+
+    saveCurrentSelection();
+    handleInput();
+    updateActiveFormats();
+    setBlockMenuOpen(false);
+  };
+
+  const clearFormatting = () => {
+    if (mode !== "visual") return;
+    editorRef.current?.focus();
+    restoreSelection();
+
+    // 1. Remove standard formatting
+    document.execCommand("removeFormat", false, undefined);
+    // 2. Clear background/highlight
+    document.execCommand("hiliteColor", false, "transparent");
+    // 3. Reset text color
+    document.execCommand("foreColor", false, "#111827");
+
+    // 4. Strip inline style background-color or color on any container span
+    const sel = typeof window !== "undefined" ? window.getSelection() : null;
+    if (sel && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      let container: Node | null = range.commonAncestorContainer;
+      if (container.nodeType === Node.TEXT_NODE) {
+        container = container.parentNode;
+      }
+      if (container && container !== editorRef.current && editorRef.current?.contains(container)) {
+        if ((container as HTMLElement).tagName?.toLowerCase() === "span") {
+          (container as HTMLElement).style.backgroundColor = "";
+          (container as HTMLElement).style.color = "";
         }
       }
     }
 
     saveCurrentSelection();
     handleInput();
-    setBlockMenuOpen(false);
+    updateActiveFormats();
+    setBgColorMenuOpen(false);
+    setTextColorMenuOpen(false);
   };
 
   const insertHeading = (tag: "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "p") => {
@@ -793,9 +933,13 @@ export default function RichTextEditor({
   }, [mode]);
 
   useEffect(() => {
-    document.addEventListener("selectionchange", updateBubblePosition);
-    return () => document.removeEventListener("selectionchange", updateBubblePosition);
-  }, [updateBubblePosition]);
+    const handleSelectionChange = () => {
+      updateBubblePosition();
+      updateActiveFormats();
+    };
+    document.addEventListener("selectionchange", handleSelectionChange);
+    return () => document.removeEventListener("selectionchange", handleSelectionChange);
+  }, [updateBubblePosition, updateActiveFormats]);
 
   // 2. SLASH COMMANDS LIST
   const slashCommands: SlashCommandItem[] = [
@@ -1194,6 +1338,7 @@ export default function RichTextEditor({
     setActiveColor(color);
     saveCurrentSelection();
     handleInput();
+    updateActiveFormats();
     setTextColorMenuOpen(false);
   };
 
@@ -1204,18 +1349,12 @@ export default function RichTextEditor({
     document.execCommand("hiliteColor", false, color);
     saveCurrentSelection();
     handleInput();
+    updateActiveFormats();
     setBgColorMenuOpen(false);
   };
 
   const removeHighlight = () => {
-    if (mode !== "visual") return;
-    editorRef.current?.focus();
-    restoreSelection();
-    document.execCommand("hiliteColor", false, "transparent");
-    document.execCommand("removeFormat", false, undefined);
-    saveCurrentSelection();
-    handleInput();
-    setBgColorMenuOpen(false);
+    clearFormatting();
   };
 
   const applyBlockBackground = (cardStyle: string) => {
@@ -1236,33 +1375,34 @@ export default function RichTextEditor({
       className="border border-gray-300 rounded-xl overflow-hidden bg-white shadow-2xs flex flex-col relative"
     >
       
-      {/* 1. STICKY WYSIWYG TOOLBAR */}
-      <div className="bg-[#f9fafb] border-b border-gray-200 p-2 flex flex-wrap items-center gap-1 sticky top-0 z-20">
+      {/* 1. STICKY WYSIWYG STUDIO 2-TIER TOOLBAR */}
+      <div className="sticky top-0 z-20 border-b border-gray-200 shadow-2xs">
         
-        {/* Undo / Redo */}
-        <div className="flex items-center border-r border-gray-200 pr-1.5 mr-1 gap-0.5">
-          <button
-            type="button"
-            onClick={() => executeCommand("undo")}
-            className="p-1.5 rounded hover:bg-gray-200 text-gray-700 cursor-pointer"
-            title="Undo (Ctrl+Z)"
-          >
-            <Undo className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => executeCommand("redo")}
-            className="p-1.5 rounded hover:bg-gray-200 text-gray-700 cursor-pointer"
-            title="Redo (Ctrl+Y)"
-          >
-            <Redo className="w-3.5 h-3.5" />
-          </button>
-        </div>
+        {/* TIER 1: TYPOGRAPHY & INLINE FORMATTING */}
+        <div className="bg-[#fcfdfd] px-3 py-2 flex flex-wrap items-center gap-1 border-b border-gray-100">
+          
+          {/* Undo / Redo */}
+          <div className="flex items-center gap-0.5 pr-1 border-r border-gray-200">
+            <button
+              type="button"
+              onClick={() => executeCommand("undo")}
+              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-700 transition cursor-pointer"
+              title="Undo (Ctrl+Z)"
+            >
+              <Undo className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => executeCommand("redo")}
+              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-700 transition cursor-pointer"
+              title="Redo (Ctrl+Y)"
+            >
+              <Redo className="w-3.5 h-3.5" />
+            </button>
+          </div>
 
-        {/* Headings & Block Formats */}
-        <div className="flex items-center border-r border-gray-200 pr-1.5 mr-1 gap-1">
-          {/* Block Format Dropdown */}
-          <div className="relative">
+          {/* Dynamic Block Format Dropdown */}
+          <div className="relative border-r border-gray-200 pr-1.5">
             <button
               type="button"
               onMouseDown={(e) => {
@@ -1270,82 +1410,97 @@ export default function RichTextEditor({
                 saveCurrentSelection();
               }}
               onClick={() => setBlockMenuOpen((prev) => !prev)}
-              className="h-[28px] px-2 rounded-md hover:bg-gray-200 text-gray-800 text-xs font-semibold inline-flex items-center gap-1 border border-gray-300 bg-white cursor-pointer shadow-2xs"
-              title="Change Block Heading / Format (H1-H6, P)"
+              className="h-[30px] px-2.5 rounded-lg hover:bg-gray-100 text-gray-800 text-xs font-semibold inline-flex items-center gap-1.5 border border-gray-200 bg-white cursor-pointer shadow-2xs transition"
+              title="Change Block Heading / Type"
             >
-              <span>Format</span>
-              <ChevronDown className="w-3 h-3 text-gray-500" />
+              <span className="min-w-[65px] text-left">{currentBlock.label}</span>
+              <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
             </button>
 
             {blockMenuOpen && (
-              <div className="absolute left-0 top-full mt-1.5 w-52 bg-white rounded-xl shadow-xl border border-gray-200 py-1.5 z-30 animate-in fade-in zoom-in-95 duration-150">
+              <div className="absolute left-0 top-full mt-1.5 w-56 bg-white rounded-xl shadow-xl border border-gray-200 py-1.5 z-30 animate-in fade-in zoom-in-95 duration-150">
                 <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                  Headings &amp; Text
+                  Headings &amp; Blocks
                 </div>
                 <button
                   type="button"
                   onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => formatHeading("h1")}
-                  className="w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs font-black text-gray-900 cursor-pointer"
+                  onClick={() => formatHeading("p")}
+                  className={`w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs cursor-pointer ${
+                    currentBlock.tag === "p" ? "bg-teal-50 text-teal-800 font-bold" : "text-gray-700"
+                  }`}
                 >
-                  <span className="text-base font-extrabold text-gray-900">Heading 1 (H1)</span>
-                  <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">32px</span>
+                  <span>Paragraph (P)</span>
+                  <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">Body</span>
+                </button>
+                <div className="my-1 border-t border-gray-100" />
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => formatHeading("h1")}
+                  className={`w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs cursor-pointer ${
+                    currentBlock.tag === "h1" ? "bg-teal-50 text-teal-900 font-black" : "text-gray-900 font-extrabold"
+                  }`}
+                >
+                  <span className="text-base font-extrabold">Heading 1 (H1)</span>
+                  <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">34px</span>
                 </button>
                 <button
                   type="button"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => formatHeading("h2")}
-                  className="w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs font-bold text-gray-800 cursor-pointer"
+                  className={`w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs cursor-pointer ${
+                    currentBlock.tag === "h2" ? "bg-teal-50 text-teal-900 font-bold" : "text-gray-800 font-bold"
+                  }`}
                 >
-                  <span className="text-sm font-bold text-gray-800">Heading 2 (H2)</span>
-                  <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">24px</span>
+                  <span className="text-sm font-bold">Heading 2 (H2)</span>
+                  <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">25px</span>
                 </button>
                 <button
                   type="button"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => formatHeading("h3")}
-                  className="w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs font-semibold text-gray-800 cursor-pointer"
+                  className={`w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs cursor-pointer ${
+                    currentBlock.tag === "h3" ? "bg-teal-50 text-teal-900 font-semibold" : "text-gray-800 font-semibold"
+                  }`}
                 >
-                  <span className="text-sm font-semibold text-gray-800">Heading 3 (H3)</span>
+                  <span className="text-sm font-semibold">Heading 3 (H3)</span>
                   <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">20px</span>
                 </button>
                 <button
                   type="button"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => formatHeading("h4")}
-                  className="w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs font-medium text-gray-800 cursor-pointer"
+                  className={`w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs cursor-pointer ${
+                    currentBlock.tag === "h4" ? "bg-teal-50 text-teal-900 font-semibold" : "text-gray-700 font-medium"
+                  }`}
                 >
-                  <span className="text-xs font-semibold text-gray-800">Heading 4 (H4)</span>
+                  <span className="text-xs font-semibold">Heading 4 (H4)</span>
                   <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">18px</span>
                 </button>
                 <button
                   type="button"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => formatHeading("h5")}
-                  className="w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs font-medium text-gray-700 cursor-pointer"
+                  className={`w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs cursor-pointer ${
+                    currentBlock.tag === "h5" ? "bg-teal-50 text-teal-900 font-medium" : "text-gray-600"
+                  }`}
                 >
-                  <span className="text-xs font-medium text-gray-700">Heading 5 (H5)</span>
+                  <span className="text-xs font-medium">Heading 5 (H5)</span>
                   <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">16px</span>
                 </button>
                 <button
                   type="button"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => formatHeading("h6")}
-                  className="w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs font-medium text-gray-600 cursor-pointer"
+                  className={`w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs cursor-pointer ${
+                    currentBlock.tag === "h6" ? "bg-teal-50 text-teal-900 font-medium" : "text-gray-500 uppercase tracking-wider"
+                  }`}
                 >
-                  <span className="text-xs font-medium uppercase tracking-wider text-gray-600">Heading 6 (H6)</span>
+                  <span className="text-xs font-medium uppercase tracking-wider">Heading 6 (H6)</span>
                   <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">14px</span>
                 </button>
                 <div className="my-1 border-t border-gray-100" />
-                <button
-                  type="button"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => formatHeading("p")}
-                  className="w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs text-gray-700 cursor-pointer"
-                >
-                  <span>Paragraph (P)</span>
-                  <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">Normal</span>
-                </button>
                 <button
                   type="button"
                   onMouseDown={(e) => e.preventDefault()}
@@ -1353,100 +1508,78 @@ export default function RichTextEditor({
                   className="w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs text-gray-700 cursor-pointer"
                 >
                   <span>Blockquote</span>
-                  <Quote className="w-3 h-3 text-gray-400" />
+                  <Quote className="w-3.5 h-3.5 text-gray-400" />
                 </button>
               </div>
             )}
           </div>
 
-          {/* Quick Direct Buttons */}
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => formatHeading("p")}
-            className="px-2 py-1 rounded text-xs font-semibold hover:bg-gray-200 text-gray-700 cursor-pointer"
-            title="Convert to Normal Paragraph (P)"
-          >
-            P
-          </button>
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => formatHeading("h1")}
-            className="p-1.5 rounded hover:bg-gray-200 text-gray-900 font-black cursor-pointer text-xs"
-            title="Heading 1 (H1 - 32px)"
-          >
-            <Heading1 className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => formatHeading("h2")}
-            className="p-1.5 rounded hover:bg-gray-200 text-gray-800 font-bold cursor-pointer"
-            title="Heading 2 (H2 - 24px)"
-          >
-            <Heading2 className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => formatHeading("h3")}
-            className="p-1.5 rounded hover:bg-gray-200 text-gray-800 font-bold cursor-pointer"
-            title="Heading 3 (H3 - 20px)"
-          >
-            <Heading3 className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => formatHeading("h4")}
-            className="p-1.5 rounded hover:bg-gray-200 text-gray-800 font-bold cursor-pointer"
-            title="Heading 4 (H4 - 18px)"
-          >
-            <Heading4 className="w-4 h-4" />
-          </button>
-        </div>
+          {/* Inline Formatting (B, I, U, S, Code) with Active States */}
+          <div className="flex items-center gap-0.5 border-r border-gray-200 pr-1.5">
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => executeCommand("bold")}
+              className={`p-1.5 rounded-lg transition cursor-pointer ${
+                activeFormats.bold
+                  ? "bg-teal-100 text-teal-900 font-bold shadow-2xs"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+              title="Bold (Ctrl+B)"
+            >
+              <Bold className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => executeCommand("italic")}
+              className={`p-1.5 rounded-lg transition cursor-pointer ${
+                activeFormats.italic
+                  ? "bg-teal-100 text-teal-900 shadow-2xs"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+              title="Italic (Ctrl+I)"
+            >
+              <Italic className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => executeCommand("underline")}
+              className={`p-1.5 rounded-lg transition cursor-pointer ${
+                activeFormats.underline
+                  ? "bg-teal-100 text-teal-900 shadow-2xs"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+              title="Underline (Ctrl+U)"
+            >
+              <Underline className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => executeCommand("strikeThrough")}
+              className={`p-1.5 rounded-lg transition cursor-pointer ${
+                activeFormats.strikeThrough
+                  ? "bg-teal-100 text-teal-900 shadow-2xs"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+              title="Strikethrough"
+            >
+              <Strikethrough className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => executeCommand("formatBlock", "<pre>")}
+              className="p-1.5 rounded-lg text-gray-700 hover:bg-gray-100 transition cursor-pointer font-mono text-xs"
+              title="Code Block"
+            >
+              <Code className="w-3.5 h-3.5" />
+            </button>
+          </div>
 
-        {/* Inline Formatting */}
-        <div className="flex items-center border-r border-gray-200 pr-1.5 mr-1 gap-0.5">
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => executeCommand("bold")}
-            className="p-1.5 rounded hover:bg-gray-200 text-gray-800 font-bold cursor-pointer"
-            title="Bold (Ctrl+B)"
-          >
-            <Bold className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => executeCommand("italic")}
-            className="p-1.5 rounded hover:bg-gray-200 text-gray-800 italic cursor-pointer"
-            title="Italic (Ctrl+I)"
-          >
-            <Italic className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => executeCommand("underline")}
-            className="p-1.5 rounded hover:bg-gray-200 text-gray-800 underline cursor-pointer"
-            title="Underline (Ctrl+U)"
-          >
-            <Underline className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => executeCommand("strikeThrough")}
-            className="p-1.5 rounded hover:bg-gray-200 text-gray-700 line-through cursor-pointer"
-            title="Strikethrough"
-          >
-            <Strikethrough className="w-3.5 h-3.5" />
-          </button>
-
-          {/* 1. TEXT COLOR SELECTOR DROPDOWN (User-Friendly Grid) */}
+          {/* Text Color Selector */}
           <div className="relative" ref={textColorMenuRef}>
             <button
               type="button"
@@ -1458,7 +1591,7 @@ export default function RichTextEditor({
                 setTextColorMenuOpen(!textColorMenuOpen);
                 setBgColorMenuOpen(false);
               }}
-              className="px-1.5 py-1 rounded hover:bg-gray-200 text-gray-800 flex items-center gap-1 cursor-pointer border border-transparent hover:border-gray-300"
+              className="px-2 py-1 rounded-lg hover:bg-gray-100 text-gray-800 flex items-center gap-1 cursor-pointer border border-transparent hover:border-gray-200"
               title="Text Color"
             >
               <div className="flex flex-col items-center leading-none">
@@ -1488,7 +1621,6 @@ export default function RichTextEditor({
                   </button>
                 </div>
 
-                {/* 10 Clean Circle Color Swatches */}
                 <div className="grid grid-cols-5 gap-2 mb-3">
                   {TEXT_COLORS.map((col) => (
                     <button
@@ -1500,7 +1632,7 @@ export default function RichTextEditor({
                       title={col.label}
                     >
                       <span
-                        className="w-6 h-6 rounded-full border border-gray-300/80 shadow-2xs group-hover:scale-115 transition-transform flex items-center justify-center ring-offset-1 group-hover:ring-2 group-hover:ring-teal-500"
+                        className="w-6 h-6 rounded-full border border-gray-300 shadow-2xs group-hover:scale-115 transition-transform flex items-center justify-center ring-offset-1 group-hover:ring-2 group-hover:ring-teal-500"
                         style={{ backgroundColor: col.color }}
                       >
                         {activeColor.toLowerCase() === col.color.toLowerCase() && (
@@ -1511,7 +1643,6 @@ export default function RichTextEditor({
                   ))}
                 </div>
 
-                {/* Custom Color Input */}
                 <div className="pt-2 border-t border-gray-100 flex items-center justify-between gap-2">
                   <span className="text-[11px] text-gray-500 font-medium">Custom Color:</span>
                   <div className="flex items-center gap-1.5">
@@ -1533,8 +1664,8 @@ export default function RichTextEditor({
             )}
           </div>
 
-          {/* 2. HIGHLIGHT & BACKGROUND COLOR DROPDOWN (User-Friendly Pastel Grid) */}
-          <div className="relative" ref={bgColorMenuRef}>
+          {/* Text Highlight & Background Selector */}
+          <div className="relative border-r border-gray-200 pr-1.5" ref={bgColorMenuRef}>
             <button
               type="button"
               onMouseDown={(e) => {
@@ -1545,8 +1676,8 @@ export default function RichTextEditor({
                 setBgColorMenuOpen(!bgColorMenuOpen);
                 setTextColorMenuOpen(false);
               }}
-              className="px-1.5 py-1 rounded hover:bg-gray-200 text-gray-800 flex items-center gap-1 cursor-pointer border border-transparent hover:border-gray-300"
-              title="Text Highlight & Background Color"
+              className="px-2 py-1 rounded-lg hover:bg-gray-100 text-gray-800 flex items-center gap-1 cursor-pointer border border-transparent hover:border-gray-200"
+              title="Highlight & Background Color"
             >
               <div className="flex flex-col items-center leading-none">
                 <Highlighter className="w-3.5 h-3.5 text-amber-500" />
@@ -1557,8 +1688,6 @@ export default function RichTextEditor({
 
             {bgColorMenuOpen && (
               <div className="absolute left-0 top-full mt-1.5 w-72 bg-white rounded-xl shadow-xl border border-gray-200 p-3 z-30 animate-in fade-in zoom-in-95 duration-150 max-h-96 overflow-y-auto">
-                
-                {/* Section A: Text Highlight Color */}
                 <div className="pb-2.5 border-b border-gray-100">
                   <div className="flex items-center justify-between text-xs font-bold text-gray-800 mb-2">
                     <span className="flex items-center gap-1 text-gray-800">
@@ -1568,10 +1697,11 @@ export default function RichTextEditor({
                     <button
                       type="button"
                       onMouseDown={(e) => e.preventDefault()}
-                      onClick={removeHighlight}
-                      className="text-[11px] text-red-600 hover:text-red-800 font-semibold px-1.5 py-0.5 rounded hover:bg-red-50 cursor-pointer"
+                      onClick={clearFormatting}
+                      className="text-[11px] text-red-600 hover:text-red-800 font-semibold px-2 py-0.5 rounded hover:bg-red-50 cursor-pointer inline-flex items-center gap-1"
                     >
-                      Clear
+                      <Eraser className="w-3 h-3" />
+                      <span>Clear Highlight</span>
                     </button>
                   </div>
 
@@ -1605,7 +1735,6 @@ export default function RichTextEditor({
                   </div>
                 </div>
 
-                {/* Section B: Wrap Selection in Full Block Card Background */}
                 <div className="pt-2.5">
                   <div className="text-xs font-bold text-gray-800 mb-1.5 flex items-center gap-1">
                     <Layers className="w-3.5 h-3.5 text-[#00897b]" />
@@ -1631,302 +1760,327 @@ export default function RichTextEditor({
                     ))}
                   </div>
                 </div>
-
               </div>
             )}
           </div>
+
+          {/* 1-Click Clear Formatting & Remove Highlight (Tx / Eraser) */}
+          <button
+            type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={clearFormatting}
+            className="p-1.5 rounded-lg hover:bg-red-50 text-gray-600 hover:text-red-700 transition cursor-pointer border-r border-gray-200 pr-2"
+            title="Clear All Formatting & Highlights (Tx)"
+          >
+            <Eraser className="w-3.5 h-3.5" />
+          </button>
+
+          {/* Text Alignment */}
+          <div className="flex items-center gap-0.5 border-r border-gray-200 pr-1.5">
+            <button
+              type="button"
+              onClick={() => executeCommand("justifyLeft")}
+              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-700 transition cursor-pointer"
+              title="Align Left"
+            >
+              <AlignLeft className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => executeCommand("justifyCenter")}
+              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-700 transition cursor-pointer"
+              title="Align Center"
+            >
+              <AlignCenter className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => executeCommand("justifyRight")}
+              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-700 transition cursor-pointer"
+              title="Align Right"
+            >
+              <AlignRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Lists & Dividers */}
+          <div className="flex items-center gap-0.5 border-r border-gray-200 pr-1.5">
+            <button
+              type="button"
+              onClick={() => executeCommand("insertUnorderedList")}
+              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-700 transition cursor-pointer"
+              title="Bullet List"
+            >
+              <List className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => executeCommand("insertOrderedList")}
+              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-700 transition cursor-pointer"
+              title="Numbered List"
+            >
+              <ListOrdered className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={insertBlockquote}
+              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-700 transition cursor-pointer"
+              title="Quote"
+            >
+              <Quote className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={insertHorizontalRule}
+              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-700 transition cursor-pointer"
+              title="Horizontal Divider"
+            >
+              <Minus className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Mode Switch (Visual vs HTML) */}
+          <div className="ml-auto flex items-center gap-1 bg-white p-0.5 rounded-lg border border-gray-200 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setMode("visual")}
+              className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors cursor-pointer ${
+                mode === "visual"
+                  ? "bg-[#00897b] text-white shadow-2xs"
+                  : "text-gray-600 hover:text-black"
+              }`}
+            >
+              Visual
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("html")}
+              className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors cursor-pointer ${
+                mode === "html"
+                  ? "bg-[#00897b] text-white shadow-2xs"
+                  : "text-gray-600 hover:text-black"
+              }`}
+            >
+              HTML Code
+            </button>
+          </div>
+
         </div>
 
-        {/* Text Alignment */}
-        <div className="flex items-center border-r border-gray-200 pr-1.5 mr-1 gap-0.5">
-          <button
-            type="button"
-            onClick={() => executeCommand("justifyLeft")}
-            className="p-1.5 rounded hover:bg-gray-200 text-gray-700 cursor-pointer"
-            title="Align Left"
-          >
-            <AlignLeft className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => executeCommand("justifyCenter")}
-            className="p-1.5 rounded hover:bg-gray-200 text-gray-700 cursor-pointer"
-            title="Align Center"
-          >
-            <AlignCenter className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => executeCommand("justifyRight")}
-            className="p-1.5 rounded hover:bg-gray-200 text-gray-700 cursor-pointer"
-            title="Align Right"
-          >
-            <AlignRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {/* Lists & Quotes & Tables */}
-        <div className="flex items-center border-r border-gray-200 pr-1.5 mr-1 gap-0.5">
-          <button
-            type="button"
-            onClick={() => executeCommand("insertUnorderedList")}
-            className="p-1.5 rounded hover:bg-gray-200 text-gray-700 cursor-pointer"
-            title="Bullet List"
-          >
-            <List className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => executeCommand("insertOrderedList")}
-            className="p-1.5 rounded hover:bg-gray-200 text-gray-700 cursor-pointer"
-            title="Numbered List"
-          >
-            <ListOrdered className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={insertBlockquote}
-            className="p-1.5 rounded hover:bg-gray-200 text-gray-700 cursor-pointer"
-            title="Quote"
-          >
-            <Quote className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={insertHorizontalRule}
-            className="p-1.5 rounded hover:bg-gray-200 text-gray-700 cursor-pointer"
-            title="Horizontal Divider"
-          >
-            <Minus className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setTableModalOpen(true)}
-            className="p-1.5 rounded hover:bg-teal-50 text-teal-700 cursor-pointer"
-            title="Insert Table (Rows & Columns)"
-          >
-            <TableIcon className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {/* Technician Callout Alert Blocks */}
-        <div className="flex items-center border-r border-gray-200 pr-1.5 mr-1 gap-1">
-          <button
-            type="button"
-            onClick={() => insertCallout("tip")}
-            className="px-2 py-1 rounded bg-teal-50 hover:bg-teal-100 text-[#00897b] text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
-            title="Insert Technician Tip Box"
-          >
-            <Lightbulb className="w-3 h-3 text-[#00897b]" />
-            <span>Tip</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => insertCallout("warning")}
-            className="px-2 py-1 rounded bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
-            title="Insert Technician Warning Box"
-          >
-            <AlertTriangle className="w-3 h-3 text-red-600" />
-            <span>Warning</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => insertCallout("note")}
-            className="px-2 py-1 rounded bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
-            title="Insert Important Note Box"
-          >
-            <Info className="w-3 h-3 text-blue-600" />
-            <span>Note</span>
-          </button>
-        </div>
-
-        {/* Media & Embeds */}
-        <div className="flex items-center border-r border-gray-200 pr-1.5 mr-1 gap-1">
-          <button
-            type="button"
-            onClick={openLinkModal}
-            className="p-1.5 rounded hover:bg-gray-200 text-gray-700 cursor-pointer"
-            title="Insert SEO Link (Dofollow / Nofollow) (Ctrl+K)"
-          >
-            <LinkIcon className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setImageModalOpen(true)}
-            className="p-1.5 rounded hover:bg-teal-50 text-teal-700 cursor-pointer"
-            title="Browse & Insert Media Library"
-          >
-            <ImageIcon className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setVideoModalOpen(true)}
-            className="p-1.5 rounded hover:bg-red-50 text-red-600 cursor-pointer"
-            title="Embed YouTube Repair Video"
-          >
-            <Video className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {/* 📦 STRUCTURED BLOCKS INSERTER DROPDOWN */}
-        <div className="relative" ref={blockMenuRef}>
-          <button
-            type="button"
-            onClick={() => setBlockMenuOpen(!blockMenuOpen)}
-            className="h-[28px] px-2.5 rounded-md bg-[#00897b] hover:bg-[#00796b] text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
-            title="Insert Pre-built Content & Hardware Blocks"
-          >
-            <PlusCircle className="w-3.5 h-3.5" />
-            <span>Add Block</span>
-            <ChevronDown className="w-3 h-3 opacity-80" />
-          </button>
-
-          {blockMenuOpen && (
-            <div className="absolute left-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-gray-200 py-1.5 z-30 animate-in fade-in zoom-in-95 duration-150">
-              <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 border-b border-gray-100 flex items-center justify-between">
-                <span>Content &amp; Hardware Blocks</span>
-                <span className="text-[10px] text-teal-600">Type /</span>
-              </div>
-
+        {/* TIER 2: STUDIO POWER TOOLS & INSERTS */}
+        <div className="bg-[#f8fafc] px-3 py-1.5 flex flex-wrap items-center justify-between gap-2">
+          
+          <div className="flex flex-wrap items-center gap-1.5">
+            {/* 📦 Structured Blocks Inserter */}
+            <div className="relative" ref={blockMenuRef}>
               <button
                 type="button"
-                onClick={() => insertStructuredBlock("section")}
-                className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition-colors"
+                onClick={() => setBlockMenuOpen(!blockMenuOpen)}
+                className="h-[28px] px-2.5 rounded-lg bg-[#00897b] hover:bg-[#00796b] text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+                title="Insert Pre-built Content & Hardware Blocks"
               >
-                <div className="w-7 h-7 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center text-[#00897b] shrink-0">
-                  <Layers className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <span className="font-semibold block leading-tight">Complete Section Block</span>
-                  <span className="text-[11px] text-gray-400">H2 Subheading + text + tip box</span>
-                </div>
+                <PlusCircle className="w-3.5 h-3.5" />
+                <span>Add Block</span>
+                <ChevronDown className="w-3 h-3 opacity-80" />
               </button>
 
-              <button
-                type="button"
-                onClick={() => insertStructuredBlock("step")}
-                className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition-colors"
-              >
-                <div className="w-7 h-7 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-700 shrink-0">
-                  <ListChecks className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <span className="font-semibold block leading-tight">Step-by-Step Procedure</span>
-                  <span className="text-[11px] text-gray-400">Numbered badge with step card</span>
-                </div>
-              </button>
+              {blockMenuOpen && (
+                <div className="absolute left-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-gray-200 py-1.5 z-30 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 border-b border-gray-100 flex items-center justify-between">
+                    <span>Content &amp; Hardware Blocks</span>
+                    <span className="text-[10px] text-teal-600">Type /</span>
+                  </div>
 
-              <button
-                type="button"
-                onClick={() => insertStructuredBlock("tools")}
-                className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition-colors"
-              >
-                <div className="w-7 h-7 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-700 shrink-0">
-                  <Wrench className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <span className="font-semibold block leading-tight">Required Tools &amp; Parts</span>
-                  <span className="text-[11px] text-gray-400">Hardware checklist &amp; chemicals</span>
-                </div>
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => insertStructuredBlock("section")}
+                    className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition-colors"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center text-[#00897b] shrink-0">
+                      <Layers className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="font-semibold block leading-tight">Complete Section Block</span>
+                      <span className="text-[11px] text-gray-400">H2 Subheading + text + tip box</span>
+                    </div>
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => insertStructuredBlock("faq")}
-                className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition-colors"
-              >
-                <div className="w-7 h-7 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700 shrink-0">
-                  <HelpCircle className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <span className="font-semibold block leading-tight">FAQ Accordion Card</span>
-                  <span className="text-[11px] text-gray-400">Collapsible Question &amp; Answer</span>
-                </div>
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => insertStructuredBlock("step")}
+                    className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition-colors"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-700 shrink-0">
+                      <ListChecks className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="font-semibold block leading-tight">Step-by-Step Procedure</span>
+                      <span className="text-[11px] text-gray-400">Numbered badge with step card</span>
+                    </div>
+                  </button>
 
+                  <button
+                    type="button"
+                    onClick={() => insertStructuredBlock("tools")}
+                    className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition-colors"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-700 shrink-0">
+                      <Wrench className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="font-semibold block leading-tight">Required Tools &amp; Parts</span>
+                      <span className="text-[11px] text-gray-400">Hardware checklist &amp; chemicals</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => insertStructuredBlock("faq")}
+                    className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition-colors"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700 shrink-0">
+                      <HelpCircle className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="font-semibold block leading-tight">FAQ Accordion Card</span>
+                      <span className="text-[11px] text-gray-400">Collapsible Question &amp; Answer</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => insertStructuredBlock("comparison")}
+                    className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition-colors border-t border-gray-100 mt-1"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-700 shrink-0">
+                      <TableIcon className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="font-semibold block leading-tight">OEM vs Aftermarket Table</span>
+                      <span className="text-[11px] text-gray-400">Component comparison matrix</span>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* In-Article Inserts: SEO Link, Media, Video, Table */}
+            <button
+              type="button"
+              onClick={openLinkModal}
+              className="h-[28px] px-2.5 rounded-lg bg-white border border-gray-200 hover:border-gray-300 text-gray-700 hover:text-black text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer shadow-2xs transition"
+              title="Insert SEO Link (Dofollow / Nofollow) (Ctrl+K)"
+            >
+              <LinkIcon className="w-3.5 h-3.5 text-teal-600" />
+              <span>SEO Link</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setImageModalOpen(true)}
+              className="h-[28px] px-2.5 rounded-lg bg-white border border-gray-200 hover:border-gray-300 text-gray-700 hover:text-black text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer shadow-2xs transition"
+              title="Browse & Insert Media Library"
+            >
+              <ImageIcon className="w-3.5 h-3.5 text-blue-600" />
+              <span>Media</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setVideoModalOpen(true)}
+              className="h-[28px] px-2.5 rounded-lg bg-white border border-gray-200 hover:border-gray-300 text-gray-700 hover:text-black text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer shadow-2xs transition"
+              title="Embed YouTube Repair Video"
+            >
+              <Video className="w-3.5 h-3.5 text-red-600" />
+              <span>Video</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setTableModalOpen(true)}
+              className="h-[28px] px-2.5 rounded-lg bg-white border border-gray-200 hover:border-gray-300 text-gray-700 hover:text-black text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer shadow-2xs transition"
+              title="Insert Custom Table (Rows & Columns)"
+            >
+              <TableIcon className="w-3.5 h-3.5 text-purple-600" />
+              <span>Table</span>
+            </button>
+
+            {/* Quick Callout Chips */}
+            <div className="flex items-center gap-1 ml-1 pl-1 border-l border-gray-200">
               <button
                 type="button"
-                onClick={() => insertStructuredBlock("comparison")}
-                className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition-colors border-t border-gray-100 mt-1"
+                onClick={() => insertCallout("tip")}
+                className="px-2 py-0.5 rounded-md bg-teal-50 hover:bg-teal-100 text-[#00897b] border border-teal-200/60 text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                title="Insert Technician Tip Box"
               >
-                <div className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-700 shrink-0">
-                  <TableIcon className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <span className="font-semibold block leading-tight">OEM vs Aftermarket Table</span>
-                  <span className="text-[11px] text-gray-400">Component comparison matrix</span>
-                </div>
+                <Lightbulb className="w-3 h-3 text-[#00897b]" />
+                <span>Tip</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => insertCallout("warning")}
+                className="px-2 py-0.5 rounded-md bg-red-50 hover:bg-red-100 text-red-700 border border-red-200/60 text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                title="Insert Technician Warning Box"
+              >
+                <AlertTriangle className="w-3 h-3 text-red-600" />
+                <span>Warning</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => insertCallout("note")}
+                className="px-2 py-0.5 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/60 text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                title="Insert Important Note Box"
+              >
+                <Info className="w-3 h-3 text-blue-600" />
+                <span>Note</span>
               </button>
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* ⚡ ADVANCE pSEO JUICY LINK INSERTER BUTTON */}
-        <div className="flex items-center pl-1 gap-1">
-          <button
-            type="button"
-            onClick={() => setPseoModalOpen(true)}
-            className="h-[28px] px-2.5 rounded-md bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
-            title="Insert Advance pSEO Juicy Link, Repair Card or Matrix"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
-            <span>⚡ pSEO Link</span>
-          </button>
+          {/* Right Group: Studio Engines (pSEO & AI Assist) */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPseoModalOpen(true)}
+              className="h-[28px] px-3 rounded-lg bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+              title="Insert Advance pSEO Juicy Link, Repair Card or Matrix"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
+              <span>⚡ pSEO Juicy Link</span>
+            </button>
 
-          {/* ✨ AI WRITING & SEO OPTIMIZER BUTTON */}
-          <button
-            type="button"
-            onClick={openAiModal}
-            className="h-[28px] px-2.5 rounded-md bg-gradient-to-r from-purple-600 via-indigo-600 to-teal-600 hover:from-purple-700 hover:to-teal-700 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
-            title="✨ AI Assistant: Polish, Grammar, Local SEO, Technical Expansion, FAQ generator"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-pulse" />
-            <span>✨ AI Assist</span>
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={openAiModal}
+              className="h-[28px] px-3 rounded-lg bg-gradient-to-r from-purple-600 via-indigo-600 to-teal-600 hover:from-purple-700 hover:to-teal-700 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+              title="✨ AI Assistant: Polish, Grammar, Local SEO, Technical Expansion, FAQ generator"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-pulse" />
+              <span>✨ AI Assist</span>
+            </button>
+          </div>
 
-        {/* View Toggle Mode (Visual vs HTML Code) */}
-        <div className="ml-auto flex items-center gap-1 bg-white p-0.5 rounded border border-gray-200">
-          <button
-            type="button"
-            onClick={() => setMode("visual")}
-            className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-colors cursor-pointer ${
-              mode === "visual"
-                ? "bg-[#00897b] text-white shadow-2xs"
-                : "text-gray-600 hover:text-black"
-            }`}
-          >
-            Visual
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("html")}
-            className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-colors cursor-pointer ${
-              mode === "html"
-                ? "bg-[#00897b] text-white shadow-2xs"
-                : "text-gray-600 hover:text-black"
-            }`}
-          >
-            HTML Code
-          </button>
         </div>
 
       </div>
 
-      {/* 2. FLOATING BUBBLE SELECTION TOOLBAR (Notion & Payload Style) */}
+      {/* 2. FLOATING BUBBLE SELECTION TOOLBAR (Sleek Notion / Medium Style Pill) */}
       {bubbleToolbar.visible && (
         <div
-          className="absolute z-30 bg-gray-900 text-white rounded-lg px-1.5 py-1 flex items-center gap-0.5 shadow-xl border border-gray-700 -translate-x-1/2 animate-in fade-in zoom-in-95 duration-100"
-          style={{ left: bubbleToolbar.x, top: bubbleToolbar.y }}
+          className="absolute z-30 bg-neutral-900/95 backdrop-blur-md text-white rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-2xl border border-neutral-700/80 -translate-x-1/2 animate-in fade-in zoom-in-95 duration-100 select-none text-xs"
+          style={{ left: bubbleToolbar.x, top: Math.max(8, bubbleToolbar.y) }}
         >
+          {/* Inline styles */}
           <button
             type="button"
             onMouseDown={(e) => {
               e.preventDefault();
               executeCommand("bold");
             }}
-            className="p-1 hover:bg-gray-800 rounded text-gray-200 hover:text-white"
-            title="Bold"
+            className={`p-1.5 rounded-full hover:bg-neutral-800 transition ${
+              activeFormats.bold ? "bg-teal-600 text-white" : "text-neutral-300 hover:text-white"
+            }`}
+            title="Bold (Ctrl+B)"
           >
             <Bold className="w-3.5 h-3.5" />
           </button>
@@ -1936,8 +2090,10 @@ export default function RichTextEditor({
               e.preventDefault();
               executeCommand("italic");
             }}
-            className="p-1 hover:bg-gray-800 rounded text-gray-200 hover:text-white"
-            title="Italic"
+            className={`p-1.5 rounded-full hover:bg-neutral-800 transition ${
+              activeFormats.italic ? "bg-teal-600 text-white" : "text-neutral-300 hover:text-white"
+            }`}
+            title="Italic (Ctrl+I)"
           >
             <Italic className="w-3.5 h-3.5" />
           </button>
@@ -1947,8 +2103,10 @@ export default function RichTextEditor({
               e.preventDefault();
               executeCommand("underline");
             }}
-            className="p-1 hover:bg-gray-800 rounded text-gray-200 hover:text-white"
-            title="Underline"
+            className={`p-1.5 rounded-full hover:bg-neutral-800 transition ${
+              activeFormats.underline ? "bg-teal-600 text-white" : "text-neutral-300 hover:text-white"
+            }`}
+            title="Underline (Ctrl+U)"
           >
             <Underline className="w-3.5 h-3.5" />
           </button>
@@ -1956,57 +2114,29 @@ export default function RichTextEditor({
             type="button"
             onMouseDown={(e) => {
               e.preventDefault();
-              toggleHighlight();
+              executeCommand("strikeThrough");
             }}
-            className="p-1 hover:bg-gray-800 rounded text-yellow-300"
-            title="Highlight"
+            className={`p-1.5 rounded-full hover:bg-neutral-800 transition ${
+              activeFormats.strikeThrough ? "bg-teal-600 text-white" : "text-neutral-300 hover:text-white"
+            }`}
+            title="Strikethrough"
           >
-            <Highlighter className="w-3.5 h-3.5" />
+            <Strikethrough className="w-3.5 h-3.5" />
           </button>
-          <div className="w-[1px] h-3.5 bg-gray-700 mx-0.5" />
-          <button
-            type="button"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              openAiModal();
-            }}
-            className="px-1.5 py-0.5 hover:bg-purple-900/60 rounded text-yellow-300 font-bold text-xs inline-flex items-center gap-1"
-            title="✨ AI Assist on Selected Text"
-          >
-            <Sparkles className="w-3 h-3 text-yellow-300" />
-            <span>AI</span>
-          </button>
-          <div className="w-[1px] h-3.5 bg-gray-700 mx-0.5" />
-          <button
-            type="button"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              openLinkModal();
-            }}
-            className="p-1 hover:bg-gray-800 rounded text-gray-200 hover:text-white"
-            title="Insert SEO Link (Dofollow / Nofollow)"
-          >
-            <LinkIcon className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              formatHeading("p");
-            }}
-            className="px-1.5 py-0.5 hover:bg-gray-800 rounded text-gray-200 hover:text-white font-semibold text-xs"
-            title="Normal Paragraph"
-          >
-            P
-          </button>
+
+          <div className="w-px h-4 bg-neutral-700 mx-0.5" />
+
+          {/* Heading pills */}
           <button
             type="button"
             onMouseDown={(e) => {
               e.preventDefault();
               formatHeading("h1");
             }}
-            className="px-1.5 py-0.5 hover:bg-gray-800 rounded text-gray-200 hover:text-white font-black text-xs"
-            title="Heading 1"
+            className={`px-2 py-0.5 rounded-md text-xs font-bold transition ${
+              currentBlock.tag === "h1" ? "bg-teal-600 text-white shadow-2xs" : "hover:bg-neutral-800 text-neutral-300 hover:text-white"
+            }`}
+            title="Heading 1 (34px)"
           >
             H1
           </button>
@@ -2016,8 +2146,10 @@ export default function RichTextEditor({
               e.preventDefault();
               formatHeading("h2");
             }}
-            className="px-1.5 py-0.5 hover:bg-gray-800 rounded text-gray-200 hover:text-white font-bold text-xs"
-            title="Heading 2"
+            className={`px-2 py-0.5 rounded-md text-xs font-bold transition ${
+              currentBlock.tag === "h2" ? "bg-teal-600 text-white shadow-2xs" : "hover:bg-neutral-800 text-neutral-300 hover:text-white"
+            }`}
+            title="Heading 2 (25px)"
           >
             H2
           </button>
@@ -2027,8 +2159,10 @@ export default function RichTextEditor({
               e.preventDefault();
               formatHeading("h3");
             }}
-            className="px-1.5 py-0.5 hover:bg-gray-800 rounded text-gray-200 hover:text-white font-bold text-xs"
-            title="Heading 3"
+            className={`px-2 py-0.5 rounded-md text-xs font-bold transition ${
+              currentBlock.tag === "h3" ? "bg-teal-600 text-white shadow-2xs" : "hover:bg-neutral-800 text-neutral-300 hover:text-white"
+            }`}
+            title="Heading 3 (20px)"
           >
             H3
           </button>
@@ -2036,41 +2170,27 @@ export default function RichTextEditor({
             type="button"
             onMouseDown={(e) => {
               e.preventDefault();
-              formatHeading("h4");
+              formatHeading("p");
             }}
-            className="px-1.5 py-0.5 hover:bg-gray-800 rounded text-gray-200 hover:text-white font-bold text-xs"
-            title="Heading 4"
+            className={`px-2 py-0.5 rounded-md text-xs font-semibold transition ${
+              currentBlock.tag === "p" ? "bg-teal-600 text-white shadow-2xs" : "hover:bg-neutral-800 text-neutral-300 hover:text-white"
+            }`}
+            title="Normal Paragraph"
           >
-            H4
+            P
           </button>
-          <div className="w-[1px] h-3.5 bg-gray-700 mx-0.5" />
-          {/* Quick Color Swatches in Bubble Toolbar */}
-          <button
-            type="button"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              applyTextColor("#00897b");
-            }}
-            className="w-3.5 h-3.5 rounded-full bg-[#00897b] border border-gray-500 hover:scale-125 transition-transform"
-            title="SFD Teal Text"
-          />
-          <button
-            type="button"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              applyTextColor("#dc2626");
-            }}
-            className="w-3.5 h-3.5 rounded-full bg-[#dc2626] border border-gray-500 hover:scale-125 transition-transform"
-            title="Crimson Red Text"
-          />
+
+          <div className="w-px h-4 bg-neutral-700 mx-0.5" />
+
+          {/* Quick Highlight Swatches */}
           <button
             type="button"
             onMouseDown={(e) => {
               e.preventDefault();
               applyHighlightColor("#fef08a");
             }}
-            className="w-3.5 h-3.5 rounded-full bg-[#fef08a] border border-gray-500 hover:scale-125 transition-transform"
-            title="Soft Yellow Highlight"
+            className="w-4 h-4 rounded-full bg-[#fef08a] border border-neutral-600 hover:scale-125 transition-transform"
+            title="Yellow Highlight"
           />
           <button
             type="button"
@@ -2078,9 +2198,60 @@ export default function RichTextEditor({
               e.preventDefault();
               applyHighlightColor("#ccfbf1");
             }}
-            className="w-3.5 h-3.5 rounded-full bg-[#ccfbf1] border border-gray-500 hover:scale-125 transition-transform"
-            title="Soft Teal Highlight"
+            className="w-4 h-4 rounded-full bg-[#ccfbf1] border border-neutral-600 hover:scale-125 transition-transform"
+            title="Teal Highlight"
           />
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              applyHighlightColor("#fed7aa");
+            }}
+            className="w-4 h-4 rounded-full bg-[#fed7aa] border border-neutral-600 hover:scale-125 transition-transform"
+            title="Orange Highlight"
+          />
+
+          {/* Link button */}
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              openLinkModal();
+            }}
+            className="p-1.5 rounded-full hover:bg-neutral-800 text-neutral-200 hover:text-white transition"
+            title="Insert SEO Link (Ctrl+K)"
+          >
+            <LinkIcon className="w-3.5 h-3.5" />
+          </button>
+
+          {/* 1-Click Clear Formatting & Highlight Eraser */}
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              clearFormatting();
+            }}
+            className="p-1.5 rounded-full hover:bg-red-950/70 text-red-300 hover:text-red-200 transition"
+            title="Clear All Formatting & Highlights (Tx)"
+          >
+            <Eraser className="w-3.5 h-3.5" />
+          </button>
+
+          <div className="w-px h-4 bg-neutral-700 mx-0.5" />
+
+          {/* AI Assist Pill */}
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              openAiModal();
+            }}
+            className="px-2.5 py-1 rounded-full bg-gradient-to-r from-purple-600 to-teal-500 hover:from-purple-500 hover:to-teal-400 text-white font-bold text-xs inline-flex items-center gap-1 shadow-sm transition"
+            title="✨ AI Assist on Selected Text"
+          >
+            <Sparkles className="w-3 h-3 text-yellow-300" />
+            <span>AI</span>
+          </button>
         </div>
       )}
 
@@ -2151,9 +2322,18 @@ export default function RichTextEditor({
             handleInput();
           }}
           onKeyDown={handleKeyDown}
-          onKeyUp={saveCurrentSelection}
-          onMouseUp={saveCurrentSelection}
-          onSelect={saveCurrentSelection}
+          onKeyUp={() => {
+            saveCurrentSelection();
+            updateActiveFormats();
+          }}
+          onMouseUp={() => {
+            saveCurrentSelection();
+            updateActiveFormats();
+          }}
+          onSelect={() => {
+            saveCurrentSelection();
+            updateActiveFormats();
+          }}
           className="sfd-editor-content p-6 sm:p-8 outline-none text-[#1d1c1a] leading-relaxed text-sm font-normal focus:bg-white transition-colors overflow-y-auto selection:bg-teal-100 selection:text-teal-900"
           style={{ minHeight }}
           data-placeholder={placeholder}
