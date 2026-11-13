@@ -1,13 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
-  Menu,
-  Save,
-  ExternalLink,
-  Plus,
-  Trash2,
   Smartphone,
   Tablet,
   Gamepad2,
@@ -15,623 +10,849 @@ import {
   Check,
   Eye,
   ChevronRight,
-  ArrowRight,
+  ChevronDown,
+  Trash2,
+  Plus,
   RotateCcw,
   Sparkles,
   Layers,
+  MapPin,
+  ExternalLink,
+  Save,
+  Sliders,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
-
-type CategoryKey = "smartphones" | "tablet" | "consoles" | "computers";
-
-interface MegaCategoryData {
-  key: CategoryKey;
-  label: string;
-  iconName: string;
-  href: string;
-  allLinkText: string;
-  popularDevices: string[];
-  commonIssues: string[];
-  brands: { title: string; subtitle: string; href?: string }[];
-}
-
-const INITIAL_MEGA_MENU: Record<CategoryKey, MegaCategoryData> = {
-  smartphones: {
-    key: "smartphones",
-    label: "Smartphones",
-    iconName: "Smartphone",
-    href: "/repairs/smartphone",
-    allLinkText: "All Smartphone Repairs",
-    popularDevices: [
-      "iPhone 16 Pro Repair",
-      "iPhone 15 Repair",
-      "iPhone 14 Repair",
-      "iPhone 13 Repair",
-      "Galaxy S25 Repair",
-      "Google Pixel 9 Repair",
-    ],
-    commonIssues: [
-      "Cracked Screen Repair",
-      "Phone Battery Replacement",
-      "Charging Port Repair",
-      "Water Damage Repair",
-      "Back Glass Laser Repair",
-      "Camera & Lens Repair",
-      "Speaker & Mic Fix",
-    ],
-    brands: [
-      { title: "Apple Repair", subtitle: "All Apple Models" },
-      { title: "Samsung Repair", subtitle: "All Samsung Models" },
-      { title: "Google Repair", subtitle: "All Google Models" },
-      { title: "Motorola Repair", subtitle: "All Motorola Models" },
-    ],
-  },
-  tablet: {
-    key: "tablet",
-    label: "Tablets & iPads",
-    iconName: "Tablet",
-    href: "/repairs/tablet",
-    allLinkText: "All Tablet Repairs",
-    popularDevices: [
-      "iPad Pro 12.9\" Repair",
-      "iPad Air 5 Repair",
-      "iPad 10th Gen Repair",
-      "iPad Mini 6 Repair",
-      "Galaxy Tab S9 Repair",
-      "Surface Pro 9 Repair",
-    ],
-    commonIssues: [
-      "Cracked Digitizer / Glass",
-      "Tablet Battery Replacement",
-      "Charging Port Repair",
-      "LCD Display Replacement",
-      "Water Damage Diagnostics",
-      "Power & Volume Button Fix",
-      "Headphone Jack / Audio Fix",
-    ],
-    brands: [
-      { title: "Apple iPad Repair", subtitle: "All iPad Models" },
-      { title: "Samsung Tab Repair", subtitle: "All Galaxy Tab Models" },
-      { title: "Microsoft Surface", subtitle: "All Surface Models" },
-      { title: "Amazon Fire Tablet", subtitle: "All Kindle Fire Models" },
-    ],
-  },
-  consoles: {
-    key: "consoles",
-    label: "Game Consoles",
-    iconName: "Gamepad2",
-    href: "/repairs/computer",
-    allLinkText: "All Game Console Repairs",
-    popularDevices: [
-      "PlayStation 5 Repair",
-      "PlayStation 4 Pro Repair",
-      "Xbox Series X Repair",
-      "Xbox Series S Repair",
-      "Nintendo Switch OLED",
-      "Steam Deck Repair",
-    ],
-    commonIssues: [
-      "HDMI Port Micro-Soldering",
-      "Overheating & Fan Repaste",
-      "Disc Drive Replacement",
-      "No Power / Power Supply Fix",
-      "Joy-Con Drift Fix",
-      "Software & OS Recovery",
-      "Internal Storage Upgrade",
-    ],
-    brands: [
-      { title: "Sony PlayStation", subtitle: "PS5 & PS4 Models" },
-      { title: "Microsoft Xbox", subtitle: "Series X/S & One" },
-      { title: "Nintendo Repair", subtitle: "Switch, OLED & Lite" },
-      { title: "Handheld Consoles", subtitle: "Steam Deck & ROG Ally" },
-    ],
-  },
-  computers: {
-    key: "computers",
-    label: "Computers & MacBooks",
-    iconName: "Laptop",
-    href: "/repairs/mac",
-    allLinkText: "All Computer & Laptop Repairs",
-    popularDevices: [
-      "MacBook Pro 14\"/16\" Repair",
-      "MacBook Air M2/M3",
-      "Dell XPS & Inspiron",
-      "HP Pavilion & Envy",
-      "Lenovo ThinkPad Repair",
-      "Asus ROG & ZenBook",
-    ],
-    commonIssues: [
-      "Laptop Screen Replacement",
-      "Battery Replacement",
-      "Keyboard & Trackpad Fix",
-      "SSD Upgrade & Data Recovery",
-      "Liquid Spill Cleanup",
-      "Fan Cleaning & Thermal Paste",
-      "Virus Removal & OS Install",
-    ],
-    brands: [
-      { title: "Apple MacBook Repair", subtitle: "Pro, Air & iMac" },
-      { title: "Dell Laptop Repair", subtitle: "XPS, Latitude, Inspiron" },
-      { title: "HP Laptop Repair", subtitle: "Envy, Pavilion, Spectre" },
-      { title: "Lenovo & ThinkPad", subtitle: "Yoga, Carbon, Legion" },
-    ],
-  },
-};
+import {
+  CategoryKey,
+  MegaCategoryData,
+  MegaMenuConfig,
+  DEFAULT_MEGA_MENU_CONFIG,
+  getStoredMegaMenu,
+  saveStoredMegaMenu,
+} from "@/lib/megaMenuData";
 
 export default function MegaMenuBuilderPage() {
-  const [megaMenu, setMegaMenu] = useState(INITIAL_MEGA_MENU);
+  const [config, setConfig] = useState<MegaMenuConfig>(DEFAULT_MEGA_MENU_CONFIG);
   const [activeCategory, setActiveCategory] = useState<CategoryKey>("smartphones");
-  const [isSaving, setIsSaving] = useState(false);
-  const [savedToast, setSavedToast] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"columns" | "cta">("columns");
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [previewExpanded, setPreviewExpanded] = useState(false);
 
-  // New item inputs
+  // Form input states for adding items
   const [newDevice, setNewDevice] = useState("");
   const [newIssue, setNewIssue] = useState("");
   const [newBrandTitle, setNewBrandTitle] = useState("");
   const [newBrandSubtitle, setNewBrandSubtitle] = useState("");
 
-  const current = megaMenu[activeCategory];
+  // Load stored config on mount
+  useEffect(() => {
+    const stored = getStoredMegaMenu();
+    setConfig(stored);
+  }, []);
 
-  const handleUpdateField = (field: keyof MegaCategoryData, value: any) => {
-    setMegaMenu((prev) => ({
+  const currentCategory = config.categories[activeCategory];
+
+  // Save changes
+  const handleSave = () => {
+    saveStoredMegaMenu(config);
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 2500);
+  };
+
+  // Reset to original defaults
+  const handleReset = () => {
+    if (confirm("Reset mega menu to official default settings?")) {
+      setConfig(DEFAULT_MEGA_MENU_CONFIG);
+      saveStoredMegaMenu(DEFAULT_MEGA_MENU_CONFIG);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2000);
+    }
+  };
+
+  // Add Popular Device
+  const handleAddDevice = () => {
+    if (!newDevice.trim()) return;
+    setConfig((prev) => ({
       ...prev,
-      [activeCategory]: {
-        ...prev[activeCategory],
-        [field]: value,
+      categories: {
+        ...prev.categories,
+        [activeCategory]: {
+          ...prev.categories[activeCategory],
+          popularDevices: [...prev.categories[activeCategory].popularDevices, newDevice.trim()],
+        },
+      },
+    }));
+    setNewDevice("");
+  };
+
+  // Remove Popular Device
+  const handleRemoveDevice = (index: number) => {
+    setConfig((prev) => ({
+      ...prev,
+      categories: {
+        ...prev.categories,
+        [activeCategory]: {
+          ...prev.categories[activeCategory],
+          popularDevices: prev.categories[activeCategory].popularDevices.filter((_, i) => i !== index),
+        },
       },
     }));
   };
 
-  // Add handlers
-  const handleAddDevice = () => {
-    if (!newDevice.trim()) return;
-    handleUpdateField("popularDevices", [...current.popularDevices, newDevice.trim()]);
-    setNewDevice("");
-  };
-
-  const handleDeleteDevice = (index: number) => {
-    const updated = [...current.popularDevices];
-    updated.splice(index, 1);
-    handleUpdateField("popularDevices", updated);
-  };
-
+  // Add Common Issue
   const handleAddIssue = () => {
     if (!newIssue.trim()) return;
-    handleUpdateField("commonIssues", [...current.commonIssues, newIssue.trim()]);
+    setConfig((prev) => ({
+      ...prev,
+      categories: {
+        ...prev.categories,
+        [activeCategory]: {
+          ...prev.categories[activeCategory],
+          commonIssues: [...prev.categories[activeCategory].commonIssues, newIssue.trim()],
+        },
+      },
+    }));
     setNewIssue("");
   };
 
-  const handleDeleteIssue = (index: number) => {
-    const updated = [...current.commonIssues];
-    updated.splice(index, 1);
-    handleUpdateField("commonIssues", updated);
+  // Remove Common Issue
+  const handleRemoveIssue = (index: number) => {
+    setConfig((prev) => ({
+      ...prev,
+      categories: {
+        ...prev.categories,
+        [activeCategory]: {
+          ...prev.categories[activeCategory],
+          commonIssues: prev.categories[activeCategory].commonIssues.filter((_, i) => i !== index),
+        },
+      },
+    }));
   };
 
+  // Add Brand
   const handleAddBrand = () => {
     if (!newBrandTitle.trim()) return;
-    handleUpdateField("brands", [
-      ...current.brands,
-      { title: newBrandTitle.trim(), subtitle: newBrandSubtitle.trim() || "All Models" },
-    ]);
+    setConfig((prev) => ({
+      ...prev,
+      categories: {
+        ...prev.categories,
+        [activeCategory]: {
+          ...prev.categories[activeCategory],
+          brands: [
+            ...prev.categories[activeCategory].brands,
+            {
+              title: newBrandTitle.trim(),
+              subtitle: newBrandSubtitle.trim() || `All ${newBrandTitle.trim()} Models`,
+            },
+          ],
+        },
+      },
+    }));
     setNewBrandTitle("");
     setNewBrandSubtitle("");
   };
 
-  const handleDeleteBrand = (index: number) => {
-    const updated = [...current.brands];
-    updated.splice(index, 1);
-    handleUpdateField("brands", updated);
+  // Remove Brand
+  const handleRemoveBrand = (index: number) => {
+    setConfig((prev) => ({
+      ...prev,
+      categories: {
+        ...prev.categories,
+        [activeCategory]: {
+          ...prev.categories[activeCategory],
+          brands: prev.categories[activeCategory].brands.filter((_, i) => i !== index),
+        },
+      },
+    }));
   };
 
-  const handleSave = () => {
-    setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
-      setSavedToast(`Mega-Menu configuration published to customer website!`);
-      setTimeout(() => setSavedToast(null), 3500);
-    }, 500);
+  // Update All Link Text
+  const handleUpdateAllLinkText = (text: string) => {
+    setConfig((prev) => ({
+      ...prev,
+      categories: {
+        ...prev.categories,
+        [activeCategory]: {
+          ...prev.categories[activeCategory],
+          allLinkText: text,
+        },
+      },
+    }));
   };
+
+  // Helper to render icons
+  const renderCategoryIcon = (key: CategoryKey, className = "w-5 h-5") => {
+    switch (key) {
+      case "smartphones":
+        return <Smartphone className={className} />;
+      case "tablet":
+        return <Tablet className={className} />;
+      case "consoles":
+        return <Gamepad2 className={className} />;
+      case "computers":
+        return <Laptop className={className} />;
+    }
+  };
+
+  const categoryKeys: CategoryKey[] = ["smartphones", "tablet", "consoles", "computers"];
 
   return (
-    <div className="flex-1 min-w-0 w-full px-4 sm:px-6 py-5 flex flex-col gap-5 overflow-x-hidden">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-[1700px] mx-auto space-y-6">
+      
       {/* 1. TOP HEADER & ACTION BAR */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#e8e8e8]">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-5 border-b border-[#e8e8e8]">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-[22px] sm:text-[24px] font-bold text-[#111111] tracking-[-0.02em]">
-              Mega Menu Builder
-            </h1>
-            <span className="text-[11px] font-semibold text-[#009691] bg-[#009691]/10 px-2 py-0.5 rounded-full">
-              Live Site Navigation
-            </span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-lg bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-700">
+              <Layers className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-[#111111] tracking-tight">
+                Mega Menu Builder
+              </h1>
+              <p className="text-[13px] text-[#6b6b6b]">
+                Visual editor for the customer storefront navigation. Live synchronized with <span className="font-semibold text-neutral-800">smartfonedoctor.com</span>.
+              </p>
+            </div>
           </div>
-          <p className="text-[13px] text-[#5f6368] mt-0.5">
-            Configure popular devices, common issues, and brand cards displayed inside the public website's &quot;Repair&quot; mega-dropdown
-          </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={handleReset}
+            className="h-[36px] px-3 rounded-[6px] border border-gray-300 bg-white hover:bg-gray-50 text-[13px] font-medium text-gray-700 inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+            title="Reset to default menu items"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Reset Defaults</span>
+          </button>
+
           <Link
             href="/"
             target="_blank"
-            className="h-[34px] px-3.5 rounded-[6px] border border-[#d1d5db] bg-white hover:bg-gray-50 text-[12px] font-medium text-[#111111] inline-flex items-center gap-1.5 shadow-2xs transition-colors"
+            rel="noreferrer"
+            className="h-[36px] px-3 rounded-[6px] border border-gray-300 bg-white hover:bg-gray-50 text-[13px] font-medium text-gray-700 inline-flex items-center gap-1.5 transition-colors"
           >
-            <span>Preview on Site</span>
-            <ExternalLink className="w-3.5 h-3.5 text-gray-500" />
+            <ExternalLink className="w-3.5 h-3.5" />
+            <span>View Live Site</span>
           </Link>
 
           <button
             type="button"
             onClick={handleSave}
-            disabled={isSaving}
-            className="h-[34px] px-4 rounded-[6px] bg-[#009691] hover:bg-[#007f7b] text-white text-[13px] font-semibold inline-flex items-center gap-2 shadow-2xs transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+            className="h-[36px] px-4 rounded-[6px] bg-[#00897b] hover:bg-[#00796b] text-white text-[13px] font-semibold inline-flex items-center gap-2 shadow-sm transition-all cursor-pointer"
           >
-            {isSaving ? (
-              <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            {saveSuccess ? (
+              <>
+                <Check className="w-4 h-4 text-white" />
+                <span>Saved &amp; Published!</span>
+              </>
             ) : (
-              <Save className="w-3.5 h-3.5" />
+              <>
+                <Save className="w-4 h-4" />
+                <span>Save &amp; Publish Menu</span>
+              </>
             )}
-            <span>{isSaving ? "Publishing..." : "Publish Mega Menu"}</span>
           </button>
         </div>
       </div>
 
-      {/* TOAST MESSAGE */}
-      {savedToast && (
-        <div className="bg-[#dcfae5] border border-[#86efac] text-[#065f46] rounded-[8px] px-4 py-3 flex items-center justify-between gap-3 text-[13px] shadow-sm animate-in fade-in">
-          <div className="flex items-center gap-2">
-            <Check className="w-4 h-4 text-[#059669] shrink-0" />
-            <span className="font-semibold">{savedToast}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setSavedToast(null)}
-            className="text-[#065f46] hover:text-black font-semibold text-xs cursor-pointer"
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
-
-      {/* 2. CATEGORY SWITCHER TABS */}
-      <div className="flex items-center gap-2 border-b border-[#e5e7eb] overflow-x-auto no-scrollbar pb-px">
-        {[
-          { id: "smartphones", label: "📱 Smartphones", count: megaMenu.smartphones.popularDevices.length },
-          { id: "tablet", label: "📟 Tablets & iPads", count: megaMenu.tablet.popularDevices.length },
-          { id: "consoles", label: "🎮 Game Consoles", count: megaMenu.consoles.popularDevices.length },
-          { id: "computers", label: "💻 Computers & MacBooks", count: megaMenu.computers.popularDevices.length },
-        ].map((tab) => {
-          const isActive = activeCategory === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveCategory(tab.id as CategoryKey)}
-              className={`h-[40px] px-4 rounded-t-[6px] text-[13px] font-medium inline-flex items-center gap-2 whitespace-nowrap transition-colors border-b-2 cursor-pointer ${
-                isActive
-                  ? "border-[#009691] text-[#009691] bg-white font-bold"
-                  : "border-transparent text-[#6b7280] hover:text-[#111111] hover:bg-[#f3f4f6]"
-              }`}
-            >
-              <span>{tab.label}</span>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${isActive ? "bg-[#009691]/10 text-[#009691]" : "bg-gray-100 text-gray-500"}`}>
-                {tab.count} Devices
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* 3. MAIN WORKSPACE (SPLIT: 3 COLUMNS EDITOR ON LEFT, REAL-TIME MEGA MENU PREVIEW ON RIGHT) */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+      {/* 2. LIVE STOREFRONT PREVIEW WINDOW (Pixel-perfect mirror of user's uploaded screenshot) */}
+      <div className="bg-white border border-gray-300 rounded-xl overflow-hidden shadow-sm">
         
-        {/* LEFT COLUMN: MEGA MENU COLUMN EDITORS (7 COLS on XL) */}
-        <div className="xl:col-span-7 flex flex-col gap-5">
-          
-          {/* CATEGORY BASIC SETTINGS */}
-          <div className="bg-white border border-[#e8e8e8] rounded-[10px] p-4 shadow-2xs flex flex-col gap-3">
-            <span className="text-[12px] font-bold text-[#111111] uppercase tracking-wider block border-b border-[#f2f2f2] pb-2">
-              Category Header &amp; Link Target
+        {/* Mock Browser Header Bar */}
+        <div className="bg-[#f0f2f5] border-b border-gray-300 px-4 py-2.5 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full bg-[#ff5f56]" />
+            <span className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
+            <span className="w-3 h-3 rounded-full bg-[#27c93f]" />
+            <span className="ml-2 text-[12px] font-semibold text-gray-700 flex items-center gap-1.5">
+              <Eye className="w-3.5 h-3.5 text-[#00897b]" />
+              Customer Live Front-End Mega Menu Preview
             </span>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[11px] font-medium text-gray-600 mb-1">
-                  Category Display Name
-                </label>
-                <input
-                  type="text"
-                  value={current.label}
-                  onChange={(e) => handleUpdateField("label", e.target.value)}
-                  className="w-full h-[34px] px-2.5 rounded-[5px] border border-gray-300 text-[13px] font-semibold focus:outline-none focus:border-[#009691]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-medium text-gray-600 mb-1">
-                  Destination URL
-                </label>
-                <input
-                  type="text"
-                  value={current.href}
-                  onChange={(e) => handleUpdateField("href", e.target.value)}
-                  className="w-full h-[34px] px-2.5 rounded-[5px] border border-gray-300 text-[12px] font-mono text-gray-700 focus:outline-none focus:border-[#009691]"
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="block text-[11px] font-medium text-gray-600 mb-1">
-                  Bottom CTA Button Label
-                </label>
-                <input
-                  type="text"
-                  value={current.allLinkText}
-                  onChange={(e) => handleUpdateField("allLinkText", e.target.value)}
-                  className="w-full h-[34px] px-2.5 rounded-[5px] border border-gray-300 text-[12px] focus:outline-none focus:border-[#009691]"
-                />
-              </div>
-            </div>
           </div>
 
-          {/* COLUMN 1: POPULAR DEVICES */}
-          <div className="bg-white border border-[#e8e8e8] rounded-[10px] p-4 shadow-2xs flex flex-col gap-3">
-            <div className="flex items-center justify-between pb-2 border-b border-[#f2f2f2]">
-              <span className="text-[13px] font-bold text-[#111111]">
-                Column 1: Popular Devices ({current.popularDevices.length})
-              </span>
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center bg-white px-3 py-1 rounded-md border border-gray-200 text-[11px] text-gray-500 font-mono">
+              https://smartfonedoctor.com/ (Desktop Header)
             </div>
-
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={newDevice}
-                onChange={(e) => setNewDevice(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAddDevice()}
-                placeholder="e.g. iPhone 16 Plus Repair..."
-                className="flex-1 h-[32px] px-2.5 rounded-[5px] border border-gray-300 text-[12px] focus:outline-none focus:border-[#009691]"
-              />
-              <button
-                type="button"
-                onClick={handleAddDevice}
-                className="h-[32px] px-3 rounded-[5px] bg-[#009691] hover:bg-[#007f7b] text-white text-[12px] font-semibold inline-flex items-center gap-1 cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Add</span>
-              </button>
-            </div>
-
-            <div className="flex flex-wrap gap-2 mt-1">
-              {current.popularDevices.map((dev, i) => (
-                <div
-                  key={i}
-                  className="bg-[#f9fafb] border border-gray-200 rounded-[5px] px-2.5 py-1 text-[12px] flex items-center gap-2"
-                >
-                  <span className="font-medium text-[#111111]">{dev}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteDevice(i)}
-                    className="text-gray-400 hover:text-red-600 cursor-pointer"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
-            </div>
+            <button
+              type="button"
+              onClick={() => setPreviewExpanded(!previewExpanded)}
+              className="text-gray-600 hover:text-black p-1"
+              title={previewExpanded ? "Collapse preview" : "Expand preview"}
+            >
+              {previewExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            </button>
           </div>
-
-          {/* COLUMN 2: COMMON ISSUES */}
-          <div className="bg-white border border-[#e8e8e8] rounded-[10px] p-4 shadow-2xs flex flex-col gap-3">
-            <div className="flex items-center justify-between pb-2 border-b border-[#f2f2f2]">
-              <span className="text-[13px] font-bold text-[#111111]">
-                Column 2: Common Issues &amp; Services ({current.commonIssues.length})
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={newIssue}
-                onChange={(e) => setNewIssue(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAddIssue()}
-                placeholder="e.g. Broken Camera Glass..."
-                className="flex-1 h-[32px] px-2.5 rounded-[5px] border border-gray-300 text-[12px] focus:outline-none focus:border-[#009691]"
-              />
-              <button
-                type="button"
-                onClick={handleAddIssue}
-                className="h-[32px] px-3 rounded-[5px] bg-[#009691] hover:bg-[#007f7b] text-white text-[12px] font-semibold inline-flex items-center gap-1 cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Add</span>
-              </button>
-            </div>
-
-            <div className="flex flex-wrap gap-2 mt-1">
-              {current.commonIssues.map((issue, i) => (
-                <div
-                  key={i}
-                  className="bg-[#f9fafb] border border-gray-200 rounded-[5px] px-2.5 py-1 text-[12px] flex items-center gap-2"
-                >
-                  <span className="font-medium text-[#111111]">{issue}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteIssue(i)}
-                    className="text-gray-400 hover:text-red-600 cursor-pointer"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* COLUMN 3: BRANDS */}
-          <div className="bg-white border border-[#e8e8e8] rounded-[10px] p-4 shadow-2xs flex flex-col gap-3">
-            <div className="flex items-center justify-between pb-2 border-b border-[#f2f2f2]">
-              <span className="text-[13px] font-bold text-[#111111]">
-                Column 3: Brand Cards ({current.brands.length})
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <input
-                type="text"
-                value={newBrandTitle}
-                onChange={(e) => setNewBrandTitle(e.target.value)}
-                placeholder="Brand Title (e.g. Apple Repair)"
-                className="h-[32px] px-2.5 rounded-[5px] border border-gray-300 text-[12px] focus:outline-none focus:border-[#009691]"
-              />
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={newBrandSubtitle}
-                  onChange={(e) => setNewBrandSubtitle(e.target.value)}
-                  placeholder="Subtitle (e.g. All iPhone Models)"
-                  className="flex-1 h-[32px] px-2.5 rounded-[5px] border border-gray-300 text-[12px] focus:outline-none focus:border-[#009691]"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddBrand}
-                  className="h-[32px] px-3 rounded-[5px] bg-[#009691] hover:bg-[#007f7b] text-white text-[12px] font-semibold inline-flex items-center gap-1 cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
-              {current.brands.map((b, i) => (
-                <div
-                  key={i}
-                  className="p-2.5 rounded-[6px] bg-[#f9fafb] border border-gray-200 flex items-center justify-between"
-                >
-                  <div>
-                    <span className="text-[12px] font-semibold text-[#111111] block">
-                      {b.title}
-                    </span>
-                    <span className="text-[10px] text-gray-500 block">
-                      {b.subtitle}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteBrand(i)}
-                    className="text-gray-400 hover:text-red-600 p-1 cursor-pointer"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
         </div>
 
-        {/* RIGHT COLUMN: REAL-TIME SIMULATED MEGA MENU FLYOUT (5 COLS on XL) */}
-        <div className="xl:col-span-5 sticky top-16 flex flex-col gap-3">
+        {/* SIMULATED DESKTOP WEBSITE HEADER */}
+        <div className="bg-white border-b border-neutral-200 px-4 sm:px-8 py-3.5 flex items-center justify-between">
           
-          <div className="bg-white border border-[#e8e8e8] rounded-[10px] p-3 flex items-center justify-between shadow-2xs">
-            <div className="flex items-center gap-2">
-              <Eye className="w-4 h-4 text-[#009691]" />
-              <span className="text-[13px] font-bold text-[#111111]">
-                Live Mega-Menu Flyout Preview
+          {/* Logo */}
+          <div className="flex items-center gap-2">
+            <div className="flex flex-col leading-none">
+              <span className="text-[18px] font-black tracking-tighter text-[#1d1c1a]">
+                SMART <span className="text-[#00897b]">FONE</span> DOCTOR
+              </span>
+              <span className="text-[9px] font-semibold tracking-wider text-gray-400 uppercase">
+                Philadelphia Repair Bench
               </span>
             </div>
-            <span className="text-[11px] font-semibold text-[#009691] bg-[#009691]/10 px-2 py-0.5 rounded">
-              Active: {current.label}
-            </span>
           </div>
 
-          {/* SIMULATED DESKTOP NAVBAR & FLYOUT */}
-          <div className="bg-white border border-gray-300 rounded-[10px] overflow-hidden shadow-lg">
-            
-            {/* Header tab strip */}
-            <div className="bg-[#1a1a1a] text-white p-3 flex items-center justify-between text-[12px]">
-              <div className="flex items-center gap-2">
-                <span className="w-4 h-4 rounded bg-[#009691] text-white text-[9px] font-bold flex items-center justify-center">
-                  SF
-                </span>
-                <span className="font-bold">SmartFoneDoctor Navbar</span>
-              </div>
-              <span className="bg-[#009691] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                {current.label} Menu Open
-              </span>
+          {/* Desktop Nav Items */}
+          <div className="hidden lg:flex items-center gap-5 text-[14px] font-medium text-[#1d1c1a]">
+            {/* Active Repair button with Open Chevron */}
+            <div className="px-3.5 py-1.5 rounded border border-[#1d1c1a] bg-white flex items-center gap-1.5 font-semibold text-[#1d1c1a]">
+              <span>Repair</span>
+              <ChevronDown className="w-4 h-4 rotate-180 text-[#00897b]" />
             </div>
 
-            {/* Simulated 3-Column Mega Menu Container */}
-            <div className="p-4 bg-white text-[12px] flex flex-col gap-4">
+            <div className="flex items-center gap-1 text-gray-700 hover:text-[#00897b] cursor-pointer">
+              <span>Repairs &amp; Services</span>
+              <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+            </div>
+
+            <div className="px-3 py-1 rounded-full bg-[#00897b]/10 text-[#00897b] font-semibold flex items-center gap-1.5 text-[13px]">
+              <span className="w-2 h-2 rounded-full bg-[#00897b] animate-pulse" />
+              <span>Free Estimate</span>
+            </div>
+
+            <span className="text-gray-700 hover:text-[#00897b] cursor-pointer">Locations</span>
+
+            <div className="px-3 py-1 rounded-full border border-[#00897b] text-[#1d1c1a] font-semibold text-[13px] bg-[#00897b]/10">
+              Track Status
+            </div>
+
+            <span className="text-gray-700 hover:text-[#00897b] cursor-pointer">About Us</span>
+          </div>
+
+          {/* Start Repair CTA */}
+          <div className="hidden lg:block">
+            <span className="px-4 py-2 rounded bg-[#00897b] text-white font-bold text-[12px] uppercase tracking-wider">
+              START REPAIR
+            </span>
+          </div>
+        </div>
+
+        {/* CPR STYLE FULL-WIDTH MEGA MENU BODY (Identical to screenshot) */}
+        <div className="w-full bg-[#f5f5f5] border-t border-neutral-200 p-6 sm:p-8">
+          <div className="max-w-[1350px] mx-auto">
+            
+            {/* Top Category Selector Row (Pills with chevron) */}
+            <div className="flex flex-wrap items-center gap-3 pb-6 border-b border-neutral-200">
+              {categoryKeys.map((key) => {
+                const cat = config.categories[key];
+                const isActive = activeCategory === key;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setActiveCategory(key)}
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-[14px] font-medium transition-all duration-150 cursor-pointer ${
+                      isActive
+                        ? "bg-white text-[#1d1c1a] shadow-xs font-bold border border-neutral-200/80"
+                        : "text-neutral-600 hover:bg-white/70 hover:text-[#1d1c1a]"
+                    }`}
+                  >
+                    <span className={isActive ? "text-[#00897b]" : "text-neutral-500"}>
+                      {renderCategoryIcon(key, "w-5 h-5")}
+                    </span>
+                    <span>{cat.label}</span>
+                    <ChevronRight className="w-4 h-4 text-neutral-400" />
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Inner Grid: Left 8 Columns (Devices, Issues, Brands) + Right 4 Columns (CTA Card) */}
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 pt-6">
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* LEFT 8 COLUMNS: 3 SUB-COLUMNS */}
+              <div className="xl:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-6">
                 
                 {/* Col 1: Popular Devices */}
-                <div className="flex flex-col gap-1.5 border-r border-gray-100 pr-2">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
-                    Popular Devices
-                  </span>
-                  {current.popularDevices.slice(0, 6).map((d, i) => (
-                    <div
-                      key={i}
-                      className="text-[#111111] hover:text-[#009691] py-0.5 truncate cursor-pointer font-medium"
-                    >
-                      {d}
-                    </div>
-                  ))}
+                <div className="md:pr-6 md:border-r border-neutral-200 flex flex-col justify-between">
+                  <div>
+                    <h4 className="text-[15px] font-bold text-[#1d1c1a] mb-4">
+                      Popular Devices
+                    </h4>
+                    <ul className="space-y-3.5 text-[14px] text-neutral-600">
+                      {currentCategory.popularDevices.map((device, i) => (
+                        <li key={i} className="hover:text-[#00897b] transition-colors cursor-pointer">
+                          {device}
+                        </li>
+                      ))}
+                      {currentCategory.popularDevices.length === 0 && (
+                        <li className="text-gray-400 italic text-[13px]">No devices added yet.</li>
+                      )}
+                    </ul>
+                  </div>
+                  <div className="mt-6">
+                    <span className="inline-flex items-center gap-1 text-[14px] font-bold text-[#1d1c1a] underline hover:text-[#00897b] cursor-pointer">
+                      <span>View All</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </span>
+                  </div>
                 </div>
 
                 {/* Col 2: Common Issues */}
-                <div className="flex flex-col gap-1.5 border-r border-gray-100 pr-2">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
-                    Common Issues
-                  </span>
-                  {current.commonIssues.slice(0, 6).map((iss, i) => (
-                    <div
-                      key={i}
-                      className="text-[#111111] hover:text-[#009691] py-0.5 truncate cursor-pointer font-medium"
-                    >
-                      {iss}
-                    </div>
-                  ))}
+                <div className="md:px-6 md:border-r border-neutral-200 flex flex-col justify-between">
+                  <div>
+                    <h4 className="text-[15px] font-bold text-[#1d1c1a] mb-4">
+                      Common Issues
+                    </h4>
+                    <ul className="space-y-3.5 text-[14px] text-neutral-600">
+                      {currentCategory.commonIssues.map((issue, i) => (
+                        <li key={i} className="hover:text-[#00897b] transition-colors cursor-pointer">
+                          {issue}
+                        </li>
+                      ))}
+                      {currentCategory.commonIssues.length === 0 && (
+                        <li className="text-gray-400 italic text-[13px]">No issues added yet.</li>
+                      )}
+                    </ul>
+                  </div>
+                  <div className="mt-6">
+                    <span className="inline-flex items-center gap-1 text-[14px] font-bold text-[#1d1c1a] underline hover:text-[#00897b] cursor-pointer">
+                      <span>View All</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </span>
+                  </div>
                 </div>
 
-                {/* Col 3: Brands */}
-                <div className="flex flex-col gap-2">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">
-                    Select Brand
-                  </span>
-                  {current.brands.slice(0, 3).map((b, i) => (
-                    <div
-                      key={i}
-                      className="p-2 rounded bg-gray-50 border border-gray-200 hover:border-[#009691] cursor-pointer"
-                    >
-                      <span className="font-bold text-[#111111] block text-[11px] truncate">{b.title}</span>
-                      <span className="text-[10px] text-gray-500 block truncate">{b.subtitle}</span>
-                    </div>
-                  ))}
+                {/* Col 3: By Brand */}
+                <div className="md:pl-6 flex flex-col justify-between">
+                  <div>
+                    <h4 className="text-[15px] font-bold text-[#1d1c1a] mb-4">
+                      By Brand
+                    </h4>
+                    <ul className="space-y-4">
+                      {currentCategory.brands.map((brand, i) => (
+                        <li key={i} className="flex items-center justify-between group cursor-pointer">
+                          <div>
+                            <p className="text-[14px] font-medium text-neutral-800 group-hover:text-[#00897b] transition-colors">
+                              {brand.title}
+                            </p>
+                            <p className="text-[13px] text-neutral-500">
+                              {brand.subtitle}
+                            </p>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-neutral-400 group-hover:text-[#00897b] group-hover:translate-x-0.5 transition-transform" />
+                        </li>
+                      ))}
+                      {currentCategory.brands.length === 0 && (
+                        <li className="text-gray-400 italic text-[13px]">No brands added yet.</li>
+                      )}
+                    </ul>
+                  </div>
+
+                  <div className="mt-6">
+                    <span className="inline-flex items-center justify-between w-full text-[14px] font-bold text-[#1d1c1a] underline hover:text-[#00897b] cursor-pointer">
+                      <span>{currentCategory.allLinkText}</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </span>
+                  </div>
                 </div>
 
               </div>
 
-              {/* Bottom bar of Mega Menu */}
-              <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
-                <span className="text-[11px] text-gray-500">
-                  3 Convenient Philadelphia Locations
-                </span>
-                <span className="text-[12px] font-bold text-[#009691] inline-flex items-center gap-1 cursor-pointer hover:underline">
-                  <span>{current.allLinkText}</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </span>
+              {/* RIGHT 4 COLUMNS: THE WHITE "Need your device fixed?" CTA CARD */}
+              <div className="xl:col-span-4 flex flex-col">
+                <div className="bg-white rounded-2xl p-6 sm:p-8 text-center shadow-xs border border-neutral-100 flex flex-col items-center justify-center flex-1">
+                  
+                  {/* Circular Teal Pin Icon */}
+                  <div className="w-12 h-12 rounded-full border-2 border-[#00897b]/40 flex items-center justify-center text-[#00897b] mb-4">
+                    <MapPin className="w-6 h-6" />
+                  </div>
+
+                  <h3 className="text-2xl sm:text-3xl font-normal text-[#1d1c1a] leading-tight mb-3">
+                    {config.ctaCard.title}
+                  </h3>
+
+                  <p className="text-sm text-neutral-600 max-w-xs mb-6 leading-relaxed">
+                    {config.ctaCard.description}
+                  </p>
+
+                  <div className="w-full space-y-3">
+                    <button
+                      type="button"
+                      className="block w-full py-3.5 px-6 rounded-full bg-[#00897b] hover:opacity-90 text-white font-bold text-sm transition shadow-sm cursor-pointer"
+                    >
+                      {config.ctaCard.primaryBtnText}
+                    </button>
+
+                    <button
+                      type="button"
+                      className="block w-full py-3.5 px-6 rounded-full border border-neutral-400 hover:border-[#1d1c1a] text-[#1d1c1a] font-bold text-sm bg-white hover:bg-neutral-50 transition cursor-pointer"
+                    >
+                      {config.ctaCard.secondaryBtnText}
+                    </button>
+                  </div>
+
+                </div>
               </div>
 
             </div>
 
           </div>
-
-          <p className="text-[11px] text-center text-gray-400">
-            ⚡ Updates instantaneously as you add or remove items on the left.
-          </p>
-
         </div>
 
       </div>
+
+      {/* 3. EDITOR CONTROL PANEL (Applying /awesome-design high-productivity layout) */}
+      <div className="bg-white border border-[#e8e8e8] rounded-xl p-5 sm:p-6 shadow-xs space-y-6">
+        
+        {/* Editor Tab Navigation */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-gray-200">
+          <div className="flex items-center gap-2">
+            <Sliders className="w-4 h-4 text-[#00897b]" />
+            <h2 className="text-base font-bold text-[#111111]">
+              Menu Content Editor
+            </h2>
+          </div>
+
+          <div className="flex items-center gap-2 bg-[#f4f5f7] p-1 rounded-lg">
+            <button
+              type="button"
+              onClick={() => setActiveTab("columns")}
+              className={`px-3 py-1.5 rounded-md text-[13px] font-semibold transition-colors cursor-pointer ${
+                activeTab === "columns"
+                  ? "bg-white text-[#111111] shadow-2xs"
+                  : "text-gray-500 hover:text-black"
+              }`}
+            >
+              Columns &amp; Devices ({currentCategory.label})
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("cta")}
+              className={`px-3 py-1.5 rounded-md text-[13px] font-semibold transition-colors cursor-pointer ${
+                activeTab === "cta"
+                  ? "bg-white text-[#111111] shadow-2xs"
+                  : "text-gray-500 hover:text-black"
+              }`}
+            >
+              Right CTA Card Settings
+            </button>
+          </div>
+        </div>
+
+        {/* TAB 1: 3-COLUMN REPAIR ITEM EDITORS */}
+        {activeTab === "columns" && (
+          <div className="space-y-6">
+            
+            {/* Category Selector Bar */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[12px] font-semibold text-gray-500 mr-2">
+                Active Category:
+              </span>
+              {categoryKeys.map((key) => {
+                const isSelected = activeCategory === key;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setActiveCategory(key)}
+                    className={`h-[32px] px-3 rounded-full text-[12px] font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer ${
+                      isSelected
+                        ? "bg-[#00897b] text-white shadow-xs"
+                        : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                    }`}
+                  >
+                    {renderCategoryIcon(key, "w-3.5 h-3.5")}
+                    <span>{config.categories[key].label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* 3 Columns Edit Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+              
+              {/* 1. Popular Devices Editor */}
+              <div className="bg-[#f9fafb] border border-gray-200 rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] font-bold text-[#111111]">
+                    Popular Devices
+                  </span>
+                  <span className="text-[11px] font-semibold bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">
+                    {currentCategory.popularDevices.length} items
+                  </span>
+                </div>
+
+                {/* Add new device input */}
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="text"
+                    value={newDevice}
+                    onChange={(e) => setNewDevice(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleAddDevice()}
+                    placeholder="e.g. iPhone 16 Plus Repair"
+                    className="flex-1 h-[32px] px-2.5 rounded-[5px] border border-gray-300 text-[12px] bg-white focus:outline-none focus:border-[#00897b]"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddDevice}
+                    className="h-[32px] px-2.5 rounded-[5px] bg-[#00897b] hover:bg-[#00796b] text-white text-[12px] font-semibold inline-flex items-center gap-1 cursor-pointer shrink-0"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add</span>
+                  </button>
+                </div>
+
+                {/* List */}
+                <div className="space-y-1.5 max-h-[260px] overflow-y-auto pr-1">
+                  {currentCategory.popularDevices.map((device, idx) => (
+                    <div
+                      key={idx}
+                      className="px-2.5 py-1.5 rounded-[5px] bg-white border border-gray-200 flex items-center justify-between text-[12px] text-gray-800"
+                    >
+                      <span className="truncate pr-2">{device}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveDevice(idx)}
+                        className="text-gray-400 hover:text-red-600 p-0.5 cursor-pointer"
+                        title="Remove device"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 2. Common Issues Editor */}
+              <div className="bg-[#f9fafb] border border-gray-200 rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] font-bold text-[#111111]">
+                    Common Issues
+                  </span>
+                  <span className="text-[11px] font-semibold bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">
+                    {currentCategory.commonIssues.length} items
+                  </span>
+                </div>
+
+                {/* Add new issue input */}
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="text"
+                    value={newIssue}
+                    onChange={(e) => setNewIssue(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleAddIssue()}
+                    placeholder="e.g. HDMI Port Fix"
+                    className="flex-1 h-[32px] px-2.5 rounded-[5px] border border-gray-300 text-[12px] bg-white focus:outline-none focus:border-[#00897b]"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddIssue}
+                    className="h-[32px] px-2.5 rounded-[5px] bg-[#00897b] hover:bg-[#00796b] text-white text-[12px] font-semibold inline-flex items-center gap-1 cursor-pointer shrink-0"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add</span>
+                  </button>
+                </div>
+
+                {/* List */}
+                <div className="space-y-1.5 max-h-[260px] overflow-y-auto pr-1">
+                  {currentCategory.commonIssues.map((issue, idx) => (
+                    <div
+                      key={idx}
+                      className="px-2.5 py-1.5 rounded-[5px] bg-white border border-gray-200 flex items-center justify-between text-[12px] text-gray-800"
+                    >
+                      <span className="truncate pr-2">{issue}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveIssue(idx)}
+                        className="text-gray-400 hover:text-red-600 p-0.5 cursor-pointer"
+                        title="Remove issue"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 3. By Brand Editor */}
+              <div className="bg-[#f9fafb] border border-gray-200 rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] font-bold text-[#111111]">
+                    By Brand
+                  </span>
+                  <span className="text-[11px] font-semibold bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">
+                    {currentCategory.brands.length} brands
+                  </span>
+                </div>
+
+                {/* Add new brand input */}
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    value={newBrandTitle}
+                    onChange={(e) => setNewBrandTitle(e.target.value)}
+                    placeholder="Brand Title (e.g. Sony PlayStation)"
+                    className="w-full h-[32px] px-2.5 rounded-[5px] border border-gray-300 text-[12px] bg-white focus:outline-none focus:border-[#00897b]"
+                  />
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="text"
+                      value={newBrandSubtitle}
+                      onChange={(e) => setNewBrandSubtitle(e.target.value)}
+                      placeholder="Subtitle (e.g. PS5 & PS4 Models)"
+                      className="flex-1 h-[32px] px-2.5 rounded-[5px] border border-gray-300 text-[12px] bg-white focus:outline-none focus:border-[#00897b]"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddBrand}
+                      className="h-[32px] px-2.5 rounded-[5px] bg-[#00897b] hover:bg-[#00796b] text-white text-[12px] font-semibold inline-flex items-center gap-1 cursor-pointer shrink-0"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* List */}
+                <div className="space-y-1.5 max-h-[220px] overflow-y-auto pr-1">
+                  {currentCategory.brands.map((brand, idx) => (
+                    <div
+                      key={idx}
+                      className="px-2.5 py-1.5 rounded-[5px] bg-white border border-gray-200 flex items-center justify-between text-[12px] text-gray-800"
+                    >
+                      <div className="min-w-0 pr-2">
+                        <span className="font-semibold block truncate">{brand.title}</span>
+                        <span className="text-[10px] text-gray-500 block truncate">{brand.subtitle}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveBrand(idx)}
+                        className="text-gray-400 hover:text-red-600 p-0.5 cursor-pointer"
+                        title="Remove brand"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+            {/* Bottom Row: Category Footer Link Text */}
+            <div className="pt-3 border-t border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-[12px] font-semibold text-gray-600">
+                  Bottom CTA Link Text:
+                </span>
+                <input
+                  type="text"
+                  value={currentCategory.allLinkText}
+                  onChange={(e) => handleUpdateAllLinkText(e.target.value)}
+                  className="h-[32px] px-3 rounded-[5px] border border-gray-300 text-[12px] w-64 bg-white focus:outline-none focus:border-[#00897b]"
+                />
+              </div>
+
+              <span className="text-[11px] text-gray-400">
+                ⚡ Any changes made above immediately reflect in the Live Storefront Preview above.
+              </span>
+            </div>
+
+          </div>
+        )}
+
+        {/* TAB 2: RIGHT CTA CARD EDITOR */}
+        {activeTab === "cta" && (
+          <div className="max-w-2xl space-y-4">
+            <div>
+              <label className="text-[12px] font-semibold text-gray-700 block mb-1">
+                Headline / Title
+              </label>
+              <input
+                type="text"
+                value={config.ctaCard.title}
+                onChange={(e) =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    ctaCard: { ...prev.ctaCard, title: e.target.value },
+                  }))
+                }
+                className="w-full h-[36px] px-3 rounded-[6px] border border-gray-300 text-[13px] focus:outline-none focus:border-[#00897b]"
+              />
+            </div>
+
+            <div>
+              <label className="text-[12px] font-semibold text-gray-700 block mb-1">
+                Description / Subtitle
+              </label>
+              <textarea
+                rows={2}
+                value={config.ctaCard.description}
+                onChange={(e) =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    ctaCard: { ...prev.ctaCard, description: e.target.value },
+                  }))
+                }
+                className="w-full p-2.5 rounded-[6px] border border-gray-300 text-[13px] focus:outline-none focus:border-[#00897b]"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-[12px] font-semibold text-gray-700 block mb-1">
+                  Primary Button Text
+                </label>
+                <input
+                  type="text"
+                  value={config.ctaCard.primaryBtnText}
+                  onChange={(e) =>
+                    setConfig((prev) => ({
+                      ...prev,
+                      ctaCard: { ...prev.ctaCard, primaryBtnText: e.target.value },
+                    }))
+                  }
+                  className="w-full h-[36px] px-3 rounded-[6px] border border-gray-300 text-[13px] focus:outline-none focus:border-[#00897b]"
+                />
+              </div>
+
+              <div>
+                <label className="text-[12px] font-semibold text-gray-700 block mb-1">
+                  Secondary Button Text
+                </label>
+                <input
+                  type="text"
+                  value={config.ctaCard.secondaryBtnText}
+                  onChange={(e) =>
+                    setConfig((prev) => ({
+                      ...prev,
+                      ctaCard: { ...prev.ctaCard, secondaryBtnText: e.target.value },
+                    }))
+                  }
+                  className="w-full h-[36px] px-3 rounded-[6px] border border-gray-300 text-[13px] focus:outline-none focus:border-[#00897b]"
+                />
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={handleSave}
+                className="h-[36px] px-4 rounded-[6px] bg-[#00897b] hover:bg-[#00796b] text-white text-[13px] font-semibold inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <Save className="w-4 h-4" />
+                <span>Save CTA Changes</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+      </div>
+
     </div>
   );
 }

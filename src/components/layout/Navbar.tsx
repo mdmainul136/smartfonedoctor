@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -16,146 +16,31 @@ import {
   MapPin,
   PhoneCall,
 } from 'lucide-react';
-
-type CategoryKey = 'smartphones' | 'tablet' | 'consoles' | 'computers';
-
-const MEGA_MENU_DATA: Record<
+import {
   CategoryKey,
-  {
-    label: string;
-    icon: React.ReactNode;
-    popularDevices: string[];
-    commonIssues: string[];
-    brands: { title: string; subtitle: string }[];
-    allLinkText: string;
-    href: string;
-  }
-> = {
-  smartphones: {
-    label: 'Smartphones',
-    icon: <Smartphone className="w-6 h-6 text-sfd-teal" />,
-    popularDevices: [
-      'iPhone 16 Pro Repair',
-      'iPhone 15 Repair',
-      'iPhone 14 Repair',
-      'iPhone 13 Repair',
-      'Galaxy S25 Repair',
-      'Google Pixel 9 Repair',
-    ],
-    commonIssues: [
-      'Cracked Screen Repair',
-      'Phone Battery Replacement',
-      'Charging Port Repair',
-      'Water Damage Repair',
-      'Back Glass Repair',
-      'Camera Repair',
-      'Speaker & Mic Repair',
-    ],
-    brands: [
-      { title: 'Apple Repair', subtitle: 'All Apple Models' },
-      { title: 'Samsung Repair', subtitle: 'All Samsung Models' },
-      { title: 'Google Repair', subtitle: 'All Google Models' },
-      { title: 'Motorola Repair', subtitle: 'All Motorola Models' },
-    ],
-    allLinkText: 'All Smartphone Repairs',
-    href: '/repairs/smartphone',
-  },
-  tablet: {
-    label: 'Tablets',
-    icon: <Tablet className="w-6 h-6 text-sfd-teal" />,
-    popularDevices: [
-      'iPad Pro 12.9" Repair',
-      'iPad Air 5 Repair',
-      'iPad 10th Gen Repair',
-      'iPad Mini 6 Repair',
-      'Galaxy Tab S9 Repair',
-      'Surface Pro 9 Repair',
-    ],
-    commonIssues: [
-      'Cracked Digitizer / Glass',
-      'Tablet Battery Replacement',
-      'Charging Port Repair',
-      'LCD Display Replacement',
-      'Water Damage Diagnostics',
-      'Power & Volume Button Fix',
-      'Headphone Jack / Audio Repair',
-    ],
-    brands: [
-      { title: 'Apple iPad Repair', subtitle: 'All iPad Models' },
-      { title: 'Samsung Tab Repair', subtitle: 'All Galaxy Tab Models' },
-      { title: 'Microsoft Surface', subtitle: 'All Surface Models' },
-      { title: 'Amazon Fire Tablet', subtitle: 'All Kindle Fire Models' },
-    ],
-    allLinkText: 'All Tablet Repairs',
-    href: '/repairs/tablet',
-  },
-  consoles: {
-    label: 'Game Console',
-    icon: <Gamepad2 className="w-6 h-6 text-sfd-teal" />,
-    popularDevices: [
-      'PlayStation 5 Repair',
-      'PlayStation 4 Pro Repair',
-      'Xbox Series X Repair',
-      'Xbox Series S Repair',
-      'Nintendo Switch OLED',
-      'Steam Deck Repair',
-    ],
-    commonIssues: [
-      'HDMI Port Replacement',
-      'Overheating & Fan Cleaning',
-      'Disc Drive Repair',
-      'No Power / Power Supply',
-      'Joy-Con Drift Repair',
-      'Software & OS Recovery',
-      'Controller Port / Jack Repair',
-    ],
-    brands: [
-      { title: 'Sony PlayStation', subtitle: 'PS5 & PS4 Models' },
-      { title: 'Microsoft Xbox', subtitle: 'Series X/S & One' },
-      { title: 'Nintendo Repair', subtitle: 'Switch, OLED & Lite' },
-      { title: 'Valve & Handhelds', subtitle: 'Steam Deck & ROG Ally' },
-    ],
-    allLinkText: 'All Game Console Repairs',
-    href: '/repairs/console/playstation-repair',
-  },
-  computers: {
-    label: 'Computers',
-    icon: <Laptop className="w-6 h-6 text-sfd-teal" />,
-    popularDevices: [
-      'MacBook Pro 14"/16" Repair',
-      'MacBook Air M2/M3',
-      'Dell XPS & Inspiron',
-      'HP Pavilion & Envy',
-      'Lenovo ThinkPad Repair',
-      'Asus ROG & ZenBook',
-    ],
-    commonIssues: [
-      'Laptop Screen Replacement',
-      'Battery Replacement',
-      'Keyboard & Trackpad Fix',
-      'SSD Upgrade & Data Recovery',
-      'Liquid Spill Cleanup',
-      'Fan Cleaning & Thermal Paste',
-      'Virus Removal & OS Reinstall',
-    ],
-    brands: [
-      { title: 'Apple Mac Repair', subtitle: 'MacBook & iMac Models' },
-      { title: 'Windows Laptop Repair', subtitle: 'Dell, HP, Lenovo, Asus' },
-      { title: 'Desktop & PC Custom', subtitle: 'Gaming & Workstation PCs' },
-      { title: 'Chromebook Repair', subtitle: 'All Chromebook Models' },
-    ],
-    allLinkText: 'All Computer Repairs',
-    href: '/repairs/computer',
-  },
-};
+  MegaCategoryData,
+  DEFAULT_MEGA_MENU_CONFIG,
+  getStoredMegaMenu,
+} from '@/lib/megaMenuData';
 
 export default function Navbar() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<CategoryKey>('smartphones');
+  const [menuConfig, setMenuConfig] = useState(DEFAULT_MEGA_MENU_CONFIG);
+
+  useEffect(() => {
+    setMenuConfig(getStoredMegaMenu());
+    const handleUpdate = () => {
+      setMenuConfig(getStoredMegaMenu());
+    };
+    window.addEventListener('sfd-mega-menu-updated', handleUpdate);
+    return () => window.removeEventListener('sfd-mega-menu-updated', handleUpdate);
+  }, []);
 
   const isDashboard =
+    pathname?.startsWith('/admin') ||
     pathname?.startsWith('/portal') ||
     pathname?.startsWith('/review') ||
     pathname?.startsWith('/profile') ||
@@ -175,7 +60,20 @@ export default function Navbar() {
     setActiveCategory('smartphones');
   };
 
-  const currentData = MEGA_MENU_DATA[activeCategory];
+  const currentData = menuConfig.categories[activeCategory] || DEFAULT_MEGA_MENU_CONFIG.categories[activeCategory];
+
+  const renderCategoryIcon = (key: CategoryKey) => {
+    switch (key) {
+      case 'smartphones':
+        return <Smartphone className="w-6 h-6 text-sfd-teal" />;
+      case 'tablet':
+        return <Tablet className="w-6 h-6 text-sfd-teal" />;
+      case 'consoles':
+        return <Gamepad2 className="w-6 h-6 text-sfd-teal" />;
+      case 'computers':
+        return <Laptop className="w-6 h-6 text-sfd-teal" />;
+    }
+  };
 
   return (
     <header
@@ -355,8 +253,8 @@ export default function Navbar() {
 
             {/* Top Category Selector Row */}
             <div className="flex items-center gap-4 pb-6 border-b border-neutral-200">
-              {(Object.keys(MEGA_MENU_DATA) as CategoryKey[]).map((key) => {
-                const item = MEGA_MENU_DATA[key];
+              {(Object.keys(menuConfig.categories) as CategoryKey[]).map((key) => {
+                const item = menuConfig.categories[key];
                 const isActive = activeCategory === key;
                 return (
                   <button
@@ -370,7 +268,7 @@ export default function Navbar() {
                         : 'text-neutral-600 hover:bg-white/60 hover:text-sfd-dark'
                     }`}
                   >
-                    {item.icon}
+                    {renderCategoryIcon(key)}
                     <span>{item.label}</span>
                     <ChevronRight className="w-4 h-4 text-neutral-400" />
                   </button>
@@ -487,26 +385,26 @@ export default function Navbar() {
               </div>
 
               <h3 className="text-3xl font-normal text-sfd-dark leading-tight mb-3">
-                Need your <br /> device fixed?
+                {menuConfig.ctaCard.title}
               </h3>
 
               <p className="text-sm text-neutral-600 max-w-xs mb-6 leading-relaxed">
-                Find your device, see repair options and book your nearest SmartFone Doctor location.
+                {menuConfig.ctaCard.description}
               </p>
 
               <div className="w-full space-y-3">
                 <Link
-                  href="/schedule-repair"
+                  href={menuConfig.ctaCard.primaryBtnHref || "/schedule-repair"}
                   className="block w-full py-3.5 px-6 rounded-full bg-sfd-teal hover:opacity-90 text-white font-bold text-sm transition shadow-sm"
                 >
-                  Book a Repair
+                  {menuConfig.ctaCard.primaryBtnText}
                 </Link>
 
                 <Link
-                  href="/locations/i/book-repair"
+                  href={menuConfig.ctaCard.secondaryBtnHref || "/locations/i/book-repair"}
                   className="block w-full py-3.5 px-6 rounded-full border border-neutral-400 hover:border-sfd-dark text-sfd-dark font-bold text-sm bg-white hover:bg-neutral-50 transition"
                 >
-                  Find a Store Near You
+                  {menuConfig.ctaCard.secondaryBtnText}
                 </Link>
               </div>
 
