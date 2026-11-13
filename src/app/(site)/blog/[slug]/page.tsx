@@ -202,53 +202,60 @@ export default function SingleBlogPostPage({ params }: BlogPostPageProps) {
       {/* 3. MAIN ARTICLE CONTENT */}
       <div className="max-w-[850px] mx-auto px-4 sm:px-6 mt-10 space-y-8">
         
-        {/* Render Rich Sections */}
-        {article.sections.map((sec, idx) => (
-          <section key={sec.id || idx} className="space-y-4">
-            
-            {/* Section Heading */}
-            {sec.heading && (
-              <h2 className="text-xl sm:text-2xl font-bold text-[#1d1c1a] tracking-tight">
-                {sec.heading}
-              </h2>
-            )}
+        {/* Render Rich HTML Content or Structured Sections */}
+        {article.contentHtml ? (
+          <div
+            className="sfd-article-prose space-y-4 text-base text-gray-700 leading-relaxed font-normal"
+            dangerouslySetInnerHTML={{ __html: article.contentHtml }}
+          />
+        ) : (
+          article.sections.map((sec, idx) => (
+            <section key={sec.id || idx} className="space-y-4">
+              
+              {/* Section Heading */}
+              {sec.heading && (
+                <h2 className="text-xl sm:text-2xl font-bold text-[#1d1c1a] tracking-tight">
+                  {sec.heading}
+                </h2>
+              )}
 
-            {/* Paragraph Text */}
-            <p className="text-base text-gray-700 leading-relaxed font-normal whitespace-pre-line">
-              {sec.body}
-            </p>
+              {/* Paragraph Text */}
+              <p className="text-base text-gray-700 leading-relaxed font-normal whitespace-pre-line">
+                {sec.body}
+              </p>
 
-            {/* Callout Alert Box */}
-            {sec.calloutType && sec.calloutText && (
-              <div
-                className={`p-4 rounded-xl border flex items-start gap-3 my-4 ${
-                  sec.calloutType === "warning"
-                    ? "bg-red-50/80 border-red-200 text-red-900"
-                    : sec.calloutType === "tip"
-                    ? "bg-teal-50/80 border-teal-200 text-teal-950"
-                    : "bg-blue-50/80 border-blue-200 text-blue-950"
-                }`}
-              >
-                {sec.calloutType === "warning" && (
-                  <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-                )}
-                {sec.calloutType === "tip" && (
-                  <Lightbulb className="w-5 h-5 text-[#00897b] shrink-0 mt-0.5" />
-                )}
-                {sec.calloutType === "note" && (
-                  <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-                )}
-                <div className="text-sm leading-relaxed">
-                  <span className="font-bold uppercase tracking-wider text-[11px] block mb-0.5 opacity-80">
-                    Technician {sec.calloutType}
-                  </span>
-                  <span>{sec.calloutText}</span>
+              {/* Callout Alert Box */}
+              {sec.calloutType && sec.calloutText && (
+                <div
+                  className={`p-4 rounded-xl border flex items-start gap-3 my-4 ${
+                    sec.calloutType === "warning"
+                      ? "bg-red-50/80 border-red-200 text-red-900"
+                      : sec.calloutType === "tip"
+                      ? "bg-teal-50/80 border-teal-200 text-teal-950"
+                      : "bg-blue-50/80 border-blue-200 text-blue-950"
+                  }`}
+                >
+                  {sec.calloutType === "warning" && (
+                    <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                  )}
+                  {sec.calloutType === "tip" && (
+                    <Lightbulb className="w-5 h-5 text-[#00897b] shrink-0 mt-0.5" />
+                  )}
+                  {sec.calloutType === "note" && (
+                    <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                  )}
+                  <div className="text-sm leading-relaxed">
+                    <span className="font-bold uppercase tracking-wider text-[11px] block mb-0.5 opacity-80">
+                      Technician {sec.calloutType}
+                    </span>
+                    <span>{sec.calloutText}</span>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-          </section>
-        ))}
+            </section>
+          ))
+        )}
 
         {/* 4. CONNECTED SERVICE REPAIR CTA BANNER */}
         {article.connectedService && (

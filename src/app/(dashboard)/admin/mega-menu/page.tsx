@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Smartphone,
   Tablet,
@@ -311,51 +312,51 @@ export default function MegaMenuBuilderPage() {
           </div>
         </div>
 
-        {/* SIMULATED DESKTOP WEBSITE HEADER */}
-        <div className="bg-white border-b border-neutral-200 px-4 sm:px-8 py-3.5 flex items-center justify-between">
+        {/* SIMULATED DESKTOP WEBSITE HEADER (1:1 with user's front-end navbar) */}
+        <div className="bg-white border-b border-neutral-200 px-4 sm:px-8 py-3 flex items-center justify-between">
           
-          {/* Logo */}
+          {/* Real Logo */}
           <div className="flex items-center gap-2">
-            <div className="flex flex-col leading-none">
-              <span className="text-[18px] font-black tracking-tighter text-[#1d1c1a]">
-                SMART <span className="text-[#00897b]">FONE</span> DOCTOR
-              </span>
-              <span className="text-[9px] font-semibold tracking-wider text-gray-400 uppercase">
-                Philadelphia Repair Bench
-              </span>
-            </div>
+            <Image
+              src="/logo-png.jpg"
+              alt="SmartFone Doctor Logo"
+              width={160}
+              height={50}
+              priority
+              className="h-10 sm:h-12 w-auto object-contain"
+            />
           </div>
 
           {/* Desktop Nav Items */}
-          <div className="hidden lg:flex items-center gap-5 text-[14px] font-medium text-[#1d1c1a]">
+          <div className="hidden lg:flex items-center gap-5 xl:gap-7 text-[14px] font-medium text-[#1d1c1a]">
             {/* Active Repair button with Open Chevron */}
-            <div className="px-3.5 py-1.5 rounded border border-[#1d1c1a] bg-white flex items-center gap-1.5 font-semibold text-[#1d1c1a]">
+            <div className="px-3.5 py-1.5 border border-[#1d1c1a] bg-white flex items-center gap-1.5 font-semibold text-[#1d1c1a]">
               <span>Repair</span>
-              <ChevronDown className="w-4 h-4 rotate-180 text-[#00897b]" />
+              <ChevronDown className="w-4 h-4 rotate-180 text-neutral-600" />
             </div>
 
-            <div className="flex items-center gap-1 text-gray-700 hover:text-[#00897b] cursor-pointer">
+            <div className="flex items-center gap-1 text-neutral-800 hover:text-[#00897b] cursor-pointer">
               <span>Repairs &amp; Services</span>
-              <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+              <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />
             </div>
 
-            <div className="px-3 py-1 rounded-full bg-[#00897b]/10 text-[#00897b] font-semibold flex items-center gap-1.5 text-[13px]">
-              <span className="w-2 h-2 rounded-full bg-[#00897b] animate-pulse" />
+            <div className="px-3 py-1 rounded-full bg-[#ccfbf1] text-[#0f766e] font-semibold flex items-center gap-1.5 text-[13px]">
+              <span className="w-2 h-2 rounded-full bg-[#0d9488]" />
               <span>Free Estimate</span>
             </div>
 
-            <span className="text-gray-700 hover:text-[#00897b] cursor-pointer">Locations</span>
+            <span className="text-neutral-800 hover:text-[#00897b] cursor-pointer">Locations</span>
 
-            <div className="px-3 py-1 rounded-full border border-[#00897b] text-[#1d1c1a] font-semibold text-[13px] bg-[#00897b]/10">
+            <div className="px-3.5 py-1 rounded-full border border-[#0d9488] text-[#1d1c1a] font-semibold text-[13px] bg-[#99f6e4]/30 shadow-xs">
               Track Status
             </div>
 
-            <span className="text-gray-700 hover:text-[#00897b] cursor-pointer">About Us</span>
+            <span className="text-neutral-800 hover:text-[#00897b] cursor-pointer">About Us</span>
           </div>
 
           {/* Start Repair CTA */}
           <div className="hidden lg:block">
-            <span className="px-4 py-2 rounded bg-[#00897b] text-white font-bold text-[12px] uppercase tracking-wider">
+            <span className="px-5 py-2.5 rounded bg-[#00897b] text-white font-bold text-[13px] uppercase tracking-wider shadow-xs">
               START REPAIR
             </span>
           </div>
@@ -375,17 +376,17 @@ export default function MegaMenuBuilderPage() {
                     key={key}
                     type="button"
                     onClick={() => setActiveCategory(key)}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-[14px] font-medium transition-all duration-150 cursor-pointer ${
+                    className={`flex items-center gap-2.5 px-4 py-2 rounded-xl text-[14px] font-medium transition-all duration-150 cursor-pointer ${
                       isActive
-                        ? "bg-white text-[#1d1c1a] shadow-xs font-bold border border-neutral-200/80"
+                        ? "bg-white text-[#1d1c1a] shadow-xs font-bold border border-neutral-300"
                         : "text-neutral-600 hover:bg-white/70 hover:text-[#1d1c1a]"
                     }`}
                   >
                     <span className={isActive ? "text-[#00897b]" : "text-neutral-500"}>
-                      {renderCategoryIcon(key, "w-5 h-5")}
+                      {renderCategoryIcon(key, "w-4 h-4")}
                     </span>
                     <span>{cat.label}</span>
-                    <ChevronRight className="w-4 h-4 text-neutral-400" />
+                    <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
                   </button>
                 );
               })}
@@ -398,7 +399,7 @@ export default function MegaMenuBuilderPage() {
               <div className="xl:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-6">
                 
                 {/* Col 1: Popular Devices */}
-                <div className="md:pr-6 md:border-r border-neutral-200 flex flex-col justify-between">
+                <div className="md:pr-6 md:border-r border-neutral-200 flex flex-col justify-between min-h-[340px]">
                   <div>
                     <h4 className="text-[15px] font-bold text-[#1d1c1a] mb-4">
                       Popular Devices
@@ -425,7 +426,7 @@ export default function MegaMenuBuilderPage() {
                   <div className="mt-6">
                     <Link
                       href={currentCategory.href}
-                      className="inline-flex items-center gap-1 text-[14px] font-bold text-[#1d1c1a] underline hover:text-[#00897b] cursor-pointer"
+                      className="inline-flex items-center gap-1 text-[14px] font-bold text-[#1d1c1a] underline underline-offset-4 hover:text-[#00897b] cursor-pointer"
                     >
                       <span>View All</span>
                       <ChevronRight className="w-4 h-4" />
@@ -434,7 +435,7 @@ export default function MegaMenuBuilderPage() {
                 </div>
 
                 {/* Col 2: Common Issues */}
-                <div className="md:px-6 md:border-r border-neutral-200 flex flex-col justify-between">
+                <div className="md:px-6 md:border-r border-neutral-200 flex flex-col justify-between min-h-[340px]">
                   <div>
                     <h4 className="text-[15px] font-bold text-[#1d1c1a] mb-4">
                       Common Issues
@@ -461,7 +462,7 @@ export default function MegaMenuBuilderPage() {
                   <div className="mt-6">
                     <Link
                       href="/common-issues"
-                      className="inline-flex items-center gap-1 text-[14px] font-bold text-[#1d1c1a] underline hover:text-[#00897b] cursor-pointer"
+                      className="inline-flex items-center gap-1 text-[14px] font-bold text-[#1d1c1a] underline underline-offset-4 hover:text-[#00897b] cursor-pointer"
                     >
                       <span>View All</span>
                       <ChevronRight className="w-4 h-4" />
@@ -470,7 +471,7 @@ export default function MegaMenuBuilderPage() {
                 </div>
 
                 {/* Col 3: By Brand */}
-                <div className="md:pl-6 flex flex-col justify-between">
+                <div className="md:pl-6 flex flex-col justify-between min-h-[340px]">
                   <div>
                     <h4 className="text-[15px] font-bold text-[#1d1c1a] mb-4">
                       By Brand
@@ -506,10 +507,10 @@ export default function MegaMenuBuilderPage() {
                   <div className="mt-6">
                     <Link
                       href={currentCategory.href}
-                      className="inline-flex items-center justify-between w-full text-[14px] font-bold text-[#1d1c1a] underline hover:text-[#00897b] cursor-pointer"
+                      className="inline-flex items-center justify-between w-full text-[14px] font-bold text-[#1d1c1a] hover:text-[#00897b] cursor-pointer"
                     >
-                      <span>{currentCategory.allLinkText}</span>
-                      <ChevronRight className="w-4 h-4" />
+                      <span className="underline underline-offset-4">{currentCategory.allLinkText}</span>
+                      <ChevronRight className="w-4 h-4 text-neutral-500" />
                     </Link>
                   </div>
                 </div>
@@ -521,29 +522,29 @@ export default function MegaMenuBuilderPage() {
                 <div className="bg-white rounded-2xl p-6 sm:p-8 text-center shadow-xs border border-neutral-100 flex flex-col items-center justify-center flex-1">
                   
                   {/* Circular Teal Pin Icon */}
-                  <div className="w-12 h-12 rounded-full border-2 border-[#00897b]/40 flex items-center justify-center text-[#00897b] mb-4">
-                    <MapPin className="w-6 h-6" />
+                  <div className="w-12 h-12 rounded-full border border-[#00897b]/40 flex items-center justify-center text-[#00897b] mb-4 bg-teal-50/40">
+                    <MapPin className="w-5 h-5 text-[#00897b]" />
                   </div>
 
-                  <h3 className="text-2xl sm:text-3xl font-normal text-[#1d1c1a] leading-tight mb-3">
+                  <h3 className="text-2xl sm:text-[28px] font-normal text-[#1d1c1a] leading-tight mb-3">
                     {config.ctaCard.title}
                   </h3>
 
-                  <p className="text-sm text-neutral-600 max-w-xs mb-6 leading-relaxed">
+                  <p className="text-sm text-neutral-600 max-w-[280px] mb-6 leading-relaxed">
                     {config.ctaCard.description}
                   </p>
 
                   <div className="w-full space-y-3">
                     <button
                       type="button"
-                      className="block w-full py-3.5 px-6 rounded-full bg-[#00897b] hover:opacity-90 text-white font-bold text-sm transition shadow-sm cursor-pointer"
+                      className="block w-full py-3.5 px-6 rounded-full bg-[#00897b] hover:bg-[#00796b] text-white font-bold text-sm transition shadow-xs cursor-pointer"
                     >
                       {config.ctaCard.primaryBtnText}
                     </button>
 
                     <button
                       type="button"
-                      className="block w-full py-3.5 px-6 rounded-full border border-neutral-400 hover:border-[#1d1c1a] text-[#1d1c1a] font-bold text-sm bg-white hover:bg-neutral-50 transition cursor-pointer"
+                      className="block w-full py-3.5 px-6 rounded-full border border-neutral-700 hover:border-black text-[#1d1c1a] font-bold text-sm bg-white hover:bg-neutral-50 transition cursor-pointer"
                     >
                       {config.ctaCard.secondaryBtnText}
                     </button>

@@ -37,6 +37,7 @@ export interface BlogArticle {
   publishedAt: string;
   readTime: string;
   status: "Published" | "Draft" | "Archived";
+  contentHtml?: string;
   sections: BlogArticleSection[];
   seo: {
     metaTitle: string;
@@ -267,3 +268,4 @@ export function saveStoredBlogCategories(categories: BlogCategoryTaxonomy[]): vo
   localStorage.setItem(BLOG_CAT_STORAGE_KEY, JSON.stringify(categories));
   window.dispatchEvent(new Event("sfd-blog-categories-updated"));
 }
+

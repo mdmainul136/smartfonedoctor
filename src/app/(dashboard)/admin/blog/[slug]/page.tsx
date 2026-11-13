@@ -22,6 +22,9 @@ import {
   Image as ImageIcon,
   Wrench,
   Globe,
+  Sliders,
+  FileCode,
+  PenTool,
 } from "lucide-react";
 import {
   BlogArticle,
@@ -30,6 +33,7 @@ import {
   saveStoredBlogArticles,
   getStoredBlogCategories,
 } from "@/lib/blogData";
+import RichTextEditor from "@/components/admin/RichTextEditor";
 
 interface EditorPageProps {
   params: Promise<{
@@ -41,6 +45,8 @@ export default function BlogPostEditorPage({ params }: EditorPageProps) {
   const resolvedParams = use(params);
   const router = useRouter();
   const isNew = resolvedParams.slug === "new";
+
+  const [editorMode, setEditorMode] = useState<"richtext" | "blocks">("richtext");
 
   const [article, setArticle] = useState<BlogArticle>({
     id: `post-${Date.now()}`,
@@ -59,6 +65,7 @@ export default function BlogPostEditorPage({ params }: EditorPageProps) {
     publishedAt: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
     readTime: "4 min read",
     status: "Published",
+    contentHtml: "",
     sections: [
       {
         id: `sec-${Date.now()}-1`,
@@ -91,8 +98,39 @@ export default function BlogPostEditorPage({ params }: EditorPageProps) {
     if (!isNew) {
       const found = list.find((a) => a.slug === resolvedParams.slug);
       if (found) {
+        // If contentHtml is not present yet, compile initial HTML from sections
+        if (!found.contentHtml && found.sections && found.sections.length > 0) {
+          const styles = {
+            tip: "background: #f0fdfa; border-left: 4px solid #00897b; color: #134e48; padding: 12px 16px; margin: 16px 0; border-radius: 6px;",
+            warning: "background: #fef2f2; border-left: 4px solid #dc2626; color: #7f1d1d; padding: 12px 16px; margin: 16px 0; border-radius: 6px;",
+            note: "background: #eff6ff; border-left: 4px solid #2563eb; color: #1e3a8a; padding: 12px 16px; margin: 16px 0; border-radius: 6px;",
+          };
+          const compiled = found.sections
+            .map((s) => {
+              let calloutHtml = "";
+              if (s.calloutType && s.calloutText) {
+                const title =
+                  s.calloutType === "tip"
+                    ? "💡 Technician Tip"
+                    : s.calloutType === "warning"
+                    ? "⚠️ Technician Warning"
+                    : "ℹ️ Important Note";
+                calloutHtml = `<div style="${styles[s.calloutType]}"><strong>${title}:</strong> ${s.calloutText}</div>`;
+              }
+              return `<h2>${s.heading}</h2><p>${s.body}</p>${calloutHtml}`;
+            })
+            .join("<p><br></p>");
+          found.contentHtml = compiled;
+        }
         setArticle(found);
       }
+    } else {
+      // New article default HTML
+      setArticle((prev) => ({
+        ...prev,
+        contentHtml:
+          "<h2>1. Overview & Diagnosis</h2><p>Provide clear troubleshooting guidance for customers experiencing this hardware problem...</p><div style=\"background: #f0fdfa; border-left: 4px solid #00897b; color: #134e48; padding: 12px 16px; margin: 16px 0; border-radius: 6px;\"><strong>💡 Technician Tip:</strong> Always back up your data before opening the device casing.</div><h2>2. Recommended Repair Solutions</h2><p>Detail how certified bench technicians resolve this issue with genuine parts and calibration...</p>",
+      }));
     }
   }, [resolvedParams.slug, isNew]);
 
@@ -124,7 +162,7 @@ export default function BlogPostEditorPage({ params }: EditorPageProps) {
     }));
   };
 
-  // Section Management
+  // Section Management (for blocks mode)
   const handleAddSection = () => {
     const newSec: BlogArticleSection = {
       id: `sec-${Date.now()}`,
@@ -328,125 +366,151 @@ export default function BlogPostEditorPage({ params }: EditorPageProps) {
             )}
           </div>
 
-          {/* Dynamic Article Section Blocks */}
-          <div className="space-y-4">
+          {/* WYSIWYG RICH TEXT WRITING CANVAS */}
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-bold text-[#111111]">
-                  Article Content Blocks ({article.sections.length} Sections)
+                <h3 className="text-sm font-bold text-[#111111] flex items-center gap-1.5">
+                  <PenTool className="w-4 h-4 text-[#00897b]" />
+                  Payload Rich Text Content Editor
                 </h3>
                 <p className="text-[11px] text-gray-400">
-                  Break your technical guide into clear subheadings, troubleshooting instructions, and tip callouts.
+                  Write freely with full rich text formatting: H2/H3, quotes, technician callouts, images, and links.
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={handleAddSection}
-                className="h-[32px] px-3 rounded-[5px] bg-[#00897b] hover:bg-[#00796b] text-white text-xs font-semibold inline-flex items-center gap-1 cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Add Section Block</span>
-              </button>
+              {/* Mode Switcher */}
+              <div className="flex items-center gap-1 bg-gray-200/80 p-0.5 rounded-lg text-xs font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setEditorMode("richtext")}
+                  className={`px-3 py-1 rounded-md transition-colors ${
+                    editorMode === "richtext"
+                      ? "bg-white text-black shadow-2xs"
+                      : "text-gray-600 hover:text-black"
+                  }`}
+                >
+                  WYSIWYG Editor
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditorMode("blocks")}
+                  className={`px-3 py-1 rounded-md transition-colors ${
+                    editorMode === "blocks"
+                      ? "bg-white text-black shadow-2xs"
+                      : "text-gray-600 hover:text-black"
+                  }`}
+                >
+                  Section Blocks
+                </button>
+              </div>
             </div>
 
-            {/* List of Section Blocks */}
-            <div className="space-y-4">
-              {article.sections.map((sec, idx) => (
-                <div
-                  key={sec.id || idx}
-                  className="bg-white rounded-xl border border-gray-200 p-5 shadow-2xs space-y-4 relative group"
-                >
-                  <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                      Section #{idx + 1}
-                    </span>
+            {/* TAB 1: WYSIWYG RICH TEXT EDITOR */}
+            {editorMode === "richtext" && (
+              <RichTextEditor
+                value={article.contentHtml || ""}
+                onChange={(html) => setArticle((prev) => ({ ...prev, contentHtml: html }))}
+                placeholder="Write your in-depth technician repair guide, troubleshooting steps, and advice here..."
+                minHeight="420px"
+              />
+            )}
 
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveSection(idx)}
-                      disabled={article.sections.length === 1}
-                      className="text-gray-400 hover:text-red-600 disabled:opacity-30 disabled:cursor-not-allowed p-1"
-                      title="Remove section block"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-
-                  {/* Section Heading */}
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 block mb-1">
-                      Subheading (H2)
-                    </label>
-                    <input
-                      type="text"
-                      value={sec.heading}
-                      onChange={(e) => handleUpdateSection(idx, { heading: e.target.value })}
-                      placeholder="e.g. 1. The Truth About the 80% Battery Health Threshold"
-                      className="w-full h-[36px] px-3 rounded-[5px] border border-gray-300 text-xs font-bold text-gray-900 focus:outline-none focus:border-[#00897b]"
-                    />
-                  </div>
-
-                  {/* Body Paragraph */}
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 block mb-1">
-                      Detailed Content &amp; Instructions
-                    </label>
-                    <textarea
-                      rows={5}
-                      value={sec.body}
-                      onChange={(e) => handleUpdateSection(idx, { body: e.target.value })}
-                      placeholder="Write your technician advice, diagnostics steps, or explanation..."
-                      className="w-full p-3 rounded-[6px] border border-gray-300 text-xs text-gray-700 leading-relaxed focus:outline-none focus:border-[#00897b]"
-                    />
-                  </div>
-
-                  {/* Callout Box Config */}
-                  <div className="pt-2 border-t border-gray-100 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
-                        <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
-                        Technician Highlight Alert (Callout Box)
+            {/* TAB 2: STRUCTURED SECTION BLOCKS (Alternative) */}
+            {editorMode === "blocks" && (
+              <div className="space-y-4">
+                {article.sections.map((sec, idx) => (
+                  <div
+                    key={sec.id || idx}
+                    className="bg-white rounded-xl border border-gray-200 p-5 shadow-2xs space-y-4 relative group"
+                  >
+                    <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        Section #{idx + 1}
                       </span>
-                      <select
-                        value={sec.calloutType || ""}
-                        onChange={(e) =>
-                          handleUpdateSection(idx, {
-                            calloutType: (e.target.value as any) || undefined,
-                          })
-                        }
-                        className="h-[28px] px-2 rounded border border-gray-300 text-xs bg-white text-gray-700"
+
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSection(idx)}
+                        disabled={article.sections.length === 1}
+                        className="text-gray-400 hover:text-red-600 disabled:opacity-30 disabled:cursor-not-allowed p-1"
+                        title="Remove section block"
                       >
-                        <option value="">None (Standard paragraph)</option>
-                        <option value="tip">💡 Technician Tip (Teal Alert)</option>
-                        <option value="warning">⚠️ Warning / Danger (Red Alert)</option>
-                        <option value="note">ℹ️ Important Note (Blue Alert)</option>
-                      </select>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
 
-                    {sec.calloutType && (
-                      <textarea
-                        rows={2}
-                        value={sec.calloutText || ""}
-                        onChange={(e) => handleUpdateSection(idx, { calloutText: e.target.value })}
-                        placeholder="Enter the highlighted tip or warning text..."
-                        className="w-full p-2.5 rounded-[5px] border border-amber-300 bg-amber-50/40 text-xs text-gray-800 focus:outline-none focus:border-[#00897b]"
+                    <div>
+                      <label className="text-xs font-semibold text-gray-700 block mb-1">
+                        Subheading (H2)
+                      </label>
+                      <input
+                        type="text"
+                        value={sec.heading}
+                        onChange={(e) => handleUpdateSection(idx, { heading: e.target.value })}
+                        placeholder="e.g. 1. The Truth About the 80% Battery Health Threshold"
+                        className="w-full h-[36px] px-3 rounded-[5px] border border-gray-300 text-xs font-bold text-gray-900 focus:outline-none focus:border-[#00897b]"
                       />
-                    )}
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-gray-700 block mb-1">
+                        Detailed Content &amp; Instructions
+                      </label>
+                      <textarea
+                        rows={5}
+                        value={sec.body}
+                        onChange={(e) => handleUpdateSection(idx, { body: e.target.value })}
+                        placeholder="Write your technician advice, diagnostics steps, or explanation..."
+                        className="w-full p-3 rounded-[6px] border border-gray-300 text-xs text-gray-700 leading-relaxed focus:outline-none focus:border-[#00897b]"
+                      />
+                    </div>
+
+                    <div className="pt-2 border-t border-gray-100 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
+                          <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+                          Technician Highlight Alert (Callout Box)
+                        </span>
+                        <select
+                          value={sec.calloutType || ""}
+                          onChange={(e) =>
+                            handleUpdateSection(idx, {
+                              calloutType: (e.target.value as any) || undefined,
+                            })
+                          }
+                          className="h-[28px] px-2 rounded border border-gray-300 text-xs bg-white text-gray-700"
+                        >
+                          <option value="">None (Standard paragraph)</option>
+                          <option value="tip">💡 Technician Tip (Teal Alert)</option>
+                          <option value="warning">⚠️ Warning / Danger (Red Alert)</option>
+                          <option value="note">ℹ️ Important Note (Blue Alert)</option>
+                        </select>
+                      </div>
+
+                      {sec.calloutType && (
+                        <textarea
+                          rows={2}
+                          value={sec.calloutText || ""}
+                          onChange={(e) => handleUpdateSection(idx, { calloutText: e.target.value })}
+                          placeholder="Enter the highlighted tip or warning text..."
+                          className="w-full p-2.5 rounded-[5px] border border-amber-300 bg-amber-50/40 text-xs text-gray-800 focus:outline-none focus:border-[#00897b]"
+                        />
+                      )}
+                    </div>
                   </div>
+                ))}
 
-                </div>
-              ))}
-            </div>
-
-            <button
-              type="button"
-              onClick={handleAddSection}
-              className="w-full py-3 rounded-xl border-2 border-dashed border-gray-300 hover:border-[#00897b] bg-white hover:bg-teal-50/20 text-xs font-semibold text-gray-600 hover:text-[#00897b] transition-colors flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add Another Section Block</span>
-            </button>
+                <button
+                  type="button"
+                  onClick={handleAddSection}
+                  className="w-full py-3 rounded-xl border-2 border-dashed border-gray-300 hover:border-[#00897b] bg-white hover:bg-teal-50/20 text-xs font-semibold text-gray-600 hover:text-[#00897b] transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add Another Section Block</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Connected Service Booking Box */}
