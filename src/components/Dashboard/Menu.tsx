@@ -14,6 +14,7 @@ import {
   Star,
   FileText,
   Layers,
+  FolderTree,
   User,
   Settings,
   LogOut,
@@ -68,6 +69,12 @@ const menuItems: { title: string; items: MenuLink[] }[] = [
         icon: Layers,
         label: "Mega Menu Builder",
         href: "/admin/mega-menu",
+        visible: ["admin"],
+      },
+      {
+        icon: FolderTree,
+        label: "Taxonomies & Routing",
+        href: "/admin/taxonomies",
         visible: ["admin"],
       },
       {

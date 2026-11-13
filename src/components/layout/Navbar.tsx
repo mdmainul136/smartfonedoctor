@@ -21,6 +21,9 @@ import {
   MegaCategoryData,
   DEFAULT_MEGA_MENU_CONFIG,
   getStoredMegaMenu,
+  getDeviceUrl,
+  getIssueUrl,
+  getBrandUrl,
 } from '@/lib/megaMenuData';
 
 export default function Navbar() {
@@ -289,7 +292,7 @@ export default function Navbar() {
                     {currentData.popularDevices.map((device) => (
                       <li key={device}>
                         <Link
-                          href={currentData.href}
+                          href={getDeviceUrl(device, activeCategory)}
                           className="hover:text-sfd-teal transition-colors block"
                         >
                           {device}
@@ -317,7 +320,7 @@ export default function Navbar() {
                     {currentData.commonIssues.map((issue) => (
                       <li key={issue}>
                         <Link
-                          href="/common-issues"
+                          href={getIssueUrl(issue, activeCategory)}
                           className="hover:text-sfd-teal transition-colors block"
                         >
                           {issue}
@@ -345,7 +348,7 @@ export default function Navbar() {
                     {currentData.brands.map((brand) => (
                       <li key={brand.title}>
                         <Link
-                          href={currentData.href}
+                          href={brand.href || getBrandUrl(brand.title, activeCategory)}
                           className="flex items-center justify-between group"
                         >
                           <div>

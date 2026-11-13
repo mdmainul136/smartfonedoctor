@@ -22,6 +22,8 @@ import {
   Sliders,
   Maximize2,
   Minimize2,
+  FolderTree,
+  Link2,
 } from "lucide-react";
 import {
   CategoryKey,
@@ -30,7 +32,17 @@ import {
   DEFAULT_MEGA_MENU_CONFIG,
   getStoredMegaMenu,
   saveStoredMegaMenu,
+  getDeviceUrl,
+  getIssueUrl,
+  getBrandUrl,
 } from "@/lib/megaMenuData";
+import {
+  resolveTaxonomyUrl,
+  getAllLinkableEntities,
+  DEVICE_MODELS_TAXONOMY,
+  SERVICE_ISSUES_TAXONOMY,
+  BRANDS_TAXONOMY,
+} from "@/lib/taxonomy";
 
 export default function MegaMenuBuilderPage() {
   const [config, setConfig] = useState<MegaMenuConfig>(DEFAULT_MEGA_MENU_CONFIG);
@@ -71,15 +83,16 @@ export default function MegaMenuBuilderPage() {
   };
 
   // Add Popular Device
-  const handleAddDevice = () => {
-    if (!newDevice.trim()) return;
+  const handleAddDevice = (customName?: string) => {
+    const nameToAdd = (customName || newDevice).trim();
+    if (!nameToAdd) return;
     setConfig((prev) => ({
       ...prev,
       categories: {
         ...prev.categories,
         [activeCategory]: {
           ...prev.categories[activeCategory],
-          popularDevices: [...prev.categories[activeCategory].popularDevices, newDevice.trim()],
+          popularDevices: [...prev.categories[activeCategory].popularDevices, nameToAdd],
         },
       },
     }));
@@ -101,15 +114,16 @@ export default function MegaMenuBuilderPage() {
   };
 
   // Add Common Issue
-  const handleAddIssue = () => {
-    if (!newIssue.trim()) return;
+  const handleAddIssue = (customTitle?: string) => {
+    const titleToAdd = (customTitle || newIssue).trim();
+    if (!titleToAdd) return;
     setConfig((prev) => ({
       ...prev,
       categories: {
         ...prev.categories,
         [activeCategory]: {
           ...prev.categories[activeCategory],
-          commonIssues: [...prev.categories[activeCategory].commonIssues, newIssue.trim()],
+          commonIssues: [...prev.categories[activeCategory].commonIssues, titleToAdd],
         },
       },
     }));
@@ -131,8 +145,11 @@ export default function MegaMenuBuilderPage() {
   };
 
   // Add Brand
-  const handleAddBrand = () => {
-    if (!newBrandTitle.trim()) return;
+  const handleAddBrand = (customBrand?: { title: string; subtitle: string }) => {
+    const title = (customBrand?.title || newBrandTitle).trim();
+    const subtitle = (customBrand?.subtitle || newBrandSubtitle).trim() || `All ${title} Models`;
+    if (!title) return;
+
     setConfig((prev) => ({
       ...prev,
       categories: {
@@ -141,10 +158,7 @@ export default function MegaMenuBuilderPage() {
           ...prev.categories[activeCategory],
           brands: [
             ...prev.categories[activeCategory].brands,
-            {
-              title: newBrandTitle.trim(),
-              subtitle: newBrandSubtitle.trim() || `All ${newBrandTitle.trim()} Models`,
-            },
+            { title, subtitle },
           ],
         },
       },
@@ -209,16 +223,24 @@ export default function MegaMenuBuilderPage() {
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-[#111111] tracking-tight">
-                Mega Menu Builder
+                Mega Menu Builder &amp; URL Router
               </h1>
               <p className="text-[13px] text-[#6b6b6b]">
-                Visual editor for the customer storefront navigation. Live synchronized with <span className="font-semibold text-neutral-800">smartfonedoctor.com</span>.
+                Visual editor for customer storefront navigation. Every item automatically attaches to verified taxonomy routes.
               </p>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2.5">
+          <Link
+            href="/admin/taxonomies"
+            className="h-[36px] px-3 rounded-[6px] border border-gray-300 bg-white hover:bg-gray-50 text-[13px] font-medium text-gray-700 inline-flex items-center gap-1.5 transition-colors"
+          >
+            <FolderTree className="w-3.5 h-3.5 text-indigo-600" />
+            <span>Manage Taxonomies</span>
+          </Link>
+
           <button
             type="button"
             onClick={handleReset}
@@ -382,21 +404,32 @@ export default function MegaMenuBuilderPage() {
                       Popular Devices
                     </h4>
                     <ul className="space-y-3.5 text-[14px] text-neutral-600">
-                      {currentCategory.popularDevices.map((device, i) => (
-                        <li key={i} className="hover:text-[#00897b] transition-colors cursor-pointer">
-                          {device}
-                        </li>
-                      ))}
+                      {currentCategory.popularDevices.map((device, i) => {
+                        const resolvedUrl = getDeviceUrl(device, activeCategory);
+                        return (
+                          <li key={i} title={`Routes to: ${resolvedUrl}`}>
+                            <Link
+                              href={resolvedUrl}
+                              className="hover:text-[#00897b] transition-colors block"
+                            >
+                              {device}
+                            </Link>
+                          </li>
+                        );
+                      })}
                       {currentCategory.popularDevices.length === 0 && (
                         <li className="text-gray-400 italic text-[13px]">No devices added yet.</li>
                       )}
                     </ul>
                   </div>
                   <div className="mt-6">
-                    <span className="inline-flex items-center gap-1 text-[14px] font-bold text-[#1d1c1a] underline hover:text-[#00897b] cursor-pointer">
+                    <Link
+                      href={currentCategory.href}
+                      className="inline-flex items-center gap-1 text-[14px] font-bold text-[#1d1c1a] underline hover:text-[#00897b] cursor-pointer"
+                    >
                       <span>View All</span>
                       <ChevronRight className="w-4 h-4" />
-                    </span>
+                    </Link>
                   </div>
                 </div>
 
@@ -407,21 +440,32 @@ export default function MegaMenuBuilderPage() {
                       Common Issues
                     </h4>
                     <ul className="space-y-3.5 text-[14px] text-neutral-600">
-                      {currentCategory.commonIssues.map((issue, i) => (
-                        <li key={i} className="hover:text-[#00897b] transition-colors cursor-pointer">
-                          {issue}
-                        </li>
-                      ))}
+                      {currentCategory.commonIssues.map((issue, i) => {
+                        const resolvedUrl = getIssueUrl(issue, activeCategory);
+                        return (
+                          <li key={i} title={`Routes to: ${resolvedUrl}`}>
+                            <Link
+                              href={resolvedUrl}
+                              className="hover:text-[#00897b] transition-colors block"
+                            >
+                              {issue}
+                            </Link>
+                          </li>
+                        );
+                      })}
                       {currentCategory.commonIssues.length === 0 && (
                         <li className="text-gray-400 italic text-[13px]">No issues added yet.</li>
                       )}
                     </ul>
                   </div>
                   <div className="mt-6">
-                    <span className="inline-flex items-center gap-1 text-[14px] font-bold text-[#1d1c1a] underline hover:text-[#00897b] cursor-pointer">
+                    <Link
+                      href="/common-issues"
+                      className="inline-flex items-center gap-1 text-[14px] font-bold text-[#1d1c1a] underline hover:text-[#00897b] cursor-pointer"
+                    >
                       <span>View All</span>
                       <ChevronRight className="w-4 h-4" />
-                    </span>
+                    </Link>
                   </div>
                 </div>
 
@@ -432,19 +476,27 @@ export default function MegaMenuBuilderPage() {
                       By Brand
                     </h4>
                     <ul className="space-y-4">
-                      {currentCategory.brands.map((brand, i) => (
-                        <li key={i} className="flex items-center justify-between group cursor-pointer">
-                          <div>
-                            <p className="text-[14px] font-medium text-neutral-800 group-hover:text-[#00897b] transition-colors">
-                              {brand.title}
-                            </p>
-                            <p className="text-[13px] text-neutral-500">
-                              {brand.subtitle}
-                            </p>
-                          </div>
-                          <ChevronRight className="w-4 h-4 text-neutral-400 group-hover:text-[#00897b] group-hover:translate-x-0.5 transition-transform" />
-                        </li>
-                      ))}
+                      {currentCategory.brands.map((brand, i) => {
+                        const resolvedUrl = brand.href || getBrandUrl(brand.title, activeCategory);
+                        return (
+                          <li key={i} title={`Routes to: ${resolvedUrl}`}>
+                            <Link
+                              href={resolvedUrl}
+                              className="flex items-center justify-between group cursor-pointer"
+                            >
+                              <div>
+                                <p className="text-[14px] font-medium text-neutral-800 group-hover:text-[#00897b] transition-colors">
+                                  {brand.title}
+                                </p>
+                                <p className="text-[13px] text-neutral-500">
+                                  {brand.subtitle}
+                                </p>
+                              </div>
+                              <ChevronRight className="w-4 h-4 text-neutral-400 group-hover:text-[#00897b] group-hover:translate-x-0.5 transition-transform" />
+                            </Link>
+                          </li>
+                        );
+                      })}
                       {currentCategory.brands.length === 0 && (
                         <li className="text-gray-400 italic text-[13px]">No brands added yet.</li>
                       )}
@@ -452,10 +504,13 @@ export default function MegaMenuBuilderPage() {
                   </div>
 
                   <div className="mt-6">
-                    <span className="inline-flex items-center justify-between w-full text-[14px] font-bold text-[#1d1c1a] underline hover:text-[#00897b] cursor-pointer">
+                    <Link
+                      href={currentCategory.href}
+                      className="inline-flex items-center justify-between w-full text-[14px] font-bold text-[#1d1c1a] underline hover:text-[#00897b] cursor-pointer"
+                    >
                       <span>{currentCategory.allLinkText}</span>
                       <ChevronRight className="w-4 h-4" />
-                    </span>
+                    </Link>
                   </div>
                 </div>
 
@@ -504,7 +559,7 @@ export default function MegaMenuBuilderPage() {
 
       </div>
 
-      {/* 3. EDITOR CONTROL PANEL (Applying /awesome-design high-productivity layout) */}
+      {/* 3. EDITOR CONTROL PANEL WITH TAXONOMY PICKER & LIVE URL RESOLUTION */}
       <div className="bg-white border border-[#e8e8e8] rounded-xl p-5 sm:p-6 shadow-xs space-y-6">
         
         {/* Editor Tab Navigation */}
@@ -512,7 +567,7 @@ export default function MegaMenuBuilderPage() {
           <div className="flex items-center gap-2">
             <Sliders className="w-4 h-4 text-[#00897b]" />
             <h2 className="text-base font-bold text-[#111111]">
-              Menu Content Editor
+              Menu Content Editor &amp; URL Resolver
             </h2>
           </div>
 
@@ -585,44 +640,62 @@ export default function MegaMenuBuilderPage() {
                   </span>
                 </div>
 
-                {/* Add new device input */}
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="text"
-                    value={newDevice}
-                    onChange={(e) => setNewDevice(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleAddDevice()}
-                    placeholder="e.g. iPhone 16 Plus Repair"
-                    className="flex-1 h-[32px] px-2.5 rounded-[5px] border border-gray-300 text-[12px] bg-white focus:outline-none focus:border-[#00897b]"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddDevice}
-                    className="h-[32px] px-2.5 rounded-[5px] bg-[#00897b] hover:bg-[#00796b] text-white text-[12px] font-semibold inline-flex items-center gap-1 cursor-pointer shrink-0"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add</span>
-                  </button>
+                {/* Add new device input with live resolved URL feedback */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="text"
+                      value={newDevice}
+                      onChange={(e) => setNewDevice(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleAddDevice()}
+                      placeholder="e.g. iPhone 16 Plus Repair"
+                      className="flex-1 h-[32px] px-2.5 rounded-[5px] border border-gray-300 text-[12px] bg-white focus:outline-none focus:border-[#00897b]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleAddDevice()}
+                      className="h-[32px] px-2.5 rounded-[5px] bg-[#00897b] hover:bg-[#00796b] text-white text-[12px] font-semibold inline-flex items-center gap-1 cursor-pointer shrink-0"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add</span>
+                    </button>
+                  </div>
+
+                  {newDevice.trim() && (
+                    <div className="text-[10px] text-teal-800 bg-teal-50 px-2 py-1 rounded border border-teal-200 flex items-center gap-1 font-mono truncate">
+                      <Link2 className="w-3 h-3 shrink-0" />
+                      <span>URL ➜ {getDeviceUrl(newDevice, activeCategory)}</span>
+                    </div>
+                  )}
                 </div>
 
-                {/* List */}
-                <div className="space-y-1.5 max-h-[260px] overflow-y-auto pr-1">
-                  {currentCategory.popularDevices.map((device, idx) => (
-                    <div
-                      key={idx}
-                      className="px-2.5 py-1.5 rounded-[5px] bg-white border border-gray-200 flex items-center justify-between text-[12px] text-gray-800"
-                    >
-                      <span className="truncate pr-2">{device}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveDevice(idx)}
-                        className="text-gray-400 hover:text-red-600 p-0.5 cursor-pointer"
-                        title="Remove device"
+                {/* List with live URL badge */}
+                <div className="space-y-1.5 max-h-[280px] overflow-y-auto pr-1">
+                  {currentCategory.popularDevices.map((device, idx) => {
+                    const devUrl = getDeviceUrl(device, activeCategory);
+                    return (
+                      <div
+                        key={idx}
+                        className="px-2.5 py-1.5 rounded-[5px] bg-white border border-gray-200 text-[12px] text-gray-800 space-y-0.5"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium truncate pr-2">{device}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveDevice(idx)}
+                            className="text-gray-400 hover:text-red-600 p-0.5 cursor-pointer shrink-0"
+                            title="Remove device"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-1 text-[10px] text-gray-400 font-mono truncate">
+                          <span>➜</span>
+                          <span className="truncate">{devUrl}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -638,43 +711,61 @@ export default function MegaMenuBuilderPage() {
                 </div>
 
                 {/* Add new issue input */}
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="text"
-                    value={newIssue}
-                    onChange={(e) => setNewIssue(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleAddIssue()}
-                    placeholder="e.g. HDMI Port Fix"
-                    className="flex-1 h-[32px] px-2.5 rounded-[5px] border border-gray-300 text-[12px] bg-white focus:outline-none focus:border-[#00897b]"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddIssue}
-                    className="h-[32px] px-2.5 rounded-[5px] bg-[#00897b] hover:bg-[#00796b] text-white text-[12px] font-semibold inline-flex items-center gap-1 cursor-pointer shrink-0"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add</span>
-                  </button>
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="text"
+                      value={newIssue}
+                      onChange={(e) => setNewIssue(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleAddIssue()}
+                      placeholder="e.g. HDMI Port Fix"
+                      className="flex-1 h-[32px] px-2.5 rounded-[5px] border border-gray-300 text-[12px] bg-white focus:outline-none focus:border-[#00897b]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleAddIssue()}
+                      className="h-[32px] px-2.5 rounded-[5px] bg-[#00897b] hover:bg-[#00796b] text-white text-[12px] font-semibold inline-flex items-center gap-1 cursor-pointer shrink-0"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add</span>
+                    </button>
+                  </div>
+
+                  {newIssue.trim() && (
+                    <div className="text-[10px] text-teal-800 bg-teal-50 px-2 py-1 rounded border border-teal-200 flex items-center gap-1 font-mono truncate">
+                      <Link2 className="w-3 h-3 shrink-0" />
+                      <span>URL ➜ {getIssueUrl(newIssue, activeCategory)}</span>
+                    </div>
+                  )}
                 </div>
 
-                {/* List */}
-                <div className="space-y-1.5 max-h-[260px] overflow-y-auto pr-1">
-                  {currentCategory.commonIssues.map((issue, idx) => (
-                    <div
-                      key={idx}
-                      className="px-2.5 py-1.5 rounded-[5px] bg-white border border-gray-200 flex items-center justify-between text-[12px] text-gray-800"
-                    >
-                      <span className="truncate pr-2">{issue}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveIssue(idx)}
-                        className="text-gray-400 hover:text-red-600 p-0.5 cursor-pointer"
-                        title="Remove issue"
+                {/* List with live URL badge */}
+                <div className="space-y-1.5 max-h-[280px] overflow-y-auto pr-1">
+                  {currentCategory.commonIssues.map((issue, idx) => {
+                    const issUrl = getIssueUrl(issue, activeCategory);
+                    return (
+                      <div
+                        key={idx}
+                        className="px-2.5 py-1.5 rounded-[5px] bg-white border border-gray-200 text-[12px] text-gray-800 space-y-0.5"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium truncate pr-2">{issue}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveIssue(idx)}
+                            className="text-gray-400 hover:text-red-600 p-0.5 cursor-pointer shrink-0"
+                            title="Remove issue"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-1 text-[10px] text-gray-400 font-mono truncate">
+                          <span>➜</span>
+                          <span className="truncate">{issUrl}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -708,7 +799,7 @@ export default function MegaMenuBuilderPage() {
                     />
                     <button
                       type="button"
-                      onClick={handleAddBrand}
+                      onClick={() => handleAddBrand()}
                       className="h-[32px] px-2.5 rounded-[5px] bg-[#00897b] hover:bg-[#00796b] text-white text-[12px] font-semibold inline-flex items-center gap-1 cursor-pointer shrink-0"
                     >
                       <Plus className="w-3.5 h-3.5" />
@@ -717,27 +808,36 @@ export default function MegaMenuBuilderPage() {
                   </div>
                 </div>
 
-                {/* List */}
+                {/* List with live URL badge */}
                 <div className="space-y-1.5 max-h-[220px] overflow-y-auto pr-1">
-                  {currentCategory.brands.map((brand, idx) => (
-                    <div
-                      key={idx}
-                      className="px-2.5 py-1.5 rounded-[5px] bg-white border border-gray-200 flex items-center justify-between text-[12px] text-gray-800"
-                    >
-                      <div className="min-w-0 pr-2">
-                        <span className="font-semibold block truncate">{brand.title}</span>
-                        <span className="text-[10px] text-gray-500 block truncate">{brand.subtitle}</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveBrand(idx)}
-                        className="text-gray-400 hover:text-red-600 p-0.5 cursor-pointer"
-                        title="Remove brand"
+                  {currentCategory.brands.map((brand, idx) => {
+                    const brUrl = brand.href || getBrandUrl(brand.title, activeCategory);
+                    return (
+                      <div
+                        key={idx}
+                        className="px-2.5 py-1.5 rounded-[5px] bg-white border border-gray-200 text-[12px] text-gray-800 space-y-0.5"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
+                        <div className="flex items-center justify-between">
+                          <div className="min-w-0 pr-2">
+                            <span className="font-semibold block truncate">{brand.title}</span>
+                            <span className="text-[10px] text-gray-500 block truncate">{brand.subtitle}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveBrand(idx)}
+                            className="text-gray-400 hover:text-red-600 p-0.5 cursor-pointer shrink-0"
+                            title="Remove brand"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-1 text-[10px] text-gray-400 font-mono truncate">
+                          <span>➜</span>
+                          <span className="truncate">{brUrl}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -758,7 +858,7 @@ export default function MegaMenuBuilderPage() {
               </div>
 
               <span className="text-[11px] text-gray-400">
-                ⚡ Any changes made above immediately reflect in the Live Storefront Preview above.
+                ⚡ Any changes made above immediately reflect in the Live Storefront Preview and customer click paths.
               </span>
             </div>
 

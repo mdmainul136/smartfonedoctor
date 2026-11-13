@@ -1,3 +1,5 @@
+import { resolveTaxonomyUrl } from "./taxonomy";
+
 export type CategoryKey = "smartphones" | "tablet" | "consoles" | "computers";
 
 export interface BrandItem {
@@ -193,4 +195,35 @@ export function saveStoredMegaMenu(config: MegaMenuConfig): void {
   } catch (e) {
     console.error("Failed to save mega menu to localStorage", e);
   }
+}
+
+/**
+ * Connected URL Resolvers
+ */
+export function getCategoryTaxonomySlug(key: CategoryKey): "smartphone" | "tablet" | "console" | "computer" {
+  switch (key) {
+    case "smartphones":
+      return "smartphone";
+    case "consoles":
+      return "console";
+    case "computers":
+      return "computer";
+    case "tablet":
+      return "tablet";
+  }
+}
+
+export function getDeviceUrl(name: string, category: CategoryKey): string {
+  const catSlug = getCategoryTaxonomySlug(category);
+  return resolveTaxonomyUrl("device", name, catSlug);
+}
+
+export function getIssueUrl(title: string, category: CategoryKey): string {
+  const catSlug = getCategoryTaxonomySlug(category);
+  return resolveTaxonomyUrl("issue", title, catSlug);
+}
+
+export function getBrandUrl(title: string, category: CategoryKey): string {
+  const catSlug = getCategoryTaxonomySlug(category);
+  return resolveTaxonomyUrl("brand", title, catSlug);
 }
