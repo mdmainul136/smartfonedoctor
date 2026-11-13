@@ -548,3 +548,81 @@ export function getAllLinkableEntities(): {
     },
   ];
 }
+
+// LocalStorage Persistence Helpers for CRUD
+export function getStoredCategories(): DeviceCategory[] {
+  if (typeof window === "undefined") return DEVICE_CATEGORIES;
+  try {
+    const raw = localStorage.getItem("sfd_tax_categories");
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return DEVICE_CATEGORIES;
+}
+
+export function saveStoredCategories(cats: DeviceCategory[]): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem("sfd_tax_categories", JSON.stringify(cats));
+  window.dispatchEvent(new Event("sfd-taxonomies-updated"));
+}
+
+export function getStoredBrands(): BrandTaxonomy[] {
+  if (typeof window === "undefined") return BRANDS_TAXONOMY;
+  try {
+    const raw = localStorage.getItem("sfd_tax_brands");
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return BRANDS_TAXONOMY;
+}
+
+export function saveStoredBrands(brands: BrandTaxonomy[]): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem("sfd_tax_brands", JSON.stringify(brands));
+  window.dispatchEvent(new Event("sfd-taxonomies-updated"));
+}
+
+export function getStoredIssues(): ServiceIssueTaxonomy[] {
+  if (typeof window === "undefined") return SERVICE_ISSUES_TAXONOMY;
+  try {
+    const raw = localStorage.getItem("sfd_tax_issues");
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return SERVICE_ISSUES_TAXONOMY;
+}
+
+export function saveStoredIssues(issues: ServiceIssueTaxonomy[]): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem("sfd_tax_issues", JSON.stringify(issues));
+  window.dispatchEvent(new Event("sfd-taxonomies-updated"));
+}
+
+export function getStoredModels(): DeviceModelTaxonomy[] {
+  if (typeof window === "undefined") return DEVICE_MODELS_TAXONOMY;
+  try {
+    const raw = localStorage.getItem("sfd_tax_models");
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return DEVICE_MODELS_TAXONOMY;
+}
+
+export function saveStoredModels(models: DeviceModelTaxonomy[]): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem("sfd_tax_models", JSON.stringify(models));
+  window.dispatchEvent(new Event("sfd-taxonomies-updated"));
+}
+
+export function getStoredBlogs(): BlogPostTaxonomy[] {
+  if (typeof window === "undefined") return BLOG_POSTS_TAXONOMY;
+  try {
+    const raw = localStorage.getItem("sfd_tax_blogs");
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return BLOG_POSTS_TAXONOMY;
+}
+
+export function saveStoredBlogs(blogs: BlogPostTaxonomy[]): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem("sfd_tax_blogs", JSON.stringify(blogs));
+  window.dispatchEvent(new Event("sfd-taxonomies-updated"));
+}
+
+

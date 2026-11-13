@@ -15,6 +15,9 @@ import {
   FileText,
   Layers,
   FolderTree,
+  Tag,
+  Smartphone,
+  BookOpen,
   User,
   Settings,
   LogOut,
@@ -61,8 +64,38 @@ const menuItems: { title: string; items: MenuLink[] }[] = [
     items: [
       {
         icon: FileText,
-        label: "Pages & SEO",
+        label: "Pages",
         href: "/admin/pages",
+        visible: ["admin"],
+      },
+      {
+        icon: FolderTree,
+        label: "Categories",
+        href: "/admin/categories",
+        visible: ["admin"],
+      },
+      {
+        icon: Tag,
+        label: "Brands",
+        href: "/admin/brands",
+        visible: ["admin"],
+      },
+      {
+        icon: Wrench,
+        label: "Issue Types",
+        href: "/admin/issue-types",
+        visible: ["admin"],
+      },
+      {
+        icon: Smartphone,
+        label: "Device Models",
+        href: "/admin/device-models",
+        visible: ["admin"],
+      },
+      {
+        icon: BookOpen,
+        label: "Guides & Blog",
+        href: "/admin/blog",
         visible: ["admin"],
       },
       {
@@ -70,18 +103,6 @@ const menuItems: { title: string; items: MenuLink[] }[] = [
         label: "Mega Menu Builder",
         href: "/admin/mega-menu",
         visible: ["admin"],
-      },
-      {
-        icon: FolderTree,
-        label: "Taxonomies & Routing",
-        href: "/admin/taxonomies",
-        visible: ["admin"],
-      },
-      {
-        icon: Wrench,
-        label: "Services & Pricing",
-        href: "/admin/services",
-        visible: ["admin", "teacher"],
       },
       {
         icon: Globe,
