@@ -140,3 +140,166 @@ html.sfd-highlight-links a {
   color: gray !important;
   margin-bottom: 5px;
 }
+
+/* =========================================================
+   SFD RICH TEXT EDITOR & BLOG ARTICLE PROSE TYPOGRAPHY
+   Overrides Tailwind CSS preflight resets for Lists & Tables
+========================================================= */
+
+.sfd-editor-content,
+.sfd-article-prose {
+  color: #1d1c1a;
+  line-height: 1.75;
+}
+
+/* Headings */
+.sfd-editor-content h2,
+.sfd-article-prose h2 {
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  color: #111827 !important;
+  margin-top: 1.75rem !important;
+  margin-bottom: 0.75rem !important;
+  line-height: 1.3 !important;
+}
+
+.sfd-editor-content h3,
+.sfd-article-prose h3 {
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  color: #1f2937 !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 0.5rem !important;
+  line-height: 1.35 !important;
+}
+
+.sfd-editor-content p,
+.sfd-article-prose p {
+  margin-top: 0.75rem !important;
+  margin-bottom: 0.75rem !important;
+  line-height: 1.75 !important;
+}
+
+/* 1. UNORDERED LISTS (BULLET POINTS) */
+.sfd-editor-content ul,
+.sfd-article-prose ul {
+  list-style-type: disc !important;
+  margin-top: 0.75rem !important;
+  margin-bottom: 0.85rem !important;
+  padding-left: 1.75rem !important;
+}
+
+.sfd-editor-content ul ul,
+.sfd-article-prose ul ul {
+  list-style-type: circle !important;
+  margin-top: 0.25rem !important;
+  margin-bottom: 0.25rem !important;
+}
+
+.sfd-editor-content ul ul ul,
+.sfd-article-prose ul ul ul {
+  list-style-type: square !important;
+}
+
+/* 2. ORDERED LISTS (NUMBERED LISTS) */
+.sfd-editor-content ol,
+.sfd-article-prose ol {
+  list-style-type: decimal !important;
+  margin-top: 0.75rem !important;
+  margin-bottom: 0.85rem !important;
+  padding-left: 1.75rem !important;
+}
+
+.sfd-editor-content ol ol,
+.sfd-article-prose ol ol {
+  list-style-type: lower-alpha !important;
+}
+
+.sfd-editor-content li,
+.sfd-article-prose li {
+  display: list-item !important;
+  margin-top: 0.35rem !important;
+  margin-bottom: 0.35rem !important;
+  padding-left: 0.25rem !important;
+  line-height: 1.65 !important;
+}
+
+/* 3. TABLES (RESPONSIVE, BORDERED, CLEAN) */
+.sfd-editor-content table,
+.sfd-article-prose table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+  font-size: 0.875rem !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+.sfd-editor-content thead,
+.sfd-article-prose thead {
+  background-color: #f1f5f9 !important;
+  border-bottom: 2px solid #cbd5e1 !important;
+}
+
+.sfd-editor-content th,
+.sfd-article-prose th {
+  padding: 10px 14px !important;
+  font-weight: 700 !important;
+  text-align: left !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  background-color: #f1f5f9 !important;
+}
+
+.sfd-editor-content td,
+.sfd-article-prose td {
+  padding: 10px 14px !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+  vertical-align: middle !important;
+  background-color: #ffffff !important;
+}
+
+.sfd-editor-content tbody tr:nth-child(even) td,
+.sfd-article-prose tbody tr:nth-child(even) td {
+  background-color: #f8fafc !important;
+}
+
+.sfd-editor-content tbody tr:hover td,
+.sfd-article-prose tbody tr:hover td {
+  background-color: #f0fdfa !important;
+}
+
+/* 4. BLOCKQUOTES */
+.sfd-editor-content blockquote,
+.sfd-article-prose blockquote {
+  border-left: 4px solid #00897b !important;
+  background-color: #f0fdfa/50 !important;
+  padding: 12px 18px !important;
+  margin: 1.25rem 0 !important;
+  font-style: italic !important;
+  color: #134e48 !important;
+  border-radius: 0 8px 8px 0 !important;
+}
+
+/* 5. CODE SPANS */
+.sfd-editor-content code,
+.sfd-article-prose code {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  font-size: 0.85em !important;
+  font-family: monospace !important;
+}
+
+/* 6. HR DIVIDERS */
+.sfd-editor-content hr,
+.sfd-article-prose hr {
+  border: 0 !important;
+  border-top: 1px solid #e2e8f0 !important;
+  margin: 2rem 0 !important;
+}
+

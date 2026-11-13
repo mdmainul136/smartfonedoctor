@@ -65,6 +65,12 @@ export default function RichTextEditor({
   const [imageUrl, setImageUrl] = useState("");
   const [imageAlt, setImageAlt] = useState("");
 
+  // Table Generator Dialog
+  const [tableModalOpen, setTableModalOpen] = useState(false);
+  const [tableRows, setTableRows] = useState(3);
+  const [tableCols, setTableCols] = useState(3);
+  const [includeHeader, setIncludeHeader] = useState(true);
+
   // Block Insertion Palette
   const [blockMenuOpen, setBlockMenuOpen] = useState(false);
   const blockMenuRef = useRef<HTMLDivElement>(null);
@@ -236,6 +242,41 @@ export default function RichTextEditor({
     setLinkUrl("https://");
     setLinkText("");
     handleInput();
+  };
+
+  // Custom Table Insertion
+  const handleInsertTable = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (mode !== "visual") return;
+    editorRef.current?.focus();
+
+    const rowsCount = Math.max(1, Math.min(Number(tableRows) || 3, 15));
+    const colsCount = Math.max(1, Math.min(Number(tableCols) || 3, 8));
+
+    let tableHtml = `<table style="width: 100%; border-collapse: collapse; margin: 20px 0; border: 1px solid #cbd5e1; font-size: 14px;">`;
+
+    if (includeHeader) {
+      tableHtml += `<thead><tr style="background: #f1f5f9;">`;
+      for (let c = 1; c <= colsCount; c++) {
+        tableHtml += `<th style="padding: 10px 14px; border: 1px solid #cbd5e1; font-weight: 700; text-align: left; color: #0f172a;">Header ${c}</th>`;
+      }
+      tableHtml += `</tr></thead>`;
+    }
+
+    tableHtml += `<tbody>`;
+    for (let r = 1; r <= rowsCount; r++) {
+      const bg = r % 2 === 0 ? "background: #f8fafc;" : "background: #ffffff;";
+      tableHtml += `<tr style="${bg}">`;
+      for (let c = 1; c <= colsCount; c++) {
+        tableHtml += `<td style="padding: 10px 14px; border: 1px solid #cbd5e1; color: #334155;">Data ${r},${c}</td>`;
+      }
+      tableHtml += `</tr>`;
+    }
+    tableHtml += `</tbody></table><p><br></p>`;
+
+    document.execCommand("insertHTML", false, tableHtml);
+    handleInput();
+    setTableModalOpen(false);
   };
 
   // Media Library Integration
@@ -429,6 +470,14 @@ export default function RichTextEditor({
           >
             <Minus className="w-3.5 h-3.5" />
           </button>
+          <button
+            type="button"
+            onClick={() => setTableModalOpen(true)}
+            className="p-1.5 rounded hover:bg-gray-200 text-gray-700 cursor-pointer"
+            title="Insert Table (Rows & Columns)"
+          >
+            <TableIcon className="w-3.5 h-3.5" />
+          </button>
         </div>
 
         {/* Technician Callout Alert Blocks */}
@@ -595,7 +644,7 @@ export default function RichTextEditor({
           contentEditable
           onInput={handleInput}
           onBlur={handleInput}
-          className="p-5 sm:p-7 outline-none text-[#1d1c1a] leading-relaxed text-sm font-normal focus:bg-white transition-colors overflow-y-auto selection:bg-teal-100 selection:text-teal-900"
+          className="sfd-editor-content p-5 sm:p-7 outline-none text-[#1d1c1a] leading-relaxed text-sm font-normal focus:bg-white transition-colors overflow-y-auto selection:bg-teal-100 selection:text-teal-900"
           style={{ minHeight }}
           data-placeholder={placeholder}
         />
@@ -678,6 +727,127 @@ export default function RichTextEditor({
                   className="h-[30px] px-3 rounded bg-[#00897b] text-white text-xs font-semibold"
                 >
                   Insert Link
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: INSERT TABLE */}
+      {tableModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-5 border border-gray-200 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b pb-2">
+              <div className="flex items-center gap-1.5 font-bold text-xs text-gray-800">
+                <TableIcon className="w-4 h-4 text-[#00897b]" />
+                <span>Insert Custom Table</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTableModalOpen(false)}
+                className="text-gray-400 hover:text-black cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleInsertTable} className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-semibold text-gray-600 block mb-1">
+                    Columns (Vertical)
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={8}
+                    value={tableCols}
+                    onChange={(e) => setTableCols(Number(e.target.value))}
+                    className="w-full h-[32px] px-2.5 rounded border border-gray-300 text-xs focus:outline-none focus:border-[#00897b]"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-gray-600 block mb-1">
+                    Data Rows (Horizontal)
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={15}
+                    value={tableRows}
+                    onChange={(e) => setTableRows(Number(e.target.value))}
+                    className="w-full h-[32px] px-2.5 rounded border border-gray-300 text-xs focus:outline-none focus:border-[#00897b]"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="includeHeaderCheck"
+                  checked={includeHeader}
+                  onChange={(e) => setIncludeHeader(e.target.checked)}
+                  className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                />
+                <label htmlFor="includeHeaderCheck" className="text-xs text-gray-700 select-none cursor-pointer">
+                  Include styled Header row (Recommended)
+                </label>
+              </div>
+
+              {/* Quick Presets */}
+              <div className="pt-2 border-t border-gray-100">
+                <span className="text-[11px] text-gray-400 block mb-1.5 font-semibold">Quick Presets:</span>
+                <div className="flex flex-wrap gap-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTableCols(3);
+                      setTableRows(3);
+                      setIncludeHeader(true);
+                    }}
+                    className="px-2 py-0.5 rounded bg-gray-100 hover:bg-gray-200 text-[11px] text-gray-700 cursor-pointer"
+                  >
+                    3 x 3 Standard
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTableCols(2);
+                      setTableRows(4);
+                      setIncludeHeader(true);
+                    }}
+                    className="px-2 py-0.5 rounded bg-gray-100 hover:bg-gray-200 text-[11px] text-gray-700 cursor-pointer"
+                  >
+                    2 x 4 Specs
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTableCols(4);
+                      setTableRows(3);
+                      setIncludeHeader(true);
+                    }}
+                    className="px-2 py-0.5 rounded bg-gray-100 hover:bg-gray-200 text-[11px] text-gray-700 cursor-pointer"
+                  >
+                    4 x 3 Matrix
+                  </button>
+                </div>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTableModalOpen(false)}
+                  className="h-[30px] px-3 rounded border text-xs font-semibold text-gray-600 hover:bg-gray-50 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="h-[30px] px-3.5 rounded bg-[#00897b] hover:bg-[#00796b] text-white text-xs font-bold shadow-xs cursor-pointer"
+                >
+                  Insert Table
                 </button>
               </div>
             </form>
