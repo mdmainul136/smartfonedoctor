@@ -47,7 +47,6 @@ export default function BlogPostEditorPage({ params }: EditorPageProps) {
   const router = useRouter();
   const isNew = resolvedParams.slug === "new";
 
-  const [editorMode, setEditorMode] = useState<"richtext" | "blocks">("richtext");
   const [featuredMediaOpen, setFeaturedMediaOpen] = useState(false);
 
   const [article, setArticle] = useState<BlogArticle>({
@@ -161,36 +160,6 @@ export default function BlogPostEditorPage({ params }: EditorPageProps) {
       ...prev,
       categoryId: catId,
       categoryName: cat?.name || "Hardware Guide",
-    }));
-  };
-
-  // Section Management (for blocks mode)
-  const handleAddSection = () => {
-    const newSec: BlogArticleSection = {
-      id: `sec-${Date.now()}`,
-      heading: `${article.sections.length + 1}. Step or Diagnostic Focus`,
-      body: "",
-      calloutType: undefined,
-      calloutText: "",
-    };
-    setArticle((prev) => ({
-      ...prev,
-      sections: [...prev.sections, newSec],
-    }));
-  };
-
-  const handleUpdateSection = (idx: number, updates: Partial<BlogArticleSection>) => {
-    setArticle((prev) => {
-      const updated = [...prev.sections];
-      updated[idx] = { ...updated[idx], ...updates };
-      return { ...prev, sections: updated };
-    });
-  };
-
-  const handleRemoveSection = (idx: number) => {
-    setArticle((prev) => ({
-      ...prev,
-      sections: prev.sections.filter((_, i) => i !== idx),
     }));
   };
 
@@ -386,151 +355,33 @@ export default function BlogPostEditorPage({ params }: EditorPageProps) {
             )}
           </div>
 
-          {/* WYSIWYG RICH TEXT WRITING CANVAS */}
+          {/* WYSIWYG RICH TEXT WRITING CANVAS (Option 1: Unified Blocks in Editor) */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div>
                 <h3 className="text-sm font-bold text-[#111111] flex items-center gap-1.5">
                   <PenTool className="w-4 h-4 text-[#00897b]" />
                   Payload Rich Text Content Editor
                 </h3>
                 <p className="text-[11px] text-gray-400">
-                  Write freely with full rich text formatting: H2/H3, quotes, technician callouts, images, and links.
+                  Write freely with full rich text formatting. Use the <strong className="text-teal-700 font-semibold">+ Add Block</strong> button to insert diagnosis sections, steps, tools &amp; comparison tables.
                 </p>
               </div>
 
-              {/* Mode Switcher */}
-              <div className="flex items-center gap-1 bg-gray-200/80 p-0.5 rounded-lg text-xs font-semibold">
-                <button
-                  type="button"
-                  onClick={() => setEditorMode("richtext")}
-                  className={`px-3 py-1 rounded-md transition-colors ${
-                    editorMode === "richtext"
-                      ? "bg-white text-black shadow-2xs"
-                      : "text-gray-600 hover:text-black"
-                  }`}
-                >
-                  WYSIWYG Editor
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEditorMode("blocks")}
-                  className={`px-3 py-1 rounded-md transition-colors ${
-                    editorMode === "blocks"
-                      ? "bg-white text-black shadow-2xs"
-                      : "text-gray-600 hover:text-black"
-                  }`}
-                >
-                  Section Blocks
-                </button>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-teal-700 bg-teal-50 border border-teal-200 px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-[#00897b]" />
+                  <span>Blocks Enabled in Rich Editor</span>
+                </span>
               </div>
             </div>
 
-            {/* TAB 1: WYSIWYG RICH TEXT EDITOR */}
-            {editorMode === "richtext" && (
-              <RichTextEditor
-                value={article.contentHtml || ""}
-                onChange={(html) => setArticle((prev) => ({ ...prev, contentHtml: html }))}
-                placeholder="Write your in-depth technician repair guide, troubleshooting steps, and advice here..."
-                minHeight="420px"
-              />
-            )}
-
-            {/* TAB 2: STRUCTURED SECTION BLOCKS (Alternative) */}
-            {editorMode === "blocks" && (
-              <div className="space-y-4">
-                {article.sections.map((sec, idx) => (
-                  <div
-                    key={sec.id || idx}
-                    className="bg-white rounded-xl border border-gray-200 p-5 shadow-2xs space-y-4 relative group"
-                  >
-                    <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                        Section #{idx + 1}
-                      </span>
-
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveSection(idx)}
-                        disabled={article.sections.length === 1}
-                        className="text-gray-400 hover:text-red-600 disabled:opacity-30 disabled:cursor-not-allowed p-1"
-                        title="Remove section block"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-semibold text-gray-700 block mb-1">
-                        Subheading (H2)
-                      </label>
-                      <input
-                        type="text"
-                        value={sec.heading}
-                        onChange={(e) => handleUpdateSection(idx, { heading: e.target.value })}
-                        placeholder="e.g. 1. The Truth About the 80% Battery Health Threshold"
-                        className="w-full h-[36px] px-3 rounded-[5px] border border-gray-300 text-xs font-bold text-gray-900 focus:outline-none focus:border-[#00897b]"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-semibold text-gray-700 block mb-1">
-                        Detailed Content &amp; Instructions
-                      </label>
-                      <textarea
-                        rows={5}
-                        value={sec.body}
-                        onChange={(e) => handleUpdateSection(idx, { body: e.target.value })}
-                        placeholder="Write your technician advice, diagnostics steps, or explanation..."
-                        className="w-full p-3 rounded-[6px] border border-gray-300 text-xs text-gray-700 leading-relaxed focus:outline-none focus:border-[#00897b]"
-                      />
-                    </div>
-
-                    <div className="pt-2 border-t border-gray-100 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
-                          <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
-                          Technician Highlight Alert (Callout Box)
-                        </span>
-                        <select
-                          value={sec.calloutType || ""}
-                          onChange={(e) =>
-                            handleUpdateSection(idx, {
-                              calloutType: (e.target.value as any) || undefined,
-                            })
-                          }
-                          className="h-[28px] px-2 rounded border border-gray-300 text-xs bg-white text-gray-700"
-                        >
-                          <option value="">None (Standard paragraph)</option>
-                          <option value="tip">💡 Technician Tip (Teal Alert)</option>
-                          <option value="warning">⚠️ Warning / Danger (Red Alert)</option>
-                          <option value="note">ℹ️ Important Note (Blue Alert)</option>
-                        </select>
-                      </div>
-
-                      {sec.calloutType && (
-                        <textarea
-                          rows={2}
-                          value={sec.calloutText || ""}
-                          onChange={(e) => handleUpdateSection(idx, { calloutText: e.target.value })}
-                          placeholder="Enter the highlighted tip or warning text..."
-                          className="w-full p-2.5 rounded-[5px] border border-amber-300 bg-amber-50/40 text-xs text-gray-800 focus:outline-none focus:border-[#00897b]"
-                        />
-                      )}
-                    </div>
-                  </div>
-                ))}
-
-                <button
-                  type="button"
-                  onClick={handleAddSection}
-                  className="w-full py-3 rounded-xl border-2 border-dashed border-gray-300 hover:border-[#00897b] bg-white hover:bg-teal-50/20 text-xs font-semibold text-gray-600 hover:text-[#00897b] transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Add Another Section Block</span>
-                </button>
-              </div>
-            )}
+            <RichTextEditor
+              value={article.contentHtml || ""}
+              onChange={(html) => setArticle((prev) => ({ ...prev, contentHtml: html }))}
+              placeholder="Write your in-depth technician repair guide, troubleshooting steps, and advice here..."
+              minHeight="460px"
+            />
           </div>
 
           {/* Connected Service Booking Box */}

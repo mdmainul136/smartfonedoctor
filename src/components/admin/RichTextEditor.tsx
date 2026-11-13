@@ -28,6 +28,13 @@ import {
   Eye,
   Check,
   X,
+  PlusCircle,
+  ChevronDown,
+  Layers,
+  Wrench,
+  ListChecks,
+  Table as TableIcon,
+  Sparkles,
 } from "lucide-react";
 
 interface RichTextEditorProps {
@@ -57,6 +64,21 @@ export default function RichTextEditor({
   const [imageModalOpen, setImageModalOpen] = useState(false);
   const [imageUrl, setImageUrl] = useState("");
   const [imageAlt, setImageAlt] = useState("");
+
+  // Block Insertion Palette
+  const [blockMenuOpen, setBlockMenuOpen] = useState(false);
+  const blockMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close block menu on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (blockMenuRef.current && !blockMenuRef.current.contains(event.target as Node)) {
+        setBlockMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Keep editor content in sync when value changes externally
   useEffect(() => {
@@ -121,6 +143,79 @@ export default function RichTextEditor({
 
     const calloutHtml = `<div style="${styles[type]}" class="sfd-callout-${type}"><strong>${titles[type]}:</strong> Enter your advice here...</div><p><br></p>`;
     document.execCommand("insertHTML", false, calloutHtml);
+    handleInput();
+  };
+
+  // Structured Blocks Inserter (Option 1)
+  const insertStructuredBlock = (type: "section" | "step" | "tools" | "comparison") => {
+    if (mode !== "visual") return;
+    editorRef.current?.focus();
+    setBlockMenuOpen(false);
+
+    let html = "";
+    if (type === "section") {
+      html = `
+        <div style="margin: 28px 0; padding-bottom: 20px; border-bottom: 1px solid #e5e7eb;">
+          <h2 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 10px 0;">New Diagnostic Section</h2>
+          <p style="font-size: 15px; line-height: 1.7; color: #374151; margin: 0 0 14px 0;">Describe the symptom, bench diagnosis, and repair procedure steps here...</p>
+          <div style="background: #f0fdfa; border-left: 4px solid #00897b; color: #134e48; padding: 12px 16px; border-radius: 6px;">
+            <strong>💡 Technician Tip:</strong> Always disconnect the battery connector before removing display cables.
+          </div>
+        </div>
+        <p><br></p>
+      `;
+    } else if (type === "step") {
+      html = `
+        <div style="display: flex; gap: 14px; margin: 18px 0; padding: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;">
+          <div style="width: 32px; height: 32px; border-radius: 50%; background: #00897b; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0;">1</div>
+          <div style="flex: 1;">
+            <h3 style="font-size: 16px; font-weight: 700; color: #0f172a; margin: 0 0 6px 0;">Step 1: Soft Prying with Anti-Static Spudger</h3>
+            <p style="font-size: 14px; color: #475569; margin: 0; line-height: 1.6;">Carefully release the perimeter adhesive seal using gentle heat and a non-conductive nylon pry tool...</p>
+          </div>
+        </div>
+        <p><br></p>
+      `;
+    } else if (type === "tools") {
+      html = `
+        <div style="margin: 22px 0; padding: 18px 20px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px;">
+          <h4 style="font-size: 15px; font-weight: 700; color: #0f172a; margin: 0 0 10px 0;">🛠️ Required Bench Tools & Materials</h4>
+          <ul style="margin: 0; padding-left: 20px; color: #334155; font-size: 14px; line-height: 1.8;">
+            <li><strong>Driver:</strong> Precision P2 Pentalobe & Tri-point Y000</li>
+            <li><strong>Thermal:</strong> Heat Mat or Hot Air Rework Station (75°C - 80°C)</li>
+            <li><strong>Chemical:</strong> 99% Pure Isopropyl Alcohol (IPA)</li>
+            <li><strong>Replacement:</strong> Genuine OEM Pull-Tab Battery Adhesive Strips</li>
+          </ul>
+        </div>
+        <p><br></p>
+      `;
+    } else if (type === "comparison") {
+      html = `
+        <table style="width: 100%; margin: 22px 0; border-collapse: collapse; border: 1px solid #e2e8f0; font-size: 14px;">
+          <thead>
+            <tr style="background: #f1f5f9; text-align: left;">
+              <th style="padding: 10px 14px; border: 1px solid #e2e8f0;">Component Metric</th>
+              <th style="padding: 10px 14px; border: 1px solid #e2e8f0; color: #00897b; font-weight: 700;">OEM Grade Part</th>
+              <th style="padding: 10px 14px; border: 1px solid #e2e8f0; color: #64748b;">Standard Aftermarket</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding: 10px 14px; border: 1px solid #e2e8f0; font-weight: 600;">Battery Cycle Capacity</td>
+              <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">✅ 800 - 1000 Full Cycles</td>
+              <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">⚠️ 300 - 500 Cycles</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 14px; border: 1px solid #e2e8f0; font-weight: 600;">TrueTone & Sensor Pairing</td>
+              <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">✅ 100% Genuine Calibration</td>
+              <td style="padding: 10px 14px; border: 1px solid #e2e8f0;">❌ Non-serialized Warning</td>
+            </tr>
+          </tbody>
+        </table>
+        <p><br></p>
+      `;
+    }
+
+    document.execCommand("insertHTML", false, html);
     handleInput();
   };
 
@@ -368,7 +463,7 @@ export default function RichTextEditor({
         </div>
 
         {/* Media & Links */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center border-r border-gray-200 pr-1.5 mr-1 gap-1">
           <button
             type="button"
             onClick={() => setLinkModalOpen(true)}
@@ -381,10 +476,88 @@ export default function RichTextEditor({
             type="button"
             onClick={() => setImageModalOpen(true)}
             className="p-1.5 rounded hover:bg-gray-200 text-gray-700 cursor-pointer"
-            title="Insert Image"
+            title="Browse & Insert Media"
           >
             <ImageIcon className="w-3.5 h-3.5" />
           </button>
+        </div>
+
+        {/* 📦 STRUCTURED BLOCKS INSERTER DROPDOWN (No 1 Unified Mode) */}
+        <div className="relative" ref={blockMenuRef}>
+          <button
+            type="button"
+            onClick={() => setBlockMenuOpen(!blockMenuOpen)}
+            className="h-[28px] px-2.5 rounded-md bg-[#00897b] hover:bg-[#00796b] text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+            title="Insert Pre-built Content & Hardware Blocks"
+          >
+            <PlusCircle className="w-3.5 h-3.5" />
+            <span>Add Block</span>
+            <ChevronDown className="w-3 h-3 opacity-80" />
+          </button>
+
+          {blockMenuOpen && (
+            <div className="absolute left-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-gray-200 py-1.5 z-30 animate-in fade-in zoom-in-95 duration-150">
+              <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 border-b border-gray-100">
+                Insert Content Block
+              </div>
+
+              <button
+                type="button"
+                onClick={() => insertStructuredBlock("section")}
+                className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition-colors"
+              >
+                <div className="w-7 h-7 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center text-[#00897b] shrink-0">
+                  <Layers className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <span className="font-semibold block leading-tight">Complete Section Block</span>
+                  <span className="text-[11px] text-gray-400">H2 Subheading + text + tip box</span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => insertStructuredBlock("step")}
+                className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition-colors"
+              >
+                <div className="w-7 h-7 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-700 shrink-0">
+                  <ListChecks className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <span className="font-semibold block leading-tight">Step-by-Step Procedure</span>
+                  <span className="text-[11px] text-gray-400">Numbered badge with step card</span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => insertStructuredBlock("tools")}
+                className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition-colors"
+              >
+                <div className="w-7 h-7 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-700 shrink-0">
+                  <Wrench className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <span className="font-semibold block leading-tight">Required Tools &amp; Parts</span>
+                  <span className="text-[11px] text-gray-400">Hardware checklist &amp; chemicals</span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => insertStructuredBlock("comparison")}
+                className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2.5 text-xs text-gray-700 hover:text-black cursor-pointer transition-colors border-t border-gray-100 mt-1"
+              >
+                <div className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-700 shrink-0">
+                  <TableIcon className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <span className="font-semibold block leading-tight">OEM vs Aftermarket Table</span>
+                  <span className="text-[11px] text-gray-400">Component comparison matrix</span>
+                </div>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* View Toggle Mode (Visual vs HTML Code) */}
