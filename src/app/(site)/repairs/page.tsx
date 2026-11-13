@@ -17,6 +17,12 @@ import {
   BookOpen,
 } from "lucide-react";
 import { PSEO_DEVICES, PSEO_ISSUES, PHILLY_LOCAL_AREAS } from "@/lib/pSeoEngine";
+import {
+  JsonLd,
+  buildBreadcrumbSchema,
+  buildMultiStoreSchema,
+  STORES,
+} from "@/lib/schema";
 
 export const metadata: Metadata = {
   title: "Professional Device Repair in Philadelphia | Same-Day Service | SmartFoneDoctor",
@@ -75,51 +81,16 @@ export default function RepairsHubPage() {
   const popularDevices = PSEO_DEVICES.slice(0, 8);
   const coreIssues = PSEO_ISSUES.slice(0, 6);
 
-  // Schema.org Structured Data
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "RepairShop",
-    name: "SmartFoneDoctor Philadelphia",
-    image: "https://smartfonedoctor.com/logo-png.jpg",
-    telephone: "+1-215-387-1700",
-    url: "https://smartfonedoctor.com/repairs",
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: "33 S 52nd St",
-      addressLocality: "Philadelphia",
-      addressRegion: "PA",
-      postalCode: "19139",
-      addressCountry: "US",
-    },
-    geo: {
-      "@type": "GeoCoordinates",
-      latitude: 39.9576,
-      longitude: -75.2268,
-    },
-    openingHoursSpecification: [
-      {
-        "@type": "OpeningHoursSpecification",
-        dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-        opens: "10:00",
-        closes: "19:00",
-      },
-      {
-        "@type": "OpeningHoursSpecification",
-        dayOfWeek: "Sunday",
-        opens: "11:00",
-        closes: "17:00",
-      },
-    ],
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.9",
-      reviewCount: "420",
-    },
-  };
+  const breadcrumbSchema = buildBreadcrumbSchema([
+    { name: "Home", url: "/" },
+    { name: "Repair Directory", url: "/repairs" },
+  ]);
+  const storeSchema = buildMultiStoreSchema(STORES);
 
   return (
     <main className="bg-[#fafbfc] min-h-screen pb-20">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={storeSchema} />
 
       {/* 1. HERO HEADER */}
       <div className="bg-white border-b border-gray-200">

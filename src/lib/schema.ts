@@ -1,5 +1,7 @@
 import React from "react";
+import { STORES } from "./stores";
 
+export { STORES };
 export const SITE_URL = "https://smartfonedoctor.com";
 
 export interface StoreInfo {
@@ -147,6 +149,7 @@ export function buildLocalBusinessSchema(
   const storeSlug = `phl-0${store.id}`;
 
   return {
+    "@context": "https://schema.org",
     "@type": ["LocalBusiness", "ElectronicsStore"],
     "@id": `${SITE_URL}/#store-${storeSlug}`,
     name: store.name,
