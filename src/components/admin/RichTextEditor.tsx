@@ -9,8 +9,12 @@ import {
   Underline,
   Strikethrough,
   Code,
+  Heading1,
   Heading2,
   Heading3,
+  Heading4,
+  Heading5,
+  Heading6,
   List,
   ListOrdered,
   Quote,
@@ -46,6 +50,13 @@ import {
   Palette,
   Paintbrush,
   Baseline,
+  Bot,
+  Wand2,
+  ExternalLink,
+  ShieldCheck,
+  ArrowUpRight,
+  RefreshCw,
+  Copy,
 } from "lucide-react";
 
 interface RichTextEditorProps {
@@ -128,14 +139,26 @@ export default function RichTextEditor({
 }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const savedRangeRef = useRef<Range | null>(null);
   const [mode, setMode] = useState<"visual" | "html">("visual");
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
 
-  // Link Dialog
+  // Link Dialog with Advance Dofollow/Nofollow/Sponsored/UGC
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState("https://");
   const [linkText, setLinkText] = useState("");
+  const [linkRel, setLinkRel] = useState<"dofollow" | "nofollow" | "sponsored" | "ugc">("dofollow");
+  const [linkOpenNewTab, setLinkOpenNewTab] = useState(false);
+  const [linkTitle, setLinkTitle] = useState("");
+
+  // AI Content Assistant Dialog
+  const [aiModalOpen, setAiModalOpen] = useState(false);
+  const [aiSelectedText, setAiSelectedText] = useState("");
+  const [aiAction, setAiAction] = useState<"polish" | "grammar" | "seo" | "expand" | "shorten" | "cta" | "faq">("polish");
+  const [aiCustomPrompt, setAiCustomPrompt] = useState("");
+  const [aiResultText, setAiResultText] = useState("");
+  const [isAiLoading, setIsAiLoading] = useState(false);
 
   // Media Library Dialog
   const [imageModalOpen, setImageModalOpen] = useState(false);
@@ -224,8 +247,49 @@ export default function RichTextEditor({
     handleInput();
   };
 
-  const insertHeading = (tag: "h2" | "h3" | "p") => {
-    executeCommand("formatBlock", `<${tag}>`);
+  const formatHeading = (tag: "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "p") => {
+    if (mode !== "visual") return;
+    editorRef.current?.focus();
+    try {
+      document.execCommand("formatBlock", false, `<${tag}>`);
+    } catch {
+      document.execCommand("formatBlock", false, tag);
+    }
+    handleInput();
+    setBlockMenuOpen(false);
+  };
+
+  const insertHeading = (tag: "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "p") => {
+    formatHeading(tag);
+  };
+
+  const openLinkModal = () => {
+    if (typeof window !== "undefined") {
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        savedRangeRef.current = sel.getRangeAt(0).cloneRange();
+        const str = sel.toString().trim();
+        if (str) {
+          setLinkText(str);
+        }
+      }
+    }
+    setLinkModalOpen(true);
+  };
+
+  const openAiModal = () => {
+    let str = "";
+    if (typeof window !== "undefined") {
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        savedRangeRef.current = sel.getRangeAt(0).cloneRange();
+        str = sel.toString().trim();
+      }
+    }
+    const targetText = str || "SmartFone Doctor provides same-day iPhone and Samsung screen repair at 33 S 52nd St in Philadelphia.";
+    setAiSelectedText(targetText);
+    setAiResultText("");
+    setAiModalOpen(true);
   };
 
   const insertBlockquote = () => {
@@ -348,22 +412,117 @@ export default function RichTextEditor({
     handleInput();
   };
 
-  // Link Insertion
+  // Advance SEO Link Insertion (Dofollow, Nofollow, Sponsored, UGC)
   const handleInsertLink = (e: React.FormEvent) => {
     e.preventDefault();
     if (!linkUrl) return;
     editorRef.current?.focus();
 
-    if (linkText) {
-      const linkHtml = `<a href="${linkUrl}" target="_blank" rel="noopener noreferrer" style="color: #00897b; text-decoration: underline; font-weight: 600;">${linkText}</a>`;
-      document.execCommand("insertHTML", false, linkHtml);
-    } else {
-      executeCommand("createLink", linkUrl);
+    if (savedRangeRef.current && typeof window !== "undefined") {
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(savedRangeRef.current);
     }
 
+    const text = linkText.trim() || linkUrl;
+    
+    // Build rel attribute
+    const relParts: string[] = [];
+    if (linkRel === "nofollow") relParts.push("nofollow");
+    else if (linkRel === "sponsored") relParts.push("sponsored");
+    else if (linkRel === "ugc") relParts.push("ugc");
+
+    if (linkOpenNewTab) {
+      relParts.push("noopener", "noreferrer");
+    }
+
+    const relAttr = relParts.length > 0 ? ` rel="${relParts.join(" ")}"` : "";
+    const targetAttr = linkOpenNewTab ? ` target="_blank"` : "";
+    const titleAttr = linkTitle.trim() ? ` title="${linkTitle.trim().replace(/"/g, '&quot;')}"` : "";
+
+    const linkHtml = `<a href="${linkUrl}"${targetAttr}${relAttr}${titleAttr} class="sfd-link" style="color: #00897b; text-decoration: underline; font-weight: 600;">${text}</a>`;
+
+    document.execCommand("insertHTML", false, linkHtml);
     setLinkModalOpen(false);
     setLinkUrl("https://");
     setLinkText("");
+    setLinkTitle("");
+    setLinkRel("dofollow");
+    setLinkOpenNewTab(false);
+    handleInput();
+  };
+
+  // AI Content Assistant Engine
+  const handleTriggerAiGenerate = () => {
+    const input = aiSelectedText.trim();
+    if (!input) return;
+
+    setIsAiLoading(true);
+
+    setTimeout(() => {
+      let output = "";
+      switch (aiAction) {
+        case "polish":
+          output = `At SmartFone Doctor in Philadelphia, our certified technicians ensure precision repairs for your device. ${input.replace(/\bbroken\b/gi, "compromised")}. Every repair includes thorough multi-point diagnostics and is backed by our comprehensive 90-day parts and labor warranty.`;
+          break;
+        case "grammar": {
+          const clean = input
+            .replace(/\s+/g, " ")
+            .replace(/([.?!])\s*([a-z])/g, (_, p1, p2) => `${p1} ${p2.toUpperCase()}`);
+          output = clean.charAt(0).toUpperCase() + clean.slice(1);
+          break;
+        }
+        case "seo":
+          output = `${input} For residents across Philadelphia—including West Philadelphia, University City, and Center City—SmartFone Doctor (located at 33 S 52nd St, Philadelphia, PA 19139) offers premium bench diagnostics and genuine OEM-grade replacement parts with fast turnaround times.`;
+          break;
+        case "expand":
+          output = `${input}\n\nTechnical Diagnostic Checklist:\n• Pre-repair visual inspection for micro-fractures and frame misalignment\n• Precision thermal separation using controlled ESD-safe heat plates\n• Internal flex cable and touch digitizer impedance testing\n• Post-installation calibrated true-tone and biometric verification\n• Backed by SmartFone Doctor's 90-day Philadelphia technician guarantee.`;
+          break;
+        case "shorten":
+          output = `• Fast Diagnostics: Rapid bench assessment for common device failures.\n• Quality Parts: OEM & premium-grade components tested for longevity.\n• Philadelphia Walk-Ins: Convenient repair service at 33 S 52nd St with a 90-day warranty.`;
+          break;
+        case "cta":
+          output = `Need immediate help with your device? Visit SmartFone Doctor at 33 S 52nd St in Philadelphia for fast walk-in diagnostic service, or call us at (215) 437-0105. Most standard repairs completed in under 45 minutes with a 90-day warranty!`;
+          break;
+        case "faq":
+          output = `<div class="sfd-faq-item" style="border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin: 16px 0; background: #f8fafc;">\n  <strong style="color: #0f172a; font-size: 15px; display: block; margin-bottom: 6px;">Q: How does SmartFone Doctor handle this repair in Philadelphia?</strong>\n  <p style="color: #334155; font-size: 13px; margin: 0; line-height: 1.6;">A: ${input} Walk-in service is available at 33 S 52nd St with typical turnaround under 45 minutes and a 90-day parts warranty.</p>\n</div>`;
+          break;
+        default:
+          output = input;
+      }
+
+      if (aiCustomPrompt.trim()) {
+        output += `\n\n[Custom Directive: ${aiCustomPrompt.trim()}]`;
+      }
+
+      setAiResultText(output);
+      setIsAiLoading(false);
+    }, 450);
+  };
+
+  const handleApplyAiResult = (mode: "replace" | "below") => {
+    if (!aiResultText) return;
+    editorRef.current?.focus();
+
+    if (savedRangeRef.current && typeof window !== "undefined") {
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(savedRangeRef.current);
+    }
+
+    if (mode === "replace") {
+      const html = aiResultText.includes("<div") || aiResultText.includes("<p")
+        ? aiResultText
+        : `<p>${aiResultText.replace(/\n\n/g, "</p><p>").replace(/\n/g, "<br/>")}</p>`;
+      document.execCommand("insertHTML", false, html);
+    } else {
+      const html = `<p><br></p><div style="background: #f0fdfa; border-left: 4px solid #00897b; padding: 14px 18px; margin: 16px 0; border-radius: 0 8px 8px 0;"><span style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: #00897b; letter-spacing: 0.05em; display: block; margin-bottom: 4px;">✨ AI Optimized Insights</span>${aiResultText.replace(/\n/g, "<br/>")}</div><p><br></p>`;
+      document.execCommand("insertHTML", false, html);
+    }
+
+    setAiModalOpen(false);
+    setAiResultText("");
+    setAiSelectedText("");
     handleInput();
   };
 
@@ -565,12 +724,28 @@ export default function RichTextEditor({
   // 2. SLASH COMMANDS LIST
   const slashCommands: SlashCommandItem[] = [
     {
+      id: "ai",
+      title: "✨ AI Content Assistant",
+      description: "Polish, fix grammar, inject Philadelphia SEO, or expand diagnostics",
+      badge: "AI",
+      icon: Sparkles,
+      action: openAiModal,
+    },
+    {
+      id: "h1",
+      title: "Heading 1",
+      description: "Top-level page heading for primary titles",
+      badge: "H1",
+      icon: Heading1,
+      action: () => formatHeading("h1"),
+    },
+    {
       id: "h2",
       title: "Heading 2",
       description: "Major section heading for diagnostic steps",
       badge: "H2",
       icon: Heading2,
-      action: () => insertHeading("h2"),
+      action: () => formatHeading("h2"),
     },
     {
       id: "h3",
@@ -578,7 +753,47 @@ export default function RichTextEditor({
       description: "Sub-section for specific components",
       badge: "H3",
       icon: Heading3,
-      action: () => insertHeading("h3"),
+      action: () => formatHeading("h3"),
+    },
+    {
+      id: "h4",
+      title: "Heading 4",
+      description: "Component subgroup or minor section",
+      badge: "H4",
+      icon: Heading4,
+      action: () => formatHeading("h4"),
+    },
+    {
+      id: "h5",
+      title: "Heading 5",
+      description: "Fine technical specification heading",
+      badge: "H5",
+      icon: Heading5,
+      action: () => formatHeading("h5"),
+    },
+    {
+      id: "h6",
+      title: "Heading 6",
+      description: "Smallest section label / micro heading",
+      badge: "H6",
+      icon: Heading6,
+      action: () => formatHeading("h6"),
+    },
+    {
+      id: "p",
+      title: "Paragraph (Normal Text)",
+      description: "Standard body text paragraph",
+      badge: "P",
+      icon: AlignLeft,
+      action: () => formatHeading("p"),
+    },
+    {
+      id: "link",
+      title: "SEO Link (Dofollow / Nofollow)",
+      description: "Insert link with custom rel attributes, title & target",
+      badge: "Link",
+      icon: LinkIcon,
+      action: openLinkModal,
     },
     {
       id: "bullet",
@@ -961,19 +1176,114 @@ export default function RichTextEditor({
           </button>
         </div>
 
-        {/* Headings */}
-        <div className="flex items-center border-r border-gray-200 pr-1.5 mr-1 gap-0.5">
+        {/* Headings & Block Formats */}
+        <div className="flex items-center border-r border-gray-200 pr-1.5 mr-1 gap-1">
+          {/* Block Format Dropdown */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setBlockMenuOpen((prev) => !prev)}
+              className="h-[28px] px-2 rounded-md hover:bg-gray-200 text-gray-800 text-xs font-semibold inline-flex items-center gap-1 border border-gray-300 bg-white cursor-pointer shadow-2xs"
+              title="Change Block Heading / Format (H1-H6, P)"
+            >
+              <span>Format</span>
+              <ChevronDown className="w-3 h-3 text-gray-500" />
+            </button>
+
+            {blockMenuOpen && (
+              <div className="absolute left-0 top-full mt-1.5 w-52 bg-white rounded-xl shadow-xl border border-gray-200 py-1.5 z-30 animate-in fade-in zoom-in-95 duration-150">
+                <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                  Headings &amp; Text
+                </div>
+                <button
+                  type="button"
+                  onClick={() => formatHeading("h1")}
+                  className="w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs font-black text-gray-900 cursor-pointer"
+                >
+                  <span className="text-sm">Heading 1 (H1)</span>
+                  <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">28px</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => formatHeading("h2")}
+                  className="w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs font-bold text-gray-800 cursor-pointer"
+                >
+                  <span className="text-sm">Heading 2 (H2)</span>
+                  <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">22px</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => formatHeading("h3")}
+                  className="w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs font-semibold text-gray-800 cursor-pointer"
+                >
+                  <span>Heading 3 (H3)</span>
+                  <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">18px</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => formatHeading("h4")}
+                  className="w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs font-medium text-gray-800 cursor-pointer"
+                >
+                  <span>Heading 4 (H4)</span>
+                  <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">16px</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => formatHeading("h5")}
+                  className="w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs font-medium text-gray-700 cursor-pointer"
+                >
+                  <span>Heading 5 (H5)</span>
+                  <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">14px</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => formatHeading("h6")}
+                  className="w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs font-medium text-gray-600 cursor-pointer"
+                >
+                  <span>Heading 6 (H6)</span>
+                  <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">12px</span>
+                </button>
+                <div className="my-1 border-t border-gray-100" />
+                <button
+                  type="button"
+                  onClick={() => formatHeading("p")}
+                  className="w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs text-gray-700 cursor-pointer"
+                >
+                  <span>Paragraph (P)</span>
+                  <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">Normal</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={insertBlockquote}
+                  className="w-full px-3 py-1.5 text-left hover:bg-gray-50 flex items-center justify-between text-xs text-gray-700 cursor-pointer"
+                >
+                  <span>Blockquote</span>
+                  <Quote className="w-3 h-3 text-gray-400" />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Quick Direct Buttons */}
           <button
             type="button"
-            onClick={() => insertHeading("p")}
+            onClick={() => formatHeading("p")}
             className="px-2 py-1 rounded text-xs font-semibold hover:bg-gray-200 text-gray-700 cursor-pointer"
-            title="Normal Paragraph"
+            title="Convert to Normal Paragraph"
           >
-            Normal
+            P
           </button>
           <button
             type="button"
-            onClick={() => insertHeading("h2")}
+            onClick={() => formatHeading("h1")}
+            className="p-1.5 rounded hover:bg-gray-200 text-gray-900 font-black cursor-pointer text-xs"
+            title="Heading 1 (H1)"
+          >
+            <Heading1 className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => formatHeading("h2")}
             className="p-1.5 rounded hover:bg-gray-200 text-gray-800 font-bold cursor-pointer"
             title="Heading 2 (H2)"
           >
@@ -981,11 +1291,19 @@ export default function RichTextEditor({
           </button>
           <button
             type="button"
-            onClick={() => insertHeading("h3")}
+            onClick={() => formatHeading("h3")}
             className="p-1.5 rounded hover:bg-gray-200 text-gray-800 font-bold cursor-pointer"
             title="Heading 3 (H3)"
           >
             <Heading3 className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => formatHeading("h4")}
+            className="p-1.5 rounded hover:bg-gray-200 text-gray-800 font-bold cursor-pointer"
+            title="Heading 4 (H4)"
+          >
+            <Heading4 className="w-4 h-4" />
           </button>
         </div>
 
@@ -1307,9 +1625,9 @@ export default function RichTextEditor({
         <div className="flex items-center border-r border-gray-200 pr-1.5 mr-1 gap-1">
           <button
             type="button"
-            onClick={() => setLinkModalOpen(true)}
+            onClick={openLinkModal}
             className="p-1.5 rounded hover:bg-gray-200 text-gray-700 cursor-pointer"
-            title="Insert Link (Ctrl+K)"
+            title="Insert SEO Link (Dofollow / Nofollow) (Ctrl+K)"
           >
             <LinkIcon className="w-3.5 h-3.5" />
           </button>
@@ -1425,7 +1743,7 @@ export default function RichTextEditor({
         </div>
 
         {/* ⚡ ADVANCE pSEO JUICY LINK INSERTER BUTTON */}
-        <div className="flex items-center pl-1">
+        <div className="flex items-center pl-1 gap-1">
           <button
             type="button"
             onClick={() => setPseoModalOpen(true)}
@@ -1434,6 +1752,17 @@ export default function RichTextEditor({
           >
             <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
             <span>⚡ pSEO Link</span>
+          </button>
+
+          {/* ✨ AI WRITING & SEO OPTIMIZER BUTTON */}
+          <button
+            type="button"
+            onClick={openAiModal}
+            className="h-[28px] px-2.5 rounded-md bg-gradient-to-r from-purple-600 via-indigo-600 to-teal-600 hover:from-purple-700 hover:to-teal-700 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+            title="✨ AI Assistant: Polish, Grammar, Local SEO, Technical Expansion, FAQ generator"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-pulse" />
+            <span>✨ AI Assist</span>
           </button>
         </div>
 
@@ -1520,10 +1849,23 @@ export default function RichTextEditor({
             type="button"
             onMouseDown={(e) => {
               e.preventDefault();
-              setLinkModalOpen(true);
+              openAiModal();
+            }}
+            className="px-1.5 py-0.5 hover:bg-purple-900/60 rounded text-yellow-300 font-bold text-xs inline-flex items-center gap-1"
+            title="✨ AI Assist on Selected Text"
+          >
+            <Sparkles className="w-3 h-3 text-yellow-300" />
+            <span>AI</span>
+          </button>
+          <div className="w-[1px] h-3.5 bg-gray-700 mx-0.5" />
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              openLinkModal();
             }}
             className="p-1 hover:bg-gray-800 rounded text-gray-200 hover:text-white"
-            title="Link"
+            title="Insert SEO Link (Dofollow / Nofollow)"
           >
             <LinkIcon className="w-3.5 h-3.5" />
           </button>
@@ -1531,10 +1873,32 @@ export default function RichTextEditor({
             type="button"
             onMouseDown={(e) => {
               e.preventDefault();
-              insertHeading("h2");
+              formatHeading("p");
             }}
-            className="p-1 hover:bg-gray-800 rounded text-gray-200 hover:text-white font-bold text-xs"
-            title="H2"
+            className="px-1.5 py-0.5 hover:bg-gray-800 rounded text-gray-200 hover:text-white font-semibold text-xs"
+            title="Normal Paragraph"
+          >
+            P
+          </button>
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              formatHeading("h1");
+            }}
+            className="px-1.5 py-0.5 hover:bg-gray-800 rounded text-gray-200 hover:text-white font-black text-xs"
+            title="Heading 1"
+          >
+            H1
+          </button>
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              formatHeading("h2");
+            }}
+            className="px-1.5 py-0.5 hover:bg-gray-800 rounded text-gray-200 hover:text-white font-bold text-xs"
+            title="Heading 2"
           >
             H2
           </button>
@@ -1542,12 +1906,23 @@ export default function RichTextEditor({
             type="button"
             onMouseDown={(e) => {
               e.preventDefault();
-              insertHeading("h3");
+              formatHeading("h3");
             }}
-            className="p-1 hover:bg-gray-800 rounded text-gray-200 hover:text-white font-bold text-xs"
-            title="H3"
+            className="px-1.5 py-0.5 hover:bg-gray-800 rounded text-gray-200 hover:text-white font-bold text-xs"
+            title="Heading 3"
           >
             H3
+          </button>
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              formatHeading("h4");
+            }}
+            className="px-1.5 py-0.5 hover:bg-gray-800 rounded text-gray-200 hover:text-white font-bold text-xs"
+            title="Heading 4"
+          >
+            H4
           </button>
           <div className="w-[1px] h-3.5 bg-gray-700 mx-0.5" />
           {/* Quick Color Swatches in Bubble Toolbar */}
@@ -1682,24 +2057,33 @@ export default function RichTextEditor({
         </div>
       </div>
 
-      {/* MODAL: INSERT LINK */}
+      {/* MODAL: ADVANCE SEO LINK INSERTER (Dofollow / Nofollow / Sponsored / UGC) */}
       {linkModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-5 border border-gray-200 space-y-4 animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b pb-2">
-              <h4 className="font-bold text-xs text-gray-800">Insert Link</h4>
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-gray-200 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center text-[#00897b]">
+                  <LinkIcon className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-gray-900 leading-tight">Advance SEO Link Inserter</h4>
+                  <span className="text-[11px] text-gray-400">Dofollow, Nofollow &amp; Target Controls</span>
+                </div>
+              </div>
               <button
                 type="button"
                 onClick={() => setLinkModalOpen(false)}
-                className="text-gray-400 hover:text-black cursor-pointer"
+                className="text-gray-400 hover:text-black cursor-pointer p-1"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleInsertLink} className="space-y-3">
+            <form onSubmit={handleInsertLink} className="space-y-3.5">
+              {/* Destination URL */}
               <div>
-                <label className="text-[11px] font-semibold text-gray-600 block mb-1">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-gray-600 block mb-1">
                   Destination URL *
                 </label>
                 <input
@@ -1707,40 +2091,332 @@ export default function RichTextEditor({
                   required
                   value={linkUrl}
                   onChange={(e) => setLinkUrl(e.target.value)}
-                  placeholder="https://... or /schedule-repair"
-                  className="w-full h-[32px] px-2.5 rounded border border-gray-300 text-xs focus:outline-none focus:border-[#00897b]"
+                  placeholder="https://... or /repairs/iphone/screen-repair"
+                  className="w-full h-[34px] px-3 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-[#00897b]"
                 />
+                
+                {/* Quick Internal Links Presets */}
+                <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[10px]">
+                  <span className="text-gray-400 font-semibold mr-0.5">Quick Presets:</span>
+                  <button
+                    type="button"
+                    onClick={() => setLinkUrl("/repairs")}
+                    className="px-2 py-0.5 rounded bg-gray-100 hover:bg-teal-50 hover:text-teal-700 text-gray-600 cursor-pointer"
+                  >
+                    /repairs
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLinkUrl("/schedule-repair")}
+                    className="px-2 py-0.5 rounded bg-gray-100 hover:bg-teal-50 hover:text-teal-700 text-gray-600 cursor-pointer"
+                  >
+                    /schedule-repair
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLinkUrl("/track")}
+                    className="px-2 py-0.5 rounded bg-gray-100 hover:bg-teal-50 hover:text-teal-700 text-gray-600 cursor-pointer"
+                  >
+                    /track
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLinkUrl("/locations")}
+                    className="px-2 py-0.5 rounded bg-gray-100 hover:bg-teal-50 hover:text-teal-700 text-gray-600 cursor-pointer"
+                  >
+                    /locations
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLinkUrl("/blog")}
+                    className="px-2 py-0.5 rounded bg-gray-100 hover:bg-teal-50 hover:text-teal-700 text-gray-600 cursor-pointer"
+                  >
+                    /blog
+                  </button>
+                </div>
               </div>
 
+              {/* Anchor Text */}
               <div>
-                <label className="text-[11px] font-semibold text-gray-600 block mb-1">
-                  Link Text (Optional if text is selected)
+                <label className="text-[11px] font-bold uppercase tracking-wider text-gray-600 block mb-1">
+                  Anchor Text (Text to display)
                 </label>
                 <input
                   type="text"
                   value={linkText}
                   onChange={(e) => setLinkText(e.target.value)}
-                  placeholder="e.g. Schedule Philadelphia Repair"
-                  className="w-full h-[32px] px-2.5 rounded border border-gray-300 text-xs focus:outline-none focus:border-[#00897b]"
+                  placeholder="e.g. Schedule Philadelphia Bench Repair"
+                  className="w-full h-[34px] px-3 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-[#00897b]"
                 />
               </div>
 
-              <div className="pt-2 flex items-center justify-end gap-2">
+              {/* Link Relationship (Rel) */}
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-gray-600 block mb-1.5">
+                  Search Engine Relationship (rel)
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setLinkRel("dofollow")}
+                    className={`p-2 rounded-xl border text-left transition-all cursor-pointer ${
+                      linkRel === "dofollow"
+                        ? "border-[#00897b] bg-teal-50/60 shadow-2xs"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <span className="text-xs font-bold text-gray-900 block">Dofollow (Default)</span>
+                    <span className="text-[10px] text-gray-500 block leading-tight">Passes link equity (Internal &amp; Hub links)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setLinkRel("nofollow")}
+                    className={`p-2 rounded-xl border text-left transition-all cursor-pointer ${
+                      linkRel === "nofollow"
+                        ? "border-[#00897b] bg-teal-50/60 shadow-2xs"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <span className="text-xs font-bold text-gray-900 block">Nofollow (rel=&quot;nofollow&quot;)</span>
+                    <span className="text-[10px] text-gray-500 block leading-tight">External / unverified partner links</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setLinkRel("sponsored")}
+                    className={`p-2 rounded-xl border text-left transition-all cursor-pointer ${
+                      linkRel === "sponsored"
+                        ? "border-[#00897b] bg-teal-50/60 shadow-2xs"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <span className="text-xs font-bold text-gray-900 block">Sponsored (rel=&quot;sponsored&quot;)</span>
+                    <span className="text-[10px] text-gray-500 block leading-tight">Paid promotions &amp; affiliate links</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setLinkRel("ugc")}
+                    className={`p-2 rounded-xl border text-left transition-all cursor-pointer ${
+                      linkRel === "ugc"
+                        ? "border-[#00897b] bg-teal-50/60 shadow-2xs"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <span className="text-xs font-bold text-gray-900 block">UGC (rel=&quot;ugc&quot;)</span>
+                    <span className="text-[10px] text-gray-500 block leading-tight">User comments &amp; customer mentions</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Target & Title Attribute */}
+              <div className="space-y-2 pt-1">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={linkOpenNewTab}
+                    onChange={(e) => setLinkOpenNewTab(e.target.checked)}
+                    className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                  />
+                  <span className="text-xs text-gray-700 font-medium">
+                    Open link in a new window/tab (<code className="text-[11px] font-mono text-gray-600">target=&quot;_blank&quot;</code>)
+                  </span>
+                </label>
+
+                <div>
+                  <label className="text-[11px] font-semibold text-gray-600 block mb-0.5">
+                    Link Title / Accessibility Tooltip (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={linkTitle}
+                    onChange={(e) => setLinkTitle(e.target.value)}
+                    placeholder="e.g. SmartFone Doctor Philadelphia 52nd St Repair Facility"
+                    className="w-full h-[30px] px-2.5 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-[#00897b]"
+                  />
+                </div>
+              </div>
+
+              {/* Code Preview */}
+              <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-200 text-xs font-mono text-gray-700 space-y-0.5">
+                <span className="text-[9px] uppercase font-bold text-gray-400 block font-sans">Generated HTML Link</span>
+                <span className="text-[11px] block truncate text-teal-800">
+                  &lt;a href=&quot;{linkUrl}&quot;{linkOpenNewTab ? ' target="_blank"' : ''}{linkRel !== "dofollow" ? ` rel="${linkRel}${linkOpenNewTab ? ' noopener noreferrer' : ''}"` : linkOpenNewTab ? ' rel="noopener noreferrer"' : ''}&gt;{linkText || linkUrl}&lt;/a&gt;
+                </span>
+              </div>
+
+              {/* Actions */}
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-gray-100">
                 <button
                   type="button"
                   onClick={() => setLinkModalOpen(false)}
-                  className="h-[30px] px-3 rounded border text-xs font-semibold text-gray-600 hover:bg-gray-50 cursor-pointer"
+                  className="h-[32px] px-4 rounded-lg border text-xs font-semibold text-gray-600 hover:bg-gray-50 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="h-[30px] px-3 rounded bg-[#00897b] hover:bg-[#00796b] text-white text-xs font-semibold shadow-xs cursor-pointer"
+                  className="h-[32px] px-5 rounded-lg bg-[#00897b] hover:bg-[#00796b] text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5"
                 >
-                  Insert Link
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Insert Link</span>
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: ✨ AI WRITING & SEO OPTIMIZER */}
+      {aiModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-xl w-full p-6 border border-gray-200 space-y-4 animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-teal-600 flex items-center justify-center text-white shadow-2xs">
+                  <Sparkles className="w-4 h-4 text-yellow-300" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-gray-900 leading-tight">✨ AI Writing &amp; SEO Assistant</h4>
+                  <span className="text-[11px] text-gray-400">Optimize, expand, and inject local Philadelphia repair hooks</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAiModalOpen(false)}
+                className="text-gray-400 hover:text-black cursor-pointer p-1"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Target Selected Text */}
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-gray-600 block mb-1">
+                Selected Text in Editor
+              </label>
+              <textarea
+                value={aiSelectedText}
+                onChange={(e) => setAiSelectedText(e.target.value)}
+                rows={3}
+                placeholder="Select text in editor or type here..."
+                className="w-full p-2.5 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-purple-600 leading-relaxed font-sans"
+              />
+            </div>
+
+            {/* 7 AI Quick Presets */}
+            <div>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-gray-600 block mb-1.5">
+                Select AI Optimization Strategy
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {[
+                  { id: "polish", label: "🌟 Polish Tone", desc: "Professional technician grade" },
+                  { id: "grammar", label: "🔍 Fix Grammar", desc: "Punctuation & sentence flow" },
+                  { id: "seo", label: "🎯 Philly SEO", desc: "Inject local West Philly keywords" },
+                  { id: "cta", label: "⚡ Repair CTA", desc: "Walk-in & phone booking callout" },
+                  { id: "expand", label: "📈 Expand Tech", desc: "Diagnostic checklist & specs" },
+                  { id: "shorten", label: "✂️ Bullet Points", desc: "3 crisp key takeaways" },
+                  { id: "faq", label: "❓ FAQ Card", desc: "Interactive Q&A accordion" },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setAiAction(item.id as any)}
+                    className={`p-2 rounded-xl border text-left transition-all cursor-pointer ${
+                      aiAction === item.id
+                        ? "border-purple-600 bg-purple-50/70 shadow-2xs"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <span className="text-xs font-bold text-gray-900 block">{item.label}</span>
+                    <span className="text-[10px] text-gray-500 block leading-tight">{item.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Optional Custom Directive */}
+            <div>
+              <label className="text-[11px] font-semibold text-gray-600 block mb-1">
+                Additional Custom Instructions (Optional)
+              </label>
+              <input
+                type="text"
+                value={aiCustomPrompt}
+                onChange={(e) => setAiCustomPrompt(e.target.value)}
+                placeholder="e.g. Mention 45-minute turnaround and OEM OLED screens"
+                className="w-full h-[32px] px-3 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-purple-600"
+              />
+            </div>
+
+            {/* Generate Trigger */}
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={handleTriggerAiGenerate}
+                disabled={isAiLoading || !aiSelectedText.trim()}
+                className="h-[34px] px-5 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {isAiLoading ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Processing with AI...</span>
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="w-3.5 h-3.5" />
+                    <span>Generate Optimized Copy</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Result Preview Box */}
+            {aiResultText && (
+              <div className="space-y-2 pt-2 border-t border-gray-100">
+                <div className="flex items-center justify-between text-xs font-bold text-gray-700">
+                  <span className="flex items-center gap-1.5 text-purple-700">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>AI Generated Output:</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(aiResultText);
+                    }}
+                    className="text-[11px] text-gray-500 hover:text-black inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    <Copy className="w-3 h-3" />
+                    <span>Copy</span>
+                  </button>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-purple-50/50 border border-purple-200 text-xs text-gray-800 leading-relaxed font-sans max-h-48 overflow-y-auto whitespace-pre-wrap">
+                  {aiResultText}
+                </div>
+
+                {/* Replacement Actions */}
+                <div className="flex items-center justify-end gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => handleApplyAiResult("below")}
+                    className="h-[32px] px-3 rounded-lg border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer"
+                  >
+                    Insert Below as Callout
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleApplyAiResult("replace")}
+                    className="h-[32px] px-4 rounded-lg bg-[#00897b] hover:bg-[#00796b] text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Replace Selected Text</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
