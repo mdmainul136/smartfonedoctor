@@ -44,7 +44,7 @@ function Styled({ id, pbStyle, editing, children }: { id: string; pbStyle?: PbSt
   const style = pbStyle as PbStyle;
   return (
     <>
-      <StyleTag css={compileStyle(id, style, { editing })} />
+      <StyleTag css={compileStyle(id, style, { editing, wrapper: true })} />
       {createElement(
         style.tag || "div",
         { id: style.cssId, className: cx(styleClass(id), style.className), ...motionAttrs(style, editing) },

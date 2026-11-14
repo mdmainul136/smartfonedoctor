@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { ActionBar, type ComponentData } from "@puckeditor/core";
+import ResizeHandles from "./ResizeHandles";
 import { usePuckSelect } from "./puckStore";
 import {
   BookmarkPlus,
@@ -507,6 +508,7 @@ export function PuckComponentOverlay({
 
   return (
     <div ref={wrapperRef} onContextMenu={handleContextMenu} className="w-full h-full relative">
+      {isSelected && !isLocked && <ResizeHandles componentId={componentId} />}
       {/* Inline Structure Picker ABOVE Active Section */}
       {showInsertAbove && (
         <div

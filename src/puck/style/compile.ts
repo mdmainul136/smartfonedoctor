@@ -53,8 +53,14 @@ export const styleClass = (id: string) => `pb-${id.replace(/[^a-zA-Z0-9_-]/g, ""
  *
  * `editing`: inside the editor, layout-in-parent properties are written for
  * Puck's wrapper div so the canvas matches the published page.
+ * `wrapper`: the styled element is a box around the widget (not the widget's
+ * own element), so a height set on it is passed down for the widget to fill.
  */
-export function compileStyle(id: string, style: PbStyle | undefined, opts: { editing?: boolean } = {}): string {
+export function compileStyle(
+  id: string,
+  style: PbStyle | undefined,
+  opts: { editing?: boolean; wrapper?: boolean } = {},
+): string {
   if (!style) return "";
   const self = `.${styleClass(id)}`;
   const out: string[] = [];
@@ -65,6 +71,7 @@ export function compileStyle(id: string, style: PbStyle | undefined, opts: { edi
   ];
 
   for (const [map, media] of scopes) {
+    if (opts.wrapper && map?.height) out.push(rule(`${self}>*`, "min-height:100%", media));
     if (!opts.editing) {
       out.push(rule(self, declarations(map), media));
       continue;
