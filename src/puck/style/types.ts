@@ -7,6 +7,17 @@
  */
 export type StyleMap = Record<string, string>;
 
+/** Entrance animation, played when the element scrolls into view. */
+export type PbMotion = {
+  /** Preset name (see ENTRANCES in motion.tsx). Empty means no animation. */
+  enter?: string;
+  /** Milliseconds. */
+  duration?: number;
+  delay?: number;
+  /** Play again every time the element re-enters the screen. */
+  repeat?: boolean;
+};
+
 export type PbStyle = {
   /** HTML element to render (div, section, article ...). */
   tag?: string;
@@ -18,6 +29,7 @@ export type PbStyle = {
   mobile?: StyleMap;
   /** Applied on mouse hover. */
   hover?: StyleMap;
+  motion?: PbMotion;
 };
 
 export type StyleScope = "base" | "tablet" | "mobile" | "hover";

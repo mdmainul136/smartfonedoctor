@@ -1,3 +1,4 @@
+import { compileMotion } from "./motion";
 import { BREAKPOINTS, type PbStyle, type StyleMap } from "./types";
 
 const kebab = (prop: string) => prop.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
@@ -42,7 +43,7 @@ export function isEmptyStyle(style?: PbStyle | null): boolean {
   const hasRules = [style.base, style.tablet, style.mobile, style.hover].some(
     (map) => map && Object.values(map).some((v) => v !== "" && v != null),
   );
-  return !hasRules && !style.tag && !style.cssId && !style.className;
+  return !hasRules && !style.motion?.enter && !style.tag && !style.cssId && !style.className;
 }
 
 export const styleClass = (id: string) => `pb-${id.replace(/[^a-zA-Z0-9_-]/g, "")}`;
@@ -81,5 +82,6 @@ export function compileStyle(id: string, style: PbStyle | undefined, opts: { edi
     if (!style.base?.transition) out.push(rule(self, "transition:all .2s ease"));
     out.push(rule(`${self}:hover`, hover));
   }
+  out.push(compileMotion(self, id, style.motion, opts.editing));
   return out.filter(Boolean).join("\n");
 }

@@ -1,6 +1,7 @@
 import { createElement, type ComponentType, type ReactNode } from "react";
 import { FieldTab, type Config } from "@puckeditor/core";
 import { compileStyle, isEmptyStyle, styleClass } from "./compile";
+import { MotionRuntime } from "./motion";
 import { StylePanel } from "./StylePanel";
 import type { PbStyle } from "./types";
 
@@ -27,6 +28,12 @@ const styleField = {
 
 const cx = (...parts: (string | undefined)[]) => parts.filter(Boolean).join(" ");
 
+/** Marks an element for MotionRuntime on the published page. */
+function motionAttrs(style: PbStyle, editing?: boolean) {
+  if (editing || !style.motion?.enter) return {};
+  return { "data-pb-motion": style.motion.repeat ? "repeat" : "once" };
+}
+
 function StyleTag({ css }: { css: string }) {
   return css ? <style dangerouslySetInnerHTML={{ __html: css }} /> : null;
 }
@@ -38,7 +45,12 @@ function Styled({ id, pbStyle, editing, children }: { id: string; pbStyle?: PbSt
   return (
     <>
       <StyleTag css={compileStyle(id, style, { editing })} />
-      {createElement(style.tag || "div", { id: style.cssId, className: cx(styleClass(id), style.className) }, children)}
+      {createElement(
+        style.tag || "div",
+        { id: style.cssId, className: cx(styleClass(id), style.className), ...motionAttrs(style, editing) },
+        children,
+      )}
+      {!editing && style.motion?.enter && <MotionRuntime />}
     </>
   );
 }
@@ -71,7 +83,14 @@ const Box: AnyComponent = {
     return (
       <>
         <StyleTag css={compileStyle(id, style, { editing: puck?.isEditing })} />
-        <Slot as={style.tag || "div"} id={style.cssId} className={cx(styleClass(id), style.className)} minEmptyHeight={96} />
+        <Slot
+          as={style.tag || "div"}
+          id={style.cssId}
+          className={cx(styleClass(id), style.className)}
+          minEmptyHeight={96}
+          {...motionAttrs(style, puck?.isEditing)}
+        />
+        {!puck?.isEditing && style.motion?.enter && <MotionRuntime />}
       </>
     );
   },

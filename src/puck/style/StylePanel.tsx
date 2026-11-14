@@ -20,6 +20,7 @@ import {
 import { usePuckSelect } from "../editor/puckStore";
 import { getKitSwatches } from "../kit";
 import { compileStyle } from "./compile";
+import { ENTRANCES } from "./motion";
 import { HTML_TAGS, type PbStyle, type StyleMap, type StyleScope } from "./types";
 
 /* ------------------------------------------------------------------ helpers */
@@ -576,6 +577,63 @@ export function StylePanel({ value, onChange }: { value?: PbStyle; onChange: (ne
             {text("flexGrow", "grow")}
             {text("order", "order")}
           </Row>
+        </Section>
+      )}
+
+      {scope !== "hover" && (
+        <Section title="Motion" open={Boolean(style.motion?.enter)}>
+          <Row label="Entrance">
+            <select
+              className={inputCls}
+              value={style.motion?.enter || ""}
+              onChange={(e) => onChange({ ...style, motion: { ...style.motion, enter: e.target.value || undefined } })}
+            >
+              <option value="">None</option>
+              {Object.entries(ENTRANCES).map(([key, preset]) => (
+                <option key={key} value={key}>
+                  {preset.label}
+                </option>
+              ))}
+            </select>
+          </Row>
+          {style.motion?.enter && (
+            <>
+              <Row label="Time (ms)">
+                <input
+                  type="number"
+                  min={0}
+                  step={50}
+                  className={inputCls}
+                  title="Duration"
+                  value={style.motion.duration ?? ""}
+                  placeholder="600"
+                  onChange={(e) => onChange({ ...style, motion: { ...style.motion, duration: e.target.value ? Number(e.target.value) : undefined } })}
+                />
+                <input
+                  type="number"
+                  min={0}
+                  step={50}
+                  className={inputCls}
+                  title="Delay before it starts"
+                  value={style.motion.delay ?? ""}
+                  placeholder="delay 0"
+                  onChange={(e) => onChange({ ...style, motion: { ...style.motion, delay: e.target.value ? Number(e.target.value) : undefined } })}
+                />
+              </Row>
+              <label className="flex items-center gap-2 text-[11px] text-gray-600">
+                <input
+                  type="checkbox"
+                  className="accent-[#009691]"
+                  checked={Boolean(style.motion.repeat)}
+                  onChange={(e) => onChange({ ...style, motion: { ...style.motion, repeat: e.target.checked || undefined } })}
+                />
+                Play every time it scrolls into view
+              </label>
+              <p className="text-[10px] leading-snug text-gray-500">
+                Plays here when you change a setting. On the live page it plays when the element scrolls into view.
+              </p>
+            </>
+          )}
         </Section>
       )}
 
