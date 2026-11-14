@@ -125,7 +125,7 @@ export default function PuckStructurePicker({
       onMouseDown={(e) => e.stopPropagation()}
       className={
         inline
-          ? "w-full my-3 rounded-xl border-2 border-dashed border-[#e11d48] bg-white p-4 shadow-xl relative z-40 animate-in fade-in zoom-in-95 duration-150 text-left select-none pointer-events-auto"
+          ? "w-full my-3 rounded-xl border-2 border-dashed border-[#009691] bg-white p-4 shadow-xl relative z-40 animate-in fade-in zoom-in-95 duration-150 text-left select-none pointer-events-auto"
           : position === "top"
           ? "mb-3 rounded-xl border border-dashed border-gray-300 bg-white/95 px-4 py-2.5 text-center shadow-xs transition hover:border-[#009691]/60"
           : "my-4 rounded-xl border-2 border-dashed border-gray-300 bg-white/90 p-6 text-center transition hover:border-[#009691]/70"
@@ -146,7 +146,7 @@ export default function PuckStructurePicker({
                 <span>Back</span>
               </button>
             ) : (
-              <span className="text-xs font-bold text-[#e11d48]">
+              <span className="text-xs font-bold text-[#009691]">
                 {title || "Insert Section"}
               </span>
             )}
@@ -178,7 +178,7 @@ export default function PuckStructurePicker({
             <button
               type="button"
               onClick={() => setStep("choice")}
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#e11d48] px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#be123c] transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#009691] px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#007f7b] transition cursor-pointer"
             >
               <Plus className="h-3.5 w-3.5" />
               <span>Add Section</span>
@@ -231,16 +231,16 @@ export default function PuckStructurePicker({
                 setStep("flex");
               }}
               onMouseDown={(e) => e.stopPropagation()}
-              className="group flex flex-col items-center gap-3 rounded-xl border-2 border-transparent bg-gray-50 p-5 hover:border-[#e11d48] hover:bg-white hover:shadow-md transition cursor-pointer w-44"
+              className="group flex flex-col items-center gap-3 rounded-xl border-2 border-transparent bg-gray-50 p-5 hover:border-[#009691] hover:bg-white hover:shadow-md transition cursor-pointer w-44"
             >
-              <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-slate-200 group-hover:bg-[#e11d48]/10 transition-colors p-2 pointer-events-none">
+              <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-slate-200 group-hover:bg-[#009691]/10 transition-colors p-2 pointer-events-none">
                 <div className="grid grid-cols-2 grid-rows-2 gap-1 w-full h-full">
-                  <div className="bg-slate-400 group-hover:bg-[#e11d48] rounded-xs" />
-                  <div className="bg-slate-400 group-hover:bg-[#e11d48] rounded-xs" />
-                  <div className="col-span-2 bg-slate-400 group-hover:bg-[#e11d48] rounded-xs" />
+                  <div className="bg-slate-400 group-hover:bg-[#009691] rounded-xs" />
+                  <div className="bg-slate-400 group-hover:bg-[#009691] rounded-xs" />
+                  <div className="col-span-2 bg-slate-400 group-hover:bg-[#009691] rounded-xs" />
                 </div>
               </div>
-              <span className="text-xs font-bold uppercase tracking-wider text-gray-700 group-hover:text-[#e11d48] pointer-events-none">
+              <span className="text-xs font-bold uppercase tracking-wider text-gray-700 group-hover:text-[#009691] pointer-events-none">
                 Flexbox
               </span>
             </button>
@@ -305,14 +305,14 @@ export default function PuckStructurePicker({
                 key={preset.id}
                 type="button"
                 onClick={() => handleInsertFlex(preset)}
-                className="group flex flex-col items-center gap-1.5 rounded-lg border border-gray-200 bg-white p-2 hover:border-[#e11d48] hover:bg-rose-50/30 transition cursor-pointer"
+                className="group flex flex-col items-center gap-1.5 rounded-lg border border-gray-200 bg-white p-2 hover:border-[#009691] hover:bg-rose-50/30 transition cursor-pointer"
               >
-                <div className="flex h-9 w-full items-center justify-center rounded bg-slate-200 group-hover:bg-[#e11d48]/15 transition-colors p-1">
+                <div className="flex h-9 w-full items-center justify-center rounded bg-slate-200 group-hover:bg-[#009691]/15 transition-colors p-1">
                   {preset.iconType === "arrow-down" && (
-                    <ArrowDown className="h-4 w-4 text-slate-500 group-hover:text-[#e11d48]" />
+                    <ArrowDown className="h-4 w-4 text-slate-500 group-hover:text-[#009691]" />
                   )}
                   {preset.iconType === "arrow-right" && (
-                    <ArrowRight className="h-4 w-4 text-slate-500 group-hover:text-[#e11d48]" />
+                    <ArrowRight className="h-4 w-4 text-slate-500 group-hover:text-[#009691]" />
                   )}
                   {preset.iconType === "bars" && preset.bars && (
                     <div className="flex h-full w-full gap-1">
@@ -320,39 +320,39 @@ export default function PuckStructurePicker({
                         <div
                           key={i}
                           style={{ width: `${pct}%` }}
-                          className="h-full rounded-xs bg-slate-400 group-hover:bg-[#e11d48] transition-colors"
+                          className="h-full rounded-xs bg-slate-400 group-hover:bg-[#009691] transition-colors"
                         />
                       ))}
                     </div>
                   )}
                   {preset.iconType === "grid2x2" && (
                     <div className="grid grid-cols-2 grid-rows-2 gap-1 h-full w-full">
-                      <div className="bg-slate-400 group-hover:bg-[#e11d48] rounded-xs" />
-                      <div className="bg-slate-400 group-hover:bg-[#e11d48] rounded-xs" />
-                      <div className="bg-slate-400 group-hover:bg-[#e11d48] rounded-xs" />
-                      <div className="bg-slate-400 group-hover:bg-[#e11d48] rounded-xs" />
+                      <div className="bg-slate-400 group-hover:bg-[#009691] rounded-xs" />
+                      <div className="bg-slate-400 group-hover:bg-[#009691] rounded-xs" />
+                      <div className="bg-slate-400 group-hover:bg-[#009691] rounded-xs" />
+                      <div className="bg-slate-400 group-hover:bg-[#009691] rounded-xs" />
                     </div>
                   )}
                   {preset.iconType === "top1-btm2" && (
                     <div className="flex flex-col gap-1 h-full w-full">
-                      <div className="h-1/2 w-full bg-slate-400 group-hover:bg-[#e11d48] rounded-xs" />
+                      <div className="h-1/2 w-full bg-slate-400 group-hover:bg-[#009691] rounded-xs" />
                       <div className="flex gap-1 h-1/2 w-full">
-                        <div className="w-1/2 bg-slate-400 group-hover:bg-[#e11d48] rounded-xs" />
-                        <div className="w-1/2 bg-slate-400 group-hover:bg-[#e11d48] rounded-xs" />
+                        <div className="w-1/2 bg-slate-400 group-hover:bg-[#009691] rounded-xs" />
+                        <div className="w-1/2 bg-slate-400 group-hover:bg-[#009691] rounded-xs" />
                       </div>
                     </div>
                   )}
                   {preset.iconType === "left1-right2" && (
                     <div className="flex gap-1 h-full w-full">
-                      <div className="w-1/2 h-full bg-slate-400 group-hover:bg-[#e11d48] rounded-xs" />
+                      <div className="w-1/2 h-full bg-slate-400 group-hover:bg-[#009691] rounded-xs" />
                       <div className="flex flex-col gap-1 w-1/2 h-full">
-                        <div className="h-1/2 bg-slate-400 group-hover:bg-[#e11d48] rounded-xs" />
-                        <div className="h-1/2 bg-slate-400 group-hover:bg-[#e11d48] rounded-xs" />
+                        <div className="h-1/2 bg-slate-400 group-hover:bg-[#009691] rounded-xs" />
+                        <div className="h-1/2 bg-slate-400 group-hover:bg-[#009691] rounded-xs" />
                       </div>
                     </div>
                   )}
                 </div>
-                <span className="text-[10px] font-semibold text-gray-600 group-hover:text-[#e11d48] truncate">
+                <span className="text-[10px] font-semibold text-gray-600 group-hover:text-[#009691] truncate">
                   {preset.label}
                 </span>
               </button>

@@ -82,8 +82,16 @@ function Seg({ value, options, onChange }: { value: string; options: SegOption[]
 }
 
 function ColorInput({ value, placeholder, onChange }: { value: string; placeholder?: string; onChange: (v: string) => void }) {
+  // Brand swatches appear only while this color is being edited.
+  const [open, setOpen] = useState(false);
   return (
-    <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+    <div
+      className="flex min-w-0 flex-1 flex-col gap-1.5"
+      onFocus={() => setOpen(true)}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(false);
+      }}
+    >
       <div className="flex items-center gap-1.5">
         <input
           type="color"
@@ -98,6 +106,7 @@ function ColorInput({ value, placeholder, onChange }: { value: string; placehold
           onChange={(e) => onChange(e.target.value)}
         />
       </div>
+      {open && (
       <div className="flex flex-wrap gap-1">
         {getKitSwatches().map(({ name, value: swatch }) => (
           <button
@@ -112,6 +121,7 @@ function ColorInput({ value, placeholder, onChange }: { value: string; placehold
           />
         ))}
       </div>
+      )}
     </div>
   );
 }
@@ -202,6 +212,7 @@ export function StylePanel({ value, onChange }: { value?: PbStyle; onChange: (ne
     const v = get(prop);
     const mode = sizeMode(v);
     return (
+      <>
       <Row label={label}>
         <Seg
           value={mode}
@@ -215,8 +226,9 @@ export function StylePanel({ value, onChange }: { value?: PbStyle; onChange: (ne
             { value: "fixed", label: "Fixed" },
           ]}
         />
-        {mode === "fixed" && <span className="w-16 shrink-0">{text(prop)}</span>}
       </Row>
+      {mode === "fixed" && <Row label="">{text(prop, "e.g. 320, 50%")}</Row>}
+      </>
     );
   };
 
@@ -399,13 +411,9 @@ export function StylePanel({ value, onChange }: { value?: PbStyle; onChange: (ne
         <Section title="Size">
           {sizeRow("Width", "width")}
           {sizeRow("Height", "height")}
-          <Row label="Min / Max W">
-            {text("minWidth", "min")}
-            {text("maxWidth", "max")}
-          </Row>
-          <Row label="Min / Max H">
-            {text("minHeight", "min")}
-            {text("maxHeight", "max")}
+          <Row label="Limits">
+            {text("maxWidth", "max width")}
+            {text("minHeight", "min height")}
           </Row>
         </Section>
       )}

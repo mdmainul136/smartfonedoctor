@@ -526,62 +526,23 @@ export function PuckComponentOverlay({
         </div>
       )}
 
-      {/* Top Handle Pill on Selected Container (Elementor Style) */}
-      {isSelected && located?.zone === "root:default-zone" && (
-        <div
-          data-sfd-handle="true"
-          onClick={(e) => e.stopPropagation()}
-          className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-30 flex items-center bg-[#e11d48] text-white rounded-t-md px-2 py-0.5 shadow-md text-xs font-semibold gap-1.5 pointer-events-auto select-none"
-        >
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowInsertAbove((prev) => !prev);
-              setShowInsertBelow(false);
-            }}
-            className={`p-1 rounded transition cursor-pointer flex items-center gap-1 text-[11px] ${
-              showInsertAbove ? "bg-white text-[#e11d48]" : "hover:bg-white/20 text-white"
-            }`}
-            title="Add Section Above"
-          >
-            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span className="text-[10px] hidden sm:inline">Add Above</span>
-          </button>
-          <span className="px-1.5 font-mono text-[11px] opacity-80 cursor-grab" title={label}>
-            :::
-          </span>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowInsertBelow((prev) => !prev);
-              setShowInsertAbove(false);
-            }}
-            className={`p-1 rounded transition cursor-pointer flex items-center gap-1 text-[11px] ${
-              showInsertBelow ? "bg-white text-[#e11d48]" : "hover:bg-white/20 text-white"
-            }`}
-            title="Add Section Below"
-          >
-            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span className="text-[10px] hidden sm:inline">Add Below</span>
-          </button>
-          <button
-            type="button"
-            disabled={isLocked}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDelete();
-            }}
-            className="hover:bg-white/20 p-1 rounded transition cursor-pointer text-white/90 hover:text-white"
-            title="Delete Section"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
-
       {children}
+
+      {/* One button to add a section under the selected one. */}
+      {isSelected && located?.zone === "root:default-zone" && !showInsertBelow && (
+        <button
+          type="button"
+          data-sfd-handle="true"
+          title="Add a section below"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowInsertBelow(true);
+          }}
+          className="pointer-events-auto absolute -bottom-7 left-1/2 z-30 flex h-6 w-6 -translate-x-1/2 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-[#009691] text-white shadow-md hover:scale-110"
+        >
+          <Plus className="h-3.5 w-3.5 stroke-[3]" />
+        </button>
+      )}
 
       {/* Inline Structure Picker BELOW Active Section */}
       {showInsertBelow && (

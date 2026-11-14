@@ -45,6 +45,8 @@ type IconType = ComponentType<{ className?: string }>;
  * to a neutral box.
  */
 const DEFAULT_WIDGET_ICONS: Record<string, IconType> = {
+  Box: Square,
+  GridBox: Grid3x3,
   FlexBlock: Columns3,
   GridBlock: Grid3x3,
   ContainerBlock: Square,

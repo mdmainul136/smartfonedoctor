@@ -17,11 +17,11 @@
   --puck-color-interactive-soft-hover: #ccfbf1;
   --puck-color-focus-ring: #14b8a6;
   --puck-color-selection-bg: color-mix(in srgb, #009691 18%, transparent);
-  --puck-color-selection-border: #e11d48;
+  --puck-color-selection-border: #009691;
   --puck-slot-component-color-placeholder: #99f6e4;
   --puck-slot-component-color-border-dragging: #5eead4;
   --puck-radius-m: 8px;
-  --puck-actionbar-color-bg: #e11d48;
+  --puck-actionbar-color-bg: #009691;
   --puck-actionbar-radius: 6px;
 }
 
@@ -54,18 +54,18 @@
 
 /* Elementor Selected & Hover Outlines */
 [class*="_DraggableComponent--isSelected_"] {
-  outline: 2px solid #e11d48 !important;
+  outline: 2px solid #009691 !important;
   outline-offset: -1px !important;
 }
 
 [class*="_DraggableComponent--hover_"]:not([class*="_DraggableComponent--isSelected_"]) {
-  outline: 1.5px dashed #e11d48 !important;
+  outline: 1.5px dashed #009691 !important;
   outline-offset: -1px !important;
 }
 
 /* Elementor Action Bar Pill */
 [class*="_ActionBar_"] {
-  background: #e11d48 !important;
+  background: #009691 !important;
   color: #ffffff !important;
   border-radius: 6px !important;
   box-shadow: 0 4px 14px rgba(225, 29, 72, 0.4) !important;
