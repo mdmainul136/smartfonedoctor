@@ -71,6 +71,7 @@ export default function DedicatedPageEditor({
     const updatedPage: CMSPage = {
       ...page,
       puckData: data as unknown as Record<string, unknown>,
+      puckEditedAt: Date.now(),
       lastEdited: "Just now",
     };
     setPage(updatedPage);
@@ -78,7 +79,12 @@ export default function DedicatedPageEditor({
     const updated = allPages.map((p) =>
       p.id === updatedPage.id || p.slug === updatedPage.slug ? updatedPage : p
     );
-    saveStoredCMSPages(updated);
+    if (!saveStoredCMSPages(updated)) {
+      // Throwing makes the builder keep the page marked unpublished.
+      setSavedToast("Could not save: browser storage is full. Delete unused media or templates and publish again.");
+      setTimeout(() => setSavedToast(null), 6000);
+      throw new Error("Browser storage is full");
+    }
     setSavedToast(`Puck layout published for "${updatedPage.name}"!`);
     setTimeout(() => setSavedToast(null), 3500);
   };
@@ -90,6 +96,8 @@ export default function DedicatedPageEditor({
       const updatedPage: CMSPage = {
         ...page,
         puckData: seed.puckData,
+        // Back to the seed: future template updates apply to this page again.
+        puckEditedAt: undefined,
         lastEdited: "Just now",
       };
       setPage(updatedPage);

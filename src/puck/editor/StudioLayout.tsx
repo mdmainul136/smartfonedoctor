@@ -106,6 +106,7 @@ export default function StudioLayout({
   const [showAddSection, setShowAddSection] = useState(false);
   const [savedIndex, setSavedIndex] = useState<number>(history.index);
   const [justPublished, setJustPublished] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
   const widgetsRef = useRef<HTMLDivElement | null>(null);
 
   const content = (appState.data?.content || []) as unknown[];
@@ -162,7 +163,14 @@ export default function StudioLayout({
 
   const publish = async () => {
     const data = appState.data as Data;
-    await onPublish(data);
+    try {
+      await onPublish(data);
+      setPublishError(null);
+    } catch (e) {
+      // The host could not save: keep the page marked unpublished and say so.
+      setPublishError(e instanceof Error ? e.message : "Publish failed");
+      return;
+    }
     // Keep the published version so it can be restored from History.
     await storage.addRevision(documentId, data).catch(() => undefined);
     autosave.markPublished();
@@ -361,6 +369,20 @@ export default function StudioLayout({
           </button>
         </div>
       </header>
+
+      {publishError && (
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-red-200 bg-red-50 px-4 py-2 text-xs text-red-800">
+          <span>Not published: {publishError}. Your changes are still in the editor.</span>
+          <button
+            type="button"
+            onClick={() => setPublishError(null)}
+            title="Dismiss"
+            className="rounded p-1 text-red-500 hover:bg-red-100 cursor-pointer"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
 
       {autosave.pendingDraft && (
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-900">

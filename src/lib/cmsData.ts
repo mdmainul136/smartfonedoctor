@@ -127,6 +127,8 @@ export interface CMSPage {
   heroStyle?: HeroStyle;
   sections?: PageSection[];
   puckData?: Record<string, unknown>;
+  /** Set when someone publishes the page in the builder; seed upgrades never overwrite it after that. */
+  puckEditedAt?: number;
 }
 
 export const INITIAL_CMS_PAGES: CMSPage[] = [
@@ -2886,7 +2888,11 @@ export function getStoredCMSPages(): CMSPage[] {
       const storedContent = (stored.puckData as { content?: unknown[] } | undefined)?.content;
       const seedContent = (seed.puckData as { content?: unknown[] } | undefined)?.content;
 
-      // Auto-heal if stored puckData is missing, empty, or has fewer blocks than seed template
+      // A page someone published in the builder is theirs: never replace it,
+      // even if it now has fewer sections than the seed template.
+      if (stored.puckEditedAt) return stored;
+
+      // Untouched pages: fill a missing layout, or pick up sections added to the seed.
       if (
         !stored.puckData ||
         !Array.isArray(storedContent) ||
@@ -2908,13 +2914,16 @@ export function getStoredCMSPages(): CMSPage[] {
   }
 }
 
-export function saveStoredCMSPages(pages: CMSPage[]): void {
-  if (typeof window === "undefined") return;
+/** Returns false when the browser refused to store the pages (storage full). */
+export function saveStoredCMSPages(pages: CMSPage[]): boolean {
+  if (typeof window === "undefined") return false;
   try {
     localStorage.setItem(CMS_PAGES_STORAGE_KEY, JSON.stringify(pages));
     window.dispatchEvent(new CustomEvent("sfd-cms-pages-updated"));
+    return true;
   } catch (err) {
     console.error("Failed to save CMS pages", err);
+    return false;
   }
 }
 
