@@ -6,6 +6,7 @@ import Image from "next/image";
 import { ChevronDown, HelpCircle, Calendar, MapPin, Wrench, ArrowRight } from "lucide-react";
 import Footer from "@/components/layout/Footer";
 import { JsonLd, buildFaqSchema, buildBreadcrumbSchema } from "@/lib/schema";
+import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
 
 interface FaqItem {
   question: string;
@@ -133,7 +134,8 @@ export default function FaqPage() {
       <JsonLd data={breadcrumbSchema} />
       <JsonLd data={faqSchema} />
 
-      <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20">
+      <CMSSectionRenderer slug="faq">
+        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20">
 
         {/* 1. Breadcrumbs */}
         <nav aria-label="Breadcrumb" className="mb-4 text-[12px] text-neutral-500 font-normal">
@@ -270,6 +272,7 @@ export default function FaqPage() {
         </div>
 
       </div>
+      </CMSSectionRenderer>
 
       {/* Footer */}
       <Footer />

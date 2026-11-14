@@ -13,7 +13,6 @@ import {
   Laptop,
   Layers,
   ChevronDown,
-  Sparkles,
 } from "lucide-react";
 
 export interface RankMathSeoProps {
@@ -24,6 +23,7 @@ export interface RankMathSeoProps {
   focusKeyword: string;
   featuredImage?: string;
   canonicalUrl?: string;
+  compact?: boolean;
   onKeywordChange?: (keyword: string) => void;
   onSchemaChange?: (schemaType: string) => void;
 }
@@ -45,6 +45,7 @@ export default function RankMathSeoSuite({
   focusKeyword,
   featuredImage,
   canonicalUrl,
+  compact = false,
   onKeywordChange,
   onSchemaChange,
 }: RankMathSeoProps) {
@@ -243,36 +244,43 @@ export default function RankMathSeoSuite({
     totalScore >= 80 ? "text-emerald-600" : totalScore >= 50 ? "text-amber-600" : "text-red-600";
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-xs overflow-hidden">
       {/* ── HEADER & SCORE METER ── */}
-      <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-gray-50 via-white to-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <div
+        className={`border-b border-gray-200 bg-gradient-to-r from-gray-50 via-white to-gray-50 flex flex-col gap-3 ${
+          compact ? "p-3" : "p-5 sm:flex-row sm:items-center justify-between gap-4"
+        }`}
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
           {/* Circular Score Gauge */}
-          <div className="relative w-14 h-14 rounded-full flex items-center justify-center bg-gray-100 border-4 border-gray-200 shadow-inner shrink-0">
-            <span className={`text-base font-black ${scoreTextColor}`}>
+          <div
+            className={`relative rounded-full flex items-center justify-center bg-gray-100 border-4 border-gray-200 shadow-inner shrink-0 ${
+              compact ? "w-11 h-11" : "w-14 h-14"
+            }`}
+          >
+            <span className={`${compact ? "text-sm" : "text-base"} font-black ${scoreTextColor}`}>
               {totalScore}
             </span>
             <span className="text-[9px] text-gray-400 absolute -bottom-1 font-bold">/100</span>
           </div>
 
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-[#00897b]" />
-                RankMath SEO Analyzer
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <h3 className="text-xs sm:text-sm font-bold text-gray-900">
+                RankMath SEO
               </h3>
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${scoreBadgeColor}`}>
                 {totalScore >= 80 ? "Great" : totalScore >= 50 ? "Fair" : "Poor"}
               </span>
             </div>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Live algorithmic checklist for Google top-ranking results
+            <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">
+              Live checklist for top-ranking results
             </p>
           </div>
         </div>
 
         {/* Focus Keyword Input in Header */}
-        <div className="w-full sm:w-72">
+        <div className={compact ? "w-full" : "w-full sm:w-72"}>
           <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">
             Focus Keyword
           </label>
@@ -281,73 +289,73 @@ export default function RankMathSeoSuite({
             value={focusKeyword}
             onChange={(e) => onKeywordChange && onKeywordChange(e.target.value)}
             placeholder="e.g. replace iphone battery"
-            className="w-full h-[32px] px-3 rounded-lg border border-gray-300 text-xs font-semibold focus:outline-none focus:border-[#00897b] focus:ring-1 focus:ring-[#00897b]"
+            className="w-full h-[32px] px-2.5 rounded-lg border border-gray-300 text-xs font-semibold focus:outline-none focus:border-[#00897b] focus:ring-1 focus:ring-[#00897b]"
           />
         </div>
       </div>
 
       {/* ── TABS (General / Social / Schema) ── */}
-      <div className="flex items-center border-b border-gray-200 bg-gray-50/50 px-4">
+      <div className={`flex items-center border-b border-gray-200 bg-gray-50/50 overflow-x-auto ${compact ? "px-2" : "px-4"}`}>
         <button
           type="button"
           onClick={() => setActiveTab("general")}
-          className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 ${
+          className={`${compact ? "px-2.5 py-2 text-[11px]" : "px-4 py-2.5 text-xs"} font-bold border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
             activeTab === "general"
               ? "border-[#00897b] text-[#00897b]"
               : "border-transparent text-gray-500 hover:text-gray-900"
           }`}
         >
-          <Globe className="w-3.5 h-3.5" />
-          <span>SEO Checklist &amp; SERP</span>
+          <Globe className="w-3.5 h-3.5 shrink-0" />
+          <span>{compact ? "Checklist" : "SEO Checklist & SERP"}</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab("social")}
-          className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 ${
+          className={`${compact ? "px-2.5 py-2 text-[11px]" : "px-4 py-2.5 text-xs"} font-bold border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
             activeTab === "social"
               ? "border-[#00897b] text-[#00897b]"
               : "border-transparent text-gray-500 hover:text-gray-900"
           }`}
         >
-          <Share2 className="w-3.5 h-3.5" />
-          <span>Social Share Card</span>
+          <Share2 className="w-3.5 h-3.5 shrink-0" />
+          <span>{compact ? "Social" : "Social Share Card"}</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab("schema")}
-          className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 ${
+          className={`${compact ? "px-2.5 py-2 text-[11px]" : "px-4 py-2.5 text-xs"} font-bold border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
             activeTab === "schema"
               ? "border-[#00897b] text-[#00897b]"
               : "border-transparent text-gray-500 hover:text-gray-900"
           }`}
         >
-          <Code2 className="w-3.5 h-3.5" />
-          <span>Schema Structured Data</span>
+          <Code2 className="w-3.5 h-3.5 shrink-0" />
+          <span>{compact ? "Schema" : "Schema Structured Data"}</span>
         </button>
       </div>
 
       {/* ── TAB CONTENT ── */}
-      <div className="p-5 space-y-6">
+      <div className={compact ? "p-3 space-y-4" : "p-5 space-y-6"}>
         
         {/* TAB 1: GENERAL SEO & SERP */}
         {activeTab === "general" && (
-          <div className="space-y-6">
+          <div className={compact ? "space-y-4" : "space-y-6"}>
             
             {/* Google SERP Preview Card with Device Switcher */}
-            <div className="rounded-xl border border-gray-200 p-4 bg-gray-50/60 space-y-3">
-              <div className="flex items-center justify-between">
+            <div className={`rounded-xl border border-gray-200 bg-gray-50/60 space-y-2.5 ${compact ? "p-3" : "p-4 space-y-3"}`}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
-                  <Globe className="w-3.5 h-3.5 text-blue-600" />
-                  Google SERP Snippet Preview
+                  <Globe className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                  <span>SERP Preview</span>
                 </span>
                 
                 <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-md p-0.5">
                   <button
                     type="button"
                     onClick={() => setPreviewDevice("desktop")}
-                    className={`px-2 py-1 rounded text-[11px] font-semibold flex items-center gap-1 ${
+                    className={`px-2 py-1 rounded text-[11px] font-semibold flex items-center gap-1 cursor-pointer ${
                       previewDevice === "desktop" ? "bg-gray-100 text-gray-900" : "text-gray-400 hover:text-gray-700"
                     }`}
                   >
@@ -356,7 +364,7 @@ export default function RankMathSeoSuite({
                   <button
                     type="button"
                     onClick={() => setPreviewDevice("mobile")}
-                    className={`px-2 py-1 rounded text-[11px] font-semibold flex items-center gap-1 ${
+                    className={`px-2 py-1 rounded text-[11px] font-semibold flex items-center gap-1 cursor-pointer ${
                       previewDevice === "mobile" ? "bg-gray-100 text-gray-900" : "text-gray-400 hover:text-gray-700"
                     }`}
                   >
@@ -366,23 +374,23 @@ export default function RankMathSeoSuite({
               </div>
 
               {/* Snippet box */}
-              <div className={`p-4 rounded-xl bg-white border border-gray-200 space-y-1 shadow-2xs ${
+              <div className={`p-3 rounded-xl bg-white border border-gray-200 space-y-1 shadow-2xs ${
                 previewDevice === "mobile" ? "max-w-sm mx-auto" : "w-full"
               }`}>
                 <div className="text-[11px] text-gray-500 font-mono truncate">
-                  https://smartfonedoctor.com &gt; blog &gt; {slug || "your-article-slug"}
+                  https://smartfonedoctor.com/{slug || "page"}
                 </div>
-                <div className="text-base font-medium text-[#1a0dab] hover:underline cursor-pointer line-clamp-1">
-                  {title || "Article Headline Title Goes Here"}
+                <div className="text-sm font-medium text-[#1a0dab] hover:underline cursor-pointer line-clamp-1">
+                  {title || "Page Title Goes Here"}
                 </div>
                 <div className="text-xs text-[#4d5156] line-clamp-2 leading-relaxed">
-                  {excerpt || "Add an informative excerpt or meta description summarizing your guide to attract clicks on Google search results..."}
+                  {excerpt || "Add a meta description summarizing your page to attract clicks on Google search results..."}
                 </div>
               </div>
             </div>
 
-            {/* Checklists: Two Columns (Basic vs Additional) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Checklists: Two Columns on wide view, Single Column in compact sidebar */}
+            <div className={`grid grid-cols-1 gap-4 ${compact ? "" : "md:grid-cols-2 md:gap-6"}`}>
               
               {/* Left Column: Basic SEO */}
               <div className="space-y-3">
@@ -446,13 +454,13 @@ export default function RankMathSeoSuite({
         {/* TAB 2: SOCIAL SHARE PREVIEW */}
         {activeTab === "social" && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-xs font-bold text-gray-700">OpenGraph &amp; Social Card Preview</span>
-              <div className="flex items-center gap-1 bg-gray-100 p-0.5 rounded-lg">
+              <div className="inline-flex items-center gap-1 bg-gray-100 p-0.5 rounded-lg">
                 <button
                   type="button"
                   onClick={() => setSocialPlatform("facebook")}
-                  className={`px-3 py-1 rounded text-xs font-semibold ${
+                  className={`${compact ? "px-2.5 py-1 text-[11px]" : "px-3 py-1 text-xs"} rounded font-semibold whitespace-nowrap cursor-pointer ${
                     socialPlatform === "facebook" ? "bg-white text-gray-900 shadow-2xs" : "text-gray-500"
                   }`}
                 >
@@ -461,7 +469,7 @@ export default function RankMathSeoSuite({
                 <button
                   type="button"
                   onClick={() => setSocialPlatform("twitter")}
-                  className={`px-3 py-1 rounded text-xs font-semibold ${
+                  className={`${compact ? "px-2.5 py-1 text-[11px]" : "px-3 py-1 text-xs"} rounded font-semibold whitespace-nowrap cursor-pointer ${
                     socialPlatform === "twitter" ? "bg-white text-gray-900 shadow-2xs" : "text-gray-500"
                   }`}
                 >

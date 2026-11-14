@@ -21,6 +21,7 @@ import {
   buildBreadcrumbSchema,
   buildMultiStoreSchema,
 } from "@/lib/schema";
+import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
 
 export const metadata: Metadata = {
   title: "Customer Reviews & Store Ratings | SmartFoneDoctor Philadelphia",
@@ -123,7 +124,8 @@ export default function ReviewHubPage() {
       <JsonLd data={breadcrumbSchema} />
       <JsonLd data={multiStoreSchema} />
 
-      <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20">
+      <CMSSectionRenderer slug="review">
+        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20">
         {/* 1. Breadcrumb Navigation */}
         <nav
           aria-label="Breadcrumb"
@@ -407,6 +409,7 @@ export default function ReviewHubPage() {
           </div>
         </section>
       </div>
+      </CMSSectionRenderer>
 
       <Footer />
     </main>

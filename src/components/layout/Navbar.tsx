@@ -83,8 +83,8 @@ export default function Navbar() {
       className="sticky top-0 z-50 w-full bg-white border-b border-neutral-200 shadow-xs relative"
       onMouseLeave={closeMegaMenu}
     >
-      {/* Container: Max width 1350px, dynamic height */}
-      <div className="max-w-[1350px] mx-auto px-3 sm:px-6 flex items-center justify-between h-16 min-h-20">
+      {/* Container: Max width 7xl (1280px), dynamic height */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16 min-h-20">
 
         {/* 1. Brand Logo */}
         <Link
@@ -249,7 +249,7 @@ export default function Navbar() {
             : 'opacity-0 -translate-y-2 invisible pointer-events-none'
         }`}
       >
-        <div className="max-w-[1350px] mx-auto px-6 py-8 grid grid-cols-12 gap-8 items-stretch">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-12 gap-8 items-stretch">
 
           {/* LEFT 8 COLUMNS: Categories + 3 Repair Columns */}
           <div className="col-span-8 flex flex-col">

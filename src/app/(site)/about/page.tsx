@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Sparkles, MapPin } from "lucide-react";
 import Footer from "@/components/layout/Footer";
 import AboutMap from "@/components/about/AboutMap";
+import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
 
 export const metadata: Metadata = {
   title: "About Us | SmartFoneDoctor",
@@ -15,7 +16,8 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <main className="bg-[#fcfcfc] min-h-screen">
-      <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-16">
+      <CMSSectionRenderer slug="about">
+        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-16">
 
         {/* 1. Breadcrumbs */}
         <nav aria-label="Breadcrumb" className="mb-4 ml-2 text-[16px] text-neutral-500 font-normal">
@@ -164,6 +166,7 @@ export default function AboutPage() {
         </div>
 
       </div>
+    </CMSSectionRenderer>
 
       {/* Footer */}
       <Footer />

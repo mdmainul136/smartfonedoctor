@@ -1,0 +1,135 @@
+/**
+ * Complete Standalone Style Bundle for Puck Page Builder
+ * Elementor layout engine + Puck brand theme overrides.
+ * Utility classes come from the host app's Tailwind build (tailwind.config.ts scans src/puck).
+ */
+
+@import "../layout/elementor-engine.css";
+
+/* SmartFone Doctor Brand Theme & Design Tokens for @puckeditor/core */
+:root,
+.sfd-puck-theme {
+  --puck-color-interactive: #009691;
+  --puck-color-interactive-hover: #007f7b;
+  --puck-color-interactive-active: #0f766e;
+  --puck-color-interactive-subtle: #ccfbf1;
+  --puck-color-interactive-soft: #f0fdfa;
+  --puck-color-interactive-soft-hover: #ccfbf1;
+  --puck-color-focus-ring: #14b8a6;
+  --puck-color-selection-bg: color-mix(in srgb, #009691 18%, transparent);
+  --puck-color-selection-border: #e11d48;
+  --puck-slot-component-color-placeholder: #99f6e4;
+  --puck-slot-component-color-border-dragging: #5eead4;
+  --puck-radius-m: 8px;
+  --puck-actionbar-color-bg: #e11d48;
+  --puck-actionbar-radius: 6px;
+}
+
+/* Ensure empty CSS Grid / Flex dropzones span full width instead of collapsing */
+.sfd-container-slot [data-puck-dropzone] {
+  min-height: 84px;
+  width: 100%;
+}
+
+.sfd-container-slot [data-puck-dropzone]:empty,
+.sfd-container-slot [data-puck-dropzone] > :only-child:not([data-puck-component]) {
+  grid-column: 1 / -1 !important;
+  width: 100%;
+  min-height: 84px;
+}
+
+/* Elementor-style Outline Navigator */
+.sfd-dark-outline {
+  color: #e2e8f0;
+}
+.sfd-dark-outline button,
+.sfd-dark-outline [class*="Outline-item"] {
+  color: #cbd5e1 !important;
+}
+.sfd-dark-outline button:hover,
+.sfd-dark-outline [class*="Outline-item"]:hover {
+  background-color: #334155 !important;
+  color: #ffffff !important;
+}
+
+/* Elementor Selected & Hover Outlines */
+[class*="_DraggableComponent--isSelected_"] {
+  outline: 2px solid #e11d48 !important;
+  outline-offset: -1px !important;
+}
+
+[class*="_DraggableComponent--hover_"]:not([class*="_DraggableComponent--isSelected_"]) {
+  outline: 1.5px dashed #e11d48 !important;
+  outline-offset: -1px !important;
+}
+
+/* Elementor Action Bar Pill */
+[class*="_ActionBar_"] {
+  background: #e11d48 !important;
+  color: #ffffff !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 14px rgba(225, 29, 72, 0.4) !important;
+  padding: 3px 6px !important;
+  min-height: 28px !important;
+  gap: 3px !important;
+}
+
+/* Studio 3-Pane Workspace Desktop Layout */
+@media (min-width: 1024px) {
+  .sfd-studio-workspace {
+    display: grid !important;
+    grid-template-columns: 260px minmax(0, 1fr) 320px !important;
+  }
+  .sfd-studio-workspace.sfd-seo-active {
+    grid-template-columns: 340px minmax(0, 1fr) 300px !important;
+  }
+}
+
+[class*="_ActionBar-label_"] {
+  color: #ffffff !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em !important;
+  padding-left: 4px !important;
+  padding-right: 4px !important;
+}
+
+[class*="_ActionBarAction_"] {
+  color: #ffffff !important;
+  border-radius: 4px !important;
+  padding: 3px 5px !important;
+  transition: all 0.15s ease !important;
+}
+
+[class*="_ActionBarAction_"]:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
+}
+
+[class*="_ActionBar-group_"] > button[class*="_ActionBarAction_"] {
+  background: rgba(0, 0, 0, 0.25) !important;
+  border-radius: 4px !important;
+  padding: 2px 6px !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+}
+
+[class*="_ActionBar-group_"] > button[class*="_ActionBarAction_"]:hover {
+  background: rgba(0, 0, 0, 0.45) !important;
+}
+
+/* Studio: widget panel as a two-column icon grid */
+.pb-widgets [class^="_Drawer_"] {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.pb-widgets [class*="_DrawerItem_"] {
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+.pb-widgets [class*="_ComponentList-title_"] {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}

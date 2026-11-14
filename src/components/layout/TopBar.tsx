@@ -20,7 +20,7 @@ export default function TopBar() {
 
   return (
     <div className="w-full bg-sfd-teal text-white text-[12px] sm:text-[13px]  h-[36px] sm:h-[38px] shadow-sm select-none border-b border-black/10">
-      <div className="max-w-[1350px] mx-auto h-full px-3  sm:px-6 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         
         {/* Left Side: Tagline (Hides on tablet/mobile to prevent crunching) */}
         <div className="hidden md:block text-[12px] text-neutral-100 font-medium tracking-wide whitespace-nowrap">

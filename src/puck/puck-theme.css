@@ -1,0 +1,5 @@
+/**
+ * Puck Theme Entry Point
+ * Pulls in the builder CSS bundle (layout engine + brand theme). Utilities come from Tailwind.
+ */
+@import "./styles/puck-bundle.css";

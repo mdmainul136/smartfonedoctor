@@ -1,0 +1,160 @@
+/* Elementor Reverse-Engineered Container & Column Layout Engine for Puck */
+
+/* 1. Flex Row Dropzones: Ensure the dropzone container spans full width and behaves as a flex row */
+.sfd-elementor-row > [data-puck-dropzone],
+.sfd-container-slot.sfd-flex-row > [data-puck-dropzone],
+[data-puck-dropzone][style*="display: flex"][style*="row"] {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* 2. Direct Column Children: Force every draggable item in a flex row to expand equally and prevent collapsing */
+.sfd-elementor-row > [data-puck-dropzone] > [data-puck-component],
+.sfd-container-slot.sfd-flex-row > [data-puck-dropzone] > [data-puck-component],
+[data-puck-dropzone][style*="display: flex"][style*="row"] > [data-puck-component],
+.sfd-elementor-row > [data-puck-dropzone] > [class*="DraggableComponent"],
+.sfd-container-slot.sfd-flex-row > [data-puck-dropzone] > [class*="DraggableComponent"] {
+  flex: 1 1 0px !important;
+  min-width: 0 !important;
+  width: auto !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* 3. Ensure inner section/div inside each column fills 100% allocated width and height */
+.sfd-elementor-row > [data-puck-dropzone] > [data-puck-component] > section,
+.sfd-elementor-row > [data-puck-dropzone] > [data-puck-component] > div,
+.sfd-container-slot.sfd-flex-row > [data-puck-dropzone] > [data-puck-component] > section,
+.sfd-container-slot.sfd-flex-row > [data-puck-dropzone] > [data-puck-component] > div,
+[data-puck-dropzone][style*="display: flex"][style*="row"] > [data-puck-component] > section,
+[data-puck-dropzone][style*="display: flex"][style*="row"] > [data-puck-component] > div {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* 4. Proportional Sizing Ratios (33/67, 25/50/25, etc.) via CSS :has */
+[data-puck-dropzone] > [data-puck-component]:has([data-col-flex="1"]),
+[data-puck-dropzone] > [data-puck-component]:has([data-col-ratio="33"]) {
+  flex: 1 1 0px !important;
+}
+
+[data-puck-dropzone] > [data-puck-component]:has([data-col-flex="2"]),
+[data-puck-dropzone] > [data-puck-component]:has([data-col-ratio="67"]) {
+  flex: 2 1 0px !important;
+}
+
+[data-puck-dropzone] > [data-puck-component]:has([data-col-flex="3"]),
+[data-puck-dropzone] > [data-puck-component]:has([data-col-ratio="75"]) {
+  flex: 3 1 0px !important;
+}
+
+[data-puck-dropzone] > [data-puck-component]:has([data-col-flex="25%"]),
+[data-puck-dropzone] > [data-puck-component]:has([data-col-ratio="25"]) {
+  flex: 0 0 25% !important;
+  max-width: 25% !important;
+}
+
+[data-puck-dropzone] > [data-puck-component]:has([data-col-flex="50%"]),
+[data-puck-dropzone] > [data-puck-component]:has([data-col-ratio="50"]) {
+  flex: 0 0 50% !important;
+  max-width: 50% !important;
+}
+
+[data-puck-dropzone] > [data-puck-component]:has([data-col-flex="33%"]) {
+  flex: 0 0 33.333% !important;
+  max-width: 33.333% !important;
+}
+
+[data-puck-dropzone] > [data-puck-component]:has([data-col-flex="67%"]) {
+  flex: 0 0 66.666% !important;
+  max-width: 66.666% !important;
+}
+
+/* 5. CSS Grid Containers */
+.sfd-elementor-grid > [data-puck-dropzone],
+.sfd-grid-container > [data-puck-dropzone],
+[data-puck-dropzone][style*="display: grid"] {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.sfd-elementor-grid > [data-puck-dropzone] > [data-puck-component],
+.sfd-grid-container > [data-puck-dropzone] > [data-puck-component],
+[data-puck-dropzone][style*="display: grid"] > [data-puck-component] {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* 6. Responsive Breakdown: On <= 768px screens, fold flex rows into single full-width column stacks */
+@media (max-width: 768px) {
+  .sfd-elementor-row > [data-puck-dropzone],
+  .sfd-container-slot.sfd-flex-row > [data-puck-dropzone],
+  [data-puck-dropzone][style*="display: flex"][style*="row"] {
+    flex-direction: column !important;
+    flex-wrap: wrap !important;
+  }
+
+  .sfd-elementor-row > [data-puck-dropzone] > [data-puck-component],
+  .sfd-container-slot.sfd-flex-row > [data-puck-dropzone] > [data-puck-component],
+  [data-puck-dropzone][style*="display: flex"][style*="row"] > [data-puck-component] {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+}
+
+/* 7. Elementor-style Empty Column Placeholder */
+.sfd-column-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  height: 100%;
+  width: 100%;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 8px;
+  background-color: rgba(248, 250, 252, 0.7);
+  color: #64748b;
+  padding: 16px;
+  text-align: center;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.sfd-column-empty-state:hover {
+  border-color: #e11d48;
+  background-color: rgba(255, 241, 242, 0.5);
+  color: #e11d48;
+}
+
+.sfd-column-empty-state .sfd-plus-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  background: white;
+  border: 1.5px solid #cbd5e1;
+  color: #64748b;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.sfd-column-empty-state:hover .sfd-plus-badge {
+  border-color: #e11d48;
+  color: #e11d48;
+  transform: scale(1.08);
+}

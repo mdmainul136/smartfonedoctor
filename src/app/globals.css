@@ -1,3 +1,5 @@
+@import "../puck/styles/puck-bundle.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -14,6 +16,25 @@ body {
   background: #ffffff;
   color: #171717;
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Admin Dashboard Sidebar Desktop Layout */
+@media (min-width: 1024px) {
+  .sfd-admin-sidebar {
+    width: 220px !important;
+  }
+  .sfd-admin-sidebar .lg\:block {
+    display: block !important;
+  }
+  .sfd-admin-sidebar .lg\:flex {
+    display: flex !important;
+  }
+  .sfd-admin-sidebar .lg\:inline-block {
+    display: inline-block !important;
+  }
+  .sfd-admin-sidebar .lg\:hidden {
+    display: none !important;
+  }
 }
 
 /* Accessibility Modifiers */

@@ -440,7 +440,7 @@ export default function SingleBlogPostPage({ params }: BlogPostPageProps) {
               </span>
             </div>
             <p className="text-xs text-gray-500 mb-4 leading-relaxed">
-              Philadelphia's trusted same-day repair shop — serving {PHILLY_NEIGHBORHOODS.slice(0, 4).join(", ")} & more.
+              Philadelphia&apos;s trusted same-day repair shop — serving {PHILLY_NEIGHBORHOODS.slice(0, 4).join(", ")} & more.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {serviceLinks.map((link) => (
@@ -650,7 +650,7 @@ export default function SingleBlogPostPage({ params }: BlogPostPageProps) {
             <span className="text-[10px] font-bold uppercase tracking-widest text-[#4dd0e1]">
               Same-Day Repair
             </span>
-            <p className="text-sm font-bold leading-snug">Need a repair now? We're open 7 days a week.</p>
+            <p className="text-sm font-bold leading-snug">Need a repair now? We&apos;re open 7 days a week.</p>
             <div className="space-y-2 pt-1">
               <Link
                 href="/schedule-repair"

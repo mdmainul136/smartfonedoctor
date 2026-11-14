@@ -12,7 +12,7 @@ export default function DashboardLayout({
     <StoreProvider>
       <div className="min-h-screen w-full flex bg-[#f9fafb] text-[#111111] antialiased">
         {/* Left Sidebar — 220px on lg+, 52px icon rail on mobile/tablet */}
-        <aside className="sticky top-0 h-screen w-[52px] lg:w-[220px] shrink-0 bg-[#f9fafb] border-r border-[#e8e8e8] flex flex-col justify-between overflow-y-auto no-scrollbar select-none pb-16">
+        <aside className="sfd-admin-sidebar sticky top-0 h-screen w-[52px] lg:w-[220px] shrink-0 bg-[#f9fafb] border-r border-[#e8e8e8] flex flex-col justify-between overflow-y-auto no-scrollbar select-none pb-16">
           <div className="p-2 lg:px-3 lg:py-4">
             {/* Brand Mark & Workspace Scope */}
             <Link

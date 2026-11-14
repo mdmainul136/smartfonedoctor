@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { INITIAL_CMS_PAGES, CMSPage } from "@/lib/cmsData";
+import { INITIAL_CMS_PAGES, CMSPage, getStoredCMSPages } from "@/lib/cmsData";
 import {
   FileText,
   Search,
@@ -20,6 +20,10 @@ export default function PagesListPage() {
   const [pages, setPages] = useState<CMSPage[]>(INITIAL_CMS_PAGES);
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+
+  useEffect(() => {
+    setPages(getStoredCMSPages());
+  }, []);
 
   const filteredPages = pages.filter((page) => {
     const matchCategory = filterCategory === "all" || page.category === filterCategory;

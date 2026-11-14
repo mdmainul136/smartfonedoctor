@@ -23,6 +23,7 @@ import {
   buildMultiStoreSchema,
   STORES,
 } from "@/lib/schema";
+import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
 
 export const metadata: Metadata = {
   title: "Professional Device Repair in Philadelphia | Same-Day Service | SmartFoneDoctor",
@@ -92,12 +93,13 @@ export default function RepairsHubPage() {
       <JsonLd data={breadcrumbSchema} />
       <JsonLd data={storeSchema} />
 
-      {/* 1. HERO HEADER */}
-      <div className="bg-white border-b border-gray-200">
+      <CMSSectionRenderer slug="repairs">
+        {/* 1. HERO HEADER */}
+        <div className="bg-white border-b border-gray-200">
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 text-center space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00897b]/10 text-[#00897b] border border-[#00897b]/20 text-xs font-bold uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5" />
-            Philadelphia's Top-Rated Repair Bench
+            Philadelphia&apos;s Top-Rated Repair Bench
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-black text-[#1d1c1a] tracking-tight max-w-3xl mx-auto">
@@ -181,7 +183,7 @@ export default function RepairsHubPage() {
               Popular Device Repairs
             </h2>
             <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-              Direct access to same-day repair pricing for Philadelphia's most repaired models.
+              Direct access to same-day repair pricing for Philadelphia&apos;s most repaired models.
             </p>
           </div>
 
@@ -335,6 +337,7 @@ export default function RepairsHubPage() {
         </section>
 
       </div>
+      </CMSSectionRenderer>
     </main>
   );
 }
