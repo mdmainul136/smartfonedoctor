@@ -9,7 +9,7 @@ import { FieldTab, type Config, type Field } from "@puckeditor/core";
  * (or a host registering a plugin widget) gets the tabbed panel for free.
  */
 
-export type FieldTabId = "content" | "style" | "advanced";
+export type FieldTabId = "content" | "style" | "advanced" | "design";
 
 const ADVANCED_FIELDS = new Set([
   "customCss",
@@ -29,6 +29,8 @@ const STYLE_NAME =
   /(color|colour|bg|background|padding|margin|spacing|align|radius|rounded|shadow|size|width|height|gap|font|border|variant|theme|opacity|overlay|style|columns?$|cols$)/i;
 
 export function classifyField(name: string, field?: Field): FieldTabId {
+  // The style engine's panel (src/puck/style) always gets its own tab.
+  if (name === "pbStyle") return "design";
   if (ADVANCED_FIELDS.has(name)) return "advanced";
   if (field && CONTENT_TYPES.has(field.type)) return "content";
   if (STYLE_NAME.test(name)) return "style";
@@ -39,12 +41,13 @@ const TAB_LABELS: Record<FieldTabId, string> = {
   content: "Content",
   style: "Style",
   advanced: "Advanced",
+  design: "Design",
 };
 
-const TAB_ORDER: FieldTabId[] = ["content", "style", "advanced"];
+const TAB_ORDER: FieldTabId[] = ["content", "style", "advanced", "design"];
 
 function buildRenderFields(fieldDefs: Record<string, Field>) {
-  const groups: Record<FieldTabId, string[]> = { content: [], style: [], advanced: [] };
+  const groups: Record<FieldTabId, string[]> = { content: [], style: [], advanced: [], design: [] };
   for (const [name, def] of Object.entries(fieldDefs)) {
     groups[classifyField(name, def)].push(name);
   }

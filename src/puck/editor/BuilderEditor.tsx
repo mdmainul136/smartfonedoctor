@@ -8,6 +8,7 @@ import StudioLayout, { type BuilderPanel } from "./StudioLayout";
 import { PuckActionBar, PuckComponentOverlay } from "./CanvasOverlay";
 import { createWidgetTile, type WidgetIconMap } from "./WidgetTile";
 import { withAutoTabs } from "../core/autoTabs";
+import { withStyleEngine } from "../style";
 import {
   BuilderStorageProvider,
   createLocalStorageBuilderStorage,
@@ -93,7 +94,8 @@ export default function BuilderEditor({
   useMemo(() => setBuilderKit(kit), [kit]);
 
   // Every widget gets Content / Style / Advanced tabs, including host widgets.
-  const config = useMemo(() => withAutoTabs(rawConfig), [rawConfig]);
+  // ...and a Design tab backed by the style engine.
+  const config = useMemo(() => withAutoTabs(withStyleEngine(rawConfig)), [rawConfig]);
 
   const debug = useDebugFlags();
   const stock = debug.has("stock");

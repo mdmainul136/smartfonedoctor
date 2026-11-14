@@ -40,3 +40,4 @@ export {
   type GridPreset,
 } from "./layout/elementorPresets";
 export type * from "./types";
+export { withStyleEngine, compileStyle, type PbStyle } from "./style";

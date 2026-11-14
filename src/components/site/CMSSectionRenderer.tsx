@@ -5,6 +5,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Render } from "@puckeditor/core";
 import { puckConfig } from "@/puck/config";
+import { withStyleEngine } from "@/puck/style";
 import type { PuckPageData } from "@/puck/types";
 import {
   CMSPage,
@@ -274,7 +275,7 @@ export default function CMSSectionRenderer({
   if (cmsPage?.puckData && Array.isArray(puckContent) && puckContent.length > 0) {
     return (
       <div className="sfd-cms-rendered-page w-full">
-        <Render config={puckConfig} data={cmsPage.puckData as unknown as PuckPageData} />
+        <Render config={withStyleEngine(puckConfig)} data={cmsPage.puckData as unknown as PuckPageData} />
       </div>
     );
   }
