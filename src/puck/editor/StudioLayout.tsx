@@ -193,9 +193,13 @@ export default function StudioLayout({
     window.addEventListener("keydown", onKeyDown);
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    // Lets the host hide its sidebar and headers (see html.pb-studio-open).
+    document.documentElement.classList.add("pb-studio-open");
+    window.scrollTo(0, 0);
     return () => {
       window.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousOverflow;
+      document.documentElement.classList.remove("pb-studio-open");
     };
   }, []);
 
@@ -233,7 +237,11 @@ export default function StudioLayout({
   ];
 
   return (
-    <div className="pb-studio fixed inset-0 z-[200] flex flex-col bg-slate-100 text-gray-900">
+    // In the page flow, not position: fixed. When the editor floats over the
+    // page (fixed or a portal), Puck's drag and drop cannot find the canvas
+    // under the pointer and every drop is lost. The host hides its own chrome
+    // while html.pb-studio-open is set, so this still fills the screen.
+    <div className="pb-studio relative flex h-screen w-full flex-col bg-slate-100 text-gray-900">
       {/* Top bar */}
       <header className="flex h-12 shrink-0 items-center gap-3 border-b border-gray-200 bg-white px-3">
         <div className="flex min-w-0 flex-1 items-center gap-2.5">

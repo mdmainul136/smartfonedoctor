@@ -894,3 +894,13 @@ html.sfd-highlight-links a {
 }
 
 
+
+/* Page builder full-screen mode: the studio sits in the page flow (drag and
+   drop needs that), so the admin chrome around it is hidden instead. */
+html.pb-studio-open [data-builder-hide] {
+  display: none !important;
+}
+html.pb-studio-open [data-builder-host] {
+  padding: 0 !important;
+  gap: 0 !important;
+}

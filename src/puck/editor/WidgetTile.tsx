@@ -145,6 +145,12 @@ export function createWidgetTile(config: Config, extraIcons?: WidgetIconMap) {
     const label = components[name]?.label || name;
     const addWidget = useAddWidget();
     return (
+        <div className="pb-widget-tile flex h-[82px] w-full cursor-grab select-none flex-col items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-1.5 text-center text-gray-600">
+          <Icon className="h-5 w-5 shrink-0" />
+          <span className="line-clamp-2 text-[11px] font-semibold leading-tight">{label}</span>
+        </div>
+      );
+    return (
       <div
         title={`${label}: click to add, or drag onto the page`}
         role="button"
@@ -156,7 +162,9 @@ export function createWidgetTile(config: Config, extraIcons?: WidgetIconMap) {
             addWidget(name);
           }
         }}
-        className="pb-widget-tile flex h-[82px] w-full cursor-grab select-none flex-col items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-1.5 text-center text-gray-600 transition hover:border-[#009691] hover:text-[#007f7b] hover:shadow-sm active:cursor-grabbing"
+        // No CSS `transition` here: dnd-kit moves this element while dragging,
+        // and an animated transform makes Puck drop the item nowhere.
+        className="pb-widget-tile flex h-[82px] w-full cursor-grab select-none flex-col items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-1.5 text-center text-gray-600 hover:border-[#009691] hover:text-[#007f7b]"
       >
         <Icon className="h-5 w-5 shrink-0" />
         <span className="line-clamp-2 text-[11px] font-semibold leading-tight">{label}</span>

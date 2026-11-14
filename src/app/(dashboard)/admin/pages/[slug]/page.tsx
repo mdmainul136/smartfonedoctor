@@ -113,9 +113,9 @@ export default function DedicatedPageEditor({
   };
 
   return (
-    <div className="flex-1 min-w-0 w-full px-4 sm:px-6 py-5 flex flex-col gap-5 overflow-x-hidden">
+    <div data-builder-host className="flex-1 min-w-0 w-full px-4 sm:px-6 py-5 flex flex-col gap-5 overflow-x-hidden">
       {/* 1. TOP BREADCRUMB & ACTION BAR */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#e8e8e8]">
+      <div data-builder-hide className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#e8e8e8]">
         <div className="flex items-center gap-3">
           <Link
             href="/admin/pages"
@@ -206,7 +206,7 @@ export default function DedicatedPageEditor({
 
       {/* TOAST MESSAGE */}
       {savedToast && (
-        <div className="bg-[#dcfae5] border border-[#86efac] text-[#065f46] rounded-[8px] px-4 py-3 flex items-center justify-between gap-3 text-[13px] shadow-sm animate-in fade-in">
+        <div data-builder-hide className="bg-[#dcfae5] border border-[#86efac] text-[#065f46] rounded-[8px] px-4 py-3 flex items-center justify-between gap-3 text-[13px] shadow-sm animate-in fade-in">
           <div className="flex items-center gap-2">
             <Check className="w-4 h-4 text-[#059669] shrink-0" />
             <span className="font-semibold">{savedToast}</span>
