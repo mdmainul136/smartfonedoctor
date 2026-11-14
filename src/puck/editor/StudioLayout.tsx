@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
-import { Puck, usePuck, type Data } from "@puckeditor/core";
+import { Puck, type Data } from "@puckeditor/core";
+import { usePuckSelect } from "./puckStore";
 import {
   ArrowLeft,
   Bookmark,
@@ -91,7 +92,13 @@ export default function StudioLayout({
   panels = [],
   enableAi = true,
 }: StudioLayoutProps) {
-  const { appState, dispatch, selectedItem, history, config } = usePuck();
+  const puckData = usePuckSelect((s) => s.appState.data);
+  const previewMode = usePuckSelect((s) => s.appState.ui.previewMode);
+  const viewports = usePuckSelect((s) => s.appState.ui.viewports);
+  const dispatch = usePuckSelect((s) => s.dispatch);
+  const selectedItem = usePuckSelect((s) => s.selectedItem);
+  const history = usePuckSelect((s) => s.history);
+  const config = usePuckSelect((s) => s.config);
 
   const [leftMode, setLeftMode] = useState<string>("widgets");
   const [widgetSearch, setWidgetSearch] = useState("");
@@ -109,11 +116,11 @@ export default function StudioLayout({
   const [publishError, setPublishError] = useState<string | null>(null);
   const widgetsRef = useRef<HTMLDivElement | null>(null);
 
-  const content = (appState.data?.content || []) as unknown[];
+  const content = (puckData?.content || []) as unknown[];
   const isEmpty = content.length === 0;
   const isDirty = history.index !== savedIndex;
-  const isInteractive = appState.ui.previewMode === "interactive";
-  const currentWidth = appState.ui.viewports.current.width;
+  const isInteractive = previewMode === "interactive";
+  const currentWidth = viewports.current.width;
   const selectedId = (selectedItem?.props as { id?: string } | undefined)?.id;
   const selectedLabel = selectedItem
     ? (config.components as Record<string, { label?: string }>)[selectedItem.type]?.label ||
@@ -123,7 +130,7 @@ export default function StudioLayout({
 
   const { storage, documentId } = useBuilderStorage();
   const autosave = useAutosave({
-    data: appState.data as Data,
+    data: puckData as Data,
     dirty: isDirty,
     storage,
     documentId,
@@ -162,7 +169,7 @@ export default function StudioLayout({
   }, [widgetSearch, leftMode]);
 
   const publish = async () => {
-    const data = appState.data as Data;
+    const data = puckData as Data;
     try {
       await onPublish(data);
       setPublishError(null);
@@ -218,7 +225,7 @@ export default function StudioLayout({
       type: "setUi",
       ui: {
         viewports: {
-          ...appState.ui.viewports,
+          ...viewports,
           current: { width, height: "auto" },
         },
       },
@@ -510,7 +517,7 @@ export default function StudioLayout({
           )}
 
           {activePanel && (
-            <div className="min-h-0 flex-1 overflow-y-auto p-3">{activePanel.render(appState.data as Data)}</div>
+            <div className="min-h-0 flex-1 overflow-y-auto p-3">{activePanel.render(puckData as Data)}</div>
           )}
         </aside>
 

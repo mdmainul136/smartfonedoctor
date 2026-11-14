@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePuck } from "@puckeditor/core";
+import { useGetPuck } from "@puckeditor/core";
+import { usePuckSelect } from "./puckStore";
 import { Sparkles, X, Loader2, KeyRound, Wand2, Settings } from "lucide-react";
 import type { PuckPageData } from "@/puck/types";
 import { BuilderLink, getBuilderHost, type AiSettings } from "../host";
@@ -18,7 +19,9 @@ export default function PuckAiPanel({
 }: {
   onClose: () => void;
 }) {
-  const { appState, dispatch } = usePuck();
+  // Read on demand: these values are only needed when the user acts.
+  const getPuck = useGetPuck();
+  const dispatch = usePuckSelect((s) => s.dispatch);
   const [prompt, setPrompt] = useState("");
   const [mode, setMode] = useState<"edit" | "generate">("edit");
   const [provider, setProvider] = useState<"gemini" | "openai">("gemini");
@@ -77,7 +80,7 @@ export default function PuckAiPanel({
           providerApiKey: effectiveKey,
           currentData:
             mode === "edit"
-              ? (appState.data as unknown as PuckPageData)
+              ? (getPuck().appState.data as unknown as PuckPageData)
               : undefined,
         }),
       });

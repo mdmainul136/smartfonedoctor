@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePuck, type Data } from "@puckeditor/core";
+import { type Data } from "@puckeditor/core";
+import { usePuckSelect } from "./puckStore";
 import { History, RotateCcw, X } from "lucide-react";
 import { useBuilderStorage, type BuilderRevision } from "../storage";
 import { formatDateTime } from "./useAutosave";
@@ -19,7 +20,7 @@ export default function HistoryPanel({
   /** Changes after every publish so the list reloads. */
   refreshKey: number;
 }) {
-  const { dispatch } = usePuck();
+  const dispatch = usePuckSelect((s) => s.dispatch);
   const { storage, documentId } = useBuilderStorage();
   const [revisions, setRevisions] = useState<BuilderRevision[] | null>(null);
   const [restoredId, setRestoredId] = useState<string | null>(null);

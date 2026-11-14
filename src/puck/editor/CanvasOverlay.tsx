@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { ActionBar, usePuck, type ComponentData } from "@puckeditor/core";
+import { ActionBar, type ComponentData } from "@puckeditor/core";
+import { usePuckSelect } from "./puckStore";
 import {
   BookmarkPlus,
   Copy,
@@ -210,7 +211,10 @@ export function PuckComponentOverlay({
   componentId: string;
   componentType: string;
 }) {
-  const { appState, dispatch, config: editorConfig } = usePuck();
+  // Only the page data: hover and drag state changes must not re-render every overlay.
+  const puckData = usePuckSelect((s) => s.appState.data);
+  const dispatch = usePuckSelect((s) => s.dispatch);
+  const editorConfig = usePuckSelect((s) => s.config);
   // The canvas can render outside the full editor (a bare <Puck>), so storage is optional.
   const storage = useOptionalBuilderStorage()?.storage;
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
@@ -282,7 +286,7 @@ export function PuckComponentOverlay({
   };
 
   const located = findComponentInTree(
-    (appState.data.content || []) as ComponentData[],
+    (puckData.content || []) as ComponentData[],
     componentId,
     "root:default-zone"
   );
@@ -341,7 +345,7 @@ export function PuckComponentOverlay({
     if (copied && located) {
       const cloned = cloneWithNewIds(copied);
       const res = insertAfterInTree(
-        (appState.data.content || []) as ComponentData[],
+        (puckData.content || []) as ComponentData[],
         componentId,
         cloned
       );
@@ -349,7 +353,7 @@ export function PuckComponentOverlay({
         dispatch({
           type: "setData",
           data: {
-            ...appState.data,
+            ...puckData,
             content: res.list,
           },
         });
@@ -451,7 +455,7 @@ export function PuckComponentOverlay({
   const isContainerType = componentType === "FlexBlock" || componentType === "GridBlock";
   const currentContainer = isContainerType
     ? findComponentInTree(
-      (appState.data.content || []) as ComponentData[],
+      (puckData.content || []) as ComponentData[],
       componentId,
       "root:default-zone"
     )
@@ -476,7 +480,7 @@ export function PuckComponentOverlay({
       },
     };
     const res = insertChildIntoContainer(
-      (appState.data.content || []) as ComponentData[],
+      (puckData.content || []) as ComponentData[],
       componentId,
       newChild
     );
@@ -484,7 +488,7 @@ export function PuckComponentOverlay({
       dispatch({
         type: "setData",
         data: {
-          ...appState.data,
+          ...puckData,
           content: res.list,
         },
       });
@@ -837,10 +841,11 @@ export function PuckActionBar({
   dragHandle?: React.ReactNode;
   dragHandleRef?: (element: Element | null) => void;
 }) {
-  const { appState, dispatch } = usePuck();
-  const selector = appState.ui?.itemSelector;
+  const puckData = usePuckSelect((s) => s.appState.data);
+  const selector = usePuckSelect((s) => s.appState.ui.itemSelector);
+  const dispatch = usePuckSelect((s) => s.dispatch);
   const zone = selector?.zone || "root:default-zone";
-  const content = (appState.data.content || []) as ComponentData[];
+  const content = (puckData.content || []) as ComponentData[];
   const zoneList = selector ? getZoneList(content, zone) : null;
   const index = selector?.index ?? -1;
   const canMoveUp = Boolean(selector && zoneList && index > 0);
@@ -857,7 +862,7 @@ export function PuckActionBar({
     dispatch({
       type: "setData",
       data: {
-        ...appState.data,
+        ...puckData,
         content: replaceZoneList(content, zone, nextList),
       },
     });

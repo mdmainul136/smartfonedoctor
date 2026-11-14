@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePuck, type ComponentData } from "@puckeditor/core";
+import { type ComponentData } from "@puckeditor/core";
+import { usePuckSelect } from "./puckStore";
 import { Bookmark, BookmarkPlus, Plus, Trash2 } from "lucide-react";
 import { useBuilderStorage, type BuilderTemplate } from "../storage";
 import { cloneWithNewIds } from "../core/tree";
@@ -12,7 +13,9 @@ import { formatDateTime } from "./useAutosave";
  * right-click menu on the canvas ("Save as template") or here for the whole page.
  */
 export default function TemplatesPanel() {
-  const { appState, dispatch, config } = usePuck();
+  const puckData = usePuckSelect((s) => s.appState.data);
+  const dispatch = usePuckSelect((s) => s.dispatch);
+  const config = usePuckSelect((s) => s.config);
   const { storage } = useBuilderStorage();
   const [templates, setTemplates] = useState<BuilderTemplate[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -33,13 +36,13 @@ export default function TemplatesPanel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storage]);
 
-  const content = (appState.data.content || []) as ComponentData[];
+  const content = (puckData.content || []) as ComponentData[];
 
   const insert = (template: BuilderTemplate) => {
     dispatch({
       type: "setData",
       data: {
-        ...appState.data,
+        ...puckData,
         content: [...content, ...template.content.map(cloneWithNewIds)],
       },
     });

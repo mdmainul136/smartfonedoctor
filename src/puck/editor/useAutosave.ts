@@ -50,22 +50,64 @@ export function useAutosave({
     };
   }, [storage, documentId]);
 
+  const mountedRef = useRef(true);
+  // Each save gets a number; only the newest one may update the status, so a
+  // slow earlier save cannot report "saved" over a later failure (or vice versa).
+  const saveSeqRef = useRef(0);
+  // True while an edit is waiting for the debounce timer.
+  const unsavedRef = useRef(false);
+  const canSaveRef = useRef(false);
+  canSaveRef.current = checkedDraft && !pendingDraft;
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  const saveNow = useCallback(
+    (snapshot: Data) => {
+      unsavedRef.current = false;
+      const seq = ++saveSeqRef.current;
+      return storage
+        .saveDraft(documentId, snapshot)
+        .then((draft) => {
+          if (!mountedRef.current || seq !== saveSeqRef.current) return;
+          setSavedAt(draft.savedAt);
+          setStatus("saved");
+        })
+        .catch(() => {
+          if (mountedRef.current && seq === saveSeqRef.current) setStatus("error");
+        });
+    },
+    [storage, documentId],
+  );
+
   // While the restore question is open, autosave waits so it cannot overwrite
   // the old draft before the user decides.
   useEffect(() => {
     if (!checkedDraft || pendingDraft || !dirty) return;
+    unsavedRef.current = true;
     setStatus("saving");
-    const timer = window.setTimeout(() => {
-      storage
-        .saveDraft(documentId, data)
-        .then((draft) => {
-          setSavedAt(draft.savedAt);
-          setStatus("saved");
-        })
-        .catch(() => setStatus("error"));
-    }, AUTOSAVE_DELAY_MS);
+    const timer = window.setTimeout(() => void saveNow(data), AUTOSAVE_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [data, dirty, checkedDraft, pendingDraft, storage, documentId]);
+  }, [data, dirty, checkedDraft, pendingDraft, saveNow]);
+
+  // Closing the tab or leaving the editor inside the debounce window must not
+  // lose the last edit: write it straight away.
+  useEffect(() => {
+    const flush = () => {
+      if (unsavedRef.current && canSaveRef.current) void saveNow(dataRef.current);
+    };
+    window.addEventListener("pagehide", flush);
+    window.addEventListener("beforeunload", flush);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      window.removeEventListener("beforeunload", flush);
+      flush();
+    };
+  }, [saveNow]);
 
   const takeDraft = useCallback(() => {
     const draft = pendingDraft;
@@ -80,6 +122,9 @@ export function useAutosave({
 
   /** Call after a successful publish: the draft is now the live page. */
   const markPublished = useCallback(() => {
+    // Invalidate any save still in flight so it cannot re-mark the page as a draft.
+    saveSeqRef.current++;
+    unsavedRef.current = false;
     setStatus("idle");
     setSavedAt(null);
     void storage.clearDraft(documentId);

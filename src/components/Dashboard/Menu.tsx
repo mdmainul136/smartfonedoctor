@@ -214,6 +214,7 @@ const Menu = () => {
               if (!item.children) {
                 return (
                   <Link
+                    prefetch={false}
                     href={item.href}
                     key={item.label}
                     title={item.label}
@@ -243,6 +244,7 @@ const Menu = () => {
                 <div key={item.label} className="flex flex-col">
                   {/* Collapsed rail link for <lg */}
                   <Link
+                    prefetch={false}
                     href={item.href}
                     title={item.label}
                     aria-label={item.label}
@@ -289,6 +291,7 @@ const Menu = () => {
                         return (
                           <li key={child.href}>
                             <Link
+                              prefetch={false}
                               href={child.href}
                               aria-current={childActive ? "page" : undefined}
                               className={`h-[30px] flex items-center px-2 rounded-[5px] text-[13px] transition-colors ${

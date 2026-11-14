@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { usePuck, ComponentData } from "@puckeditor/core";
+import { useGetPuck, ComponentData } from "@puckeditor/core";
+import { usePuckSelect } from "./puckStore";
 import {
   Plus,
   Sparkles,
@@ -36,7 +37,9 @@ export default function PuckStructurePicker({
   inline?: boolean;
   title?: string;
 }) {
-  const { appState, dispatch } = usePuck();
+  // Read on demand: these values are only needed when the user acts.
+  const getPuck = useGetPuck();
+  const dispatch = usePuckSelect((s) => s.dispatch);
   const [step, setStep] = useState<"idle" | "choice" | "flex" | "grid">(
     inline ? "choice" : initialStep
   );
@@ -57,13 +60,15 @@ export default function PuckStructurePicker({
   }, [step, onClose]);
 
   const insertBlockAtTarget = (newBlock: ComponentData) => {
+    const { appState } = getPuck();
     const existing = (appState.data?.content || []) as ComponentData[];
     let insertIdx = existing.length;
+    const selectedIndex = appState.ui?.itemSelector?.index;
 
     if (typeof targetIndex === "number" && targetIndex >= 0) {
       insertIdx = Math.min(targetIndex, existing.length);
-    } else if (appState.ui?.itemSelector?.index !== undefined) {
-      insertIdx = appState.ui.itemSelector.index;
+    } else if (selectedIndex !== undefined) {
+      insertIdx = selectedIndex;
     }
 
     const nextContent = [
