@@ -12,7 +12,7 @@ import {
   Check,
   ChevronDown,
 } from "lucide-react";
-import { scopeCustomCss } from "@/lib/cmsCustomCss";
+import { scopeCustomCss } from "../core/customCss";
 import type {
   BlockVisibility,
   PuckFaqItem,

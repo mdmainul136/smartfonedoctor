@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
+import { BuilderLink as Link, MissingHostWidget, getBuilderHost } from "./host";
 import { FieldGroup, FieldTab, type Config } from "@puckeditor/core";
 import {
   ArrowRight,
@@ -18,7 +18,7 @@ import {
   ChevronRight,
   Sparkles,
 } from "lucide-react";
-import { scopeCustomCss } from "@/lib/cmsCustomCss";
+import { scopeCustomCss } from "./core/customCss";
 import type { PuckComponents } from "@/puck/types";
 import {
   RenderItemIcon,
@@ -36,8 +36,6 @@ import { createCustomCssField } from "@/puck/fields/CustomCssField";
 import { createResponsiveField } from "@/puck/fields/ResponsiveField";
 import { createImagePickerField } from "@/puck/fields/ImagePickerField";
 import { createVisibilityField } from "@/puck/fields/VisibilityField";
-import RepairTrackerWidget from "@/components/site/RepairTrackerWidget";
-import ScheduleRepairWizard from "@/components/booking/ScheduleRepairWizard";
 import { ColumnBlock } from "@/puck/layout/ElementorColumn";
 
 const ALIGN_FIELD = {
@@ -1205,6 +1203,10 @@ export const puckConfig: Config<PuckComponents> = {
           <section id={`sfd-section-${safeId}`} className="w-full">
             {scopedCss && <style dangerouslySetInnerHTML={{ __html: scopedCss }} />}
             {visibilityCss && <style dangerouslySetInnerHTML={{ __html: visibilityCss }} />}
+            {(() => {
+              const RepairTrackerWidget = getBuilderHost().widgets.RepairTracker;
+              if (!RepairTrackerWidget) return <MissingHostWidget name="Repair tracker" />;
+              return (
             <RepairTrackerWidget
               title={title}
               subtitle={subtitle}
@@ -1215,6 +1217,8 @@ export const puckConfig: Config<PuckComponents> = {
               showStoreCard={showStoreCard}
               showPickupChecklist={showPickupChecklist}
             />
+              );
+            })()}
           </section>
         );
       },
@@ -2113,7 +2117,14 @@ export const puckConfig: Config<PuckComponents> = {
                     </div>
                   }
                 >
-                  <ScheduleRepairWizard />
+                  {(() => {
+                    const ScheduleRepairWizard = getBuilderHost().widgets.BookingWizard;
+                    return ScheduleRepairWizard ? (
+                      <ScheduleRepairWizard />
+                    ) : (
+                      <MissingHostWidget name="Booking wizard" />
+                    );
+                  })()}
                 </React.Suspense>
               </div>
             </section>

@@ -1,5 +1,6 @@
 "use client";
 
+import "@/plugins/repair-shop/builderHost";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Render } from "@puckeditor/core";

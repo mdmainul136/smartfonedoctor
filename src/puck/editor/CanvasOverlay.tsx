@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { ActionBar, usePuck, type ComponentData } from "@puckeditor/core";
 import {
+  BookmarkPlus,
   Copy,
   ClipboardPaste,
   CopyPlus,
@@ -17,8 +18,9 @@ import {
   ArrowDown,
   X,
 } from "lucide-react";
-import { puckConfig } from "@/puck/config";
 import PuckStructurePicker from "./StructurePicker";
+import { cloneWithNewIds } from "../core/tree";
+import { useOptionalBuilderStorage } from "../storage";
 
 const BLOCK_CLIPBOARD_KEY = "sfd_puck_clipboard_block_v1";
 const STYLE_CLIPBOARD_KEY = "sfd_puck_clipboard_style_v1";
@@ -88,25 +90,6 @@ function findComponentInTree(
     }
   }
   return null;
-}
-
-function cloneWithNewIds(node: ComponentData): ComponentData {
-  const uid = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
-  const nextProps: ComponentData["props"] = {
-    ...(node.props || {}),
-    id: `${node.type}-${uid}`,
-  };
-
-  for (const [key, val] of Object.entries(nextProps)) {
-    if (Array.isArray(val) && val.length > 0 && typeof val[0] === "object" && val[0] !== null && "type" in val[0]) {
-      nextProps[key] = (val as ComponentData[]).map(cloneWithNewIds);
-    }
-  }
-
-  return {
-    ...node,
-    props: nextProps,
-  };
 }
 
 function insertAfterInTree(
@@ -227,7 +210,9 @@ export function PuckComponentOverlay({
   componentId: string;
   componentType: string;
 }) {
-  const { appState, dispatch } = usePuck();
+  const { appState, dispatch, config: editorConfig } = usePuck();
+  // The canvas can render outside the full editor (a bare <Puck>), so storage is optional.
+  const storage = useOptionalBuilderStorage()?.storage;
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [showInsertAbove, setShowInsertAbove] = useState(false);
@@ -302,7 +287,7 @@ export function PuckComponentOverlay({
     "root:default-zone"
   );
 
-  const compConfig = (puckConfig.components as Record<string, { label?: string; defaultProps?: Record<string, unknown> }>)[
+  const compConfig = (editorConfig.components as Record<string, { label?: string; defaultProps?: Record<string, unknown> }>)[
     componentType
   ];
   const label = compConfig?.label || componentType;
@@ -329,6 +314,19 @@ export function PuckComponentOverlay({
       });
     }
     setMenuPos(null);
+  };
+
+  const handleSaveTemplate = async () => {
+    setMenuPos(null);
+    if (!located || !storage) return;
+    const name = window.prompt("Name this template", label);
+    if (!name?.trim()) return;
+    try {
+      await storage.saveTemplate(name.trim(), [located.item]);
+      window.dispatchEvent(new Event("pb:templates-changed"));
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : "Could not save the template");
+    }
   };
 
   const handleCopy = () => {
@@ -467,7 +465,7 @@ export function PuckComponentOverlay({
 
   const handleQuickAddWidget = (widgetType: string) => {
     const cfg = (
-      puckConfig.components as Record<string, { defaultProps?: Record<string, unknown> }>
+      editorConfig.components as Record<string, { defaultProps?: Record<string, unknown> }>
     )[widgetType];
     const uid = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`;
     const newChild: ComponentData = {
@@ -683,6 +681,15 @@ export function PuckComponentOverlay({
           >
             <CopyPlus className="w-3.5 h-3.5" />
             <span>Duplicate</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => void handleSaveTemplate()}
+            className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-teal-50 hover:text-[#007f7b] text-left cursor-pointer"
+          >
+            <BookmarkPlus className="w-3.5 h-3.5" />
+            <span>Save as template</span>
           </button>
 
           <div className="my-1 border-t border-gray-100" />

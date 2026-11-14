@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { usePuck } from "@puckeditor/core";
 import { Sparkles, X, Loader2, KeyRound, Wand2, Settings } from "lucide-react";
 import type { PuckPageData } from "@/puck/types";
-import { getStoredAiSettings, type StoredAiSettings } from "@/lib/aiSettings";
+import { BuilderLink, getBuilderHost, type AiSettings } from "../host";
 
 const QUICK_PROMPTS = [
   "Create a high-converting iPhone screen repair landing page with Hero, 3-col Services Grid, FAQ, and CTA Banner",
@@ -23,7 +22,7 @@ export default function PuckAiPanel({
   const [prompt, setPrompt] = useState("");
   const [mode, setMode] = useState<"edit" | "generate">("edit");
   const [provider, setProvider] = useState<"gemini" | "openai">("gemini");
-  const [storedSettings, setStoredSettings] = useState<StoredAiSettings>({
+  const [storedSettings, setStoredSettings] = useState<AiSettings>({
     defaultProvider: "gemini",
     geminiApiKey: "",
     openaiApiKey: "",
@@ -36,11 +35,11 @@ export default function PuckAiPanel({
   const [lastSummary, setLastSummary] = useState<string | null>(null);
 
   useEffect(() => {
-    const saved = getStoredAiSettings();
+    const saved = getBuilderHost().getAiSettings();
     setStoredSettings(saved);
     setProvider(saved.defaultProvider);
 
-    fetch("/api/admin/puck-ai")
+    fetch(getBuilderHost().aiEndpoint)
       .then((r) => r.json())
       .then((info: { hasServerKey?: boolean; providers?: { gemini?: boolean; openai?: boolean } }) => {
         const serverReady = Boolean(info.hasServerKey);
@@ -68,7 +67,7 @@ export default function PuckAiPanel({
     setLastSummary(null);
 
     try {
-      const res = await fetch("/api/admin/puck-ai", {
+      const res = await fetch(getBuilderHost().aiEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -169,14 +168,16 @@ export default function PuckAiPanel({
             </span>
           </button>
 
-          <Link
-            href="/settings"
+{getBuilderHost().aiSettingsHref && (
+                      <BuilderLink
+              href={getBuilderHost().aiSettingsHref || ""}
             className="inline-flex items-center gap-1 rounded border border-gray-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-700 hover:bg-gray-50"
             title="Manage AI keys in Settings"
           >
             <Settings className="h-3 w-3 text-gray-500" />
             <span>Settings</span>
-          </Link>
+          </BuilderLink>
+          )}
 
           <button
             type="button"

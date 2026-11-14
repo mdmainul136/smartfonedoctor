@@ -1,17 +1,8 @@
 "use client";
 
 import { FieldLabel, type CustomField } from "@puckeditor/core";
+import { getKitSwatches } from "../kit";
 
-const BRAND_SWATCHES = [
-  "#009691",
-  "#0f172a",
-  "#ffffff",
-  "#f8fafc",
-  "#f9fafb",
-  "#111827",
-  "#e5e7eb",
-  "transparent",
-];
 
 function toPickerHex(value: string): string {
   return /^#[0-9a-fA-F]{6}$/.test(value) ? value : "#009691";
@@ -47,7 +38,7 @@ export function createColorField<T extends string | undefined = string>(
               />
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
-              {BRAND_SWATCHES.map((swatch) => {
+              {getKitSwatches().map(({ name, value: swatch }) => {
                 const isSelected = current.toLowerCase() === swatch.toLowerCase();
                 return (
                   <button
@@ -55,7 +46,7 @@ export function createColorField<T extends string | undefined = string>(
                     type="button"
                     disabled={readOnly}
                     onClick={() => onChange(swatch as T)}
-                    title={swatch}
+                    title={`${name} (${swatch})`}
                     style={{
                       backgroundColor: swatch === "transparent" ? "#ffffff" : swatch,
                       backgroundImage:

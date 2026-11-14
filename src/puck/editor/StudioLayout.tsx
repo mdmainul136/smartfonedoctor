@@ -4,8 +4,11 @@ import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 
 import { Puck, usePuck, type Data } from "@puckeditor/core";
 import {
   ArrowLeft,
+  Bookmark,
   Check,
+  CloudOff,
   ExternalLink,
+  History,
   LayoutGrid,
   Layers,
   Maximize2,
@@ -25,6 +28,10 @@ import {
 } from "lucide-react";
 import AiPanel from "./AiPanel";
 import StructurePicker from "./StructurePicker";
+import HistoryPanel from "./HistoryPanel";
+import TemplatesPanel from "./TemplatesPanel";
+import { formatDateTime, formatTime, useAutosave } from "./useAutosave";
+import { useBuilderStorage } from "../storage";
 
 /**
  * An extra tab in the left panel supplied by the host app (for example an SEO
@@ -89,7 +96,13 @@ export default function StudioLayout({
   const [leftMode, setLeftMode] = useState<string>("widgets");
   const [widgetSearch, setWidgetSearch] = useState("");
   const [showAi, setShowAi] = useState(false);
-  const [showNavigator, setShowNavigator] = useState(false);
+  // Right-hand panel: the Navigator tree or the revision history, one at a time.
+  const [rightPanel, setRightPanel] = useState<"navigator" | "history" | null>(null);
+  const showNavigator = rightPanel === "navigator";
+  const showHistory = rightPanel === "history";
+  const toggleRight = (panel: "navigator" | "history") =>
+    setRightPanel((current) => (current === panel ? null : panel));
+  const [historyKey, setHistoryKey] = useState(0);
   const [showAddSection, setShowAddSection] = useState(false);
   const [savedIndex, setSavedIndex] = useState<number>(history.index);
   const [justPublished, setJustPublished] = useState(false);
@@ -106,6 +119,19 @@ export default function StudioLayout({
       selectedItem.type
     : null;
   const activePanel = panels.find((p) => p.id === leftMode);
+
+  const { storage, documentId } = useBuilderStorage();
+  const autosave = useAutosave({
+    data: appState.data as Data,
+    dirty: isDirty,
+    storage,
+    documentId,
+  });
+
+  const restoreDraft = () => {
+    const draft = autosave.takeDraft();
+    if (draft) dispatch({ type: "setData", data: draft.data });
+  };
   const panelWidth = activePanel?.width || BASE_PANEL_WIDTH;
 
   // Elementor behaviour: selecting an element opens its settings in the left
@@ -135,7 +161,12 @@ export default function StudioLayout({
   }, [widgetSearch, leftMode]);
 
   const publish = async () => {
-    await onPublish(appState.data as Data);
+    const data = appState.data as Data;
+    await onPublish(data);
+    // Keep the published version so it can be restored from History.
+    await storage.addRevision(documentId, data).catch(() => undefined);
+    autosave.markPublished();
+    setHistoryKey((k) => k + 1);
     setSavedIndex(history.index);
     setJustPublished(true);
     window.setTimeout(() => setJustPublished(false), 2200);
@@ -188,6 +219,7 @@ export default function StudioLayout({
 
   const leftTabs: Array<{ id: string; label: string; icon: ComponentType<{ className?: string }> }> = [
     { id: "widgets", label: "Widgets", icon: LayoutGrid },
+    { id: "templates", label: "Templates", icon: Bookmark },
     { id: "edit", label: selectedItem ? "Edit" : "Page", icon: SlidersHorizontal },
     ...panels.map((p) => ({ id: p.id, label: p.label, icon: p.icon })),
   ];
@@ -211,9 +243,20 @@ export default function StudioLayout({
                 </span>
               )}
             </div>
-            {subtitle && (
-              <div className="truncate font-mono text-[10.5px] leading-tight text-gray-400">{subtitle}</div>
-            )}
+            <div className="flex items-center gap-1.5 truncate text-[10.5px] leading-tight text-gray-400">
+              {subtitle && <span className="truncate font-mono">{subtitle}</span>}
+              {autosave.status === "saving" && <span>· Saving draft...</span>}
+              {autosave.status === "saved" && autosave.savedAt && (
+                <span title="Unpublished changes are kept in a draft">
+                  · Draft saved {formatTime(autosave.savedAt)}
+                </span>
+              )}
+              {autosave.status === "error" && (
+                <span className="inline-flex items-center gap-1 text-red-500" title="Publish to keep your changes">
+                  <CloudOff className="h-3 w-3" /> Draft not saved
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -270,7 +313,17 @@ export default function StudioLayout({
 
           <button
             type="button"
-            onClick={() => setShowNavigator((v) => !v)}
+            onClick={() => toggleRight("history")}
+            title="Revision history: every published version of this page"
+            className={pillButton(showHistory)}
+          >
+            <History className="h-3.5 w-3.5" />
+            <span className="hidden xl:inline">History</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => toggleRight("navigator")}
             title="Navigator: every section and widget on the page"
             className={pillButton(showNavigator)}
           >
@@ -308,6 +361,30 @@ export default function StudioLayout({
           </button>
         </div>
       </header>
+
+      {autosave.pendingDraft && (
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-900">
+          <span>
+            You have unpublished changes from {formatDateTime(autosave.pendingDraft.savedAt)}.
+          </span>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={restoreDraft}
+              className="h-7 rounded-md bg-amber-600 px-2.5 font-semibold text-white hover:bg-amber-700 cursor-pointer"
+            >
+              Restore draft
+            </button>
+            <button
+              type="button"
+              onClick={autosave.discardDraft}
+              className="h-7 rounded-md border border-amber-300 bg-white px-2.5 font-semibold text-amber-800 hover:bg-amber-100 cursor-pointer"
+            >
+              Discard
+            </button>
+          </div>
+        </div>
+      )}
 
       {enableAi && showAi && <AiPanel onClose={() => setShowAi(false)} />}
 
@@ -376,6 +453,8 @@ export default function StudioLayout({
               <Puck.Components />
             </div>
           </div>
+
+          {leftMode === "templates" && <TemplatesPanel />}
 
           {leftMode === "edit" && (
             <div className="flex min-h-0 flex-1 flex-col">
@@ -453,7 +532,7 @@ export default function StudioLayout({
               </div>
               <button
                 type="button"
-                onClick={() => setShowNavigator(false)}
+                onClick={() => setRightPanel(null)}
                 title="Close navigator"
                 className="rounded p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-700 cursor-pointer"
               >
@@ -465,6 +544,8 @@ export default function StudioLayout({
             </div>
           </aside>
         )}
+
+        {showHistory && <HistoryPanel onClose={() => setRightPanel(null)} refreshKey={historyKey} />}
       </div>
 
       {/* Add section dialog */}

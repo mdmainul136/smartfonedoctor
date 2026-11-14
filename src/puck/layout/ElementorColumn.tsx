@@ -3,7 +3,7 @@ import type { ComponentConfig } from "@puckeditor/core";
 import { FieldGroup, FieldTab } from "@puckeditor/core";
 import type { ColumnBlockProps } from "@/puck/types";
 import { sanitizeSectionId } from "@/puck/components/shared";
-import { scopeCustomCss } from "@/lib/cmsCustomCss";
+import { scopeCustomCss } from "../core/customCss";
 import { createColorField } from "@/puck/fields/ColorPickerField";
 import { createCustomCssField } from "@/puck/fields/CustomCssField";
 import { createVisibilityField } from "@/puck/fields/VisibilityField";

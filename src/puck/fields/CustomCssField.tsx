@@ -1,7 +1,7 @@
 "use client";
 
 import { FieldLabel, type CustomField } from "@puckeditor/core";
-import { CSS_SNIPPETS, validateCustomCss } from "@/lib/cmsCustomCss";
+import { CSS_SNIPPETS, validateCustomCss } from "../core/customCss";
 
 export function createCustomCssField(label = "Custom CSS (scoped)"): CustomField<string> {
   return {

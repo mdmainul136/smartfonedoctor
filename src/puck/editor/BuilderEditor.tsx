@@ -7,6 +7,16 @@ import "../puck-theme.css";
 import StudioLayout, { type BuilderPanel } from "./StudioLayout";
 import { PuckActionBar, PuckComponentOverlay } from "./CanvasOverlay";
 import { createWidgetTile, type WidgetIconMap } from "./WidgetTile";
+import { withAutoTabs } from "../core/autoTabs";
+import {
+  BuilderStorageProvider,
+  createLocalStorageBuilderStorage,
+  type BuilderStorage,
+} from "../storage";
+import { setBuilderKit, type BuilderKit } from "../kit";
+
+/** Browser storage, used until the host passes its own (a database adapter). */
+const defaultStorage = createLocalStorageBuilderStorage();
 
 const VIEWPORTS: Viewports = [
   { width: 375, height: "auto", label: "Mobile (375px)", icon: "Smartphone" },
@@ -22,6 +32,12 @@ export type BuilderEditorProps = {
   data: Data;
   /** Change this to throw away the current editing session and load `data` again. */
   editorKey: string;
+  /** Stable id of the page (its slug). Drafts and revisions are kept under it. Defaults to the title. */
+  documentId?: string;
+  /** Brand colors offered first in every color picker. */
+  kit?: BuilderKit;
+  /** Where drafts, revisions and templates are kept. Defaults to the browser. */
+  storage?: BuilderStorage;
   title: string;
   subtitle?: string;
   status?: string;
@@ -41,12 +57,21 @@ export type BuilderEditorProps = {
  * where pages are stored or what the host's extra panels do.
  */
 export default function BuilderEditor({
-  config,
+  config: rawConfig,
   data,
   editorKey,
   widgetIcons,
+  documentId,
+  kit,
+  storage = defaultStorage,
   ...layout
 }: BuilderEditorProps) {
+  // Set before the first render so the color pickers show the host's brand.
+  useMemo(() => setBuilderKit(kit), [kit]);
+
+  // Every widget gets Content / Style / Advanced tabs, including host widgets.
+  const config = useMemo(() => withAutoTabs(rawConfig), [rawConfig]);
+
   const overrides = useMemo(
     () => ({
       componentOverlay: PuckComponentOverlay,
@@ -57,6 +82,7 @@ export default function BuilderEditor({
   );
 
   return (
+    <BuilderStorageProvider storage={storage} documentId={documentId || layout.title}>
     <div className="sfd-puck-theme">
       <Puck
         key={editorKey}
@@ -69,6 +95,7 @@ export default function BuilderEditor({
         <StudioLayout {...layout} />
       </Puck>
     </div>
+    </BuilderStorageProvider>
   );
 }
 

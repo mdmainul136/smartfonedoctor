@@ -1,14 +1,30 @@
 "use client";
 
+import "@/plugins/repair-shop/builderHost";
 import { useMemo } from "react";
 import type { Config, Data } from "@puckeditor/core";
 import { Globe, RotateCcw } from "lucide-react";
 import type { CMSPage } from "@/lib/cmsData";
 import { puckConfig } from "@/puck/config";
 import type { PuckPageData } from "@/puck/types";
-import { cmsPageToPuckData } from "@/puck/migrateCmsPageToPuck";
+import { cmsPageToPuckData } from "@/plugins/repair-shop/migrateCmsPageToPuck";
 import BuilderEditor, { type BuilderPanel } from "@/puck/editor/BuilderEditor";
 import PageSeoPanel from "@/components/admin/PageSeoPanel";
+import type { BuilderKit } from "@/puck/kit";
+
+/** SmartFone Doctor brand colors, offered first in every color picker. */
+const SMARTFONE_KIT: BuilderKit = {
+  colors: [
+    { name: "Brand teal", value: "#009691" },
+    { name: "Teal light", value: "#14b8a6" },
+    { name: "Brand red", value: "#b31924" },
+    { name: "Brand dark", value: "#1d1c1a" },
+    { name: "Navy", value: "#0f172a" },
+    { name: "Text", value: "#111827" },
+    { name: "Border", value: "#e5e7eb" },
+    { name: "Light", value: "#f8fafc" },
+  ],
+};
 
 /**
  * SmartFone Doctor's wiring for the page builder: maps a CMS page to builder
@@ -61,6 +77,8 @@ export default function PuckPageEditor({
       config={puckConfig as unknown as Config}
       data={initialData as unknown as Data}
       editorKey={`${page.slug}-${editorNonce}`}
+      documentId={page.slug}
+      kit={SMARTFONE_KIT}
       title={page.name}
       subtitle={page.path}
       status={page.status}

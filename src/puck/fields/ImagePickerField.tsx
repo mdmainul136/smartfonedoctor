@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { FieldLabel, type CustomField } from "@puckeditor/core";
 import { Image as ImageIcon, FolderOpen, X } from "lucide-react";
-import MediaModal from "@/components/admin/MediaModal";
+import { getBuilderHost } from "../host";
 
 interface ImagePickerControlProps {
   label: string;
@@ -19,6 +19,7 @@ function ImagePickerControl({
   readOnly,
 }: ImagePickerControlProps) {
   const [modalOpen, setModalOpen] = useState(false);
+  const MediaPicker = getBuilderHost().MediaPicker;
 
   return (
     <FieldLabel label={label} readOnly={readOnly}>
@@ -58,7 +59,7 @@ function ImagePickerControl({
           className="h-8 w-full rounded border border-gray-300 bg-white px-2.5 text-xs text-gray-800 focus:border-[#009691] focus:outline-none"
         />
 
-        {!readOnly && (
+        {!readOnly && MediaPicker && (
           <button
             type="button"
             onClick={() => setModalOpen(true)}
@@ -69,15 +70,17 @@ function ImagePickerControl({
           </button>
         )}
 
-        <MediaModal
-          isOpen={modalOpen}
-          onClose={() => setModalOpen(false)}
-          initialSelectedUrl={value}
-          onSelect={(payload) => {
-            onChange(payload.url);
-            setModalOpen(false);
-          }}
-        />
+        {MediaPicker && (
+          <MediaPicker
+            isOpen={modalOpen}
+            onClose={() => setModalOpen(false)}
+            initialUrl={value}
+            onSelect={(url) => {
+              onChange(url);
+              setModalOpen(false);
+            }}
+          />
+        )}
       </div>
     </FieldLabel>
   );
