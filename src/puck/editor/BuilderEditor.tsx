@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Puck, type Config, type Data, type Viewports } from "@puckeditor/core";
 import "@puckeditor/core/puck.css";
 import "../puck-theme.css";
@@ -56,6 +56,29 @@ export type BuilderEditorProps = {
  * needs: it takes data in, hands data back on publish, and knows nothing about
  * where pages are stored or what the host's extra panels do.
  */
+/**
+ * Troubleshooting: add ?pbDebug=<flags> to the admin URL to switch parts of the
+ * builder off, e.g. ?pbDebug=nooverlay,notile.
+ *   stock     - plain Puck, none of our UI (layout, overlay, tiles)
+ *   nolayout  - Puck's own layout instead of StudioLayout
+ *   nooverlay - no canvas overlay / action bar overrides
+ *   notile    - Puck's own widget list items instead of our tiles
+ */
+type DebugFlag = "stock" | "nolayout" | "nooverlay" | "notile";
+
+function useDebugFlags(): Set<DebugFlag> {
+  const [flags, setFlags] = useState<Set<DebugFlag>>(new Set());
+  useEffect(() => {
+    const raw = new URLSearchParams(window.location.search).get("pbDebug") || "";
+    const next = new Set(raw.split(",").map((f) => f.trim()).filter(Boolean) as DebugFlag[]);
+    if (next.size) {
+      console.info("[builder] debug flags:", Array.from(next).join(", "));
+      setFlags(next);
+    }
+  }, []);
+  return flags;
+}
+
 export default function BuilderEditor({
   config: rawConfig,
   data,
@@ -72,27 +95,32 @@ export default function BuilderEditor({
   // Every widget gets Content / Style / Advanced tabs, including host widgets.
   const config = useMemo(() => withAutoTabs(rawConfig), [rawConfig]);
 
-  const overrides = useMemo(
-    () => ({
-      componentOverlay: PuckComponentOverlay,
-      actionBar: PuckActionBar,
-      drawerItem: createWidgetTile(config, widgetIcons),
-    }),
-    [config, widgetIcons]
-  );
+  const debug = useDebugFlags();
+  const stock = debug.has("stock");
+
+  const overrides = useMemo(() => {
+    if (stock) return {};
+    return {
+      ...(debug.has("nooverlay")
+        ? {}
+        : { componentOverlay: PuckComponentOverlay, actionBar: PuckActionBar }),
+      ...(debug.has("notile") ? {} : { drawerItem: createWidgetTile(config, widgetIcons) }),
+    };
+  }, [config, widgetIcons, debug, stock]);
+  const useStudio = !stock && !debug.has("nolayout");
 
   return (
     <BuilderStorageProvider storage={storage} documentId={documentId || layout.title}>
     <div className="sfd-puck-theme">
       <Puck
-        key={editorKey}
+        key={`${editorKey}:${Array.from(debug).join(",")}`}
         config={config}
         data={data}
         viewports={VIEWPORTS}
         overrides={overrides}
         onPublish={layout.onPublish}
       >
-        <StudioLayout {...layout} />
+        {useStudio ? <StudioLayout {...layout} /> : undefined}
       </Puck>
     </div>
     </BuilderStorageProvider>

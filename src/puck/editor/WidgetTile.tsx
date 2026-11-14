@@ -1,5 +1,5 @@
 import type { ComponentType, ReactNode } from "react";
-import { usePuck, type Config } from "@puckeditor/core";
+import { useGetPuck, type Config } from "@puckeditor/core";
 import {
   Activity,
   Award,
@@ -93,8 +93,11 @@ const ROOT_ZONE = "root:default-zone";
  * and selects it so its settings open.
  */
 function useAddWidget() {
-  const { appState, dispatch, selectedItem, config } = usePuck();
+  // useGetPuck reads the state only on click; usePuck would re-render all
+  // ~66 tiles on every editor change (including every pointer move in a drag).
+  const getPuck = useGetPuck();
   return (componentType: string) => {
+    const { appState, dispatch, selectedItem, config } = getPuck();
     let zone = ROOT_ZONE;
     let index = ((appState.data.content || []) as unknown[]).length;
     const selector = appState.ui.itemSelector;
