@@ -166,80 +166,96 @@ export function createColumnBlock(
   };
 }
 
-/**
- * Generates an Elementor Flexbox Container block populated with ColumnBlock children
- */
-export function createFlexPresetBlock(preset: FlexPreset): ComponentData {
-  const uid = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
-  let children: ComponentData[] = [];
+const newUid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
-  if (preset.cols === 1 && (preset.id === "col-down" || preset.id === "row-right")) {
-    children = [createColumnBlock(uid, 0, "1", "100")];
-  } else if (preset.ratios && preset.ratios.length > 0) {
-    children = preset.ratios.map((ratio, i) =>
-      createColumnBlock(uid, i, ratio, preset.colRatios?.[i] || "")
-    );
-  } else {
-    children = Array.from({ length: Math.max(1, preset.cols) }, (_, i) =>
-      createColumnBlock(uid, i, "1", "")
-    );
-  }
+const SECTION_FRAME = {
+  width: "100%",
+  maxWidth: "1280px",
+  marginLeft: "auto",
+  marginRight: "auto",
+  gap: "16px",
+  paddingTop: "32px",
+  paddingRight: "24px",
+  paddingBottom: "32px",
+  paddingLeft: "24px",
+};
 
+/** An empty Container (see src/puck/style) that sits inside a section as one column or cell. */
+function createCell(uid: string, idx: number, base: Record<string, string> = {}, mobile?: Record<string, string>): ComponentData {
   return {
-    type: "FlexBlock",
+    type: "Box",
     props: {
-      id: `FlexBlock-${uid}`,
-      label: `Flexbox (${preset.label})`,
-      displayLayout: "flex",
-      direction: preset.direction || "row",
-      wrap: preset.cols > 4 ? "wrap" : "nowrap",
-      justify: "flex-start",
-      align: "stretch",
-      gap: 16,
-      rowGap: 16,
-      paddingY: 32,
-      paddingX: 24,
-      width: "100%",
-      maxWidth: "1280px",
-      margin: "0 auto",
-      backgroundColor: "transparent",
-      customCss: "",
-      children,
+      id: `Box-${uid}-c${idx + 1}`,
+      content: [],
+      pbStyle: {
+        base: { display: "flex", flexDirection: "column", gap: "12px", minHeight: "120px", minWidth: "0", ...base },
+        ...(mobile ? { mobile } : {}),
+      },
     },
   };
 }
 
 /**
- * Generates an Elementor Grid Container block populated with ColumnBlock children
+ * Builds a section from a flex preset: a Container laid out as a row whose
+ * columns are Containers sized by the preset's ratios. Stacks on mobile.
  */
-export function createGridPresetBlock(preset: GridPreset): ComponentData {
-  const uid = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
-  const totalCells =
-    preset.type === "grid3x2" ? 6 : preset.type === "grid2x2" ? 4 : preset.columns;
-
-  const children = Array.from({ length: Math.max(1, totalCells) }, (_, i) =>
-    createColumnBlock(uid, i, "1", "")
-  );
-
-  return {
-    type: "GridBlock",
+export function createFlexPresetBlock(preset: FlexPreset): ComponentData {
+  const uid = newUid();
+  const section = (type: string, base: Record<string, string>, content: ComponentData[], mobile?: Record<string, string>) => ({
+    type,
     props: {
-      id: `GridBlock-${uid}`,
-      label: `Grid (${preset.label})`,
-      columns: preset.columns,
-      templateColumns: preset.templateColumns || `repeat(${preset.columns}, minmax(0, 1fr))`,
-      gap: 16,
-      rowGap: 16,
-      align: "stretch",
-      justifyItems: "stretch",
-      paddingY: 32,
-      paddingX: 24,
-      width: "100%",
-      maxWidth: "1280px",
-      margin: "0 auto",
-      backgroundColor: "transparent",
-      customCss: "",
-      children,
+      id: `${type}-${uid}`,
+      content,
+      pbStyle: { base: { ...SECTION_FRAME, ...base }, ...(mobile ? { mobile } : {}) },
+    },
+  });
+  const oneColumn = { gridTemplateColumns: "repeat(1, minmax(0, 1fr))" };
+  const twoColumns = { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))" };
+
+  // A single empty container the user fills directly.
+  if (preset.id === "col-down" || preset.id === "row-right") {
+    return section("Box", { display: "flex", flexDirection: preset.direction || "row", minHeight: "120px" }, []);
+  }
+  if (preset.id === "grid-2x2") {
+    return section("GridBox", twoColumns, [0, 1, 2, 3].map((i) => createCell(uid, i)), oneColumn);
+  }
+  if (preset.id === "top1-btm2" || preset.id === "left1-right2") {
+    const wide: Record<string, string> = preset.id === "top1-btm2" ? { gridColumn: "span 2" } : { gridRow: "span 2" };
+    const reset: Record<string, string> = preset.id === "top1-btm2" ? { gridColumn: "span 1" } : { gridRow: "span 1" };
+    return section(
+      "GridBox",
+      twoColumns,
+      [createCell(uid, 0, wide, reset), createCell(uid, 1), createCell(uid, 2)],
+      oneColumn,
+    );
+  }
+
+  const ratios = preset.ratios?.length ? preset.ratios : Array.from({ length: Math.max(1, preset.cols) }, () => "1");
+  return section(
+    "Box",
+    { display: "flex", flexDirection: "row", alignItems: "stretch" },
+    ratios.map((ratio, i) => createCell(uid, i, { flex: `${ratio} 1 0%` }, { flex: "0 0 auto" })),
+    { flexDirection: "column" },
+  );
+}
+
+/** Builds a section from a grid preset: a Grid with one empty Container per cell. One column on mobile. */
+export function createGridPresetBlock(preset: GridPreset): ComponentData {
+  const uid = newUid();
+  const cells = preset.type === "grid3x2" ? 6 : preset.type === "grid2x2" ? 4 : preset.columns;
+  return {
+    type: "GridBox",
+    props: {
+      id: `GridBox-${uid}`,
+      content: Array.from({ length: Math.max(1, cells) }, (_, i) => createCell(uid, i)),
+      pbStyle: {
+        base: {
+          ...SECTION_FRAME,
+          display: "grid",
+          gridTemplateColumns: preset.templateColumns || `repeat(${preset.columns}, minmax(0, 1fr))`,
+        },
+        ...(preset.columns > 1 ? { mobile: { gridTemplateColumns: "repeat(1, minmax(0, 1fr))" } } : {}),
+      },
     },
   };
 }
