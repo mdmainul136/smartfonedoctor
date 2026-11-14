@@ -189,7 +189,10 @@ export default function StudioLayout({
   const publishRef = useRef(publish);
   publishRef.current = publish;
 
-  // Ctrl/Cmd+S publishes; the page scroll is locked while the studio is open.
+  // Ctrl/Cmd+S publishes. The studio fills the screen, so the page has nothing
+  // to scroll. Do not lock it with an inline body style: Puck copies the
+  // host's <html>/<body> attributes into the canvas iframe, so
+  // body { overflow: hidden } would also stop mouse-wheel scrolling on the canvas.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
@@ -198,14 +201,11 @@ export default function StudioLayout({
       }
     };
     window.addEventListener("keydown", onKeyDown);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
     // Lets the host hide its sidebar and headers (see html.pb-studio-open).
     document.documentElement.classList.add("pb-studio-open");
     window.scrollTo(0, 0);
     return () => {
       window.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = previousOverflow;
       document.documentElement.classList.remove("pb-studio-open");
     };
   }, []);
