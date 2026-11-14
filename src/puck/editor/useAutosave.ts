@@ -27,7 +27,10 @@ export function useAutosave({
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [pendingDraft, setPendingDraft] = useState<BuilderDraft | null>(null);
   const [checkedDraft, setCheckedDraft] = useState(false);
-  const initialJson = useRef(JSON.stringify(data));
+  // Latest editor data, so the draft check compares against what is on screen
+  // (after a hot reload the editor may already hold the draft's changes).
+  const dataRef = useRef(data);
+  dataRef.current = data;
 
   // A draft that differs from what the editor opened with is from an earlier
   // session the user never published.
@@ -36,7 +39,7 @@ export function useAutosave({
     storage
       .loadDraft(documentId)
       .then((draft) => {
-        if (alive && draft && JSON.stringify(draft.data) !== initialJson.current) {
+        if (alive && draft && JSON.stringify(draft.data) !== JSON.stringify(dataRef.current)) {
           setPendingDraft(draft);
         }
       })
