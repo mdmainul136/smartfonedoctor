@@ -9,6 +9,7 @@ import { PuckActionBar, PuckComponentOverlay } from "./CanvasOverlay";
 import { createWidgetTile, type WidgetIconMap } from "./WidgetTile";
 import { withAutoTabs } from "../core/autoTabs";
 import { withStyleEngine } from "../style";
+import { migrateLegacyLayout } from "../layout/migrateLegacyLayout";
 import {
   BuilderStorageProvider,
   createLocalStorageBuilderStorage,
@@ -82,7 +83,7 @@ function useDebugFlags(): Set<DebugFlag> {
 
 export default function BuilderEditor({
   config: rawConfig,
-  data,
+  data: rawData,
   editorKey,
   widgetIcons,
   documentId,
@@ -96,6 +97,10 @@ export default function BuilderEditor({
   // Every widget gets Content / Style / Advanced tabs, including host widgets.
   // ...and a Design tab backed by the style engine.
   const config = useMemo(() => withAutoTabs(withStyleEngine(rawConfig)), [rawConfig]);
+
+  // Older layout blocks open as the new Container / Grid. The stored page is
+  // untouched until the user publishes.
+  const data = useMemo(() => migrateLegacyLayout(rawData), [rawData]);
 
   const debug = useDebugFlags();
   const stock = debug.has("stock");
