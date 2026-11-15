@@ -27,6 +27,7 @@ export interface SchemaServiceOptions {
   url: string;
   turnaround?: string;
   providerStoreId?: number;
+  image?: string;
 }
 
 export interface BreadcrumbItem {
@@ -295,6 +296,7 @@ export function buildServiceSchema(
     serviceType: options.name,
     category: options.category || "Electronics Repair Service",
     description: options.description,
+    image: options.image || `${SITE_URL}/logo-png.jpg`,
     provider: {
       "@type": ["LocalBusiness", "ElectronicsStore"],
       "@id": `${SITE_URL}/#store-${storeSlug}`,
@@ -309,6 +311,46 @@ export function buildServiceSchema(
       "@type": "OfferCatalog",
       name: `${options.name} Repair Options`,
       itemListElement: offers,
+    },
+  };
+}
+
+/**
+ * 6. Product Schema for Device Models
+ */
+export function buildDeviceProductSchema(device: {
+  name: string;
+  brand: string;
+  category: string;
+  image?: string;
+  url: string;
+}): Record<string, unknown> {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: device.name,
+    image: device.image || `${SITE_URL}/logo-png.jpg`,
+    brand: {
+      "@type": "Brand",
+      name: device.brand,
+    },
+    category: device.category,
+    offers: {
+      "@type": "AggregateOffer",
+      priceCurrency: "USD",
+      lowPrice: "69.00",
+      highPrice: "249.00",
+      offerCount: "8",
+      offers: [
+        {
+          "@type": "Offer",
+          name: `${device.name} Diagnostic & Repair Service`,
+          price: "69.00",
+          priceCurrency: "USD",
+          availability: "https://schema.org/InStock",
+          url: `${SITE_URL}${device.url}`,
+        },
+      ],
     },
   };
 }

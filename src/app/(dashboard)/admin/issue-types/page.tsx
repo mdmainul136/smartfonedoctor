@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   Wrench,
@@ -25,9 +25,11 @@ import {
   Cpu,
   Copy,
   Sparkles,
-  ArrowRight,
-  SlidersHorizontal,
   ChevronRight,
+  Upload,
+  Image as ImageIcon,
+  Code2,
+  Layers,
 } from "lucide-react";
 import {
   ServiceIssueTaxonomy,
@@ -35,12 +37,30 @@ import {
   saveStoredIssues,
 } from "@/lib/taxonomy";
 import { getTaxonomyAction, saveTaxonomyAction } from "@/actions/taxonomy";
+import MediaModal, { type SelectedMediaPayload } from "@/components/admin/MediaModal";
+
+const AVAILABLE_ICONS = [
+  { id: "Smartphone", label: "Screen / Display", icon: Smartphone },
+  { id: "BatteryCharging", label: "Battery", icon: BatteryCharging },
+  { id: "Zap", label: "Charging Port", icon: Zap },
+  { id: "Droplets", label: "Water Damage", icon: Droplets },
+  { id: "Camera", label: "Camera & Lens", icon: Camera },
+  { id: "Tv", label: "HDMI Port / Console", icon: Tv },
+  { id: "Volume2", label: "Speaker / Mic", icon: Volume2 },
+  { id: "Wind", label: "Fan / Thermal", icon: Wind },
+  { id: "Disc", label: "Disc Drive", icon: Disc },
+  { id: "Cpu", label: "Logic Board", icon: Cpu },
+  { id: "Layers", label: "Back Glass", icon: Layers },
+  { id: "Wrench", label: "General Hardware", icon: Wrench },
+];
 
 /**
  * Return contextual icon and subtle pastel theme per issue type
  */
-function getIssueIconInfo(slug: string, title: string) {
-  const s = `${slug} ${title}`.toLowerCase();
+function getIssueIconInfo(slug: string, title: string, customIcon?: string) {
+  const chosen = customIcon || "";
+  const s = `${chosen} ${slug} ${title}`.toLowerCase();
+
   if (s.includes("battery")) {
     return {
       icon: BatteryCharging,
@@ -62,7 +82,7 @@ function getIssueIconInfo(slug: string, title: string) {
       border: "border-sky-200/70",
     };
   }
-  if (s.includes("port") || s.includes("charging") || s.includes("charge")) {
+  if (s.includes("port") || s.includes("charging") || s.includes("charge") || s.includes("zap")) {
     return {
       icon: Zap,
       color: "text-amber-700",
@@ -70,7 +90,7 @@ function getIssueIconInfo(slug: string, title: string) {
       border: "border-amber-200/70",
     };
   }
-  if (s.includes("water") || s.includes("liquid") || s.includes("corrosion")) {
+  if (s.includes("water") || s.includes("liquid") || s.includes("corrosion") || s.includes("droplets")) {
     return {
       icon: Droplets,
       color: "text-blue-700",
@@ -90,7 +110,8 @@ function getIssueIconInfo(slug: string, title: string) {
     s.includes("hdmi") ||
     s.includes("console") ||
     s.includes("ps5") ||
-    s.includes("xbox")
+    s.includes("xbox") ||
+    s.includes("tv")
   ) {
     return {
       icon: Tv,
@@ -99,7 +120,7 @@ function getIssueIconInfo(slug: string, title: string) {
       border: "border-indigo-200/70",
     };
   }
-  if (s.includes("fan") || s.includes("overheating") || s.includes("thermal")) {
+  if (s.includes("fan") || s.includes("overheating") || s.includes("thermal") || s.includes("wind")) {
     return {
       icon: Wind,
       color: "text-teal-700",
@@ -107,7 +128,7 @@ function getIssueIconInfo(slug: string, title: string) {
       border: "border-teal-200/70",
     };
   }
-  if (s.includes("audio") || s.includes("speaker") || s.includes("mic")) {
+  if (s.includes("audio") || s.includes("speaker") || s.includes("mic") || s.includes("volume")) {
     return {
       icon: Volume2,
       color: "text-rose-700",
@@ -123,12 +144,20 @@ function getIssueIconInfo(slug: string, title: string) {
       border: "border-violet-200/70",
     };
   }
-  if (s.includes("board") || s.includes("logic") || s.includes("chip") || s.includes("clean")) {
+  if (s.includes("board") || s.includes("logic") || s.includes("chip") || s.includes("clean") || s.includes("cpu")) {
     return {
       icon: Cpu,
       color: "text-[#009691]",
       bg: "bg-teal-50",
       border: "border-teal-200/70",
+    };
+  }
+  if (s.includes("backglass") || s.includes("laser") || s.includes("layers")) {
+    return {
+      icon: Layers,
+      color: "text-indigo-700",
+      bg: "bg-indigo-50",
+      border: "border-indigo-200/70",
     };
   }
   return {
@@ -162,6 +191,11 @@ export default function IssueTypesCRUDPage() {
   const [editingIssue, setEditingIssue] = useState<ServiceIssueTaxonomy | null>(null);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
 
+  // Media Modal & File upload
+  const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Form State
   const [formData, setFormData] = useState<Partial<ServiceIssueTaxonomy>>({
     title: "",
@@ -170,6 +204,9 @@ export default function IssueTypesCRUDPage() {
     startingPrice: 79,
     turnaround: "30 Mins",
     badge: "",
+    icon: "Smartphone",
+    image: "",
+    description: "",
     url: "",
   });
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -212,6 +249,9 @@ export default function IssueTypesCRUDPage() {
       startingPrice: 79,
       turnaround: "30 Mins",
       badge: "",
+      icon: "Smartphone",
+      image: "",
+      description: "",
       url: "/common-issues/smartphone/",
     });
     setIsModalOpen(true);
@@ -244,6 +284,30 @@ export default function IssueTypesCRUDPage() {
     }));
   };
 
+  const handleDirectUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("alt", formData.title || "Issue repair diagram");
+      const res = await fetch("/api/admin/media", { method: "POST", body: fd });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.item?.url) {
+          setFormData((prev) => ({ ...prev, image: data.item.url }));
+          showToast("Image uploaded successfully!");
+        }
+      }
+    } catch (err) {
+      console.error("Upload error:", err);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title?.trim()) return;
@@ -263,6 +327,9 @@ export default function IssueTypesCRUDPage() {
         startingPrice: Number(formData.startingPrice) || 79,
         turnaround: formData.turnaround || "Same Day",
         badge: formData.badge || undefined,
+        icon: formData.icon || "Wrench",
+        image: formData.image || undefined,
+        description: formData.description || undefined,
         url: formData.url || `/common-issues/${formData.categorySlug || "smartphone"}`,
       };
       updated = [...issues, newIssue];
@@ -294,12 +361,33 @@ export default function IssueTypesCRUDPage() {
     return matchesSearch && matchesCategory;
   });
 
-  // Calculate quick stats
   const minPrice = issues.length > 0 ? Math.min(...issues.map((i) => i.startingPrice)) : 69;
   const categoriesCount = new Set(issues.map((i) => i.categorySlug)).size;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
+      {/* Hidden file input for direct upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleDirectUpload}
+        className="hidden"
+      />
+
+      {/* Media Management Modal */}
+      <MediaModal
+        isOpen={isMediaModalOpen}
+        onClose={() => setIsMediaModalOpen(false)}
+        onSelect={(payload: SelectedMediaPayload) => {
+          setFormData((prev) => ({ ...prev, image: payload.url }));
+          setIsMediaModalOpen(false);
+        }}
+        title="Select Issue Diagram or Component Photo"
+        selectButtonText="Use as Issue Image"
+        initialSelectedUrl={formData.image}
+      />
+
       {/* Toast Alert */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-[#111111] text-white px-4 py-2.5 rounded-lg shadow-xl text-xs font-semibold flex items-center gap-2 border border-neutral-700 animate-in fade-in slide-in-from-bottom-2">
@@ -322,7 +410,7 @@ export default function IssueTypesCRUDPage() {
             Common Issue Types &amp; Diagnostics
           </h1>
           <p className="text-xs text-gray-500 mt-0.5">
-            Manage repair issues (Cracked Screens, Batteries, Charging Ports, Water Damage, HDMI) and diagnostic guide routes.
+            Manage repair issues with customized icons, component diagrams, pricing, and Schema.org RepairService metadata.
           </p>
         </div>
 
@@ -394,15 +482,15 @@ export default function IssueTypesCRUDPage() {
         <div className="bg-white border border-[#e8e8e8] rounded-xl p-3.5 sm:p-4 shadow-2xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block">
-              Platforms Covered
+              Schema.org Coverage
             </span>
             <span className="text-xl sm:text-2xl font-bold text-gray-900 mt-0.5 block">
-              {categoriesCount} Categories
+              100% Valid
             </span>
-            <span className="text-[11px] text-indigo-600 font-medium">Phones, Tablets, Consoles, Macs</span>
+            <span className="text-[11px] text-indigo-600 font-medium">RepairService JSON-LD injected</span>
           </div>
           <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
-            <Smartphone className="w-5 h-5" />
+            <Code2 className="w-5 h-5" />
           </div>
         </div>
       </div>
@@ -431,7 +519,7 @@ export default function IssueTypesCRUDPage() {
             )}
           </div>
 
-          {/* Category Quick Filter Pills */}
+          {/* Category Filter Pills */}
           <div className="flex items-center gap-1 overflow-x-auto py-0.5">
             {[
               { id: "all", label: "All" },
@@ -468,7 +556,7 @@ export default function IssueTypesCRUDPage() {
           <table className="w-full text-left text-xs">
             <thead className="bg-[#f9fafb] text-gray-500 font-bold uppercase tracking-wider border-b border-[#e8e8e8] text-[10px]">
               <tr>
-                <th className="py-3.5 px-4">Issue Name</th>
+                <th className="py-3.5 px-4">Issue Name &amp; Visual</th>
                 <th className="py-3.5 px-4">Category</th>
                 <th className="py-3.5 px-4">Starting Price</th>
                 <th className="py-3.5 px-4">Turnaround</th>
@@ -478,7 +566,7 @@ export default function IssueTypesCRUDPage() {
             </thead>
             <tbody className="divide-y divide-[#f2f2f2]">
               {filtered.map((issue) => {
-                const iconInfo = getIssueIconInfo(issue.slug, issue.title);
+                const iconInfo = getIssueIconInfo(issue.slug, issue.title, issue.icon);
                 const IconComponent = iconInfo.icon;
                 const catBadge = getCategoryBadge(issue.categorySlug);
 
@@ -487,14 +575,29 @@ export default function IssueTypesCRUDPage() {
                     key={issue.id}
                     className="hover:bg-gray-50/80 transition-colors group"
                   >
-                    {/* 1. Issue Name + Distinct Contextual Icon */}
+                    {/* Issue Name + Icon + Optional Diagram Thumbnail */}
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-3">
-                        <span
-                          className={`w-8 h-8 rounded-lg ${iconInfo.bg} border ${iconInfo.border} ${iconInfo.color} flex items-center justify-center shrink-0 shadow-2xs transition-transform group-hover:scale-105`}
-                        >
-                          <IconComponent className="w-4 h-4" />
-                        </span>
+                        {issue.image ? (
+                          <div className="relative w-9 h-9 rounded-lg overflow-hidden border border-gray-200 shrink-0 bg-gray-100">
+                            <img
+                              src={issue.image}
+                              alt={issue.title}
+                              className="w-full h-full object-cover"
+                            />
+                            <span
+                              className={`absolute bottom-0 right-0 w-4 h-4 rounded-tl ${iconInfo.bg} ${iconInfo.color} flex items-center justify-center text-[9px]`}
+                            >
+                              <IconComponent className="w-2.5 h-2.5" />
+                            </span>
+                          </div>
+                        ) : (
+                          <span
+                            className={`w-8 h-8 rounded-lg ${iconInfo.bg} border ${iconInfo.border} ${iconInfo.color} flex items-center justify-center shrink-0 shadow-2xs transition-transform group-hover:scale-105`}
+                          >
+                            <IconComponent className="w-4 h-4" />
+                          </span>
+                        )}
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="font-bold text-gray-900 text-[13px] group-hover:text-[#009691] transition-colors">
@@ -506,14 +609,16 @@ export default function IssueTypesCRUDPage() {
                               </span>
                             )}
                           </div>
-                          <span className="text-[11px] font-mono text-gray-400 block mt-0.5">
-                            {issue.slug}
-                          </span>
+                          <div className="flex items-center gap-2 mt-0.5 text-[10px] text-gray-400">
+                            <span className="font-mono">{issue.slug}</span>
+                            <span>•</span>
+                            <span className="text-teal-600 font-medium">Schema.org Service</span>
+                          </div>
                         </div>
                       </div>
                     </td>
 
-                    {/* 2. Category */}
+                    {/* Category */}
                     <td className="py-3.5 px-4">
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${catBadge.bg}`}
@@ -522,14 +627,14 @@ export default function IssueTypesCRUDPage() {
                       </span>
                     </td>
 
-                    {/* 3. Starting Price */}
+                    {/* Starting Price */}
                     <td className="py-3.5 px-4">
                       <span className="font-bold text-[#009691] text-[13px]">
                         From ${issue.startingPrice}
                       </span>
                     </td>
 
-                    {/* 4. Turnaround */}
+                    {/* Turnaround */}
                     <td className="py-3.5 px-4">
                       <span className="inline-flex items-center gap-1.5 text-gray-700 font-medium">
                         <Clock className="w-3.5 h-3.5 text-gray-400" />
@@ -537,7 +642,7 @@ export default function IssueTypesCRUDPage() {
                       </span>
                     </td>
 
-                    {/* 5. Public URL with Copy button */}
+                    {/* Public URL with Copy button */}
                     <td className="py-3.5 px-4">
                       <div className="inline-flex items-center gap-1.5 bg-gray-50 px-2.5 py-1 rounded-[5px] border border-gray-200 max-w-xs group/link">
                         <span className="font-mono text-[11px] text-gray-600 truncate">
@@ -566,7 +671,7 @@ export default function IssueTypesCRUDPage() {
                       </div>
                     </td>
 
-                    {/* 6. Actions */}
+                    {/* Actions */}
                     <td className="py-3.5 px-4 text-right">
                       <div className="inline-flex items-center gap-1">
                         <button
@@ -609,31 +714,36 @@ export default function IssueTypesCRUDPage() {
         </div>
       </div>
 
-      {/* ── MODAL: ADD / EDIT ISSUE TYPE ── */}
+      {/* ── MODAL: ADD / EDIT ISSUE TYPE WITH ICON & IMAGE PICKER ── */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full border border-gray-200 overflow-hidden animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full border border-gray-200 overflow-hidden animate-in zoom-in-95 duration-150 my-6">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50/60">
               <div className="flex items-center gap-2">
                 <span className="w-7 h-7 rounded bg-teal-50 border border-teal-200 text-[#009691] flex items-center justify-center">
                   <Wrench className="w-3.5 h-3.5" />
                 </span>
-                <h3 className="text-sm font-bold text-gray-900">
-                  {editingIssue ? "Edit Issue Type" : "Add New Issue Type"}
-                </h3>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900">
+                    {editingIssue ? "Edit Issue Type" : "Add New Issue Type"}
+                  </h3>
+                  <span className="text-[10px] text-gray-400">
+                    Configures website intake wizard &amp; Schema.org RepairService
+                  </span>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 p-1 rounded-md"
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-md cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Modal Form */}
-            <form onSubmit={handleSave} className="p-4 space-y-3.5">
+            <form onSubmit={handleSave} className="p-4 space-y-3.5 max-h-[80vh] overflow-y-auto">
               <div>
                 <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
                   Issue Title
@@ -645,6 +755,99 @@ export default function IssueTypesCRUDPage() {
                   onChange={(e) => handleTitleChange(e.target.value)}
                   placeholder="e.g. Cracked Screen Repair"
                   className="w-full h-[34px] px-3 rounded-[6px] border border-gray-300 text-xs focus:outline-none focus:border-[#009691]"
+                />
+              </div>
+
+              {/* 1. SELECT ISSUE ICON */}
+              <div>
+                <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                  <span>Issue Icon Symbol</span>
+                  <span className="text-[10px] font-normal text-gray-400">
+                    Used in Booking Flow &amp; Service Lists
+                  </span>
+                </label>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
+                  {AVAILABLE_ICONS.map((item) => {
+                    const ItemIcon = item.icon;
+                    const isSelected = (formData.icon || "Wrench") === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, icon: item.id })}
+                        className={`p-2 rounded-lg border text-left flex items-center gap-2 transition cursor-pointer ${
+                          isSelected
+                            ? "border-[#009691] bg-teal-50/70 text-[#009691] ring-1 ring-[#009691]"
+                            : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300"
+                        }`}
+                      >
+                        <ItemIcon className="w-4 h-4 shrink-0" />
+                        <span className="text-[11px] font-semibold truncate leading-tight">
+                          {item.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 2. COMPONENT DIAGRAM / IMAGE PICKER */}
+              <div className="pt-2 border-t border-gray-100">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[11px] font-bold text-gray-700 uppercase tracking-wider">
+                    Issue Diagram / Photo (Optional)
+                  </label>
+                  <span className="text-[10px] text-teal-600 font-semibold">
+                    Injected into Schema.org
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {formData.image ? (
+                    <div className="relative w-12 h-12 rounded-lg border border-gray-300 overflow-hidden shrink-0 group">
+                      <img
+                        src={formData.image}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, image: "" })}
+                        className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                        title="Remove image"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ) : null}
+
+                  <div className="flex-1 flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setIsMediaModalOpen(true)}
+                      className="h-[32px] px-2.5 rounded-[5px] border border-gray-300 bg-white hover:bg-gray-50 text-[11px] font-semibold text-gray-700 inline-flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                    >
+                      <ImageIcon className="w-3.5 h-3.5 text-[#009691]" />
+                      <span>Media Library</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                      className="h-[32px] px-2.5 rounded-[5px] bg-gray-100 hover:bg-gray-200 text-gray-700 text-[11px] font-semibold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>{isUploading ? "Uploading..." : "Upload File"}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <input
+                  type="text"
+                  value={formData.image || ""}
+                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                  placeholder="Or enter direct URL: https://... or /uploads/..."
+                  className="w-full h-[30px] px-2.5 rounded-[5px] border border-gray-300 text-[11px] font-mono text-gray-600 focus:outline-none focus:border-[#009691] mt-1.5"
                 />
               </div>
 
@@ -718,6 +921,14 @@ export default function IssueTypesCRUDPage() {
                   onChange={(e) => setFormData({ ...formData, url: e.target.value })}
                   className="w-full h-[34px] px-3 rounded-[6px] border border-gray-300 text-xs font-mono text-gray-600 focus:outline-none focus:border-[#009691]"
                 />
+              </div>
+
+              {/* Schema.org Live Validation Snippet */}
+              <div className="p-2.5 rounded-lg bg-gray-900 text-emerald-400 font-mono text-[10px] leading-relaxed border border-gray-800">
+                <span className="text-gray-400 block mb-0.5">// Schema.org JSON-LD Service Object:</span>
+                <div>{`"@type": "Service", "serviceType": "${formData.title || "Repair Service"}",`}</div>
+                <div>{`"image": "${formData.image || "https://smartfonedoctor.com/logo-png.jpg"}",`}</div>
+                <div>{`"offers": { "@type": "Offer", "price": "${formData.startingPrice || 69}", "priceCurrency": "USD" }`}</div>
               </div>
 
               {/* Action Buttons */}

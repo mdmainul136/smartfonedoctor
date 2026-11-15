@@ -191,6 +191,9 @@ export interface ServiceIssueTaxonomy {
   startingPrice: number;
   turnaround: string;
   badge?: string;
+  icon?: string;
+  image?: string;
+  description?: string;
 }
 
 export const SERVICE_ISSUES_TAXONOMY: ServiceIssueTaxonomy[] = [
@@ -203,6 +206,9 @@ export const SERVICE_ISSUES_TAXONOMY: ServiceIssueTaxonomy[] = [
     startingPrice: 89,
     turnaround: "30 Mins",
     badge: "Most Common",
+    icon: "Smartphone",
+    image: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=800&auto=format&fit=crop&q=80",
+    description: "OEM OLED & Glass replacement with TrueTone & touch calibration.",
   },
   {
     id: "iss-battery",
@@ -213,6 +219,9 @@ export const SERVICE_ISSUES_TAXONOMY: ServiceIssueTaxonomy[] = [
     startingPrice: 69,
     turnaround: "25 Mins",
     badge: "OEM Grade",
+    icon: "BatteryCharging",
+    image: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=800&auto=format&fit=crop&q=80",
+    description: "Zero-cycle authentic battery cells restored to 100% capacity.",
   },
   {
     id: "iss-port",
@@ -222,6 +231,9 @@ export const SERVICE_ISSUES_TAXONOMY: ServiceIssueTaxonomy[] = [
     url: "/common-issues/smartphone/charging-port-replacement",
     startingPrice: 79,
     turnaround: "30 Mins",
+    icon: "Zap",
+    image: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&auto=format&fit=crop&q=80",
+    description: "USB-C & Lightning flex replacement and lint de-soldering.",
   },
   {
     id: "iss-water",
@@ -231,6 +243,9 @@ export const SERVICE_ISSUES_TAXONOMY: ServiceIssueTaxonomy[] = [
     url: "/common-issues/smartphone/water-damaged-phone-repair",
     startingPrice: 69,
     turnaround: "Same Day",
+    icon: "Droplets",
+    image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&auto=format&fit=crop&q=80",
+    description: "Ultrasonic chemical bath and galvanic corrosion remediation.",
   },
   {
     id: "iss-backglass",
@@ -240,6 +255,9 @@ export const SERVICE_ISSUES_TAXONOMY: ServiceIssueTaxonomy[] = [
     url: "/common-issues/smartphone/cracked-glass-replacement",
     startingPrice: 119,
     turnaround: "60 Mins",
+    icon: "Layers",
+    image: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=800&auto=format&fit=crop&q=80",
+    description: "Precision laser separation of shattered rear glass panels.",
   },
   {
     id: "iss-camera",
@@ -249,6 +267,9 @@ export const SERVICE_ISSUES_TAXONOMY: ServiceIssueTaxonomy[] = [
     url: "/repairs/smartphone",
     startingPrice: 89,
     turnaround: "45 Mins",
+    icon: "Camera",
+    image: "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=800&auto=format&fit=crop&q=80",
+    description: "OIS sensor stabilization, sapphire lens, and focus motor renewal.",
   },
   {
     id: "iss-audio",
@@ -258,6 +279,9 @@ export const SERVICE_ISSUES_TAXONOMY: ServiceIssueTaxonomy[] = [
     url: "/repairs/smartphone",
     startingPrice: 69,
     turnaround: "30 Mins",
+    icon: "Volume2",
+    image: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=800&auto=format&fit=crop&q=80",
+    description: "Ear speaker mesh cleaning and microphone module soldering.",
   },
   // Tablet
   {
@@ -336,38 +360,216 @@ export interface DeviceModelTaxonomy {
   brandSlug: string;
   url: string;
   isPopular: boolean;
+  image?: string;
+  description?: string;
 }
 
 export const DEVICE_MODELS_TAXONOMY: DeviceModelTaxonomy[] = [
   // Smartphones
-  { id: "dev-ip16pro", name: "iPhone 16 Pro Repair", categorySlug: "smartphone", brandSlug: "apple", url: "/schedule-repair?device=iPhone-16-Pro", isPopular: true },
-  { id: "dev-ip15", name: "iPhone 15 Repair", categorySlug: "smartphone", brandSlug: "apple", url: "/schedule-repair?device=iPhone-15", isPopular: true },
-  { id: "dev-ip14", name: "iPhone 14 Repair", categorySlug: "smartphone", brandSlug: "apple", url: "/schedule-repair?device=iPhone-14", isPopular: true },
-  { id: "dev-ip13", name: "iPhone 13 Repair", categorySlug: "smartphone", brandSlug: "apple", url: "/schedule-repair?device=iPhone-13", isPopular: true },
-  { id: "dev-s25", name: "Galaxy S25 Repair", categorySlug: "smartphone", brandSlug: "samsung", url: "/schedule-repair?device=Galaxy-S25", isPopular: true },
-  { id: "dev-px9", name: "Google Pixel 9 Repair", categorySlug: "smartphone", brandSlug: "google", url: "/schedule-repair?device=Pixel-9", isPopular: true },
+  {
+    id: "dev-ip16pro",
+    name: "iPhone 16 Pro Repair",
+    categorySlug: "smartphone",
+    brandSlug: "apple",
+    url: "/schedule-repair?device=iPhone-16-Pro",
+    isPopular: true,
+    image: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=800&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "dev-ip15",
+    name: "iPhone 15 Repair",
+    categorySlug: "smartphone",
+    brandSlug: "apple",
+    url: "/schedule-repair?device=iPhone-15",
+    isPopular: true,
+    image: "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=800&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "dev-ip14",
+    name: "iPhone 14 Repair",
+    categorySlug: "smartphone",
+    brandSlug: "apple",
+    url: "/schedule-repair?device=iPhone-14",
+    isPopular: true,
+    image: "https://images.unsplash.com/photo-1678685888221-cda773a3dcdb?w=800&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "dev-ip13",
+    name: "iPhone 13 Repair",
+    categorySlug: "smartphone",
+    brandSlug: "apple",
+    url: "/schedule-repair?device=iPhone-13",
+    isPopular: true,
+    image: "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=800&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "dev-s25",
+    name: "Galaxy S25 Repair",
+    categorySlug: "smartphone",
+    brandSlug: "samsung",
+    url: "/schedule-repair?device=Galaxy-S25",
+    isPopular: true,
+    image: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=800&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "dev-px9",
+    name: "Google Pixel 9 Repair",
+    categorySlug: "smartphone",
+    brandSlug: "google",
+    url: "/schedule-repair?device=Pixel-9",
+    isPopular: true,
+    image: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=800&auto=format&fit=crop&q=80",
+  },
 
   // Tablets
-  { id: "dev-ipad-pro", name: 'iPad Pro 12.9" Repair', categorySlug: "tablet", brandSlug: "apple", url: "/schedule-repair?device=iPad-Pro-12.9", isPopular: true },
-  { id: "dev-ipad-air5", name: "iPad Air 5 Repair", categorySlug: "tablet", brandSlug: "apple", url: "/schedule-repair?device=iPad-Air-5", isPopular: true },
-  { id: "dev-ipad-10", name: "iPad 10th Gen Repair", categorySlug: "tablet", brandSlug: "apple", url: "/schedule-repair?device=iPad-10th-Gen", isPopular: true },
-  { id: "dev-tab-s9", name: "Galaxy Tab S9 Repair", categorySlug: "tablet", brandSlug: "samsung", url: "/schedule-repair?device=Galaxy-Tab-S9", isPopular: true },
-  { id: "dev-surface9", name: "Surface Pro 9 Repair", categorySlug: "tablet", brandSlug: "microsoft", url: "/schedule-repair?device=Surface-Pro-9", isPopular: true },
+  {
+    id: "dev-ipad-pro",
+    name: 'iPad Pro 12.9" Repair',
+    categorySlug: "tablet",
+    brandSlug: "apple",
+    url: "/schedule-repair?device=iPad-Pro-12.9",
+    isPopular: true,
+    image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=800&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "dev-ipad-air5",
+    name: "iPad Air 5 Repair",
+    categorySlug: "tablet",
+    brandSlug: "apple",
+    url: "/schedule-repair?device=iPad-Air-5",
+    isPopular: true,
+    image: "https://images.unsplash.com/photo-1561154464-82e9adf32764?w=800&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "dev-ipad-10",
+    name: "iPad 10th Gen Repair",
+    categorySlug: "tablet",
+    brandSlug: "apple",
+    url: "/schedule-repair?device=iPad-10th-Gen",
+    isPopular: true,
+    image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=800&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "dev-tab-s9",
+    name: "Galaxy Tab S9 Repair",
+    categorySlug: "tablet",
+    brandSlug: "samsung",
+    url: "/schedule-repair?device=Galaxy-Tab-S9",
+    isPopular: true,
+    image: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "dev-surface9",
+    name: "Surface Pro 9 Repair",
+    categorySlug: "tablet",
+    brandSlug: "microsoft",
+    url: "/schedule-repair?device=Surface-Pro-9",
+    isPopular: true,
+    image: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&auto=format&fit=crop&q=80",
+  },
 
   // Consoles
-  { id: "dev-ps5", name: "PlayStation 5 Repair", categorySlug: "console", brandSlug: "sony", url: "/schedule-repair?device=PlayStation-5", isPopular: true },
-  { id: "dev-ps4", name: "PlayStation 4 Pro Repair", categorySlug: "console", brandSlug: "sony", url: "/schedule-repair?device=PlayStation-4-Pro", isPopular: true },
-  { id: "dev-xbox-x", name: "Xbox Series X Repair", categorySlug: "console", brandSlug: "microsoft", url: "/schedule-repair?device=Xbox-Series-X", isPopular: true },
-  { id: "dev-switch-oled", name: "Nintendo Switch OLED", categorySlug: "console", brandSlug: "nintendo", url: "/schedule-repair?device=Nintendo-Switch-OLED", isPopular: true },
-  { id: "dev-steamdeck", name: "Steam Deck Repair", categorySlug: "console", brandSlug: "asus", url: "/schedule-repair?device=Steam-Deck", isPopular: true },
+  {
+    id: "dev-ps5",
+    name: "PlayStation 5 Repair",
+    categorySlug: "console",
+    brandSlug: "sony",
+    url: "/schedule-repair?device=PlayStation-5",
+    isPopular: true,
+    image: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=800&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "dev-ps4",
+    name: "PlayStation 4 Pro Repair",
+    categorySlug: "console",
+    brandSlug: "sony",
+    url: "/schedule-repair?device=PlayStation-4-Pro",
+    isPopular: true,
+    image: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=800&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "dev-xbox-x",
+    name: "Xbox Series X Repair",
+    categorySlug: "console",
+    brandSlug: "microsoft",
+    url: "/schedule-repair?device=Xbox-Series-X",
+    isPopular: true,
+    image: "https://images.unsplash.com/photo-1621259182978-fbf93132d53d?w=800&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "dev-switch-oled",
+    name: "Nintendo Switch OLED",
+    categorySlug: "console",
+    brandSlug: "nintendo",
+    url: "/schedule-repair?device=Nintendo-Switch-OLED",
+    isPopular: true,
+    image: "https://images.unsplash.com/photo-1578303512597-81e6cc155b3e?w=800&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "dev-steamdeck",
+    name: "Steam Deck Repair",
+    categorySlug: "console",
+    brandSlug: "asus",
+    url: "/schedule-repair?device=Steam-Deck",
+    isPopular: true,
+    image: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=800&auto=format&fit=crop&q=80",
+  },
 
   // Computers
-  { id: "dev-macbook-pro", name: 'MacBook Pro 14"/16" Repair', categorySlug: "computer", brandSlug: "apple", url: "/schedule-repair?device=MacBook-Pro", isPopular: true },
-  { id: "dev-macbook-air", name: "MacBook Air M2/M3", categorySlug: "computer", brandSlug: "apple", url: "/schedule-repair?device=MacBook-Air", isPopular: true },
-  { id: "dev-dell-xps", name: "Dell XPS & Inspiron", categorySlug: "computer", brandSlug: "dell", url: "/schedule-repair?device=Dell-XPS", isPopular: true },
-  { id: "dev-hp-envy", name: "HP Pavilion & Envy", categorySlug: "computer", brandSlug: "hp", url: "/schedule-repair?device=HP-Envy", isPopular: true },
-  { id: "dev-lenovo-thinkpad", name: "Lenovo ThinkPad Repair", categorySlug: "computer", brandSlug: "lenovo", url: "/schedule-repair?device=Lenovo-ThinkPad", isPopular: true },
-  { id: "dev-asus-rog", name: "Asus ROG & ZenBook", categorySlug: "computer", brandSlug: "asus", url: "/schedule-repair?device=Asus-ROG", isPopular: true },
+  {
+    id: "dev-macbook-pro",
+    name: 'MacBook Pro 14"/16" Repair',
+    categorySlug: "computer",
+    brandSlug: "apple",
+    url: "/schedule-repair?device=MacBook-Pro",
+    isPopular: true,
+    image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "dev-macbook-air",
+    name: "MacBook Air M2/M3",
+    categorySlug: "computer",
+    brandSlug: "apple",
+    url: "/schedule-repair?device=MacBook-Air",
+    isPopular: true,
+    image: "https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=800&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "dev-dell-xps",
+    name: "Dell XPS & Inspiron",
+    categorySlug: "computer",
+    brandSlug: "dell",
+    url: "/schedule-repair?device=Dell-XPS",
+    isPopular: true,
+    image: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "dev-hp-envy",
+    name: "HP Pavilion & Envy",
+    categorySlug: "computer",
+    brandSlug: "hp",
+    url: "/schedule-repair?device=HP-Envy",
+    isPopular: true,
+    image: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "dev-lenovo-thinkpad",
+    name: "Lenovo ThinkPad Repair",
+    categorySlug: "computer",
+    brandSlug: "lenovo",
+    url: "/schedule-repair?device=Lenovo-ThinkPad",
+    isPopular: true,
+    image: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "dev-asus-rog",
+    name: "Asus ROG & ZenBook",
+    categorySlug: "computer",
+    brandSlug: "asus",
+    url: "/schedule-repair?device=Asus-ROG",
+    isPopular: true,
+    image: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&auto=format&fit=crop&q=80",
+  },
 ];
 
 // 5. CORE PAGES
@@ -583,30 +785,57 @@ export function saveStoredBrands(brands: BrandTaxonomy[]): void {
 export function getStoredIssues(): ServiceIssueTaxonomy[] {
   if (typeof window === "undefined") return SERVICE_ISSUES_TAXONOMY;
   try {
-    const raw = localStorage.getItem("sfd_tax_issues");
+    const raw = localStorage.getItem("sfd_tax_issues_v2");
     if (raw) return JSON.parse(raw);
+    const old = localStorage.getItem("sfd_tax_issues");
+    if (old) {
+      const parsed = JSON.parse(old) as ServiceIssueTaxonomy[];
+      const merged = parsed.map((item) => {
+        const seed = SERVICE_ISSUES_TAXONOMY.find((s) => s.id === item.id || s.slug === item.slug);
+        return {
+          ...item,
+          icon: item.icon || seed?.icon,
+          image: item.image || seed?.image,
+        };
+      });
+      localStorage.setItem("sfd_tax_issues_v2", JSON.stringify(merged));
+      return merged;
+    }
   } catch {}
   return SERVICE_ISSUES_TAXONOMY;
 }
 
 export function saveStoredIssues(issues: ServiceIssueTaxonomy[]): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem("sfd_tax_issues", JSON.stringify(issues));
+  localStorage.setItem("sfd_tax_issues_v2", JSON.stringify(issues));
   window.dispatchEvent(new Event("sfd-taxonomies-updated"));
 }
 
 export function getStoredModels(): DeviceModelTaxonomy[] {
   if (typeof window === "undefined") return DEVICE_MODELS_TAXONOMY;
   try {
-    const raw = localStorage.getItem("sfd_tax_models");
+    const raw = localStorage.getItem("sfd_tax_models_v2");
     if (raw) return JSON.parse(raw);
+    const old = localStorage.getItem("sfd_tax_models");
+    if (old) {
+      const parsed = JSON.parse(old) as DeviceModelTaxonomy[];
+      const merged = parsed.map((item) => {
+        const seed = DEVICE_MODELS_TAXONOMY.find((s) => s.id === item.id || s.name === item.name);
+        return {
+          ...item,
+          image: item.image || seed?.image,
+        };
+      });
+      localStorage.setItem("sfd_tax_models_v2", JSON.stringify(merged));
+      return merged;
+    }
   } catch {}
   return DEVICE_MODELS_TAXONOMY;
 }
 
 export function saveStoredModels(models: DeviceModelTaxonomy[]): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem("sfd_tax_models", JSON.stringify(models));
+  localStorage.setItem("sfd_tax_models_v2", JSON.stringify(models));
   window.dispatchEvent(new Event("sfd-taxonomies-updated"));
 }
 

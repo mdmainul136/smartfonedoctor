@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   Smartphone,
@@ -19,6 +19,9 @@ import {
   ChevronRight,
   Sparkles,
   Layers,
+  Upload,
+  Image as ImageIcon,
+  Code2,
 } from "lucide-react";
 import {
   DeviceModelTaxonomy,
@@ -28,6 +31,34 @@ import {
   saveStoredModels,
 } from "@/lib/taxonomy";
 import { getTaxonomyAction, saveTaxonomyAction } from "@/actions/taxonomy";
+import MediaModal, { type SelectedMediaPayload } from "@/components/admin/MediaModal";
+
+const PRESET_DEVICE_PHOTOS = [
+  {
+    name: "iPhone 16 Pro",
+    url: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=800&auto=format&fit=crop&q=80",
+  },
+  {
+    name: "Galaxy S25",
+    url: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=800&auto=format&fit=crop&q=80",
+  },
+  {
+    name: "Google Pixel 9",
+    url: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=800&auto=format&fit=crop&q=80",
+  },
+  {
+    name: "iPad Pro 12.9",
+    url: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=800&auto=format&fit=crop&q=80",
+  },
+  {
+    name: "PlayStation 5",
+    url: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=800&auto=format&fit=crop&q=80",
+  },
+  {
+    name: "MacBook Pro",
+    url: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&auto=format&fit=crop&q=80",
+  },
+];
 
 function getDeviceModelIcon(categorySlug: string) {
   switch (categorySlug) {
@@ -52,12 +83,18 @@ export default function DeviceModelsCRUDPage() {
   const [editingModel, setEditingModel] = useState<DeviceModelTaxonomy | null>(null);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
 
+  // Media Modal & File upload
+  const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Form State
   const [formData, setFormData] = useState<Partial<DeviceModelTaxonomy>>({
     name: "",
     categorySlug: "smartphone",
     brandSlug: "apple",
     url: "",
+    image: "",
     isPopular: true,
   });
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -98,6 +135,7 @@ export default function DeviceModelsCRUDPage() {
       categorySlug: "smartphone",
       brandSlug: "apple",
       url: "/schedule-repair?device=",
+      image: "",
       isPopular: true,
     });
     setIsModalOpen(true);
@@ -121,6 +159,30 @@ export default function DeviceModelsCRUDPage() {
     }));
   };
 
+  const handleDirectUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("alt", formData.name || "Device model photo");
+      const res = await fetch("/api/admin/media", { method: "POST", body: fd });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.item?.url) {
+          setFormData((prev) => ({ ...prev, image: data.item.url }));
+          showToast("Device picture uploaded successfully!");
+        }
+      }
+    } catch (err) {
+      console.error("Upload error:", err);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name?.trim()) return;
@@ -139,6 +201,7 @@ export default function DeviceModelsCRUDPage() {
         categorySlug: (formData.categorySlug as any) || "smartphone",
         brandSlug: formData.brandSlug || "apple",
         url: formData.url || `/schedule-repair?device=${slug}`,
+        image: formData.image || undefined,
         isPopular: formData.isPopular ?? false,
       };
       updated = [...models, newModel];
@@ -177,6 +240,28 @@ export default function DeviceModelsCRUDPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
+      {/* Hidden file input for direct upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleDirectUpload}
+        className="hidden"
+      />
+
+      {/* Media Management Modal */}
+      <MediaModal
+        isOpen={isMediaModalOpen}
+        onClose={() => setIsMediaModalOpen(false)}
+        onSelect={(payload: SelectedMediaPayload) => {
+          setFormData((prev) => ({ ...prev, image: payload.url }));
+          setIsMediaModalOpen(false);
+        }}
+        title="Select Device Picture"
+        selectButtonText="Use as Device Picture"
+        initialSelectedUrl={formData.image}
+      />
+
       {/* Toast Alert */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-[#111111] text-white px-4 py-2.5 rounded-lg shadow-xl text-xs font-semibold flex items-center gap-2 border border-neutral-700 animate-in fade-in slide-in-from-bottom-2">
@@ -199,7 +284,7 @@ export default function DeviceModelsCRUDPage() {
             Supported Device Models
           </h1>
           <p className="text-xs text-gray-500 mt-0.5">
-            Manage supported individual hardware models (iPhones, Galaxy, Pixels, iPads, PS5, MacBooks) and booking links.
+            Manage supported individual hardware models with real device pictures, brands, and Schema.org Product structured data.
           </p>
         </div>
 
@@ -231,7 +316,7 @@ export default function DeviceModelsCRUDPage() {
             <span className="text-xl sm:text-2xl font-bold text-gray-900 mt-0.5 block">
               {models.length} Devices
             </span>
-            <span className="text-[11px] text-emerald-600 font-medium">Mapped to repair wizards</span>
+            <span className="text-[11px] text-emerald-600 font-medium">Mapped to intake wizards</span>
           </div>
           <div className="w-10 h-10 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center text-[#009691] shrink-0">
             <Smartphone className="w-5 h-5" />
@@ -246,7 +331,7 @@ export default function DeviceModelsCRUDPage() {
             <span className="text-xl sm:text-2xl font-bold text-amber-600 mt-0.5 block">
               {popularCount} Models
             </span>
-            <span className="text-[11px] text-gray-500 font-medium">Featured in quick intake</span>
+            <span className="text-[11px] text-gray-500 font-medium">Featured with golden badge</span>
           </div>
           <div className="w-10 h-10 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shrink-0">
             <Star className="w-5 h-5 fill-amber-500" />
@@ -271,15 +356,15 @@ export default function DeviceModelsCRUDPage() {
         <div className="bg-white border border-[#e8e8e8] rounded-xl p-3.5 sm:p-4 shadow-2xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block">
-              Booking Ready
+              Schema.org Products
             </span>
             <span className="text-xl sm:text-2xl font-bold text-[#009691] mt-0.5 block">
               100% Active
             </span>
-            <span className="text-[11px] text-emerald-600 font-medium">Live schedule repair URLs</span>
+            <span className="text-[11px] text-emerald-600 font-medium">JSON-LD Product schema injected</span>
           </div>
           <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-            <Sparkles className="w-5 h-5" />
+            <Code2 className="w-5 h-5" />
           </div>
         </div>
       </div>
@@ -356,16 +441,16 @@ export default function DeviceModelsCRUDPage() {
         </div>
       </div>
 
-      {/* ── ELEVATED DEVICE MODELS TABLE ── */}
+      {/* ── ELEVATED DEVICE MODELS TABLE WITH REAL DEVICE PICS ── */}
       <div className="bg-white border border-[#e8e8e8] rounded-xl overflow-hidden shadow-2xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-[#f9fafb] text-gray-500 font-bold uppercase tracking-wider border-b border-[#e8e8e8] text-[10px]">
               <tr>
-                <th className="py-3.5 px-4">Device Model</th>
+                <th className="py-3.5 px-4">Device Model &amp; Picture</th>
                 <th className="py-3.5 px-4">Platform</th>
                 <th className="py-3.5 px-4">Manufacturer</th>
-                <th className="py-3.5 px-4">Popularity</th>
+                <th className="py-3.5 px-4">Status &amp; Schema</th>
                 <th className="py-3.5 px-4">Booking URL Route</th>
                 <th className="py-3.5 px-4 text-right">Actions</th>
               </tr>
@@ -380,14 +465,25 @@ export default function DeviceModelsCRUDPage() {
                     key={model.id}
                     className="hover:bg-gray-50/80 transition-colors group"
                   >
-                    {/* Model Name + Distinct Icon */}
+                    {/* Model Name + Real Device Photo or Icon */}
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-3">
-                        <span
-                          className={`w-8 h-8 rounded-lg ${iconInfo.bg} border ${iconInfo.border} ${iconInfo.color} flex items-center justify-center shrink-0 shadow-2xs transition-transform group-hover:scale-105`}
-                        >
-                          <IconComponent className="w-4 h-4" />
-                        </span>
+                        {model.image ? (
+                          <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-200 shrink-0 bg-gray-50 shadow-2xs">
+                            <img
+                              src={model.image}
+                              alt={model.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            />
+                          </div>
+                        ) : (
+                          <span
+                            className={`w-10 h-10 rounded-lg ${iconInfo.bg} border ${iconInfo.border} ${iconInfo.color} flex items-center justify-center shrink-0 shadow-2xs`}
+                          >
+                            <IconComponent className="w-5 h-5" />
+                          </span>
+                        )}
+
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="font-bold text-gray-900 text-[13px] group-hover:text-[#009691] transition-colors">
@@ -400,7 +496,7 @@ export default function DeviceModelsCRUDPage() {
                               </span>
                             )}
                           </div>
-                          <span className="text-[10px] text-gray-400 font-mono">
+                          <span className="text-[10px] text-gray-400 font-mono mt-0.5 block">
                             ID: {model.id}
                           </span>
                         </div>
@@ -421,16 +517,21 @@ export default function DeviceModelsCRUDPage() {
                       </span>
                     </td>
 
-                    {/* Popularity */}
+                    {/* Status & Schema */}
                     <td className="py-3.5 px-4">
-                      {model.isPopular ? (
-                        <span className="text-emerald-700 font-semibold text-[11px] inline-flex items-center gap-1">
-                          <Check className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>Intake Flagship</span>
+                      <div className="flex flex-col gap-0.5">
+                        {model.isPopular ? (
+                          <span className="text-emerald-700 font-semibold text-[11px] inline-flex items-center gap-1">
+                            <Check className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>Intake Flagship</span>
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-[11px]">Standard Catalog</span>
+                        )}
+                        <span className="text-[10px] text-indigo-600 font-mono">
+                          Schema.org Product
                         </span>
-                      ) : (
-                        <span className="text-gray-400 text-[11px]">Standard Catalog</span>
-                      )}
+                      </div>
                     </td>
 
                     {/* Booking URL */}
@@ -499,19 +600,24 @@ export default function DeviceModelsCRUDPage() {
         </div>
       </div>
 
-      {/* ── MODAL: ADD / EDIT DEVICE MODEL ── */}
+      {/* ── MODAL: ADD / EDIT DEVICE MODEL WITH PICTURE PICKER ── */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full border border-gray-200 overflow-hidden animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full border border-gray-200 overflow-hidden animate-in zoom-in-95 duration-150 my-6">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50/60">
               <div className="flex items-center gap-2">
                 <span className="w-7 h-7 rounded bg-teal-50 border border-teal-200 text-[#009691] flex items-center justify-center">
                   <Smartphone className="w-3.5 h-3.5" />
                 </span>
-                <h3 className="text-sm font-bold text-gray-900">
-                  {editingModel ? "Edit Device Model" : "Add Device Model"}
-                </h3>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900">
+                    {editingModel ? "Edit Device Model" : "Add Device Model"}
+                  </h3>
+                  <span className="text-[10px] text-gray-400">
+                    Configures website booking wizard &amp; Schema.org Product
+                  </span>
+                </div>
               </div>
               <button
                 type="button"
@@ -523,7 +629,7 @@ export default function DeviceModelsCRUDPage() {
             </div>
 
             {/* Modal Form */}
-            <form onSubmit={handleSave} className="p-4 space-y-3.5">
+            <form onSubmit={handleSave} className="p-4 space-y-3.5 max-h-[80vh] overflow-y-auto">
               <div>
                 <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
                   Device Model Name
@@ -535,6 +641,93 @@ export default function DeviceModelsCRUDPage() {
                   onChange={(e) => handleNameChange(e.target.value)}
                   placeholder="e.g. iPhone 16 Pro Max"
                   className="w-full h-[34px] px-3 rounded-[6px] border border-gray-300 text-xs focus:outline-none focus:border-[#009691]"
+                />
+              </div>
+
+              {/* 1. DEVICE PHOTO / THUMBNAIL */}
+              <div className="pt-2 border-t border-gray-100">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-[11px] font-bold text-gray-700 uppercase tracking-wider">
+                    Device Picture / Thumbnail
+                  </label>
+                  <span className="text-[10px] text-teal-600 font-semibold">
+                    Injected into Schema.org Product
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {formData.image ? (
+                    <div className="relative w-14 h-14 rounded-lg border border-gray-300 overflow-hidden shrink-0 group shadow-2xs">
+                      <img
+                        src={formData.image}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, image: "" })}
+                        className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                        title="Remove image"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-14 h-14 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 shrink-0">
+                      <ImageIcon className="w-5 h-5 opacity-40" />
+                    </div>
+                  )}
+
+                  <div className="flex-1 flex flex-wrap items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setIsMediaModalOpen(true)}
+                      className="h-[32px] px-2.5 rounded-[5px] border border-gray-300 bg-white hover:bg-gray-50 text-[11px] font-semibold text-gray-700 inline-flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                    >
+                      <ImageIcon className="w-3.5 h-3.5 text-[#009691]" />
+                      <span>Media Library</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                      className="h-[32px] px-2.5 rounded-[5px] bg-gray-100 hover:bg-gray-200 text-gray-700 text-[11px] font-semibold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>{isUploading ? "Uploading..." : "Upload Photo"}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Quick Presets */}
+                <div className="mt-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-1">
+                    Or select quick flagship preset photo:
+                  </span>
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                    {PRESET_DEVICE_PHOTOS.map((preset) => (
+                      <button
+                        key={preset.name}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, image: preset.url })}
+                        className={`px-2 py-1 rounded text-[10px] font-semibold whitespace-nowrap border transition cursor-pointer ${
+                          formData.image === preset.url
+                            ? "bg-teal-50 border-[#009691] text-[#009691]"
+                            : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+                        }`}
+                      >
+                        {preset.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <input
+                  type="text"
+                  value={formData.image || ""}
+                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                  placeholder="Or enter direct URL: https://... or /uploads/..."
+                  className="w-full h-[30px] px-2.5 rounded-[5px] border border-gray-300 text-[11px] font-mono text-gray-600 focus:outline-none focus:border-[#009691] mt-1.5"
                 />
               </div>
 
@@ -596,9 +789,17 @@ export default function DeviceModelsCRUDPage() {
                     className="w-4 h-4 rounded text-[#009691] focus:ring-[#009691]"
                   />
                   <span className="text-xs font-semibold text-gray-800">
-                    Feature as Popular Flagship (Shows golden star badge in quick intake wizard)
+                    Feature as Popular Flagship (Shows golden star badge in intake wizard)
                   </span>
                 </label>
+              </div>
+
+              {/* Schema.org Live Validation Snippet */}
+              <div className="p-2.5 rounded-lg bg-gray-900 text-emerald-400 font-mono text-[10px] leading-relaxed border border-gray-800">
+                <span className="text-gray-400 block mb-0.5">// Schema.org JSON-LD Product Object:</span>
+                <div>{`"@type": "Product", "name": "${formData.name || "Device Model"}",`}</div>
+                <div>{`"image": "${formData.image || "https://smartfonedoctor.com/logo-png.jpg"}",`}</div>
+                <div>{`"brand": { "@type": "Brand", "name": "${formData.brandSlug || "apple"}" }`}</div>
               </div>
 
               {/* Action Buttons */}

@@ -69,6 +69,7 @@ export default function ServiceDetailClient({ service }: Props) {
     url: `/repairs/${service.categoryId}/${service.serviceId}`,
     priceAftermarket: 89,
     priceOem: 149,
+    image: service.heroImage || "https://smartfonedoctor.com/logo-png.jpg",
   });
 
   const diagnosticGuides =
