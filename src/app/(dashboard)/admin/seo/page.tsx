@@ -985,39 +985,21 @@ export default function SeoManagerPage() {
         </div>
       )}
 
-      {/* TAB 5: MULTI-STORE SCHEMA.ORG */}
+      {/* TAB 5: MULTI-STORE SCHEMA.ORG STUDIO */}
       {activeTab === "schema" && (
-        <div className="space-y-5">
-          {/* TOP TOOLBAR: SWITCHERS & ACTIONS */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-2 border-b border-gray-100">
+        <div className="space-y-4">
+          {/* Top Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-200">
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-gray-900">Schema.org Structured Data</h3>
-                <span className="text-[11px] font-semibold text-[#009691] bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
-                  {schemaType}
-                </span>
-              </div>
+              <h2 className="text-base font-semibold text-gray-900">
+                Schema.org Structured Data Studio
+              </h2>
               <p className="text-xs text-gray-500 mt-0.5">
-                Switch location scope, select schema type, edit branch coordinates, or auto-enhance Rich Results.
+                Multi-location JSON-LD markup for Google Search Rich Snippets &amp; Maps synchronization.
               </p>
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap">
-              {/* Improve / Auto-Enhance Button */}
-              <button
-                type="button"
-                onClick={handleToggleEnhance}
-                className={`h-8 px-3 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 border transition-all cursor-pointer ${
-                  isEnhanced
-                    ? "bg-emerald-50 text-emerald-800 border-emerald-300 shadow-2xs"
-                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                }`}
-                title="Automatically populate paymentAccepted, currenciesAccepted, areaServed, and services"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                <span>{isEnhanced ? "100% Rich Enhanced" : "Auto-Enhance Schema"}</span>
-              </button>
-
+            <div className="flex items-center gap-2">
               <a
                 href="https://search.google.com/test/rich-results"
                 target="_blank"
@@ -1025,13 +1007,13 @@ export default function SeoManagerPage() {
                 className="h-8 px-3 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-xs font-medium inline-flex items-center gap-1.5 transition-colors"
               >
                 <span>Google Rich Results Test</span>
-                <ExternalLink className="w-3 h-3 text-gray-400" />
+                <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
               </a>
 
               <button
                 type="button"
                 onClick={handleCopy}
-                className="h-8 px-3.5 rounded-lg bg-[#009691] hover:bg-[#007f7b] text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer shadow-2xs transition-colors"
+                className="h-8 px-3.5 rounded-lg bg-[#009691] hover:bg-[#007f7b] text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
               >
                 {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copied ? "Copied!" : "Copy JSON-LD"}</span>
@@ -1039,136 +1021,210 @@ export default function SeoManagerPage() {
             </div>
           </div>
 
-          {/* 1. SWITCH CONTROLS (Location Scope & Schema @type) */}
-          <div className="bg-gray-50 p-3.5 rounded-lg border border-gray-200 flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-medium text-gray-600 shrink-0">Switch Scope:</span>
-              <button
-                type="button"
-                onClick={() => setSchemaScope("all")}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer ${
-                  schemaScope === "all"
-                    ? "bg-[#009691] text-white shadow-xs"
-                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
-                }`}
-              >
-                All Locations (Consolidated Graph)
-              </button>
-              {stores.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => setSchemaScope(s.id)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer ${
-                    schemaScope === s.id
-                      ? "bg-[#009691] text-white shadow-xs"
-                      : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
-                  }`}
-                >
-                  Store #{s.id}
-                </button>
-              ))}
-            </div>
+          {/* 2-COLUMN STUDIO LAYOUT */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+            {/* LEFT COLUMN: Controls, Active Entity, & Enhancements (5 cols) */}
+            <div className="lg:col-span-5 space-y-4">
+              {/* Location Scope Switcher Card */}
+              <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-gray-900 uppercase tracking-wider">
+                    Location Scope
+                  </span>
+                  <span className="text-[11px] text-gray-500 font-medium">
+                    {schemaScope === "all" ? "Consolidated Multi-Store" : `Store #${schemaScope}`}
+                  </span>
+                </div>
 
-            <div className="flex items-center gap-2 shrink-0">
-              <label htmlFor="schemaTypeSelect" className="text-xs font-medium text-gray-600">
-                Schema @type:
-              </label>
-              <select
-                id="schemaTypeSelect"
-                value={schemaType}
-                onChange={(e) => setSchemaType(e.target.value)}
-                className="h-8 px-2.5 rounded-md border border-gray-300 bg-white text-xs font-medium text-gray-800 focus:outline-none focus:border-[#009691]"
-              >
-                <option value="ElectronicsRepairShop">ElectronicsRepairShop (Recommended)</option>
-                <option value="MobilePhoneRepairShop">MobilePhoneRepairShop</option>
-                <option value="LocalBusiness">LocalBusiness</option>
-                <option value="FAQPage">FAQPage</option>
-                <option value="Service">Service / OfferCatalog</option>
-              </select>
-            </div>
-          </div>
+                {/* Scope segmented buttons */}
+                <div className="grid grid-cols-2 gap-1.5 p-1 bg-gray-100 rounded-lg text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setSchemaScope("all")}
+                    className={`py-1.5 px-2 rounded-md font-medium text-center transition-all cursor-pointer ${
+                      schemaScope === "all"
+                        ? "bg-white text-[#009691] shadow-2xs font-semibold"
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
+                    All Locations
+                  </button>
+                  {stores.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => setSchemaScope(s.id)}
+                      className={`py-1.5 px-2 rounded-md font-medium text-center transition-all cursor-pointer ${
+                        schemaScope === s.id
+                          ? "bg-white text-[#009691] shadow-2xs font-semibold"
+                          : "text-gray-600 hover:text-gray-900"
+                      }`}
+                    >
+                      Store #{s.id}
+                    </button>
+                  ))}
+                </div>
 
-          {/* 2. CLICKABLE & EDITABLE STORE CARDS */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {stores.map((s) => {
-              const isSelected = schemaScope === s.id;
-              return (
-                <div
-                  key={s.id}
-                  onClick={() => setSchemaScope(s.id)}
-                  className={`bg-white rounded-lg p-3.5 space-y-2 cursor-pointer transition-all border ${
-                    isSelected
-                      ? "border-[#009691] ring-1 ring-[#009691] bg-teal-50/20"
-                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50/50"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[11px] font-bold text-[#009691] uppercase">Store #{s.id}</span>
-                      {isSelected && (
-                        <span className="text-[10px] bg-[#009691] text-white font-semibold px-1.5 py-0.2 rounded">
-                          Active View
-                        </span>
-                      )}
-                    </div>
+                {/* Schema @type selector */}
+                <div className="pt-2 border-t border-gray-100">
+                  <label htmlFor="schemaTypeSelector" className="text-xs font-medium text-gray-700 block mb-1">
+                    Primary Schema @type
+                  </label>
+                  <select
+                    id="schemaTypeSelector"
+                    value={schemaType}
+                    onChange={(e) => setSchemaType(e.target.value)}
+                    className="w-full h-8 px-2.5 rounded-lg border border-gray-300 bg-white text-xs font-medium text-gray-800 focus:outline-none focus:border-[#009691]"
+                  >
+                    <option value="ElectronicsRepairShop">ElectronicsRepairShop (Recommended)</option>
+                    <option value="MobilePhoneRepairShop">MobilePhoneRepairShop</option>
+                    <option value="LocalBusiness">LocalBusiness</option>
+                    <option value="FAQPage">FAQPage (Q&amp;A Rich Snippets)</option>
+                    <option value="Service">Service (Repair Offer Catalog)</option>
+                  </select>
+                </div>
+              </div>
 
+              {/* Active Entity Card */}
+              <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-[#009691]" />
+                    <span className="text-xs font-semibold text-gray-900">
+                      {activeStoreObj ? activeStoreObj.name : "All 3 Philadelphia Locations"}
+                    </span>
+                  </div>
+                  {activeStoreObj && (
                     <button
                       type="button"
-                      onClick={(e) => handleOpenEditStore(s, e)}
-                      className="h-6 px-2 rounded border border-gray-300 bg-white hover:bg-gray-100 text-[11px] font-medium text-gray-700 inline-flex items-center gap-1 cursor-pointer"
-                      title="Edit store address, phone, and schema coordinates"
+                      onClick={(e) => handleOpenEditStore(activeStoreObj, e)}
+                      className="text-xs text-[#009691] hover:text-[#007f7b] font-medium inline-flex items-center gap-1 cursor-pointer"
                     >
-                      <Pencil className="w-2.5 h-2.5 text-[#009691]" />
+                      <Pencil className="w-3 h-3" />
                       <span>Edit</span>
                     </button>
+                  )}
+                </div>
+
+                <div className="space-y-1.5 text-xs text-gray-600">
+                  <div className="flex items-start gap-2">
+                    <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" />
+                    <span>
+                      {activeStoreObj
+                        ? `${activeStoreObj.address}, ${activeStoreObj.cityStateZip}`
+                        : "3 Stores across West Philadelphia & University City"}
+                    </span>
                   </div>
-
-                  <h4 className="text-xs font-semibold text-gray-900 leading-snug">{s.name}</h4>
-                  <p className="text-xs text-gray-500 leading-snug">{s.address}, {s.cityStateZip}</p>
-
-                  <div className="text-xs text-gray-500 pt-2 border-t border-gray-100 flex items-center justify-between">
-                    <span>{s.phone}</span>
-                    <span className="text-amber-600 font-medium">★ 4.9 (500+ reviews)</span>
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                    <span>{activeStoreObj ? activeStoreObj.businessHours : "Mon - Sat: 10:00 AM - 7:00 PM"}</span>
+                  </div>
+                  <div className="flex items-center justify-between pt-1 text-gray-500">
+                    <span>Phone: {activeStoreObj ? activeStoreObj.phone : "+1 (215) 598-2090"}</span>
+                    <span className="text-amber-600 font-medium">★ 4.9 (1,500+ reviews)</span>
                   </div>
                 </div>
-              );
-            })}
-          </div>
 
-          {/* 3. SCHEMA QUALITY & RICH RESULTS CHECKLIST */}
-          <div className="p-3.5 rounded-lg border border-emerald-200 bg-emerald-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span className="font-semibold text-emerald-950">Google Rich Results Health: 100% Valid</span>
-              <span className="text-emerald-700 hidden sm:inline">· Star Ratings, GeoCoordinates, PostalAddress &amp; OpeningHours detected</span>
-            </div>
-            <div className="flex items-center gap-2 text-[11px] text-emerald-800 font-medium">
-              <span>{isEnhanced ? "Rich Catalog & Payment Active" : "Standard Specification"}</span>
-            </div>
-          </div>
-
-          {/* 4. CODE PREVIEW CONTAINER */}
-          <div className="rounded-lg border border-gray-800 bg-gray-900 overflow-hidden">
-            <div className="px-4 py-2 bg-gray-950 border-b border-gray-800 flex items-center justify-between text-xs text-gray-400">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                <span className="font-mono text-xs text-gray-300">
-                  application/ld+json · Scope: {schemaScope === "all" ? "All Locations" : `Store #${schemaScope}`} ({schemaType})
-                </span>
+                {/* Store Quick Switchers (Cards) if in all view */}
+                {schemaScope === "all" && (
+                  <div className="pt-2 border-t border-gray-100 space-y-1.5">
+                    <span className="text-[11px] font-medium text-gray-400 block uppercase tracking-wider">
+                      Included Branches ({stores.length})
+                    </span>
+                    <div className="space-y-1">
+                      {stores.map((s) => (
+                        <div
+                          key={s.id}
+                          className="flex items-center justify-between text-xs p-2 rounded-lg bg-gray-50 border border-gray-100"
+                        >
+                          <div className="min-w-0 pr-2">
+                            <span className="font-semibold text-gray-800 block truncate">{s.name}</span>
+                            <span className="text-[11px] text-gray-500 block truncate">{s.address}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => handleOpenEditStore(s, e)}
+                            className="text-[11px] text-[#009691] hover:underline shrink-0 font-medium cursor-pointer"
+                          >
+                            Edit
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="text-xs text-emerald-400 hover:text-emerald-300 font-medium inline-flex items-center gap-1 cursor-pointer"
-              >
-                {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                <span>{copied ? "Copied" : "Copy Code"}</span>
-              </button>
+
+              {/* Schema Enhancements & Rich Results Checklist */}
+              <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-semibold text-gray-900 block">Rich Results Enhancements</span>
+                    <span className="text-[11px] text-gray-500 block">Inject payment methods, service catalog &amp; geofence</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={isEnhanced}
+                    onChange={handleToggleEnhance}
+                    className="w-4 h-4 text-[#009691] rounded accent-[#009691] cursor-pointer"
+                  />
+                </div>
+
+                <div className="pt-2 border-t border-gray-100 space-y-1.5 text-xs text-gray-600">
+                  <div className="flex items-center gap-2 text-emerald-700">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>Valid Schema.org syntax &amp; context</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-emerald-700">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>Google Star Rating snippet eligible (4.9★)</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-emerald-700">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>Accurate GPS Coordinates &amp; PostalAddress</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-emerald-700">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>GMB &amp; Yelp Authority Verification links</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <pre className="p-4 text-emerald-400 font-mono text-xs leading-relaxed overflow-x-auto max-h-[380px]">
-              {JSON.stringify(jsonLdData, null, 2)}
-            </pre>
+
+            {/* RIGHT COLUMN: Code Inspector & Output Window (7 cols) */}
+            <div className="lg:col-span-7 bg-gray-950 rounded-xl border border-gray-800 overflow-hidden shadow-sm flex flex-col">
+              <div className="px-4 py-3 bg-gray-900/90 border-b border-gray-800 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                  <span className="font-mono text-gray-300">
+                    application/ld+json
+                  </span>
+                  <span className="text-gray-500 text-[11px]">
+                    ({schemaScope === "all" ? "Multi-Location" : `Store #${schemaScope}`})
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCopy}
+                    className="h-7 px-2.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                    <span>{copied ? "Copied" : "Copy Code"}</span>
+                  </button>
+                </div>
+              </div>
+
+              <pre className="p-4 text-emerald-400 font-mono text-xs leading-relaxed overflow-x-auto max-h-[520px] select-all">
+                {JSON.stringify(jsonLdData, null, 2)}
+              </pre>
+
+              <div className="px-4 py-2 bg-gray-900/50 border-t border-gray-800 text-[11px] text-gray-500 flex items-center justify-between">
+                <span>Dynamically generated &amp; injected into HTML head</span>
+                <span className="text-emerald-500 font-medium">Ready for Google Search Console</span>
+              </div>
+            </div>
           </div>
 
           {/* ── EDIT STORE MODAL ── */}
