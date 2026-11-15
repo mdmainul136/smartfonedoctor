@@ -3,7 +3,7 @@ import { PrismaClient, Prisma } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export async function seedSeoMetadata() {
-  console.log("🌱 [Seeder] Seeding Plugin-Style SEO Metadata for Pages & Blog Posts...");
+  console.log("🌱 [Seeder] Seeding Enterprise Plugin-Style SEO & AI/LLM Metadata...");
 
   // 1. Seed SEO Metadata for CMS Pages
   const pages = await prisma.cmsPage.findMany();
@@ -11,46 +11,97 @@ export async function seedSeoMetadata() {
     const metaTitle = page.title || `${page.name} | SmartFoneDoctor`;
     const metaDesc = page.metaDesc || page.heroSubtitle || "Professional electronics repair services in Philadelphia, PA.";
     const canonical = page.canonicalUrl || `https://smartfonedoctor.com${page.path === "/" ? "" : page.path}`;
+    const kw = page.focusKeyword || page.keywords?.[0] || "phone repair philadelphia";
+    const aiSummary = `${page.name} offers certified, same-day electronic repair services in Philadelphia, specializing in ${kw}. Includes 90-day comprehensive warranty and fast turnaround at 33 S 52nd St and Lancaster Ave locations.`;
+
+    const seoData = {
+      metaTitle,
+      metaDescription: metaDesc,
+      focusKeyword: kw,
+      keywords: page.keywords || [kw],
+      secondaryKeywords: page.keywords?.filter((k) => k !== kw) || [],
+      canonicalUrl: canonical,
+      breadcrumbTitle: page.name,
+
+      // Robots crawling directives
+      robotsIndex: true,
+      robotsFollow: true,
+      robotsNoArchive: false,
+      robotsNoSnippet: false,
+      robotsMaxSnippet: -1,
+      robotsMaxImagePreview: "large",
+      robotsMaxVideoPreview: -1,
+
+      // AI & LLM Search Optimization
+      allowAiCrawlers: true,
+      allowAiTraining: true,
+      aiSummary,
+      aiSnippetEnabled: true,
+
+      // Social / OpenGraph
+      ogTitle: metaTitle,
+      ogDescription: metaDesc,
+      ogImage: page.featuredImage || "/logo-png.jpg",
+      ogType: "website",
+      ogLocale: "en_US",
+      ogSiteName: "SmartFoneDoctor",
+
+      // Twitter Cards
+      twitterCard: "summary_large_image",
+      twitterTitle: metaTitle,
+      twitterDescription: metaDesc,
+      twitterImage: page.featuredImage || "/logo-png.jpg",
+      twitterCreator: "@smartfonedoctor",
+
+      // Structured Data
+      schemaType: page.schemaType || (page.path === "/" ? "LocalBusiness" : "Service"),
+      structuredData: {
+        "@context": "https://schema.org",
+        "@type": page.schemaType || "LocalBusiness",
+        name: `SmartFoneDoctor - ${page.name}`,
+        url: canonical,
+        description: metaDesc,
+        telephone: "+1 (215) 598-2090",
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: "33 S 52nd St, Fl 2nd",
+          addressLocality: "Philadelphia",
+          addressRegion: "PA",
+          postalCode: "19139",
+          addressCountry: "US",
+        },
+      },
+
+      // RankMath Live Scoring
+      score: 95,
+      readabilityScore: 92,
+      auditPassed: 14,
+      auditTotal: 15,
+      auditLog: [
+        { id: "kw-title", label: "Focus Keyword in Title", passed: true, scoreWeight: 20 },
+        { id: "kw-url", label: "Focus Keyword in URL Slug", passed: true, scoreWeight: 15 },
+        { id: "kw-desc", label: "Focus Keyword in Meta Description", passed: true, scoreWeight: 15 },
+        { id: "kw-intro", label: "Focus Keyword in Content Intro", passed: true, scoreWeight: 15 },
+        { id: "content-len", label: "Content Length", passed: true, scoreWeight: 15 },
+        { id: "internal-links", label: "Internal Links Found", passed: true, scoreWeight: 10 },
+        { id: "external-links", label: "External References Found", passed: true, scoreWeight: 10 },
+      ],
+
+      // Sitemap
+      includeInSitemap: true,
+      sitemapPriority: new Prisma.Decimal(page.path === "/" ? 1.0 : 0.8),
+      changeFrequency: page.path === "/" ? "daily" : "weekly",
+    };
 
     await prisma.seoMetadata.upsert({
       where: { pageId: page.id },
-      update: {
-        metaTitle,
-        metaDescription: metaDesc,
-        focusKeyword: page.focusKeyword,
-        keywords: page.keywords,
-        canonicalUrl: canonical,
-        ogTitle: metaTitle,
-        ogDescription: metaDesc,
-        ogImage: page.featuredImage || "/logo-png.jpg",
-        twitterCard: "summary_large_image",
-        schemaType: page.schemaType || "LocalBusiness",
-        robotsIndex: true,
-        robotsFollow: true,
-        score: 94,
-        sitemapPriority: new Prisma.Decimal(page.path === "/" ? 1.0 : 0.8),
-        changeFrequency: page.path === "/" ? "daily" : "weekly",
-      },
+      update: seoData,
       create: {
         pageId: page.id,
-        metaTitle,
-        metaDescription: metaDesc,
-        focusKeyword: page.focusKeyword,
-        keywords: page.keywords,
-        canonicalUrl: canonical,
-        ogTitle: metaTitle,
-        ogDescription: metaDesc,
-        ogImage: page.featuredImage || "/logo-png.jpg",
-        twitterCard: "summary_large_image",
-        schemaType: page.schemaType || "LocalBusiness",
-        robotsIndex: true,
-        robotsFollow: true,
-        score: 94,
-        sitemapPriority: new Prisma.Decimal(page.path === "/" ? 1.0 : 0.8),
-        changeFrequency: page.path === "/" ? "daily" : "weekly",
+        ...seoData,
       },
     });
-    console.log(`  ✓ Synced SEO plugin metadata for page: "${page.name}" (${canonical})`);
+    console.log(`  ✓ Synced enterprise SEO & AI metadata for page: "${page.name}"`);
   }
 
   // 2. Seed SEO Metadata for Blog Posts
@@ -59,47 +110,89 @@ export async function seedSeoMetadata() {
     const metaTitle = `${post.title} | SmartFoneDoctor Repair Guides`;
     const metaDesc = post.excerpt || "Comprehensive step-by-step troubleshooting and repair guide.";
     const canonical = `https://smartfonedoctor.com/blog/${post.slug}`;
+    const kw = post.focusKeyword || "hardware repair guide";
+
+    const blogSeoData = {
+      metaTitle,
+      metaDescription: metaDesc,
+      focusKeyword: kw,
+      keywords: [kw, "technician guide", "troubleshooting"],
+      secondaryKeywords: ["repair tips", "diagnostics"],
+      canonicalUrl: canonical,
+      breadcrumbTitle: post.title,
+
+      // Robots
+      robotsIndex: true,
+      robotsFollow: true,
+      robotsNoArchive: false,
+      robotsNoSnippet: false,
+      robotsMaxSnippet: -1,
+      robotsMaxImagePreview: "large",
+      robotsMaxVideoPreview: -1,
+
+      // AI/LLM
+      allowAiCrawlers: true,
+      allowAiTraining: true,
+      aiSummary: `Technical repair guide detailing: ${post.title}. Authored by certified technicians covering diagnostic symptoms, equipment required, and bench procedures.`,
+      aiSnippetEnabled: true,
+
+      // Social
+      ogTitle: metaTitle,
+      ogDescription: metaDesc,
+      ogImage: post.featuredImage || "/logo-png.jpg",
+      ogType: "article",
+      ogLocale: "en_US",
+      ogSiteName: "SmartFoneDoctor",
+
+      // Twitter
+      twitterCard: "summary_large_image",
+      twitterTitle: metaTitle,
+      twitterDescription: metaDesc,
+      twitterImage: post.featuredImage || "/logo-png.jpg",
+      twitterCreator: "@smartfonedoctor",
+
+      // Schema
+      schemaType: "TechArticle",
+      structuredData: {
+        "@context": "https://schema.org",
+        "@type": "TechArticle",
+        headline: post.title,
+        description: metaDesc,
+        image: post.featuredImage || "/logo-png.jpg",
+        author: {
+          "@type": "Person",
+          name: post.author || "Certified Technician",
+        },
+        publisher: {
+          "@type": "LocalBusiness",
+          name: "SmartFoneDoctor Philadelphia",
+        },
+      },
+
+      // RankMath
+      score: 92,
+      readabilityScore: 89,
+      auditPassed: 13,
+      auditTotal: 15,
+
+      // Sitemap
+      includeInSitemap: true,
+      sitemapPriority: new Prisma.Decimal(0.7),
+      changeFrequency: "monthly",
+    };
 
     await prisma.seoMetadata.upsert({
       where: { postId: post.id },
-      update: {
-        metaTitle,
-        metaDescription: metaDesc,
-        focusKeyword: post.focusKeyword,
-        canonicalUrl: canonical,
-        ogTitle: metaTitle,
-        ogDescription: metaDesc,
-        ogImage: post.featuredImage || "/logo-png.jpg",
-        twitterCard: "summary_large_image",
-        schemaType: "TechArticle",
-        robotsIndex: true,
-        robotsFollow: true,
-        score: 91,
-        sitemapPriority: new Prisma.Decimal(0.7),
-        changeFrequency: "monthly",
-      },
+      update: blogSeoData,
       create: {
         postId: post.id,
-        metaTitle,
-        metaDescription: metaDesc,
-        focusKeyword: post.focusKeyword,
-        canonicalUrl: canonical,
-        ogTitle: metaTitle,
-        ogDescription: metaDesc,
-        ogImage: post.featuredImage || "/logo-png.jpg",
-        twitterCard: "summary_large_image",
-        schemaType: "TechArticle",
-        robotsIndex: true,
-        robotsFollow: true,
-        score: 91,
-        sitemapPriority: new Prisma.Decimal(0.7),
-        changeFrequency: "monthly",
+        ...blogSeoData,
       },
     });
-    console.log(`  ✓ Synced SEO plugin metadata for blog post: "${post.title}"`);
+    console.log(`  ✓ Synced enterprise SEO & AI metadata for blog: "${post.title}"`);
   }
 
-  console.log("✅ [Seeder] SEO Metadata seeded successfully.");
+  console.log("✅ [Seeder] Enterprise SEO & AI/LLM Metadata seeded successfully.");
 }
 
 // Allow independent CLI execution: npx tsx prisma/seeds/seo.seed.ts

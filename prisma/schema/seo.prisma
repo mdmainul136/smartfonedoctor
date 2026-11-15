@@ -1,40 +1,82 @@
 // -------------------------------------------------------------
-// Plugin-Style Reusable SEO & OpenGraph Metadata Engine
+// Plugin-Style Reusable SEO, OpenGraph & AI/LLM Metadata Engine
 // Pluggable across Pages, Blog Posts, Services & Landing Pages
 // -------------------------------------------------------------
 
 model SeoMetadata {
-  id                 String    @id @default(cuid())
-  metaTitle          String?
-  metaDescription    String?
-  focusKeyword       String?
-  keywords           String[]  @default([])
-  canonicalUrl       String?
-  robotsIndex        Boolean   @default(true)
-  robotsFollow       Boolean   @default(true)
-  ogTitle            String?
-  ogDescription      String?
-  ogImage            String?
-  ogType             String?   @default("website")
-  twitterCard        String?   @default("summary_large_image")
-  twitterTitle       String?
-  twitterDescription String?
-  twitterImage       String?
-  schemaType         String?   @default("LocalBusiness") // LocalBusiness, TechArticle, Service, FAQPage
-  structuredData     Json?     // Custom Schema.org JSON-LD snippet
-  score              Int?      @default(85) // RankMath SEO score (0-100)
-  sitemapPriority    Decimal?  @default(0.7) @db.Decimal
-  changeFrequency    String?   @default("weekly")
+  id                    String    @id @default(cuid())
 
-  // Pluggable 1-to-1 relations
-  pageId             String?   @unique
-  page               CmsPage?  @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  // 🎯 Core SERP & Keyword Optimization
+  metaTitle             String?
+  metaDescription       String?   @db.Text
+  focusKeyword          String?
+  keywords              String[]  @default([])
+  secondaryKeywords     String[]  @default([])
+  canonicalUrl          String?
+  breadcrumbTitle       String?
 
-  postId             String?   @unique
-  post               BlogPost? @relation(fields: [postId], references: [id], onDelete: Cascade)
+  // 🤖 Search Engine Robots & Crawling Directives
+  robotsIndex           Boolean   @default(true)  // index vs noindex
+  robotsFollow          Boolean   @default(true)  // follow vs nofollow
+  robotsNoArchive       Boolean   @default(false) // noarchive
+  robotsNoSnippet       Boolean   @default(false) // nosnippet
+  robotsMaxSnippet      Int?      @default(-1)    // max-snippet: -1 (unlimited)
+  robotsMaxImagePreview String?   @default("large") // max-image-preview: large
+  robotsMaxVideoPreview Int?      @default(-1)    // max-video-preview: -1
 
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  // 🧠 AI Search, LLM Crawlers & Semantic Citations (Perplexity, ChatGPT, Gemini, Applebot)
+  allowAiCrawlers       Boolean   @default(true)  // GPTBot, ClaudeBot, PerplexityBot, Google-Extended
+  allowAiTraining       Boolean   @default(true)  // Allow content for AI model training/RAG
+  aiSummary             String?   @db.Text        // Pre-indexed semantic summary optimized for LLM RAG context
+  aiSnippetEnabled      Boolean   @default(true)  // Allow AI search overviews / citations
 
+  // 📱 Social & OpenGraph Protocol (Facebook, LinkedIn, Discord)
+  ogTitle               String?
+  ogDescription         String?   @db.Text
+  ogImage               String?
+  ogType                String?   @default("website")
+  ogLocale              String?   @default("en_US")
+  ogSiteName            String?   @default("SmartFoneDoctor")
+
+  // 🐦 Twitter / X Cards
+  twitterCard           String?   @default("summary_large_image") // summary, summary_large_image
+  twitterTitle          String?
+  twitterDescription    String?   @db.Text
+  twitterImage          String?
+  twitterCreator        String?   @default("@smartfonedoctor")
+
+  // 🔍 Structured Data (Schema.org / JSON-LD Rich Snippets)
+  schemaType            String?   @default("LocalBusiness") // LocalBusiness, TechArticle, Service, Product, FAQPage, HowTo
+  structuredData        Json?     // Custom Schema.org JSON-LD graph override
+  
+  // 📊 Live Audit & RankMath Scoring
+  score                 Int?      @default(85)  // Live calculated SEO score (0-100)
+  readabilityScore      Int?      @default(90)  // Flesch-Kincaid readability score (0-100)
+  auditPassed           Int?      @default(12)  // Number of passing checks
+  auditTotal            Int?      @default(15)  // Total checks evaluated
+  auditLog              Json?     // Full checklist state breakdown [{ id, label, passed, warning, desc }]
+
+  // 🗺️ XML Sitemap & Indexing Priority
+  includeInSitemap      Boolean   @default(true)
+  sitemapPriority       Decimal?  @default(0.7) @db.Decimal
+  changeFrequency       String?   @default("weekly") // always, hourly, daily, weekly, monthly, yearly, never
+
+  // 🔀 Smart 301/302 Redirect Engine
+  redirectUrl           String?
+  redirectCode          Int?      // 301 (Permanent) or 302 (Temporary)
+
+  // 🔌 Pluggable 1-to-1 Polymorphic Relations
+  pageId                String?   @unique
+  page                  CmsPage?  @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  postId                String?   @unique
+  post                  BlogPost? @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([focusKeyword])
+  @@index([robotsIndex])
+  @@index([allowAiCrawlers])
   @@map("seo_metadata")
 }
