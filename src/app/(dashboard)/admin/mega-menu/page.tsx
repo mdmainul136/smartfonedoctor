@@ -215,40 +215,46 @@ export default function MegaMenuBuilderPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-[1700px] mx-auto space-y-6">
       
-      {/* 1. TOP HEADER & ACTION BAR */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-5 border-b border-[#e8e8e8]">
+      {/* 1. TOP HEADER & ACTION BAR (Clean Design System) */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-5 border-b border-gray-200">
         <div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-700">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200/80 flex items-center justify-center text-[#009691] shrink-0 shadow-xs">
               <Layers className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-[#111111] tracking-tight">
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-semibold tracking-wider text-[#009691] uppercase">Website Navigation</span>
+                <span className="text-gray-300">•</span>
+                <span className="text-[11px] text-gray-500 font-medium">Storefront Router</span>
+              </div>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
                 Mega Menu Builder &amp; URL Router
               </h1>
-              <p className="text-[13px] text-[#6b6b6b]">
+              <p className="text-xs sm:text-[13px] text-gray-500 mt-0.5">
                 Visual editor for customer storefront navigation. Every item automatically attaches to verified taxonomy routes.
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        {/* Action Buttons: Responsive, clean layout, zero clipping */}
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           <Link
             href="/admin/taxonomies"
-            className="h-[36px] px-3 rounded-[6px] border border-gray-300 bg-white hover:bg-gray-50 text-[13px] font-medium text-gray-700 inline-flex items-center gap-1.5 transition-colors"
+            className="h-9 px-3 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-xs font-semibold text-gray-700 inline-flex items-center gap-1.5 transition-colors shadow-2xs whitespace-nowrap"
           >
-            <FolderTree className="w-3.5 h-3.5 text-indigo-600" />
-            <span>Manage Taxonomies</span>
+            <FolderTree className="w-3.5 h-3.5 text-teal-600" />
+            <span>Taxonomies</span>
           </Link>
 
           <button
             type="button"
             onClick={handleReset}
-            className="h-[36px] px-3 rounded-[6px] border border-gray-300 bg-white hover:bg-gray-50 text-[13px] font-medium text-gray-700 inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="h-9 px-3 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-xs font-semibold text-gray-700 inline-flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer whitespace-nowrap"
             title="Reset to default menu items"
           >
-            <RotateCcw className="w-3.5 h-3.5" />
+            <RotateCcw className="w-3.5 h-3.5 text-gray-500" />
             <span>Reset Defaults</span>
           </button>
 
@@ -256,16 +262,16 @@ export default function MegaMenuBuilderPage() {
             href="/"
             target="_blank"
             rel="noreferrer"
-            className="h-[36px] px-3 rounded-[6px] border border-gray-300 bg-white hover:bg-gray-50 text-[13px] font-medium text-gray-700 inline-flex items-center gap-1.5 transition-colors"
+            className="h-9 px-3 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-xs font-semibold text-gray-700 inline-flex items-center gap-1.5 transition-colors shadow-2xs whitespace-nowrap"
           >
-            <ExternalLink className="w-3.5 h-3.5" />
+            <ExternalLink className="w-3.5 h-3.5 text-gray-500" />
             <span>View Live Site</span>
           </Link>
 
           <button
             type="button"
             onClick={handleSave}
-            className="h-[36px] px-4 rounded-[6px] bg-[#00897b] hover:bg-[#00796b] text-white text-[13px] font-semibold inline-flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+            className="h-9 px-4 rounded-lg bg-[#009691] hover:bg-[#007e7a] text-white text-xs font-bold inline-flex items-center gap-2 shadow-xs transition-all cursor-pointer whitespace-nowrap active:scale-[0.98]"
           >
             {saveSuccess ? (
               <>
@@ -282,83 +288,89 @@ export default function MegaMenuBuilderPage() {
         </div>
       </div>
 
-      {/* 2. LIVE STOREFRONT PREVIEW WINDOW (Pixel-perfect mirror of user's uploaded screenshot) */}
-      <div className="bg-white border border-gray-300 rounded-xl overflow-hidden shadow-sm">
+      {/* 2. LIVE STOREFRONT PREVIEW WINDOW (Clean, pixel-perfect, unclipped) */}
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-xs">
         
         {/* Mock Browser Header Bar */}
-        <div className="bg-[#f0f2f5] border-b border-gray-300 px-4 py-2.5 flex items-center justify-between">
+        <div className="bg-gray-50 border-b border-gray-200 px-4 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-[#ff5f56]" />
-            <span className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
-            <span className="w-3 h-3 rounded-full bg-[#27c93f]" />
-            <span className="ml-2 text-[12px] font-semibold text-gray-700 flex items-center gap-1.5">
-              <Eye className="w-3.5 h-3.5 text-[#00897b]" />
-              Customer Live Front-End Mega Menu Preview
+            <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" />
+            <span className="ml-2 text-[11px] font-semibold text-gray-700 flex items-center gap-1.5">
+              <Eye className="w-3.5 h-3.5 text-[#009691]" />
+              Customer Front-End Mega Menu Preview
             </span>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center bg-white px-3 py-1 rounded-md border border-gray-200 text-[11px] text-gray-500 font-mono">
+            <div className="hidden sm:flex items-center bg-white px-2.5 py-0.5 rounded border border-gray-200 text-[10px] text-gray-500 font-mono">
               https://smartfonedoctor.com/ (Desktop Header)
             </div>
             <button
               type="button"
               onClick={() => setPreviewExpanded(!previewExpanded)}
-              className="text-gray-600 hover:text-black p-1"
+              className="text-gray-500 hover:text-gray-900 p-1 rounded hover:bg-gray-100 transition-colors"
               title={previewExpanded ? "Collapse preview" : "Expand preview"}
             >
-              {previewExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+              {previewExpanded ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
             </button>
           </div>
         </div>
 
-        {/* SIMULATED DESKTOP WEBSITE HEADER (1:1 with user's front-end navbar) */}
-        <div className="bg-white border-b border-neutral-200 px-4 sm:px-8 py-3 flex items-center justify-between">
-          
-          {/* Real Logo */}
-          <div className="flex items-center gap-2">
-            <Image
-              src="/logo-png.jpg"
-              alt="SmartFone Doctor Logo"
-              width={160}
-              height={50}
-              priority
-              className="h-10 sm:h-12 w-auto object-contain"
-            />
-          </div>
-
-          {/* Desktop Nav Items */}
-          <div className="hidden lg:flex items-center gap-5 xl:gap-7 text-[14px] font-medium text-[#1d1c1a]">
-            {/* Active Repair button with Open Chevron */}
-            <div className="px-3.5 py-1.5 border border-[#1d1c1a] bg-white flex items-center gap-1.5 font-semibold text-[#1d1c1a]">
-              <span>Repair</span>
-              <ChevronDown className="w-4 h-4 rotate-180 text-neutral-600" />
+        {/* SIMULATED DESKTOP WEBSITE HEADER (Clean, well-spaced, never overlaps) */}
+        <div className="bg-white border-b border-gray-200 px-4 sm:px-6 py-2.5">
+          <div className="flex items-center justify-between gap-3">
+            
+            {/* Real Logo */}
+            <div className="shrink-0 flex items-center">
+              <Image
+                src="/logo-png.jpg"
+                alt="SmartFone Doctor Logo"
+                width={130}
+                height={38}
+                priority
+                className="h-8 sm:h-9 w-auto object-contain"
+              />
             </div>
 
-            <div className="flex items-center gap-1 text-neutral-800 hover:text-[#00897b] cursor-pointer">
-              <span>Repairs &amp; Services</span>
-              <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />
+            {/* Desktop Nav Items - Clean, responsive flex with proper gaps */}
+            <div className="flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-5 overflow-x-auto scrollbar-none py-1 text-xs font-medium text-gray-800">
+              {/* Active Repair button with Open Chevron */}
+              <div className="shrink-0 px-3 py-1.5 border border-gray-900 bg-gray-900 text-white rounded-md flex items-center gap-1.5 font-bold shadow-xs">
+                <span>Repair</span>
+                <ChevronDown className="w-3.5 h-3.5 rotate-180 text-teal-300" />
+              </div>
+
+              <div className="shrink-0 flex items-center gap-1 text-gray-700 hover:text-[#009691] cursor-pointer px-1">
+                <span>Services</span>
+                <ChevronDown className="w-3 h-3 text-gray-400" />
+              </div>
+
+              <div className="shrink-0 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-700 font-semibold flex items-center gap-1.5 text-[11px]">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="whitespace-nowrap">Free Estimate</span>
+              </div>
+
+              <span className="shrink-0 text-gray-700 hover:text-[#009691] cursor-pointer px-1 hidden sm:inline whitespace-nowrap">
+                Locations
+              </span>
+
+              <div className="shrink-0 px-2.5 py-1 rounded-full border border-teal-500/30 text-gray-800 font-semibold text-[11px] bg-teal-50/60 hidden md:flex items-center whitespace-nowrap">
+                Track Status
+              </div>
+
+              <span className="shrink-0 text-gray-700 hover:text-[#009691] cursor-pointer px-1 hidden lg:inline whitespace-nowrap">
+                About Us
+              </span>
             </div>
 
-            <div className="px-3 py-1 rounded-full bg-[#ccfbf1] text-[#0f766e] font-semibold flex items-center gap-1.5 text-[13px]">
-              <span className="w-2 h-2 rounded-full bg-[#0d9488]" />
-              <span>Free Estimate</span>
+            {/* Start Repair CTA - Fixed width, shrink-0, perfectly aligned */}
+            <div className="shrink-0">
+              <span className="px-3.5 py-1.5 sm:py-2 rounded-lg bg-[#009691] hover:bg-[#007e7a] text-white font-bold text-[11px] sm:text-xs uppercase tracking-wider shadow-xs whitespace-nowrap inline-flex items-center">
+                Start Repair
+              </span>
             </div>
-
-            <span className="text-neutral-800 hover:text-[#00897b] cursor-pointer">Locations</span>
-
-            <div className="px-3.5 py-1 rounded-full border border-[#0d9488] text-[#1d1c1a] font-semibold text-[13px] bg-[#99f6e4]/30 shadow-xs">
-              Track Status
-            </div>
-
-            <span className="text-neutral-800 hover:text-[#00897b] cursor-pointer">About Us</span>
-          </div>
-
-          {/* Start Repair CTA */}
-          <div className="hidden lg:block">
-            <span className="px-5 py-2.5 rounded bg-[#00897b] text-white font-bold text-[13px] uppercase tracking-wider shadow-xs">
-              START REPAIR
-            </span>
           </div>
         </div>
 
@@ -367,7 +379,7 @@ export default function MegaMenuBuilderPage() {
           <div className="max-w-[1350px] mx-auto">
             
             {/* Top Category Selector Row (Pills with chevron) */}
-            <div className="flex flex-wrap items-center gap-3 pb-6 border-b border-neutral-200">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 pb-5 border-b border-gray-200">
               {categoryKeys.map((key) => {
                 const cat = config.categories[key];
                 const isActive = activeCategory === key;
@@ -376,17 +388,17 @@ export default function MegaMenuBuilderPage() {
                     key={key}
                     type="button"
                     onClick={() => setActiveCategory(key)}
-                    className={`flex items-center gap-2.5 px-4 py-2 rounded-xl text-[14px] font-medium transition-all duration-150 cursor-pointer ${
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-[13px] font-semibold transition-all duration-150 cursor-pointer ${
                       isActive
-                        ? "bg-white text-[#1d1c1a] shadow-xs font-bold border border-neutral-300"
-                        : "text-neutral-600 hover:bg-white/70 hover:text-[#1d1c1a]"
+                        ? "bg-white text-gray-900 shadow-xs border border-gray-300 ring-1 ring-black/5"
+                        : "text-gray-600 hover:bg-white/80 hover:text-gray-900 border border-transparent"
                     }`}
                   >
-                    <span className={isActive ? "text-[#00897b]" : "text-neutral-500"}>
+                    <span className={isActive ? "text-[#009691]" : "text-gray-400"}>
                       {renderCategoryIcon(key, "w-4 h-4")}
                     </span>
                     <span>{cat.label}</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
                   </button>
                 );
               })}
@@ -399,19 +411,20 @@ export default function MegaMenuBuilderPage() {
               <div className="xl:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-6">
                 
                 {/* Col 1: Popular Devices */}
-                <div className="md:pr-6 md:border-r border-neutral-200 flex flex-col justify-between min-h-[340px]">
+                <div className="md:pr-6 md:border-r border-gray-200 flex flex-col justify-between min-h-[340px]">
                   <div>
-                    <h4 className="text-[15px] font-bold text-[#1d1c1a] mb-4">
-                      Popular Devices
+                    <h4 className="text-[14px] font-bold text-gray-900 mb-3.5 flex items-center justify-between">
+                      <span>Popular Devices</span>
+                      <span className="text-[11px] font-normal text-gray-400">Routes</span>
                     </h4>
-                    <ul className="space-y-3.5 text-[14px] text-neutral-600">
+                    <ul className="space-y-3 text-[13px] text-gray-600">
                       {currentCategory.popularDevices.map((device, i) => {
                         const resolvedUrl = getDeviceUrl(device, activeCategory);
                         return (
                           <li key={i} title={`Routes to: ${resolvedUrl}`}>
                             <Link
                               href={resolvedUrl}
-                              className="hover:text-[#00897b] transition-colors block"
+                              className="hover:text-[#009691] hover:translate-x-0.5 transition-all block"
                             >
                               {device}
                             </Link>
@@ -419,35 +432,36 @@ export default function MegaMenuBuilderPage() {
                         );
                       })}
                       {currentCategory.popularDevices.length === 0 && (
-                        <li className="text-gray-400 italic text-[13px]">No devices added yet.</li>
+                        <li className="text-gray-400 italic text-xs">No devices added yet.</li>
                       )}
                     </ul>
                   </div>
-                  <div className="mt-6">
+                  <div className="mt-6 pt-3 border-t border-gray-100">
                     <Link
                       href={currentCategory.href}
-                      className="inline-flex items-center gap-1 text-[14px] font-bold text-[#1d1c1a] underline underline-offset-4 hover:text-[#00897b] cursor-pointer"
+                      className="inline-flex items-center gap-1 text-[13px] font-bold text-gray-900 hover:text-[#009691] cursor-pointer"
                     >
-                      <span>View All</span>
-                      <ChevronRight className="w-4 h-4" />
+                      <span className="underline underline-offset-4">View All Devices</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
                     </Link>
                   </div>
                 </div>
 
                 {/* Col 2: Common Issues */}
-                <div className="md:px-6 md:border-r border-neutral-200 flex flex-col justify-between min-h-[340px]">
+                <div className="md:px-6 md:border-r border-gray-200 flex flex-col justify-between min-h-[340px]">
                   <div>
-                    <h4 className="text-[15px] font-bold text-[#1d1c1a] mb-4">
-                      Common Issues
+                    <h4 className="text-[14px] font-bold text-gray-900 mb-3.5 flex items-center justify-between">
+                      <span>Common Issues</span>
+                      <span className="text-[11px] font-normal text-gray-400">Fixed</span>
                     </h4>
-                    <ul className="space-y-3.5 text-[14px] text-neutral-600">
+                    <ul className="space-y-3 text-[13px] text-gray-600">
                       {currentCategory.commonIssues.map((issue, i) => {
                         const resolvedUrl = getIssueUrl(issue, activeCategory);
                         return (
                           <li key={i} title={`Routes to: ${resolvedUrl}`}>
                             <Link
                               href={resolvedUrl}
-                              className="hover:text-[#00897b] transition-colors block"
+                              className="hover:text-[#009691] hover:translate-x-0.5 transition-all block"
                             >
                               {issue}
                             </Link>
@@ -455,17 +469,17 @@ export default function MegaMenuBuilderPage() {
                         );
                       })}
                       {currentCategory.commonIssues.length === 0 && (
-                        <li className="text-gray-400 italic text-[13px]">No issues added yet.</li>
+                        <li className="text-gray-400 italic text-xs">No issues added yet.</li>
                       )}
                     </ul>
                   </div>
-                  <div className="mt-6">
+                  <div className="mt-6 pt-3 border-t border-gray-100">
                     <Link
                       href="/common-issues"
-                      className="inline-flex items-center gap-1 text-[14px] font-bold text-[#1d1c1a] underline underline-offset-4 hover:text-[#00897b] cursor-pointer"
+                      className="inline-flex items-center gap-1 text-[13px] font-bold text-gray-900 hover:text-[#009691] cursor-pointer"
                     >
-                      <span>View All</span>
-                      <ChevronRight className="w-4 h-4" />
+                      <span className="underline underline-offset-4">View All Issues</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
                     </Link>
                   </div>
                 </div>
@@ -473,10 +487,11 @@ export default function MegaMenuBuilderPage() {
                 {/* Col 3: By Brand */}
                 <div className="md:pl-6 flex flex-col justify-between min-h-[340px]">
                   <div>
-                    <h4 className="text-[15px] font-bold text-[#1d1c1a] mb-4">
-                      By Brand
+                    <h4 className="text-[14px] font-bold text-gray-900 mb-3.5 flex items-center justify-between">
+                      <span>By Brand</span>
+                      <span className="text-[11px] font-normal text-gray-400">OEM</span>
                     </h4>
-                    <ul className="space-y-4">
+                    <ul className="space-y-3.5">
                       {currentCategory.brands.map((brand, i) => {
                         const resolvedUrl = brand.href || getBrandUrl(brand.title, activeCategory);
                         return (
@@ -486,31 +501,31 @@ export default function MegaMenuBuilderPage() {
                               className="flex items-center justify-between group cursor-pointer"
                             >
                               <div>
-                                <p className="text-[14px] font-medium text-neutral-800 group-hover:text-[#00897b] transition-colors">
+                                <p className="text-[13px] font-semibold text-gray-800 group-hover:text-[#009691] transition-colors">
                                   {brand.title}
                                 </p>
-                                <p className="text-[13px] text-neutral-500">
+                                <p className="text-xs text-gray-500">
                                   {brand.subtitle}
                                 </p>
                               </div>
-                              <ChevronRight className="w-4 h-4 text-neutral-400 group-hover:text-[#00897b] group-hover:translate-x-0.5 transition-transform" />
+                              <ChevronRight className="w-3.5 h-3.5 text-gray-400 group-hover:text-[#009691] group-hover:translate-x-0.5 transition-transform" />
                             </Link>
                           </li>
                         );
                       })}
                       {currentCategory.brands.length === 0 && (
-                        <li className="text-gray-400 italic text-[13px]">No brands added yet.</li>
+                        <li className="text-gray-400 italic text-xs">No brands added yet.</li>
                       )}
                     </ul>
                   </div>
 
-                  <div className="mt-6">
+                  <div className="mt-6 pt-3 border-t border-gray-100">
                     <Link
                       href={currentCategory.href}
-                      className="inline-flex items-center justify-between w-full text-[14px] font-bold text-[#1d1c1a] hover:text-[#00897b] cursor-pointer"
+                      className="inline-flex items-center justify-between w-full text-[13px] font-bold text-gray-900 hover:text-[#009691] cursor-pointer"
                     >
                       <span className="underline underline-offset-4">{currentCategory.allLinkText}</span>
-                      <ChevronRight className="w-4 h-4 text-neutral-500" />
+                      <ChevronRight className="w-3.5 h-3.5 text-gray-500" />
                     </Link>
                   </div>
                 </div>
@@ -519,32 +534,32 @@ export default function MegaMenuBuilderPage() {
 
               {/* RIGHT 4 COLUMNS: THE WHITE "Need your device fixed?" CTA CARD */}
               <div className="xl:col-span-4 flex flex-col">
-                <div className="bg-white rounded-2xl p-6 sm:p-8 text-center shadow-xs border border-neutral-100 flex flex-col items-center justify-center flex-1">
+                <div className="bg-white rounded-2xl p-6 sm:p-7 text-center shadow-xs border border-gray-200/80 flex flex-col items-center justify-center flex-1">
                   
                   {/* Circular Teal Pin Icon */}
-                  <div className="w-12 h-12 rounded-full border border-[#00897b]/40 flex items-center justify-center text-[#00897b] mb-4 bg-teal-50/40">
-                    <MapPin className="w-5 h-5 text-[#00897b]" />
+                  <div className="w-12 h-12 rounded-full border border-teal-200 flex items-center justify-center text-[#009691] mb-3.5 bg-teal-50">
+                    <MapPin className="w-5 h-5 text-[#009691]" />
                   </div>
 
-                  <h3 className="text-2xl sm:text-[28px] font-normal text-[#1d1c1a] leading-tight mb-3">
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight mb-2">
                     {config.ctaCard.title}
                   </h3>
 
-                  <p className="text-sm text-neutral-600 max-w-[280px] mb-6 leading-relaxed">
+                  <p className="text-xs sm:text-[13px] text-gray-600 max-w-[280px] mb-5 leading-relaxed">
                     {config.ctaCard.description}
                   </p>
 
-                  <div className="w-full space-y-3">
+                  <div className="w-full space-y-2.5">
                     <button
                       type="button"
-                      className="block w-full py-3.5 px-6 rounded-full bg-[#00897b] hover:bg-[#00796b] text-white font-bold text-sm transition shadow-xs cursor-pointer"
+                      className="block w-full py-2.5 px-4 rounded-lg bg-[#009691] hover:bg-[#007e7a] text-white font-bold text-xs uppercase tracking-wider transition shadow-xs cursor-pointer active:scale-[0.99]"
                     >
                       {config.ctaCard.primaryBtnText}
                     </button>
 
                     <button
                       type="button"
-                      className="block w-full py-3.5 px-6 rounded-full border border-neutral-700 hover:border-black text-[#1d1c1a] font-bold text-sm bg-white hover:bg-neutral-50 transition cursor-pointer"
+                      className="block w-full py-2.5 px-4 rounded-lg border border-gray-300 hover:border-gray-900 text-gray-800 font-semibold text-xs bg-white hover:bg-gray-50 transition cursor-pointer"
                     >
                       {config.ctaCard.secondaryBtnText}
                     </button>
@@ -561,25 +576,30 @@ export default function MegaMenuBuilderPage() {
       </div>
 
       {/* 3. EDITOR CONTROL PANEL WITH TAXONOMY PICKER & LIVE URL RESOLUTION */}
-      <div className="bg-white border border-[#e8e8e8] rounded-xl p-5 sm:p-6 shadow-xs space-y-6">
+      <div className="bg-white border border-gray-200 rounded-xl p-5 sm:p-6 shadow-xs space-y-6">
         
         {/* Editor Tab Navigation */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-gray-200">
-          <div className="flex items-center gap-2">
-            <Sliders className="w-4 h-4 text-[#00897b]" />
-            <h2 className="text-base font-bold text-[#111111]">
-              Menu Content Editor &amp; URL Resolver
-            </h2>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-teal-50 border border-teal-200/80 flex items-center justify-center text-[#009691]">
+              <Sliders className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-sm sm:text-base font-bold text-gray-900">
+                Menu Content Editor &amp; URL Resolver
+              </h2>
+              <p className="text-xs text-gray-500">Edit columns, popular devices, and verified route mappings.</p>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2 bg-[#f4f5f7] p-1 rounded-lg">
+          <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg">
             <button
               type="button"
               onClick={() => setActiveTab("columns")}
-              className={`px-3 py-1.5 rounded-md text-[13px] font-semibold transition-colors cursor-pointer ${
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === "columns"
-                  ? "bg-white text-[#111111] shadow-2xs"
-                  : "text-gray-500 hover:text-black"
+                  ? "bg-white text-gray-900 shadow-2xs"
+                  : "text-gray-500 hover:text-gray-900"
               }`}
             >
               Columns &amp; Devices ({currentCategory.label})
@@ -587,10 +607,10 @@ export default function MegaMenuBuilderPage() {
             <button
               type="button"
               onClick={() => setActiveTab("cta")}
-              className={`px-3 py-1.5 rounded-md text-[13px] font-semibold transition-colors cursor-pointer ${
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === "cta"
-                  ? "bg-white text-[#111111] shadow-2xs"
-                  : "text-gray-500 hover:text-black"
+                  ? "bg-white text-gray-900 shadow-2xs"
+                  : "text-gray-500 hover:text-gray-900"
               }`}
             >
               Right CTA Card Settings
@@ -604,7 +624,7 @@ export default function MegaMenuBuilderPage() {
             
             {/* Category Selector Bar */}
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[12px] font-semibold text-gray-500 mr-2">
+              <span className="text-xs font-semibold text-gray-500 mr-1">
                 Active Category:
               </span>
               {categoryKeys.map((key) => {
@@ -614,9 +634,9 @@ export default function MegaMenuBuilderPage() {
                     key={key}
                     type="button"
                     onClick={() => setActiveCategory(key)}
-                    className={`h-[32px] px-3 rounded-full text-[12px] font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer ${
+                    className={`h-8 px-3 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer ${
                       isSelected
-                        ? "bg-[#00897b] text-white shadow-xs"
+                        ? "bg-[#009691] text-white shadow-xs"
                         : "bg-gray-100 hover:bg-gray-200 text-gray-700"
                     }`}
                   >
@@ -631,12 +651,12 @@ export default function MegaMenuBuilderPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
               
               {/* 1. Popular Devices Editor */}
-              <div className="bg-[#f9fafb] border border-gray-200 rounded-lg p-4 space-y-3">
+              <div className="bg-gray-50/70 border border-gray-200 rounded-xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[13px] font-bold text-[#111111]">
+                  <span className="text-xs font-bold text-gray-900">
                     Popular Devices
                   </span>
-                  <span className="text-[11px] font-semibold bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-semibold bg-gray-200/80 text-gray-700 px-2 py-0.5 rounded-full">
                     {currentCategory.popularDevices.length} items
                   </span>
                 </div>
@@ -650,12 +670,12 @@ export default function MegaMenuBuilderPage() {
                       onChange={(e) => setNewDevice(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleAddDevice()}
                       placeholder="e.g. iPhone 16 Plus Repair"
-                      className="flex-1 h-[32px] px-2.5 rounded-[5px] border border-gray-300 text-[12px] bg-white focus:outline-none focus:border-[#00897b]"
+                      className="flex-1 h-8 px-2.5 rounded-lg border border-gray-300 text-xs bg-white focus:outline-none focus:border-[#009691] focus:ring-1 focus:ring-[#009691]"
                     />
                     <button
                       type="button"
                       onClick={() => handleAddDevice()}
-                      className="h-[32px] px-2.5 rounded-[5px] bg-[#00897b] hover:bg-[#00796b] text-white text-[12px] font-semibold inline-flex items-center gap-1 cursor-pointer shrink-0"
+                      className="h-8 px-3 rounded-lg bg-[#009691] hover:bg-[#007e7a] text-white text-xs font-semibold inline-flex items-center gap-1 cursor-pointer shrink-0 shadow-2xs"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Add</span>
@@ -663,8 +683,8 @@ export default function MegaMenuBuilderPage() {
                   </div>
 
                   {newDevice.trim() && (
-                    <div className="text-[10px] text-teal-800 bg-teal-50 px-2 py-1 rounded border border-teal-200 flex items-center gap-1 font-mono truncate">
-                      <Link2 className="w-3 h-3 shrink-0" />
+                    <div className="text-[10px] text-teal-800 bg-teal-50 px-2 py-1 rounded-md border border-teal-200 flex items-center gap-1 font-mono truncate">
+                      <Link2 className="w-3 h-3 shrink-0 text-teal-600" />
                       <span>URL ➜ {getDeviceUrl(newDevice, activeCategory)}</span>
                     </div>
                   )}
@@ -677,14 +697,14 @@ export default function MegaMenuBuilderPage() {
                     return (
                       <div
                         key={idx}
-                        className="px-2.5 py-1.5 rounded-[5px] bg-white border border-gray-200 text-[12px] text-gray-800 space-y-0.5"
+                        className="px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-xs text-gray-800 space-y-0.5 hover:border-gray-300 transition-colors"
                       >
                         <div className="flex items-center justify-between">
                           <span className="font-medium truncate pr-2">{device}</span>
                           <button
                             type="button"
                             onClick={() => handleRemoveDevice(idx)}
-                            className="text-gray-400 hover:text-red-600 p-0.5 cursor-pointer shrink-0"
+                            className="text-gray-400 hover:text-red-600 p-0.5 cursor-pointer shrink-0 transition-colors"
                             title="Remove device"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -701,12 +721,12 @@ export default function MegaMenuBuilderPage() {
               </div>
 
               {/* 2. Common Issues Editor */}
-              <div className="bg-[#f9fafb] border border-gray-200 rounded-lg p-4 space-y-3">
+              <div className="bg-gray-50/70 border border-gray-200 rounded-xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[13px] font-bold text-[#111111]">
+                  <span className="text-xs font-bold text-gray-900">
                     Common Issues
                   </span>
-                  <span className="text-[11px] font-semibold bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-semibold bg-gray-200/80 text-gray-700 px-2 py-0.5 rounded-full">
                     {currentCategory.commonIssues.length} items
                   </span>
                 </div>
@@ -720,12 +740,12 @@ export default function MegaMenuBuilderPage() {
                       onChange={(e) => setNewIssue(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleAddIssue()}
                       placeholder="e.g. HDMI Port Fix"
-                      className="flex-1 h-[32px] px-2.5 rounded-[5px] border border-gray-300 text-[12px] bg-white focus:outline-none focus:border-[#00897b]"
+                      className="flex-1 h-8 px-2.5 rounded-lg border border-gray-300 text-xs bg-white focus:outline-none focus:border-[#009691] focus:ring-1 focus:ring-[#009691]"
                     />
                     <button
                       type="button"
                       onClick={() => handleAddIssue()}
-                      className="h-[32px] px-2.5 rounded-[5px] bg-[#00897b] hover:bg-[#00796b] text-white text-[12px] font-semibold inline-flex items-center gap-1 cursor-pointer shrink-0"
+                      className="h-8 px-3 rounded-lg bg-[#009691] hover:bg-[#007e7a] text-white text-xs font-semibold inline-flex items-center gap-1 cursor-pointer shrink-0 shadow-2xs"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Add</span>
@@ -733,8 +753,8 @@ export default function MegaMenuBuilderPage() {
                   </div>
 
                   {newIssue.trim() && (
-                    <div className="text-[10px] text-teal-800 bg-teal-50 px-2 py-1 rounded border border-teal-200 flex items-center gap-1 font-mono truncate">
-                      <Link2 className="w-3 h-3 shrink-0" />
+                    <div className="text-[10px] text-teal-800 bg-teal-50 px-2 py-1 rounded-md border border-teal-200 flex items-center gap-1 font-mono truncate">
+                      <Link2 className="w-3 h-3 shrink-0 text-teal-600" />
                       <span>URL ➜ {getIssueUrl(newIssue, activeCategory)}</span>
                     </div>
                   )}
@@ -747,14 +767,14 @@ export default function MegaMenuBuilderPage() {
                     return (
                       <div
                         key={idx}
-                        className="px-2.5 py-1.5 rounded-[5px] bg-white border border-gray-200 text-[12px] text-gray-800 space-y-0.5"
+                        className="px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-xs text-gray-800 space-y-0.5 hover:border-gray-300 transition-colors"
                       >
                         <div className="flex items-center justify-between">
                           <span className="font-medium truncate pr-2">{issue}</span>
                           <button
                             type="button"
                             onClick={() => handleRemoveIssue(idx)}
-                            className="text-gray-400 hover:text-red-600 p-0.5 cursor-pointer shrink-0"
+                            className="text-gray-400 hover:text-red-600 p-0.5 cursor-pointer shrink-0 transition-colors"
                             title="Remove issue"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -771,12 +791,12 @@ export default function MegaMenuBuilderPage() {
               </div>
 
               {/* 3. By Brand Editor */}
-              <div className="bg-[#f9fafb] border border-gray-200 rounded-lg p-4 space-y-3">
+              <div className="bg-gray-50/70 border border-gray-200 rounded-xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[13px] font-bold text-[#111111]">
+                  <span className="text-xs font-bold text-gray-900">
                     By Brand
                   </span>
-                  <span className="text-[11px] font-semibold bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-semibold bg-gray-200/80 text-gray-700 px-2 py-0.5 rounded-full">
                     {currentCategory.brands.length} brands
                   </span>
                 </div>
@@ -788,7 +808,7 @@ export default function MegaMenuBuilderPage() {
                     value={newBrandTitle}
                     onChange={(e) => setNewBrandTitle(e.target.value)}
                     placeholder="Brand Title (e.g. Sony PlayStation)"
-                    className="w-full h-[32px] px-2.5 rounded-[5px] border border-gray-300 text-[12px] bg-white focus:outline-none focus:border-[#00897b]"
+                    className="w-full h-8 px-2.5 rounded-lg border border-gray-300 text-xs bg-white focus:outline-none focus:border-[#009691] focus:ring-1 focus:ring-[#009691]"
                   />
                   <div className="flex items-center gap-1.5">
                     <input
@@ -796,12 +816,12 @@ export default function MegaMenuBuilderPage() {
                       value={newBrandSubtitle}
                       onChange={(e) => setNewBrandSubtitle(e.target.value)}
                       placeholder="Subtitle (e.g. PS5 & PS4 Models)"
-                      className="flex-1 h-[32px] px-2.5 rounded-[5px] border border-gray-300 text-[12px] bg-white focus:outline-none focus:border-[#00897b]"
+                      className="flex-1 h-8 px-2.5 rounded-lg border border-gray-300 text-xs bg-white focus:outline-none focus:border-[#009691] focus:ring-1 focus:ring-[#009691]"
                     />
                     <button
                       type="button"
                       onClick={() => handleAddBrand()}
-                      className="h-[32px] px-2.5 rounded-[5px] bg-[#00897b] hover:bg-[#00796b] text-white text-[12px] font-semibold inline-flex items-center gap-1 cursor-pointer shrink-0"
+                      className="h-8 px-3 rounded-lg bg-[#009691] hover:bg-[#007e7a] text-white text-xs font-semibold inline-flex items-center gap-1 cursor-pointer shrink-0 shadow-2xs"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Add</span>
@@ -816,7 +836,7 @@ export default function MegaMenuBuilderPage() {
                     return (
                       <div
                         key={idx}
-                        className="px-2.5 py-1.5 rounded-[5px] bg-white border border-gray-200 text-[12px] text-gray-800 space-y-0.5"
+                        className="px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-xs text-gray-800 space-y-0.5 hover:border-gray-300 transition-colors"
                       >
                         <div className="flex items-center justify-between">
                           <div className="min-w-0 pr-2">
@@ -826,7 +846,7 @@ export default function MegaMenuBuilderPage() {
                           <button
                             type="button"
                             onClick={() => handleRemoveBrand(idx)}
-                            className="text-gray-400 hover:text-red-600 p-0.5 cursor-pointer shrink-0"
+                            className="text-gray-400 hover:text-red-600 p-0.5 cursor-pointer shrink-0 transition-colors"
                             title="Remove brand"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -847,14 +867,14 @@ export default function MegaMenuBuilderPage() {
             {/* Bottom Row: Category Footer Link Text */}
             <div className="pt-3 border-t border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <span className="text-[12px] font-semibold text-gray-600">
+                <span className="text-xs font-semibold text-gray-600">
                   Bottom CTA Link Text:
                 </span>
                 <input
                   type="text"
                   value={currentCategory.allLinkText}
                   onChange={(e) => handleUpdateAllLinkText(e.target.value)}
-                  className="h-[32px] px-3 rounded-[5px] border border-gray-300 text-[12px] w-64 bg-white focus:outline-none focus:border-[#00897b]"
+                  className="h-8 px-3 rounded-lg border border-gray-300 text-xs w-64 bg-white focus:outline-none focus:border-[#009691] focus:ring-1 focus:ring-[#009691]"
                 />
               </div>
 
@@ -870,7 +890,7 @@ export default function MegaMenuBuilderPage() {
         {activeTab === "cta" && (
           <div className="max-w-2xl space-y-4">
             <div>
-              <label className="text-[12px] font-semibold text-gray-700 block mb-1">
+              <label className="text-xs font-semibold text-gray-700 block mb-1">
                 Headline / Title
               </label>
               <input
@@ -882,12 +902,12 @@ export default function MegaMenuBuilderPage() {
                     ctaCard: { ...prev.ctaCard, title: e.target.value },
                   }))
                 }
-                className="w-full h-[36px] px-3 rounded-[6px] border border-gray-300 text-[13px] focus:outline-none focus:border-[#00897b]"
+                className="w-full h-9 px-3 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-[#009691] focus:ring-1 focus:ring-[#009691]"
               />
             </div>
 
             <div>
-              <label className="text-[12px] font-semibold text-gray-700 block mb-1">
+              <label className="text-xs font-semibold text-gray-700 block mb-1">
                 Description / Subtitle
               </label>
               <textarea
@@ -899,13 +919,13 @@ export default function MegaMenuBuilderPage() {
                     ctaCard: { ...prev.ctaCard, description: e.target.value },
                   }))
                 }
-                className="w-full p-2.5 rounded-[6px] border border-gray-300 text-[13px] focus:outline-none focus:border-[#00897b]"
+                className="w-full p-2.5 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-[#009691] focus:ring-1 focus:ring-[#009691]"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-[12px] font-semibold text-gray-700 block mb-1">
+                <label className="text-xs font-semibold text-gray-700 block mb-1">
                   Primary Button Text
                 </label>
                 <input
@@ -917,12 +937,12 @@ export default function MegaMenuBuilderPage() {
                       ctaCard: { ...prev.ctaCard, primaryBtnText: e.target.value },
                     }))
                   }
-                  className="w-full h-[36px] px-3 rounded-[6px] border border-gray-300 text-[13px] focus:outline-none focus:border-[#00897b]"
+                  className="w-full h-9 px-3 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-[#009691] focus:ring-1 focus:ring-[#009691]"
                 />
               </div>
 
               <div>
-                <label className="text-[12px] font-semibold text-gray-700 block mb-1">
+                <label className="text-xs font-semibold text-gray-700 block mb-1">
                   Secondary Button Text
                 </label>
                 <input
@@ -934,7 +954,7 @@ export default function MegaMenuBuilderPage() {
                       ctaCard: { ...prev.ctaCard, secondaryBtnText: e.target.value },
                     }))
                   }
-                  className="w-full h-[36px] px-3 rounded-[6px] border border-gray-300 text-[13px] focus:outline-none focus:border-[#00897b]"
+                  className="w-full h-9 px-3 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-[#009691] focus:ring-1 focus:ring-[#009691]"
                 />
               </div>
             </div>
@@ -943,7 +963,7 @@ export default function MegaMenuBuilderPage() {
               <button
                 type="button"
                 onClick={handleSave}
-                className="h-[36px] px-4 rounded-[6px] bg-[#00897b] hover:bg-[#00796b] text-white text-[13px] font-semibold inline-flex items-center gap-1.5 cursor-pointer"
+                className="h-9 px-4 rounded-lg bg-[#009691] hover:bg-[#007e7a] text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-[0.98]"
               >
                 <Save className="w-4 h-4" />
                 <span>Save CTA Changes</span>
