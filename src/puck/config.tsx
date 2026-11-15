@@ -4712,6 +4712,9 @@ export const puckConfig: Config<PuckComponents> = {
         color: "#009691",
         bgColor: "rgba(0, 150, 145, 0.12)",
         shape: "circle",
+        borderStyle: "none",
+        shadow: "none",
+        hoverEffect: "scale",
         align: "center",
         link: "",
         customCss: "",
@@ -4729,6 +4732,36 @@ export const puckConfig: Config<PuckComponents> = {
             { label: "Circle", value: "circle" },
             { label: "Rounded Box", value: "rounded" },
             { label: "Square Box", value: "square" },
+          ],
+        },
+        borderStyle: {
+          type: "select",
+          label: "Border Style",
+          options: [
+            { label: "None", value: "none" },
+            { label: "Subtle (1px solid)", value: "subtle" },
+            { label: "Brand Accent (2px solid)", value: "brand" },
+            { label: "Dashed Accent", value: "dashed" },
+          ],
+        },
+        shadow: {
+          type: "select",
+          label: "Shadow & Glow",
+          options: [
+            { label: "None", value: "none" },
+            { label: "Subtle Shadow (sm)", value: "sm" },
+            { label: "Medium Shadow (md)", value: "md" },
+            { label: "Brand Neon Glow", value: "glow" },
+          ],
+        },
+        hoverEffect: {
+          type: "select",
+          label: "Hover Animation",
+          options: [
+            { label: "None", value: "none" },
+            { label: "Scale Up (110%)", value: "scale" },
+            { label: "Lift Up (-4px)", value: "bounce" },
+            { label: "Slight Rotation", value: "rotate" },
           ],
         },
         align: {
@@ -4757,6 +4790,9 @@ export const puckConfig: Config<PuckComponents> = {
             {fields.color}
             {fields.bgColor}
             {fields.shape}
+            {fields.borderStyle}
+            {fields.shadow}
+            {fields.hoverEffect}
             {fields.align}
           </FieldTab>
           <FieldTab label="Advanced">
@@ -4773,6 +4809,9 @@ export const puckConfig: Config<PuckComponents> = {
         color,
         bgColor,
         shape,
+        borderStyle,
+        shadow,
+        hoverEffect,
         align,
         link,
         customCss,
@@ -4799,6 +4838,35 @@ export const puckConfig: Config<PuckComponents> = {
             ? "justify-end"
             : "justify-center";
 
+        const borderCss =
+          borderStyle === "subtle"
+            ? "1px solid rgba(0, 0, 0, 0.08)"
+            : borderStyle === "brand"
+            ? `2px solid ${color || "#009691"}`
+            : borderStyle === "dashed"
+            ? `2px dashed ${color || "#009691"}`
+            : undefined;
+
+        const shadowCss =
+          shadow === "sm"
+            ? "0 1px 3px rgba(0,0,0,0.08)"
+            : shadow === "md"
+            ? "0 4px 12px rgba(0,0,0,0.12)"
+            : shadow === "glow"
+            ? `0 0 20px ${color ? `${color}55` : "rgba(0,150,145,0.4)"}`
+            : undefined;
+
+        const hoverClass =
+          hoverEffect === "scale"
+            ? "hover:scale-110"
+            : hoverEffect === "bounce"
+            ? "hover:-translate-y-1"
+            : hoverEffect === "rotate"
+            ? "hover:rotate-6 hover:scale-105"
+            : hoverEffect === "none"
+            ? ""
+            : "hover:scale-105";
+
         const iconNode = (
           <div
             style={{
@@ -4807,12 +4875,15 @@ export const puckConfig: Config<PuckComponents> = {
               backgroundColor: shape === "none" ? "transparent" : bgColor || "transparent",
               color: color || "#009691",
               borderRadius: radius,
+              border: borderCss,
+              boxShadow: shadowCss,
             }}
-            className="inline-flex items-center justify-center transition hover:scale-105"
+            className={`inline-flex items-center justify-center transition-all duration-200 cursor-pointer ${hoverClass}`}
           >
             <RenderItemIcon
               name={icon}
-              className=""
+              size={iconPx}
+              style={{ width: `${iconPx}px`, height: `${iconPx}px` }}
             />
           </div>
         );

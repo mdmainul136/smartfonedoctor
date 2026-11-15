@@ -23,14 +23,88 @@ export type ResponsiveOverrides = {
 
 export type PuckIconName =
   | "None"
+  // Trust & Badges
   | "Shield"
-  | "Clock"
-  | "Zap"
-  | "Wrench"
-  | "Sparkles"
+  | "ShieldCheck"
+  | "Award"
   | "Star"
+  | "Sparkles"
+  | "ThumbsUp"
   | "Check"
-  | "CheckCircle2";
+  | "CheckCircle2"
+  | "Heart"
+  | "Trophy"
+  | "BadgePercent"
+  | "Lock"
+  // Devices & Tech
+  | "Smartphone"
+  | "Tablet"
+  | "Laptop"
+  | "Monitor"
+  | "Tv"
+  | "Gamepad2"
+  | "Headphones"
+  | "Battery"
+  | "BatteryCharging"
+  | "Cpu"
+  | "HardDrive"
+  | "Wifi"
+  | "Bluetooth"
+  | "Camera"
+  | "Mic"
+  | "Volume2"
+  | "Speaker"
+  | "Usb"
+  // Repair, Diagnostics & Tools
+  | "Wrench"
+  | "Hammer"
+  | "Zap"
+  | "Clock"
+  | "Settings"
+  | "Sliders"
+  | "Activity"
+  | "FileText"
+  | "Layers"
+  | "LayoutGrid"
+  | "Recycle"
+  | "Leaf"
+  // Business, Store & Contact
+  | "Phone"
+  | "PhoneCall"
+  | "Mail"
+  | "MapPin"
+  | "Navigation"
+  | "Calendar"
+  | "CalendarCheck"
+  | "Store"
+  | "Building"
+  | "ShoppingBag"
+  | "ShoppingCart"
+  | "Truck"
+  | "CreditCard"
+  | "DollarSign"
+  | "Globe"
+  | "Search"
+  | "HelpCircle"
+  | "Info"
+  | "AlertCircle"
+  // Arrows, User & Actions
+  | "ArrowRight"
+  | "ArrowLeft"
+  | "ArrowUp"
+  | "ArrowDown"
+  | "ChevronRight"
+  | "ChevronLeft"
+  | "ChevronDown"
+  | "ExternalLink"
+  | "Share2"
+  | "Copy"
+  | "Download"
+  | "Upload"
+  | "RefreshCw"
+  | "User"
+  | "Users"
+  | string;
 
 export type PuckGridItem = {
   title: string;
@@ -391,6 +465,9 @@ export type IconBlockProps = {
   bgColor: string;
   shape: "none" | "circle" | "square" | "rounded";
   align: "left" | "center" | "right";
+  borderStyle?: "none" | "subtle" | "brand" | "dashed";
+  shadow?: "none" | "sm" | "md" | "glow";
+  hoverEffect?: "none" | "scale" | "bounce" | "rotate";
   link?: string;
   customCss: string;
   locked?: boolean;

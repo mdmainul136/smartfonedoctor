@@ -33,6 +33,8 @@ import {
   ExternalLink,
 } from "lucide-react";
 
+import { RenderItemIcon } from "@/puck/components/shared";
+
 export interface CMSSectionRendererProps {
   slug: string;
   initialPage?: CMSPage | null;
@@ -127,31 +129,6 @@ function buildHeroResponsiveCss(heroStyle: HeroStyle): string {
   const m = decls(resp.mobile);
   if (m) css += `@media (max-width: 640px) {\n${sel} { ${m} }\n}\n`;
   return css;
-}
-
-function RenderItemIcon({ name, className }: { name?: string; className?: string }) {
-  if (!name || name === "None") return null;
-  const cls = className || "w-4 h-4";
-  switch (name) {
-    case "Shield":
-      return <Shield className={cls} />;
-    case "Clock":
-      return <Clock className={cls} />;
-    case "Zap":
-      return <Zap className={cls} />;
-    case "Wrench":
-      return <Wrench className={cls} />;
-    case "Sparkles":
-      return <Sparkles className={cls} />;
-    case "Star":
-      return <Star className={cls} />;
-    case "Check":
-      return <Check className={cls} />;
-    case "CheckCircle2":
-      return <CheckCircle2 className={cls} />;
-    default:
-      return null;
-  }
 }
 
 function CMSFaqAccordionItem({

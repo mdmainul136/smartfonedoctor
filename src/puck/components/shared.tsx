@@ -3,14 +3,82 @@
 import React, { useState } from "react";
 import {
   Shield,
+  ShieldCheck,
   Clock,
   Zap,
   Wrench,
+  Hammer,
   Sparkles,
   Star,
   CheckCircle2,
   Check,
   ChevronDown,
+  ChevronRight,
+  ChevronLeft,
+  ChevronUp,
+  ArrowRight,
+  ArrowLeft,
+  ArrowUp,
+  ArrowDown,
+  Award,
+  ThumbsUp,
+  Heart,
+  Trophy,
+  BadgePercent,
+  Lock,
+  Smartphone,
+  Tablet,
+  Laptop,
+  Monitor,
+  Tv,
+  Gamepad2,
+  Headphones,
+  Battery,
+  BatteryCharging,
+  Cpu,
+  HardDrive,
+  Wifi,
+  Bluetooth,
+  Camera,
+  Mic,
+  Volume2,
+  Speaker,
+  Usb,
+  Settings,
+  Sliders,
+  Activity,
+  FileText,
+  Layers,
+  LayoutGrid,
+  Recycle,
+  Leaf,
+  Phone,
+  PhoneCall,
+  Mail,
+  MapPin,
+  Navigation,
+  Calendar,
+  CalendarCheck,
+  Store,
+  Building,
+  ShoppingBag,
+  ShoppingCart,
+  Truck,
+  CreditCard,
+  DollarSign,
+  Globe,
+  Search,
+  HelpCircle,
+  Info,
+  AlertCircle,
+  ExternalLink,
+  Share2,
+  Copy,
+  Download,
+  Upload,
+  RefreshCw,
+  User,
+  Users,
 } from "lucide-react";
 import { scopeCustomCss } from "../core/customCss";
 import type {
@@ -21,46 +89,215 @@ import type {
   ResponsiveOverrides,
 } from "@/puck/types";
 
-export const ICON_OPTIONS: { label: string; value: PuckIconName }[] = [
-  { label: "None", value: "None" },
-  { label: "Shield", value: "Shield" },
-  { label: "Clock", value: "Clock" },
-  { label: "Zap", value: "Zap" },
-  { label: "Wrench", value: "Wrench" },
-  { label: "Sparkles", value: "Sparkles" },
-  { label: "Star", value: "Star" },
-  { label: "Check", value: "Check" },
-  { label: "CheckCircle2", value: "CheckCircle2" },
+export const ICON_MAP: Record<
+  string,
+  React.ComponentType<{ className?: string; style?: React.CSSProperties }>
+> = {
+  // Trust & Badges
+  Shield,
+  ShieldCheck,
+  Award,
+  Star,
+  Sparkles,
+  ThumbsUp,
+  Check,
+  CheckCircle2,
+  Heart,
+  Trophy,
+  BadgePercent,
+  Lock,
+
+  // Devices & Tech
+  Smartphone,
+  Tablet,
+  Laptop,
+  Monitor,
+  Tv,
+  Gamepad2,
+  Headphones,
+  Battery,
+  BatteryCharging,
+  Cpu,
+  HardDrive,
+  Wifi,
+  Bluetooth,
+  Camera,
+  Mic,
+  Volume2,
+  Speaker,
+  Usb,
+
+  // Repair, Tools & Diagnostics
+  Wrench,
+  Hammer,
+  Zap,
+  Clock,
+  Settings,
+  Sliders,
+  Activity,
+  FileText,
+  Layers,
+  LayoutGrid,
+  Recycle,
+  Leaf,
+
+  // Business & Contact
+  Phone,
+  PhoneCall,
+  Mail,
+  MapPin,
+  Navigation,
+  Calendar,
+  CalendarCheck,
+  Store,
+  Building,
+  ShoppingBag,
+  ShoppingCart,
+  Truck,
+  CreditCard,
+  DollarSign,
+  Globe,
+  Search,
+  HelpCircle,
+  Info,
+  AlertCircle,
+
+  // Arrows, User & Actions
+  ArrowRight,
+  ArrowLeft,
+  ArrowUp,
+  ArrowDown,
+  ChevronRight,
+  ChevronLeft,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  Share2,
+  Copy,
+  Download,
+  Upload,
+  RefreshCw,
+  User,
+  Users,
+};
+
+export interface IconOptionItem {
+  label: string;
+  value: PuckIconName;
+  category: "All" | "Trust & Badges" | "Devices & Tech" | "Repair & Tools" | "Business & Contact" | "Arrows & Actions";
+}
+
+export const ICON_OPTIONS: IconOptionItem[] = [
+  { label: "None", value: "None", category: "All" },
+
+  // Trust & Badges
+  { label: "Shield", value: "Shield", category: "Trust & Badges" },
+  { label: "Shield Check", value: "ShieldCheck", category: "Trust & Badges" },
+  { label: "Award", value: "Award", category: "Trust & Badges" },
+  { label: "Star", value: "Star", category: "Trust & Badges" },
+  { label: "Sparkles", value: "Sparkles", category: "Trust & Badges" },
+  { label: "Thumbs Up", value: "ThumbsUp", category: "Trust & Badges" },
+  { label: "Check", value: "Check", category: "Trust & Badges" },
+  { label: "Check Circle", value: "CheckCircle2", category: "Trust & Badges" },
+  { label: "Heart", value: "Heart", category: "Trust & Badges" },
+  { label: "Trophy", value: "Trophy", category: "Trust & Badges" },
+  { label: "Badge Percent", value: "BadgePercent", category: "Trust & Badges" },
+  { label: "Lock", value: "Lock", category: "Trust & Badges" },
+
+  // Devices & Tech
+  { label: "Smartphone", value: "Smartphone", category: "Devices & Tech" },
+  { label: "Tablet", value: "Tablet", category: "Devices & Tech" },
+  { label: "Laptop", value: "Laptop", category: "Devices & Tech" },
+  { label: "Monitor", value: "Monitor", category: "Devices & Tech" },
+  { label: "TV", value: "Tv", category: "Devices & Tech" },
+  { label: "Gamepad", value: "Gamepad2", category: "Devices & Tech" },
+  { label: "Headphones", value: "Headphones", category: "Devices & Tech" },
+  { label: "Battery", value: "Battery", category: "Devices & Tech" },
+  { label: "Battery Charging", value: "BatteryCharging", category: "Devices & Tech" },
+  { label: "CPU / Chip", value: "Cpu", category: "Devices & Tech" },
+  { label: "Hard Drive", value: "HardDrive", category: "Devices & Tech" },
+  { label: "WiFi", value: "Wifi", category: "Devices & Tech" },
+  { label: "Bluetooth", value: "Bluetooth", category: "Devices & Tech" },
+  { label: "Camera", value: "Camera", category: "Devices & Tech" },
+  { label: "Microphone", value: "Mic", category: "Devices & Tech" },
+  { label: "Volume", value: "Volume2", category: "Devices & Tech" },
+  { label: "Speaker", value: "Speaker", category: "Devices & Tech" },
+  { label: "USB", value: "Usb", category: "Devices & Tech" },
+
+  // Repair & Tools
+  { label: "Wrench", value: "Wrench", category: "Repair & Tools" },
+  { label: "Hammer", value: "Hammer", category: "Repair & Tools" },
+  { label: "Zap / Lightning", value: "Zap", category: "Repair & Tools" },
+  { label: "Clock", value: "Clock", category: "Repair & Tools" },
+  { label: "Settings", value: "Settings", category: "Repair & Tools" },
+  { label: "Sliders", value: "Sliders", category: "Repair & Tools" },
+  { label: "Activity", value: "Activity", category: "Repair & Tools" },
+  { label: "File Text", value: "FileText", category: "Repair & Tools" },
+  { label: "Layers", value: "Layers", category: "Repair & Tools" },
+  { label: "Layout Grid", value: "LayoutGrid", category: "Repair & Tools" },
+  { label: "Recycle", value: "Recycle", category: "Repair & Tools" },
+  { label: "Leaf", value: "Leaf", category: "Repair & Tools" },
+
+  // Business & Contact
+  { label: "Phone", value: "Phone", category: "Business & Contact" },
+  { label: "Phone Call", value: "PhoneCall", category: "Business & Contact" },
+  { label: "Mail", value: "Mail", category: "Business & Contact" },
+  { label: "Map Pin", value: "MapPin", category: "Business & Contact" },
+  { label: "Navigation", value: "Navigation", category: "Business & Contact" },
+  { label: "Calendar", value: "Calendar", category: "Business & Contact" },
+  { label: "Calendar Check", value: "CalendarCheck", category: "Business & Contact" },
+  { label: "Store", value: "Store", category: "Business & Contact" },
+  { label: "Building", value: "Building", category: "Business & Contact" },
+  { label: "Shopping Bag", value: "ShoppingBag", category: "Business & Contact" },
+  { label: "Shopping Cart", value: "ShoppingCart", category: "Business & Contact" },
+  { label: "Delivery Truck", value: "Truck", category: "Business & Contact" },
+  { label: "Credit Card", value: "CreditCard", category: "Business & Contact" },
+  { label: "Dollar Sign", value: "DollarSign", category: "Business & Contact" },
+  { label: "Globe", value: "Globe", category: "Business & Contact" },
+  { label: "Search", value: "Search", category: "Business & Contact" },
+  { label: "Help Circle", value: "HelpCircle", category: "Business & Contact" },
+  { label: "Info", value: "Info", category: "Business & Contact" },
+  { label: "Alert Circle", value: "AlertCircle", category: "Business & Contact" },
+
+  // Arrows & Actions
+  { label: "Arrow Right", value: "ArrowRight", category: "Arrows & Actions" },
+  { label: "Arrow Left", value: "ArrowLeft", category: "Arrows & Actions" },
+  { label: "Arrow Up", value: "ArrowUp", category: "Arrows & Actions" },
+  { label: "Arrow Down", value: "ArrowDown", category: "Arrows & Actions" },
+  { label: "Chevron Right", value: "ChevronRight", category: "Arrows & Actions" },
+  { label: "Chevron Left", value: "ChevronLeft", category: "Arrows & Actions" },
+  { label: "Chevron Down", value: "ChevronDown", category: "Arrows & Actions" },
+  { label: "External Link", value: "ExternalLink", category: "Arrows & Actions" },
+  { label: "Share", value: "Share2", category: "Arrows & Actions" },
+  { label: "Copy", value: "Copy", category: "Arrows & Actions" },
+  { label: "Download", value: "Download", category: "Arrows & Actions" },
+  { label: "Upload", value: "Upload", category: "Arrows & Actions" },
+  { label: "Refresh", value: "RefreshCw", category: "Arrows & Actions" },
+  { label: "User", value: "User", category: "Arrows & Actions" },
+  { label: "Users Team", value: "Users", category: "Arrows & Actions" },
 ];
 
 export function RenderItemIcon({
   name,
   className = "w-4 h-4",
+  style,
+  size,
 }: {
   name?: string;
   className?: string;
+  style?: React.CSSProperties;
+  size?: number | string;
 }) {
   if (!name || name === "None") return null;
-  switch (name) {
-    case "Shield":
-      return <Shield className={className} />;
-    case "Clock":
-      return <Clock className={className} />;
-    case "Zap":
-      return <Zap className={className} />;
-    case "Wrench":
-      return <Wrench className={className} />;
-    case "Sparkles":
-      return <Sparkles className={className} />;
-    case "Star":
-      return <Star className={className} />;
-    case "Check":
-      return <Check className={className} />;
-    case "CheckCircle2":
-      return <CheckCircle2 className={className} />;
-    default:
-      return null;
-  }
+  const Component = ICON_MAP[name];
+  if (!Component) return null;
+
+  const mergedStyle: React.CSSProperties = {
+    ...(size ? { width: `${size}px`, height: `${size}px` } : {}),
+    ...style,
+  };
+
+  return <Component className={className} style={mergedStyle} />;
 }
 
 export function sanitizeSectionId(raw?: string, fallback = "puck-block"): string {
