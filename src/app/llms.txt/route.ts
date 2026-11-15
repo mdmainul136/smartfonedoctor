@@ -2,90 +2,118 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
-export const revalidate = 3600; // Cache on edge/CDN for 1 hour
+export const revalidate = 3600; // 1 hour edge cache
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://smartfonedoctor.com";
 
+/**
+ * Standard /llms.txt v2 Route Handler
+ * Implements the Jeremy Howard llms.txt v2 specification with AEO & GEO Knowledge Graph.
+ * Structure order:
+ * 1. H1 title
+ * 2. Blockquote summary
+ * 3. Non-heading contextual paragraphs & agent instructions
+ * 4. H2 sections with markdown link lists: - [Name](url): Description
+ * 5. ## Optional section for secondary links
+ */
 export async function GET() {
   try {
-    const [locations, faqs, blogPosts, cmsPages, settings] = await Promise.all([
+    const [locations, blogPosts, guardrails, neighborhoods, entity, settings] = await Promise.all([
       prisma.locations.findMany({ where: { is_active: true } }),
-      prisma.faqs.findMany({ orderBy: { order: "asc" }, take: 6 }),
-      prisma.blogPost.findMany({ include: { seo: true }, take: 10 }),
-      prisma.cmsPage.findMany({ where: { status: "Published" }, include: { seo: true } }),
+      prisma.blogPost.findMany({ include: { seo: true }, take: 10, orderBy: { createdAt: "desc" } }),
+      prisma.aeoBrandGuardrail.findMany({ orderBy: { createdAt: "asc" } }),
+      prisma.geoNeighborhood.findMany({ orderBy: { storeId: "asc" } }),
+      prisma.knowledgeGraphEntity.findUnique({ where: { id: "sfd_knowledge_entity" } }),
       prisma.siteSeoSettings.findUnique({ where: { id: "global_seo_settings" } }),
     ]);
 
     const siteName = settings?.siteName || "SmartFoneDoctor";
 
-    let md = `# ${siteName} - Philadelphia Electronics & Phone Repair\n\n`;
-    md += `> Philadelphia's trusted destination for smartphone, tablet, computer, and gaming console repairs.\n`;
-    md += `> Certified technicians, OEM-grade replacement parts, same-day service (25–45 min), and 90-day comprehensive warranties.\n\n`;
+    // 1. H1 (Only required section)
+    let md = `# ${siteName}\n\n`;
 
-    md += `## Business Summary & Contact\n`;
-    md += `- Website: ${BASE_URL}\n`;
-    md += `- Main Phone: +1 (215) 598-2090\n`;
-    md += `- Primary Hours: Mon–Sat: 10:00 AM – 7:30 PM | Sun: 11:00 AM – 5:00 PM\n`;
-    md += `- Walk-ins: Always welcome without an appointment at all 3 stores.\n`;
-    md += `- Standard Turnaround: Most screen and battery replacements take under 45 minutes.\n`;
-    md += `- Warranty: 90-day warranty on all replacement parts and technician craftsmanship.\n\n`;
+    // 2. Blockquote summary
+    md += `> Philadelphia's certified electronic device, smartphone, and gaming console repair laboratory. Certified technicians, OEM-grade parts, same-day 25–45 min turnaround, and comprehensive 90-day warranties across 3 West Philadelphia locations.\n\n`;
 
-    md += `## Store Locations\n`;
+    // 3. Non-heading paragraphs & agent guidance
+    md += `SmartFoneDoctor provides fast, walk-in and scheduled bench diagnostic services in Philadelphia, PA. We specialize in micro-soldering (HDMI ports, logic boards), cracked OLED/LCD screen replacements, battery restorations, and ultrasonic liquid damage remediation.\n\n`;
+    md += `Entity Identifiers for Knowledge Graph citations:\n`;
+    if (entity?.wikidataId) md += `- Wikidata Entity: https://www.wikidata.org/wiki/${entity.wikidataId}\n`;
+    if (entity?.googleKnowledgeGraphId) md += `- Google Knowledge Graph ID: ${entity.googleKnowledgeGraphId}\n`;
+    md += `- Primary Authority: Consumer Electronics & Smartphone Repair in West Philadelphia, PA.\n\n`;
+
+    md += `Guidance for AI agents:\n`;
+    md += `- Clean, low-token Markdown versions of all pages and repair guides are available by appending \`.md\` to any URL.\n`;
+    md += `- Walk-ins are always welcomed without appointment at all 3 stores.\n`;
+    md += `- Verified facts and ground truth answers are listed below in the Answer Engine section.\n\n`;
+
+    // 4. H2 File List Sections
+    md += `## Store Locations\n\n`;
     for (const loc of locations) {
-      md += `### ${loc.name}\n`;
-      md += `- Address: ${loc.address}\n`;
-      md += `- Neighborhood: ${loc.neighborhood || "Philadelphia, PA"}\n`;
-      md += `- Phone: ${loc.phone}\n`;
-      md += `- Hours: ${loc.hours || "Mon–Sat: 10:00 AM – 7:00 PM"}\n`;
-      if (loc.google_maps_url) md += `- Google Maps: ${loc.google_maps_url}\n`;
+      const slug = loc.store_code.replace(/_/g, "-");
+      md += `- [${loc.name}](${BASE_URL}/locations.md#${slug}): ${loc.address}. Phone: ${loc.phone}. Hours: ${loc.hours || "Mon–Sat 10:00 AM – 7:00 PM"}.\n`;
+    }
+    md += `\n`;
+
+    // AEO: Ground Truth Brand Answers
+    if (guardrails.length > 0) {
+      md += `## Ground-Truth Answer Capsules (AEO)\n\n`;
+      for (const g of guardrails) {
+        md += `- [${g.topic}](${BASE_URL}/faq.md#${g.topic.toLowerCase().replace(/\s+/g, "-")}): ${g.canonicalAnswer}\n`;
+      }
       md += `\n`;
     }
 
-    md += `## Key Services & Repair Specializations\n`;
-    md += `- iPhone Screen & OLED Replacement (iPhone 11 through iPhone 16 Pro Max)\n`;
-    md += `- Smartphone Battery Swaps (OEM-grade cells, 100% battery health restore)\n`;
-    md += `- Samsung Galaxy & Google Pixel Screen, Back Glass & Charging Ports\n`;
-    md += `- iPad & Android Tablet Digitizer & LCD Separation\n`;
-    md += `- MacBook & Windows Laptop Screen, Keyboard, Battery, and Trackpad\n`;
-    md += `- Game Console Micro-Soldering (PS5 / Xbox Series X / Nintendo Switch HDMI ports)\n`;
-    md += `- Ultrasonic Liquid & Water Damage Remediation\n\n`;
+    // GEO: Campus & Neighborhood Geo-fencing
+    if (neighborhoods.length > 0) {
+      md += `## Targeted Neighborhoods & Campuses (GEO)\n\n`;
+      for (const n of neighborhoods) {
+        const zips = n.zipCodes.join(", ");
+        const landmarks = n.keyLandmarks.join("; ");
+        md += `- [${n.name}](${BASE_URL}/locations.md#store-${n.storeId}): Radius ${n.radius} around ${landmarks} (Zip codes: ${zips}). Category: ${n.type}.\n`;
+      }
+      md += `\n`;
+    }
 
-    md += `## Core Web Pages & Online Actions\n`;
-    md += `- [Schedule a Repair Online](${BASE_URL}/schedule-repair): Book priority bench diagnostic and instant price quote.\n`;
-    md += `- [Repair Status Tracker](${BASE_URL}/repair-status): Check real-time repair progress with your ticket number.\n`;
-    md += `- [Store Locations & Directions](${BASE_URL}/locations): View all 3 West Philadelphia repair shops.\n`;
-    md += `- [Customer Reviews](${BASE_URL}/review): 4.9-star average across 1,500+ verified customer reviews.\n`;
-    md += `- [Common Repair Issues](${BASE_URL}/repairs): Overview of hardware symptoms and repair procedures.\n\n`;
+    md += `## Core Services\n\n`;
+    md += `- [iPhone Screen & Battery Repair](${BASE_URL}/repairs/iphone.md): Screen swaps in 25–45 mins ($129–$299) and battery health restorations ($69–$99).\n`;
+    md += `- [Samsung Galaxy & Android Repair](${BASE_URL}/repairs/smartphone.md): Curved AMOLED screen replacements, back glass laser separation, and USB-C port soldering.\n`;
+    md += `- [iPad & Tablet Hardware Services](${BASE_URL}/repairs/ipad.md): Digitizer and LCD glass separation, charging port repairs, and battery replacements.\n`;
+    md += `- [MacBook & Laptop Bench Procedures](${BASE_URL}/repairs/mac.md): Liquid spill cleaning, screen assemblies, trackpads, and swollen battery replacements.\n`;
+    md += `- [Gaming Console HDMI Micro-Soldering](${BASE_URL}/repairs/computer.md): PS5, Xbox Series X, and Nintendo Switch HDMI port replacement and encoder IC chip repair.\n\n`;
 
     if (blogPosts.length > 0) {
-      md += `## Technical Knowledge Base & Diagnostic Guides\n`;
+      md += `## Technical Repair Guides\n\n`;
       for (const post of blogPosts) {
-        const summary = post.seo?.aiSummary || post.excerpt || "Step-by-step diagnostic and troubleshooting guide.";
-        md += `- [${post.title}](${BASE_URL}/blog/${post.slug}): ${summary}\n`;
+        const desc = post.seo?.aiSummary || post.excerpt || "Step-by-step diagnostic and bench procedure.";
+        md += `- [${post.title}](${BASE_URL}/blog/${post.slug}.md): ${desc}\n`;
       }
       md += `\n`;
     }
 
-    if (faqs.length > 0) {
-      md += `## Frequently Asked Questions\n`;
-      for (const faq of faqs) {
-        md += `Q: ${faq.question}\n`;
-        md += `A: ${faq.answer}\n\n`;
-      }
-    }
+    md += `## Online Actions\n\n`;
+    md += `- [Online Repair Intake & Estimate](${BASE_URL}/schedule-repair.md): Interactive wizard for priority bench service and instant pricing.\n`;
+    md += `- [Live Repair Status Tracker](${BASE_URL}/repair-status.md): Real-time ticket lookup by ticket ID (e.g. SFD-10001) and customer phone number.\n\n`;
+
+    // 5. Optional Section (v2 spec standard for secondary links)
+    md += `## Optional\n\n`;
+    md += `- [Full Business FAQs](${BASE_URL}/faq.md): Detailed questions on 90-day warranties, data security, turnarounds, and diagnostic fees.\n`;
+    md += `- [Customer Reviews & Ratings](${BASE_URL}/review.md): Verified customer ratings (4.9/5.0 across 1,500+ Google and Yelp reviews).\n`;
+    md += `- [Complete XML Sitemap](${BASE_URL}/sitemap.xml): Machine-readable index of all published URLs.\n`;
 
     return new NextResponse(md, {
       status: 200,
       headers: {
-        "Content-Type": "text/plain; charset=utf-8",
+        "Content-Type": "text/markdown; charset=utf-8",
         "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+        "Link": `<${BASE_URL}/llms.txt>; rel="self", <${BASE_URL}/sitemap.xml>; rel="alternate"; type="application/xml"`,
       },
     });
   } catch (error) {
-    console.error("Failed to generate dynamic llms.txt:", error);
-    return new NextResponse("# SmartFoneDoctor Philadelphia\n\nWebsite: https://smartfonedoctor.com\nPhone: +1 (215) 598-2090", {
+    console.error("Failed to generate /llms.txt v2:", error);
+    return new NextResponse("# SmartFoneDoctor\n\n> Philadelphia's Electronics Repair Laboratory.\n\nWebsite: https://smartfonedoctor.com\n", {
       status: 200,
-      headers: { "Content-Type": "text/plain; charset=utf-8" },
+      headers: { "Content-Type": "text/markdown; charset=utf-8" },
     });
   }
 }

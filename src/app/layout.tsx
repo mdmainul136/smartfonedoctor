@@ -40,6 +40,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
+  other: {
+    describedby: "/llms.txt",
+  },
   openGraph: {
     title: "SmartFoneDoctor | Fast & Professional Electronics Repair",
     description:

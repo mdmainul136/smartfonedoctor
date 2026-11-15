@@ -1,0 +1,69 @@
+// -------------------------------------------------------------
+// AEO (Answer Engine Optimization) & GEO (Generative Engine Optimization)
+// Knowledge Graph, Neighborhood Geo-Targeting & AI Truth Guardrails
+// -------------------------------------------------------------
+
+model GeoNeighborhood {
+  id           String   @id @default(cuid())
+  storeId      Int      @default(1) // 1 = 52nd St, 2 = 4016 Lancaster, 3 = 4060 Lancaster
+  name         String   // e.g. "University City & Drexel University"
+  type         String   // "Campus" | "Commercial Corridor" | "Transit Hub" | "Neighborhood"
+  radius       String   // "2.0 mi"
+  zipCodes     String[] @default([])
+  keyLandmarks String[] @default([])
+  status       String   @default("Indexed") // "Active" | "Indexed"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([storeId])
+  @@index([status])
+  @@map("geo_neighborhoods")
+}
+
+model AeoBrandGuardrail {
+  id              String   @id @default(cuid())
+  topic           String   // e.g. "Walk-in Turnaround", "Repair Warranty", "Parts Quality"
+  claim           String   // Question or user prompt intent
+  canonicalAnswer String   @db.Text // Verified ground-truth answer for LLM retrieval
+  sourcesVerified String[] @default([]) // e.g. ["Google Business Profile", "llms.txt"]
+  status          String   @default("Published to llms.txt") // "Verified on Site" | "Published to llms.txt"
+  confidenceScore Decimal? @default(1.0) @db.Decimal
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([topic])
+  @@index([status])
+  @@map("aeo_brand_guardrails")
+}
+
+model AeoSimulatedPrompt {
+  id               String   @id @default(cuid())
+  queryTemplate    String   // e.g. "Best same-day iPhone 15 Pro screen repair near {landmark}"
+  intent           String   // e.g. "Walk-in screen repair"
+  category         String   // "Screen repair" | "Console HDMI" | "Battery & port" | "Open hours"
+  expectedCitation String   @default("SmartFoneDoctor")
+  verifiedStatus   String   @default("Cited") // "Cited" | "Partial" | "Missing"
+  storeId          Int?     @default(1)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([category])
+  @@index([verifiedStatus])
+  @@map("aeo_simulated_prompts")
+}
+
+model KnowledgeGraphEntity {
+  id                     String   @id @default("sfd_knowledge_entity")
+  entityName             String   @default("SmartFoneDoctor")
+  legalName              String   @default("SmartFoneDoctor LLC")
+  entityType             String   @default("LocalBusiness")
+  wikidataId             String?  @default("Q115862892")
+  googleKnowledgeGraphId String?  @default("kg:/g/11s0_smartfonedoctor")
+  sameAsUrls             String[] @default([])
+  primaryTopic           String   @default("Consumer Electronics Repair Service")
+  jurisdiction           String   @default("Philadelphia, Pennsylvania, United States")
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@map("knowledge_graph_entities")
+}

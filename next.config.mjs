@@ -16,6 +16,14 @@ const nextConfig = {
     };
     return config;
   },
+  async rewrites() {
+    return [
+      {
+        source: '/:path*.md',
+        destination: '/api/markdown?path=:path*',
+      },
+    ];
+  },
 };
 
 export default withPayload(nextConfig);

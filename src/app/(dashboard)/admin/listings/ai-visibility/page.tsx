@@ -1,9 +1,17 @@
 "use client";
 
-import { useState, useMemo, Fragment } from "react";
+import { useState, useMemo, useEffect, Fragment } from "react";
 import Link from "next/link";
 import { useStoreContext } from "@/lib/storeContext";
 import { useListings } from "@/lib/listingsContext";
+import {
+  getGeoNeighborhoodsAction,
+  upsertGeoNeighborhoodAction,
+  deleteGeoNeighborhoodAction,
+  getAeoBrandGuardrailsAction,
+  upsertAeoBrandGuardrailAction,
+  deleteAeoBrandGuardrailAction,
+} from "@/actions/geoAeo";
 import {
   RefreshCw,
   Check,
@@ -246,7 +254,7 @@ export default function AiVisibilityPage() {
   const [noticeBanner, setNoticeBanner] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  // ── Broad GEO State: Neighborhoods & Brand Truth Guardrails ────────────────
+  // ── Broad GEO State: Neighborhoods & Brand Truth Guardrails (PostgreSQL DB-First) ────────────────
   const [neighborhoods, setNeighborhoods] =
     useState<GeoNeighborhood[]>(INITIAL_NEIGHBORHOODS);
   const [guardrails, setGuardrails] =
@@ -259,36 +267,54 @@ export default function AiVisibilityPage() {
   const [newNeighborZips, setNewNeighborZips] = useState("");
   const [newNeighborLandmarks, setNewNeighborLandmarks] = useState("");
 
-  const handleAddNeighborhood = () => {
+  // Load live GEO and AEO data from PostgreSQL
+  useEffect(() => {
+    async function loadDbData() {
+      const [neighRes, guardRes] = await Promise.all([
+        getGeoNeighborhoodsAction(),
+        getAeoBrandGuardrailsAction(),
+      ]);
+      if (neighRes.success && neighRes.neighborhoods && neighRes.neighborhoods.length > 0) {
+        setNeighborhoods(neighRes.neighborhoods as GeoNeighborhood[]);
+      }
+      if (guardRes.success && guardRes.guardrails && guardRes.guardrails.length > 0) {
+        setGuardrails(guardRes.guardrails as BrandTruthGuardrail[]);
+      }
+    }
+    loadDbData();
+  }, []);
+
+  const handleAddNeighborhood = async () => {
     if (!newNeighborName.trim()) return;
-    const item: GeoNeighborhood = {
-      id: `geo-${Date.now()}`,
-      storeId: isAllStores ? 1 : selectedStoreId,
+    const storeTargetId = isAllStores ? 1 : selectedStoreId;
+    const zips = newNeighborZips.split(",").map((s) => s.trim()).filter(Boolean);
+    const landmarks = newNeighborLandmarks.split(",").map((s) => s.trim()).filter(Boolean);
+
+    const res = await upsertGeoNeighborhoodAction({
+      storeId: storeTargetId,
       name: newNeighborName.trim(),
       type: newNeighborType,
       radius: newNeighborRadius,
-      zipCodes: newNeighborZips
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
-      keyLandmarks: newNeighborLandmarks
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
+      zipCodes: zips,
+      keyLandmarks: landmarks,
       status: "Active",
-    };
-    setNeighborhoods((prev) => [...prev, item]);
-    setNewNeighborName("");
-    setNewNeighborZips("");
-    setNewNeighborLandmarks("");
-    setShowNeighborForm(false);
-    setNoticeBanner(`Added ${item.name} to geo-fencing targets.`);
+    });
+
+    if (res.success && res.neighborhood) {
+      setNeighborhoods((prev) => [...prev, res.neighborhood as GeoNeighborhood]);
+      setNewNeighborName("");
+      setNewNeighborZips("");
+      setNewNeighborLandmarks("");
+      setShowNeighborForm(false);
+      setNoticeBanner(`Saved ${res.neighborhood.name} to PostgreSQL geo-fencing targets.`);
+    }
   };
 
-  const handleDeleteNeighborhood = (id: string) => {
+  const handleDeleteNeighborhood = async (id: string) => {
     const target = neighborhoods.find((n) => n.id === id);
     setNeighborhoods((prev) => prev.filter((n) => n.id !== id));
-    setNoticeBanner(`Removed ${target?.name ?? "geo-target"} from geo-fencing.`);
+    await deleteGeoNeighborhoodAction(id);
+    setNoticeBanner(`Removed ${target?.name ?? "geo-target"} from database.`);
   };
 
   const [showGuardForm, setShowGuardForm] = useState(false);
@@ -297,28 +323,33 @@ export default function AiVisibilityPage() {
   const [newGuardAnswer, setNewGuardAnswer] = useState("");
   const [newGuardSources, setNewGuardSources] = useState("Website, llms.txt");
 
-  const handleAddGuardrail = () => {
+  const handleAddGuardrail = async () => {
     if (!newGuardTopic.trim() || !newGuardClaim.trim() || !newGuardAnswer.trim()) return;
-    const item: BrandTruthGuardrail = {
-      id: `g-${Date.now()}`,
+    const sources = newGuardSources.split(",").map((s) => s.trim()).filter(Boolean);
+
+    const res = await upsertAeoBrandGuardrailAction({
       topic: newGuardTopic.trim(),
       claim: newGuardClaim.trim(),
       canonicalAnswer: newGuardAnswer.trim(),
-      sourcesVerified: newGuardSources.split(",").map((s) => s.trim()).filter(Boolean),
+      sourcesVerified: sources,
       status: "Published to llms.txt",
-    };
-    setGuardrails((prev) => [...prev, item]);
-    setNewGuardTopic("");
-    setNewGuardClaim("");
-    setNewGuardAnswer("");
-    setShowGuardForm(false);
-    setNoticeBanner(`Added truth guardrail: "${item.topic}".`);
+    });
+
+    if (res.success && res.guardrail) {
+      setGuardrails((prev) => [...prev, res.guardrail as BrandTruthGuardrail]);
+      setNewGuardTopic("");
+      setNewGuardClaim("");
+      setNewGuardAnswer("");
+      setShowGuardForm(false);
+      setNoticeBanner(`Saved truth guardrail "${res.guardrail.topic}" to PostgreSQL and published to llms.txt.`);
+    }
   };
 
-  const handleDeleteGuardrail = (id: string) => {
+  const handleDeleteGuardrail = async (id: string) => {
     const target = guardrails.find((g) => g.id === id);
     setGuardrails((prev) => prev.filter((g) => g.id !== id));
-    setNoticeBanner(`Removed guardrail: "${target?.topic ?? "fact"}".`);
+    await deleteAeoBrandGuardrailAction(id);
+    setNoticeBanner(`Removed guardrail "${target?.topic ?? "fact"}" from database.`);
   };
 
   const getDirScore = (dirId: string, storeId?: number) => {

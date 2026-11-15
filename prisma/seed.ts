@@ -4,6 +4,7 @@ import { seedNavigation } from "./seeds/navigation.seed";
 import { seedCmsPages } from "./seeds/cmsPages.seed";
 import { seedPageBuilder } from "./seeds/pageBuilder.seed";
 import { seedSeoMetadata } from "./seeds/seo.seed";
+import { seedGeoAeo } from "./seeds/geoAeo.seed";
 import { seedBlog } from "./seeds/blog.seed";
 import { seedServicesAndLocations } from "./seeds/services.seed";
 import { seedLeads } from "./seeds/leads.seed";
@@ -43,6 +44,11 @@ async function main() {
       case "seo":
       case "metadata":
         await seedSeoMetadata();
+        break;
+      case "geo":
+      case "aeo":
+      case "geoaeo":
+        await seedGeoAeo();
         break;
       case "blog":
       case "posts":
@@ -86,11 +92,15 @@ async function main() {
     await seedSeoMetadata();
     console.log("");
 
-    // 7. Locations and FAQs
+    // 7. AEO (Answer Engine) & GEO (Generative Engine) Knowledge Graph
+    await seedGeoAeo();
+    console.log("");
+
+    // 8. Locations and FAQs
     await seedServicesAndLocations();
     console.log("");
 
-    // 8. Repair leads & customer intake tickets
+    // 9. Repair leads & customer intake tickets
     await seedLeads();
   }
 
