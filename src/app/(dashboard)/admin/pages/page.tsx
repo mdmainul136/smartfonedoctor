@@ -2,7 +2,16 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { INITIAL_CMS_PAGES, CMSPage, getStoredCMSPages } from "@/lib/cmsData";
+import { useRouter } from "next/navigation";
+import {
+  INITIAL_CMS_PAGES,
+  CMSPage,
+  getStoredCMSPages,
+  saveStoredCMSPages,
+  createCustomPage,
+  pathFromName,
+  validatePagePath,
+} from "@/lib/cmsData";
 import {
   FileText,
   Search,
@@ -13,17 +22,139 @@ import {
   CheckCircle2,
   Clock,
   Pencil,
-  ArrowUpDown,
+  Copy,
+  Trash2,
+  Settings2,
+  Lock,
+  X,
 } from "lucide-react";
+
+const CATEGORIES: CMSPage["category"][] = ["Core", "Repairs", "Utility", "Legal"];
+
+type PageForm = {
+  /** Set when editing an existing page; empty when adding one. */
+  id?: string;
+  name: string;
+  path: string;
+  /** False until the user types an address themselves, so it follows the name. */
+  pathTouched: boolean;
+  title: string;
+  category: CMSPage["category"];
+  status: CMSPage["status"];
+  custom: boolean;
+};
 
 export default function PagesListPage() {
   const [pages, setPages] = useState<CMSPage[]>(INITIAL_CMS_PAGES);
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
+  const router = useRouter();
+  const [form, setForm] = useState<PageForm | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+
   useEffect(() => {
     setPages(getStoredCMSPages());
   }, []);
+
+  /** Saves the list; on failure the screen keeps showing what is really stored. */
+  const persist = (next: CMSPage[]): boolean => {
+    if (!saveStoredCMSPages(next)) {
+      setFormError("Could not save: browser storage is full.");
+      return false;
+    }
+    setPages(next);
+    return true;
+  };
+
+  const openAdd = () => {
+    setFormError(null);
+    setForm({ name: "", path: "/", pathTouched: false, title: "", category: "Core", status: "Draft", custom: true });
+  };
+
+  const openSettings = (page: CMSPage) => {
+    setFormError(null);
+    setForm({
+      id: page.id,
+      name: page.name,
+      path: page.path,
+      pathTouched: true,
+      title: page.title,
+      category: page.category,
+      status: page.status,
+      custom: Boolean(page.custom),
+    });
+  };
+
+  const submitForm = () => {
+    if (!form) return;
+    const name = form.name.trim();
+    if (!name) return setFormError("Give the page a name.");
+    const current = getStoredCMSPages();
+
+    if (!form.id) {
+      const problem = validatePagePath(form.path, current);
+      if (problem) return setFormError(problem);
+      const page = createCustomPage(name, form.path, form.category);
+      if (current.some((p) => p.slug === page.slug)) return setFormError("Another page already uses that address.");
+      if (form.title.trim()) page.title = form.title.trim();
+      if (!persist([...current, page])) return;
+      setForm(null);
+      router.push(`/admin/pages/${page.slug}`);
+      return;
+    }
+
+    // Built-in pages keep their address: it is fixed by the site's code.
+    if (form.custom) {
+      const problem = validatePagePath(form.path, current, form.id);
+      if (problem) return setFormError(problem);
+    }
+    const next = current.map((p) =>
+      p.id === form.id
+        ? {
+            ...p,
+            name,
+            title: form.title.trim() || p.title,
+            category: form.category,
+            status: form.status,
+            ...(form.custom ? { path: form.path } : {}),
+            lastEdited: "Just now",
+          }
+        : p,
+    );
+    if (persist(next)) setForm(null);
+  };
+
+  const duplicatePage = (page: CMSPage) => {
+    const current = getStoredCMSPages();
+    let n = 2;
+    let path = `${page.path === "/" ? "/home" : page.path}-copy`;
+    while (validatePagePath(path, current) || current.some((p) => p.slug === path.slice(1).replace(/\//g, "-"))) {
+      path = `${page.path === "/" ? "/home" : page.path}-copy-${n++}`;
+      if (n > 50) return;
+    }
+    const copy = createCustomPage(`${page.name} (copy)`, path, page.category);
+    persist([
+      ...current,
+      {
+        ...page,
+        id: copy.id,
+        slug: copy.slug,
+        path,
+        name: copy.name,
+        status: "Draft",
+        lastEdited: "Just now",
+        puckEditedAt: Date.now(),
+        custom: true,
+      },
+    ]);
+  };
+
+  const deletePage = (page: CMSPage) => {
+    if (!page.custom) return;
+    if (!window.confirm(`Delete "${page.name}" (${page.path})? This cannot be undone.`)) return;
+    persist(getStoredCMSPages().filter((p) => p.id !== page.id));
+  };
 
   const filteredPages = pages.filter((page) => {
     const matchCategory = filterCategory === "all" || page.category === filterCategory;
@@ -62,13 +193,14 @@ export default function PagesListPage() {
             <ExternalLink className="w-3.5 h-3.5 text-gray-500" />
           </Link>
 
-          <Link
-            href="/admin/pages/home"
-            className="h-[34px] px-3.5 rounded-[6px] bg-[#009691] hover:bg-[#007f7b] text-white text-[13px] font-semibold inline-flex items-center gap-1.5 transition-colors shadow-2xs"
+          <button
+            type="button"
+            onClick={openAdd}
+            className="h-[34px] px-3.5 rounded-[6px] bg-[#009691] hover:bg-[#007f7b] text-white text-[13px] font-semibold inline-flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
           >
-            <Pencil className="w-3.5 h-3.5" />
-            <span>Open Page Editor</span>
-          </Link>
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add page</span>
+          </button>
         </div>
       </div>
 
@@ -81,6 +213,7 @@ export default function PagesListPage() {
             { id: "Core", label: "Core Site" },
             { id: "Repairs", label: "Repair Services" },
             { id: "Utility", label: "Utility & Booking" },
+            { id: "Legal", label: "Legal" },
           ].map((cat) => (
             <button
               key={cat.id}
@@ -162,10 +295,17 @@ export default function PagesListPage() {
 
                 {/* Status */}
                 <td className="py-3 px-4">
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                    <span>{page.status}</span>
-                  </span>
+                  {page.status === "Published" ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                      <span>Published</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                      <Clock className="w-3 h-3 text-amber-600" />
+                      <span>Draft</span>
+                    </span>
+                  )}
                 </td>
 
                 {/* Last Modified */}
@@ -188,6 +328,36 @@ export default function PagesListPage() {
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
                     </Link>
+                    <button
+                      type="button"
+                      onClick={() => openSettings(page)}
+                      className="p-1.5 rounded-[4px] hover:bg-gray-100 text-gray-500 hover:text-black transition-colors cursor-pointer"
+                      title="Page settings"
+                    >
+                      <Settings2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => duplicatePage(page)}
+                      className="p-1.5 rounded-[4px] hover:bg-gray-100 text-gray-500 hover:text-black transition-colors cursor-pointer"
+                      title="Duplicate as a new draft"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                    {page.custom ? (
+                      <button
+                        type="button"
+                        onClick={() => deletePage(page)}
+                        className="p-1.5 rounded-[4px] hover:bg-red-50 text-gray-500 hover:text-red-600 transition-colors cursor-pointer"
+                        title="Delete page"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    ) : (
+                      <span className="p-1.5 text-gray-300" title="Built-in page: it cannot be deleted">
+                        <Lock className="w-3.5 h-3.5" />
+                      </span>
+                    )}
                     <Link
                       href={`/admin/pages/${page.slug}`}
                       className="h-[28px] px-2.5 rounded-[5px] bg-white border border-[#d1d5db] hover:border-[#111111] text-[12px] font-medium text-[#111111] inline-flex items-center gap-1 shadow-2xs transition-colors"
@@ -208,6 +378,113 @@ export default function PagesListPage() {
           </div>
         )}
       </div>
+
+      {/* ADD PAGE / PAGE SETTINGS */}
+      {form && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/40 p-4" onClick={() => setForm(null)}>
+          <form
+            onClick={(e) => e.stopPropagation()}
+            onSubmit={(e) => {
+              e.preventDefault();
+              submitForm();
+            }}
+            className="w-full max-w-md rounded-[10px] bg-white p-5 shadow-xl flex flex-col gap-3.5"
+          >
+            <div className="flex items-center justify-between">
+              <h2 className="text-[16px] font-bold text-[#111111]">{form.id ? "Page settings" : "Add page"}</h2>
+              <button type="button" onClick={() => setForm(null)} className="p-1 rounded hover:bg-gray-100 text-gray-500 cursor-pointer" title="Close">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <label className="flex flex-col gap-1 text-[12px] font-semibold text-gray-700">
+              Page name
+              <input
+                autoFocus
+                value={form.name}
+                onChange={(e) => {
+                  const name = e.target.value;
+                  setForm({ ...form, name, path: form.pathTouched ? form.path : pathFromName(name) });
+                }}
+                placeholder="Summer offer"
+                className="h-[34px] rounded-[6px] border border-[#d1d5db] px-2.5 text-[13px] font-normal focus:outline-none focus:border-[#009691]"
+              />
+            </label>
+
+            <label className="flex flex-col gap-1 text-[12px] font-semibold text-gray-700">
+              Address (URL)
+              <input
+                value={form.path}
+                disabled={!form.custom}
+                onChange={(e) => setForm({ ...form, path: e.target.value.toLowerCase(), pathTouched: true })}
+                placeholder="/summer-offer"
+                className="h-[34px] rounded-[6px] border border-[#d1d5db] px-2.5 text-[13px] font-mono font-normal focus:outline-none focus:border-[#009691] disabled:bg-gray-50 disabled:text-gray-500"
+              />
+              {!form.custom && (
+                <span className="text-[11px] font-normal text-gray-500">Built-in page: its address is fixed.</span>
+              )}
+            </label>
+
+            <label className="flex flex-col gap-1 text-[12px] font-semibold text-gray-700">
+              Browser title (SEO)
+              <input
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                placeholder={form.name ? `${form.name} | SmartFoneDoctor` : "Shown in the browser tab and in Google"}
+                className="h-[34px] rounded-[6px] border border-[#d1d5db] px-2.5 text-[13px] font-normal focus:outline-none focus:border-[#009691]"
+              />
+            </label>
+
+            <div className="flex gap-3">
+              <label className="flex flex-1 flex-col gap-1 text-[12px] font-semibold text-gray-700">
+                Category
+                <select
+                  value={form.category}
+                  onChange={(e) => setForm({ ...form, category: e.target.value as CMSPage["category"] })}
+                  className="h-[34px] rounded-[6px] border border-[#d1d5db] px-2 text-[13px] font-normal focus:outline-none focus:border-[#009691]"
+                >
+                  {CATEGORIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {form.id && (
+                <label className="flex flex-1 flex-col gap-1 text-[12px] font-semibold text-gray-700">
+                  Status
+                  <select
+                    value={form.status}
+                    onChange={(e) => setForm({ ...form, status: e.target.value as CMSPage["status"] })}
+                    className="h-[34px] rounded-[6px] border border-[#d1d5db] px-2 text-[13px] font-normal focus:outline-none focus:border-[#009691]"
+                  >
+                    <option value="Published">Published</option>
+                    <option value="Draft">Draft</option>
+                  </select>
+                </label>
+              )}
+            </div>
+
+            {formError && <p className="text-[12px] font-medium text-red-600">{formError}</p>}
+
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setForm(null)}
+                className="h-[34px] px-3.5 rounded-[6px] border border-[#d1d5db] bg-white text-[13px] font-medium text-[#111111] hover:bg-gray-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="h-[34px] px-3.5 rounded-[6px] bg-[#009691] hover:bg-[#007f7b] text-white text-[13px] font-semibold cursor-pointer"
+              >
+                {form.id ? "Save" : "Create and open editor"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

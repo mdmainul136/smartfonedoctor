@@ -72,6 +72,8 @@ export default function DedicatedPageEditor({
       ...page,
       puckData: data as unknown as Record<string, unknown>,
       puckEditedAt: Date.now(),
+      // Publishing in the builder puts a draft page live.
+      status: "Published",
       lastEdited: "Just now",
     };
     setPage(updatedPage);

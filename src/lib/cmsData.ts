@@ -129,6 +129,8 @@ export interface CMSPage {
   puckData?: Record<string, unknown>;
   /** Set when someone publishes the page in the builder; seed upgrades never overwrite it after that. */
   puckEditedAt?: number;
+  /** Created in Admin > Pages (not one of the built-in pages). Only these can be deleted. */
+  custom?: boolean;
 }
 
 export const INITIAL_CMS_PAGES: CMSPage[] = [
@@ -2927,4 +2929,51 @@ export function saveStoredCMSPages(pages: CMSPage[]): boolean {
   }
 }
 
+/** URL prefixes a custom page may not use. */
+const RESERVED_PATHS = ["/admin", "/api", "/_next", "/profile", "/settings", "/logout", "/sign-in"];
 
+/** "About our team" -> "/about-our-team" */
+export function pathFromName(name: string): string {
+  const slug = name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9/]+/g, "-")
+    .replace(/\/+/g, "/")
+    .replace(/^[-/]+|[-/]+$/g, "");
+  return `/${slug}`;
+}
+
+/** Returns a message when `path` cannot be used for a page, otherwise null. */
+export function validatePagePath(path: string, pages: CMSPage[], ignoreId?: string): string | null {
+  if (!/^\/[a-z0-9]+(?:[-/][a-z0-9]+)*$/.test(path)) {
+    return "Use lowercase letters, numbers and dashes, starting with /. Example: /summer-offer";
+  }
+  if (RESERVED_PATHS.some((r) => path === r || path.startsWith(`${r}/`))) return "That address is reserved by the system.";
+  if (pages.some((p) => p.path === path && p.id !== ignoreId)) return "Another page already uses that address.";
+  return null;
+}
+
+/** Makes a new, empty draft page. The caller saves it. */
+export function createCustomPage(name: string, path: string, category: CMSPage["category"]): CMSPage {
+  const slug = path.slice(1).replace(/\//g, "-");
+  return {
+    id: `page-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
+    slug,
+    name,
+    path,
+    category,
+    title: `${name} | SmartFoneDoctor`,
+    metaDesc: "",
+    heroHeadline: name,
+    heroSubtitle: "",
+    heroBadge: "",
+    primaryCtaText: "",
+    primaryCtaLink: "",
+    status: "Draft",
+    lastEdited: "Just now",
+    author: "Admin",
+    puckData: { root: { props: {} }, content: [] },
+    puckEditedAt: Date.now(),
+    custom: true,
+  };
+}
