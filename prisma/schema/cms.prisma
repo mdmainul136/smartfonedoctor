@@ -1,0 +1,48 @@
+// -------------------------------------------------------------
+// Antigravity CMS & Page Builder Models
+// -------------------------------------------------------------
+
+model CmsPage {
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  name           String
+  path           String   @unique
+  category       String   @default("Core")
+  title          String
+  metaDesc       String   @default("")
+  heroHeadline   String   @default("")
+  heroSubtitle   String   @default("")
+  heroBadge      String   @default("")
+  primaryCtaText String   @default("")
+  primaryCtaLink String   @default("")
+  status         String   @default("Published")
+  lastEdited     String   @default("")
+  author         String   @default("Admin")
+  contentHtml    String?  @db.Text
+  compiledCss    String?  @db.Text
+  focusKeyword   String?
+  keywords       String[] @default([])
+  featuredImage  String?
+  canonicalUrl   String?
+  schemaType     String?  @default("LocalBusiness")
+  custom         Boolean  @default(false)
+  puckData       Json?
+  puckEditedAt   BigInt?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([slug])
+  @@index([path])
+  @@index([status])
+  @@map("cms_pages")
+}
+
+model NavMenu {
+  id        String   @id @default("default_header_menu")
+  name      String   @default("Main Navigation")
+  config    Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("nav_menus")
+}

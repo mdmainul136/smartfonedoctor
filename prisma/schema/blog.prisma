@@ -1,0 +1,22 @@
+// -------------------------------------------------------------
+// Knowledge Base & Repair Guides Blog Models
+// -------------------------------------------------------------
+
+model BlogPost {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  title         String
+  excerpt       String?
+  content       String   @db.Text
+  category      String   @default("Repair Guides")
+  author        String   @default("Certified Technician")
+  status        String   @default("Draft")
+  featuredImage String?
+  focusKeyword  String?
+  schemaType    String?  @default("TechArticle")
+  articleData   Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("blog_posts")
+}

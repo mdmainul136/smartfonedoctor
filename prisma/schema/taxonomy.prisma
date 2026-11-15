@@ -1,0 +1,11 @@
+// -------------------------------------------------------------
+// Taxonomies Store Models (Brands, Categories, Issues, Models)
+// -------------------------------------------------------------
+
+model TaxonomyStore {
+  id        String   @id
+  data      Json
+  updatedAt DateTime @updatedAt
+
+  @@map("taxonomy_stores")
+}

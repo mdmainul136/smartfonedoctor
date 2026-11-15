@@ -1,0 +1,49 @@
+// -------------------------------------------------------------
+// Customer Repair Intake & Booking Leads Models
+// -------------------------------------------------------------
+
+model Lead {
+  id                            Int                             @id @default(autoincrement())
+  customer_name                 String                          @db.VarChar
+  phone                         String                          @db.VarChar
+  email                         String?                         @db.VarChar
+  device                        String                          @db.VarChar
+  issue                         String                          @db.VarChar
+  store                         enum_leads_store                @default(nd_st)
+  status                        enum_leads_status?              @default(new)
+  source                        enum_leads_source?              @default(website_form)
+  est_value                     Decimal?                        @default(99) @db.Decimal
+  notes                         String?                         @db.VarChar
+  updated_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  created_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  payload_locked_documents_rels payload_locked_documents_rels[]
+
+  @@index([created_at])
+  @@index([updated_at])
+  @@map("leads")
+}
+
+enum enum_leads_source {
+  google_maps   @map("google-maps")
+  google_search @map("google-search")
+  website_form  @map("website-form")
+  phone_call    @map("phone-call")
+  walk_in       @map("walk-in")
+  ai
+  yelp
+  social
+}
+
+enum enum_leads_status {
+  new
+  contacted
+  scheduled
+  completed
+  lost
+}
+
+enum enum_leads_store {
+  nd_st          @map("52nd-st")
+  lancaster_4016 @map("4016-lancaster")
+  lancaster_4060 @map("4060-lancaster")
+}

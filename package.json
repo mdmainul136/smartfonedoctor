@@ -6,7 +6,18 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:seed:cms": "tsx prisma/seeds/cmsPages.seed.ts",
+    "db:seed:blog": "tsx prisma/seeds/blog.seed.ts",
+    "db:seed:taxonomies": "tsx prisma/seeds/taxonomies.seed.ts",
+    "db:seed:leads": "tsx prisma/seeds/leads.seed.ts",
+    "db:seed:navigation": "tsx prisma/seeds/navigation.seed.ts",
+    "db:seed:services": "tsx prisma/seeds/services.seed.ts"
+  },
+  "prisma": {
+    "schema": "prisma/schema",
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

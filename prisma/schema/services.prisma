@@ -1,0 +1,79 @@
+// -------------------------------------------------------------
+// Repair Services, Locations, FAQs & Reviews Models
+// -------------------------------------------------------------
+
+model faqs {
+  id                            Int                             @id @default(autoincrement())
+  question                      String                          @db.VarChar
+  answer                        String                          @db.VarChar
+  category                      enum_faqs_category?             @default(General)
+  order                         Decimal?                        @default(1) @db.Decimal
+  updated_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  created_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  payload_locked_documents_rels payload_locked_documents_rels[]
+
+  @@index([created_at])
+  @@index([updated_at])
+}
+
+model locations {
+  id                            Int                             @id @default(autoincrement())
+  name                          String                          @db.VarChar
+  store_code                    String                          @unique(map: "locations_store_code_idx") @db.VarChar
+  address                       String                          @db.VarChar
+  neighborhood                  String?                         @default("West Philadelphia, PA") @db.VarChar
+  phone                         String                          @default("+1 (215) 598-2090") @db.VarChar
+  hours                         String?                         @default("Mon–Sat: 10:00 AM – 7:00 PM | Sun: Closed") @db.VarChar
+  google_maps_url               String?                         @db.VarChar
+  google_rating                 Decimal?                        @default(4.9) @db.Decimal
+  total_reviews                 Decimal?                        @default(1520) @db.Decimal
+  is_active                     Boolean?                        @default(true)
+  updated_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  created_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  payload_locked_documents_rels payload_locked_documents_rels[]
+
+  @@index([created_at])
+  @@index([updated_at])
+}
+
+enum enum_faqs_category {
+  General
+  Warranty
+  Pricing
+}
+
+enum enum_repairs_status {
+  received
+  diagnosing
+  waiting_parts
+  in_progress
+  ready_pickup
+  completed
+}
+
+enum enum_repairs_store_location {
+  nd_st          @map("52nd-st")
+  lancaster_4016 @map("4016-lancaster")
+  lancaster_4060 @map("4060-lancaster")
+}
+
+enum enum_reviews_source {
+  google
+  yelp
+  qr_code @map("qr-code")
+}
+
+enum enum_reviews_store {
+  nd_st          @map("52nd-st")
+  lancaster_4016 @map("4016-lancaster")
+  lancaster_4060 @map("4060-lancaster")
+}
+
+enum enum_services_category {
+  Screen_repair   @map("Screen repair")
+  Battery
+  Charging___HDMI @map("Charging & HDMI")
+  Water_damage    @map("Water damage")
+  Audio___camera  @map("Audio & camera")
+  Other
+}
