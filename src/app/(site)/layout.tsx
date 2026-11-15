@@ -3,6 +3,7 @@ import Navbar from "@/components/layout/Navbar";
 import CookieYesIntegration from "@/components/compliance/CookieYesIntegration";
 import AnalyticsScripts from "@/components/analytics/AnalyticsScripts";
 import UserWayWidget from "@/components/accessibility/UserWayWidget";
+import GmbSchemaJsonLd from "@/components/seo/GmbSchemaJsonLd";
 
 export default function SiteLayout({
   children,
@@ -11,6 +12,7 @@ export default function SiteLayout({
 }) {
   return (
     <>
+      <GmbSchemaJsonLd />
       <AnalyticsScripts />
       <TopBar />
       <Navbar />

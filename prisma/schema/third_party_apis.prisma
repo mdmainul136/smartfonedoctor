@@ -1,0 +1,61 @@
+// -------------------------------------------------------------
+// Third-Party API Connectors, Citations & Automated Sync Engine
+// (Google Business Profile, Yelp Fusion, Apple Connect, Meta Graph, DataForSEO)
+// -------------------------------------------------------------
+
+model ApiConnector {
+  id                 String       @id // e.g. "google-gbp", "yelp-fusion", "facebook-graph", "apple-connect", "bing-sync", "trustpilot-api", "dataforseo-scanner"
+  name               String       // "Google Business Profile API"
+  provider           String       // "Google Cloud OAuth 2.0"
+  capability         String       // "Read & Write (Bi-directional)" | "Read-Only" | "Automated Citation Audit"
+  authType           String       // "OAuth 2.0" | "API Key" | "Google Sync"
+  connected          Boolean      @default(false)
+  accountLabel       String?      @default("Not connected")
+  lastPulled         String?      @default("Never")
+  apiKeyEncrypted    String?      @db.Text
+  apiSecretEncrypted String?      @db.Text
+  endpointDoc        String       // "mybusinessbusinessinformation.googleapis.com/v1"
+  locationsMatched   Int          @default(3)
+  directoriesCovered String[]     @default([])
+  autoSync           Boolean      @default(true)
+  syncFrequencyHours Int          @default(24)
+  syncLogs           ApiSyncLog[]
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  @@map("api_connectors")
+}
+
+model ApiSyncLog {
+  id          String       @id @default(cuid())
+  connectorId String
+  connector   ApiConnector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
+  action      String       // "Pull All APIs", "NAP Verification", "Apple Maps Connect"
+  status      String       // "Success" | "Failed" | "Warning"
+  itemsSynced Int          @default(0)
+  message     String?
+  createdAt   DateTime     @default(now())
+
+  @@index([connectorId])
+  @@index([createdAt])
+  @@map("api_sync_logs")
+}
+
+model DirectoryListing {
+  id              String   @id // "gmb", "yelp", "apple", "bing", "facebook", "bbb", "yellowpages", "trustpilot", "foursquare"
+  name            String   // "Google Business Profile"
+  domain          String   // "google.com/business"
+  tier            String   // "Tier 1: Core", "Tier 2: High Authority", "Tier 3: Local/Niche"
+  category        String   // "Search engine", "Mapping platform", "Social & reviews"
+  syncMode        String   // "Official API", "DataForSEO Audit", "Manual Claim"
+  apiProviderId   String?  // References ApiConnector.id
+  portalUrl       String?
+  stores          Json     // Record<number, { status, napMatch, url, lastSynced, issue }>
+  overallNapMatch Int      @default(100)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tier])
+  @@index([syncMode])
+  @@map("directory_listings")
+}

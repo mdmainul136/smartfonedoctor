@@ -5,6 +5,7 @@ import { seedCmsPages } from "./seeds/cmsPages.seed";
 import { seedPageBuilder } from "./seeds/pageBuilder.seed";
 import { seedSeoMetadata } from "./seeds/seo.seed";
 import { seedGeoAeo } from "./seeds/geoAeo.seed";
+import { seedThirdPartyApis } from "./seeds/thirdPartyApis.seed";
 import { seedBlog } from "./seeds/blog.seed";
 import { seedServicesAndLocations } from "./seeds/services.seed";
 import { seedLeads } from "./seeds/leads.seed";
@@ -49,6 +50,11 @@ async function main() {
       case "aeo":
       case "geoaeo":
         await seedGeoAeo();
+        break;
+      case "apis":
+      case "connectors":
+      case "citations":
+        await seedThirdPartyApis();
         break;
       case "blog":
       case "posts":
@@ -96,11 +102,15 @@ async function main() {
     await seedGeoAeo();
     console.log("");
 
-    // 8. Locations and FAQs
+    // 8. Third-Party APIs (Google Business Profile, Yelp Fusion, Apple Connect, Meta Graph)
+    await seedThirdPartyApis();
+    console.log("");
+
+    // 9. Locations and FAQs
     await seedServicesAndLocations();
     console.log("");
 
-    // 9. Repair leads & customer intake tickets
+    // 10. Repair leads & customer intake tickets
     await seedLeads();
   }
 

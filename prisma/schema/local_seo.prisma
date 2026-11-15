@@ -1,0 +1,44 @@
+// -------------------------------------------------------------
+// Google Business Profile (GMB) & Local SEO Metrics Engine
+// -------------------------------------------------------------
+
+model GmbProfile {
+  id               String    @id @default(cuid())
+  storeCode        String    @unique // e.g. "nd_st", "lancaster_4016", "lancaster_4060"
+  storeName        String
+  googlePlaceId    String?
+  googleCid        String?
+  latitude         Decimal?  @default(39.9572) @db.Decimal
+  longitude        Decimal?  @default(-75.2267) @db.Decimal
+  impressions      Int       @default(3840)
+  profileViews     Int       @default(612)
+  calls            Int       @default(214)
+  directions       Int       @default(178)
+  websiteClicks    Int       @default(145)
+  messages         Int       @default(34)
+  reviewsCount     Int       @default(1520)
+  unrepliedReviews Int       @default(3)
+  rating           Decimal   @default(4.9) @db.Decimal
+  posts            GmbPost[]
+  updatedAt        DateTime  @updatedAt
+
+  @@map("gmb_profiles")
+}
+
+model GmbPost {
+  id          String     @id @default(cuid())
+  profileId   String
+  profile     GmbProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  type        String     @default("Offer") // "Offer" | "Update"
+  title       String
+  body        String     @db.Text
+  ctaLabel    String     @default("Book online")
+  ctaUrl      String     @default("https://smartfonedoctor.com/locations")
+  couponCode  String?
+  publishedAt DateTime   @default(now())
+  views       Int        @default(412)
+  clicks      Int        @default(29)
+
+  @@index([profileId])
+  @@map("gmb_posts")
+}
