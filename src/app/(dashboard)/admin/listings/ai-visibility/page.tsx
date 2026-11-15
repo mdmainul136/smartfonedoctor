@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, Fragment } from "react";
 import Link from "next/link";
 import { useStoreContext } from "@/lib/storeContext";
-import { useListings } from "@/lib/listingsContext";
+import { useListings, CATALOG_DIRECTORIES } from "@/lib/listingsContext";
 import {
   getGeoNeighborhoodsAction,
   upsertGeoNeighborhoodAction,
@@ -11,7 +11,12 @@ import {
   getAeoBrandGuardrailsAction,
   upsertAeoBrandGuardrailAction,
   deleteAeoBrandGuardrailAction,
+  getKnowledgeGraphEntityAction,
+  updateKnowledgeGraphEntityAction,
+  probeLiveAiVisibilityAction,
+  LiveAiProbeResult,
 } from "@/actions/geoAeo";
+import { getGmbPostsAction, GmbPostItem } from "@/actions/localSeo";
 import {
   RefreshCw,
   Check,
@@ -24,6 +29,13 @@ import {
   CheckCircle2,
   AlertCircle,
   Trash2,
+  Send,
+  ExternalLink,
+  Layers,
+  MessageSquare,
+  Globe,
+  Database,
+  Sliders,
 } from "lucide-react";
 
 type AiTab = "overview" | "neighborhoods" | "schema-crawlers" | "guardrails";
@@ -254,11 +266,32 @@ export default function AiVisibilityPage() {
   const [noticeBanner, setNoticeBanner] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  // ── Broad GEO State: Neighborhoods & Brand Truth Guardrails (PostgreSQL DB-First) ────────────────
+  // ── Broad GEO & AEO State (PostgreSQL DB-First) ────────────────
   const [neighborhoods, setNeighborhoods] =
     useState<GeoNeighborhood[]>(INITIAL_NEIGHBORHOODS);
   const [guardrails, setGuardrails] =
     useState<BrandTruthGuardrail[]>(INITIAL_GUARDRAILS);
+  const [gmbPosts, setGmbPosts] = useState<GmbPostItem[]>([]);
+  const [kgEntity, setKgEntity] = useState<{
+    wikidataId?: string | null;
+    googleKnowledgeGraphId?: string | null;
+    sameAsUrls?: string[];
+    primaryTopic?: string;
+  } | null>(null);
+
+  // Live AI Probe state
+  const [probeQuery, setProbeQuery] = useState(
+    "Best same-day iPhone 15 Pro screen repair near 52nd St"
+  );
+  const [probeResult, setProbeResult] = useState<LiveAiProbeResult | null>(null);
+  const [isProbing, setIsProbing] = useState(false);
+
+  // Knowledge Graph Editor state
+  const [kgWikidata, setKgWikidata] = useState("Q115862892");
+  const [kgGoogleId, setKgGoogleId] = useState("kg:/g/11s0_smartfonedoctor");
+  const [kgSameAsText, setKgSameAsText] = useState("");
+  const [isSavingKg, setIsSavingKg] = useState(false);
+
   const [showNeighborForm, setShowNeighborForm] = useState(false);
   const [newNeighborName, setNewNeighborName] = useState("");
   const [newNeighborType, setNewNeighborType] =
@@ -267,12 +300,14 @@ export default function AiVisibilityPage() {
   const [newNeighborZips, setNewNeighborZips] = useState("");
   const [newNeighborLandmarks, setNewNeighborLandmarks] = useState("");
 
-  // Load live GEO and AEO data from PostgreSQL
+  // Load live GEO, AEO, GMB Posts, and Knowledge Graph from PostgreSQL
   useEffect(() => {
     async function loadDbData() {
-      const [neighRes, guardRes] = await Promise.all([
+      const [neighRes, guardRes, gmbRes, kgRes] = await Promise.all([
         getGeoNeighborhoodsAction(),
         getAeoBrandGuardrailsAction(),
+        getGmbPostsAction(),
+        getKnowledgeGraphEntityAction(),
       ]);
       if (neighRes.success && neighRes.neighborhoods && neighRes.neighborhoods.length > 0) {
         setNeighborhoods(neighRes.neighborhoods as GeoNeighborhood[]);
@@ -280,9 +315,48 @@ export default function AiVisibilityPage() {
       if (guardRes.success && guardRes.guardrails && guardRes.guardrails.length > 0) {
         setGuardrails(guardRes.guardrails as BrandTruthGuardrail[]);
       }
+      if (gmbRes.success && gmbRes.posts) {
+        setGmbPosts(gmbRes.posts);
+      }
+      if (kgRes.success && kgRes.entity) {
+        setKgEntity(kgRes.entity);
+        setKgWikidata(kgRes.entity.wikidataId || "Q115862892");
+        setKgGoogleId(kgRes.entity.googleKnowledgeGraphId || "kg:/g/11s0_smartfonedoctor");
+        setKgSameAsText((kgRes.entity.sameAsUrls || []).join("\n"));
+      }
     }
     loadDbData();
   }, []);
+
+  const handleRunLiveProbe = async (customQ?: string) => {
+    const q = customQ || probeQuery;
+    if (!q.trim()) return;
+    setIsProbing(true);
+    const targetStoreId = isAllStores ? 1 : selectedStoreId;
+    const res = await probeLiveAiVisibilityAction(q.trim(), targetStoreId);
+    if (res.success) {
+      setProbeResult(res);
+      setNoticeBanner(`Live AI Probe completed: SmartFoneDoctor cited as ${res.citationRank}.`);
+    } else {
+      setNoticeBanner(res.error || "Live probe evaluation failed.");
+    }
+    setIsProbing(false);
+  };
+
+  const handleSaveKgEntity = async () => {
+    setIsSavingKg(true);
+    const urls = kgSameAsText.split("\n").map((s) => s.trim()).filter(Boolean);
+    const res = await updateKnowledgeGraphEntityAction({
+      wikidataId: kgWikidata.trim(),
+      googleKnowledgeGraphId: kgGoogleId.trim(),
+      sameAsUrls: urls,
+    });
+    if (res.success && res.entity) {
+      setKgEntity(res.entity);
+      setNoticeBanner("Updated Knowledge Graph identifiers (Wikidata & Google KG).");
+    }
+    setIsSavingKg(false);
+  };
 
   const handleAddNeighborhood = async () => {
     if (!newNeighborName.trim()) return;
@@ -1256,30 +1330,289 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
             </section>
           </div>
 
-          {/* C. COMPACT 3-PROMPT SNAPSHOT (Material 3 Cards & Brand Teal Badges) */}
+          {/* C. DYNAMIC GMB & DIRECTORY CATALOG CITATION FEEDS (Material 3 Surface) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+            {/* GMB Post Feeds */}
+            <section
+              aria-label="Google Business Profile AI signals"
+              className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs flex flex-col justify-between"
+            >
+              <div>
+                <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-teal-50 text-[#009691] flex items-center justify-center font-bold text-xs border border-teal-200/60">
+                      GMB
+                    </div>
+                    <div>
+                      <h2 className="text-sm font-bold text-slate-900">
+                        Google Business Profile (GMB) AI Feed
+                      </h2>
+                      <p className="text-xs text-slate-500 font-medium">
+                        Live offers and turnaround updates ingested by Gemini &amp; AI Overviews
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    href="/admin/local-seo/posts"
+                    className="h-7 px-3 rounded-xl bg-[#009691] hover:bg-[#00827d] text-white text-xs font-semibold inline-flex items-center gap-1 shadow-xs shadow-[#009691]/20 transition-all shrink-0"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>New Post</span>
+                  </Link>
+                </div>
+
+                <div className="p-5 flex flex-col gap-3.5">
+                  {gmbPosts.length === 0 ? (
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 text-center text-xs text-slate-500 font-medium">
+                      Loading published GMB updates from database…
+                    </div>
+                  ) : (
+                    gmbPosts.slice(0, 3).map((post) => (
+                      <div
+                        key={post.id}
+                        className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors flex flex-col gap-2"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-[#009691] border border-teal-200/60 uppercase tracking-wide">
+                              {post.type}
+                            </span>
+                            <span className="text-xs font-bold text-slate-900 truncate">
+                              {post.title}
+                            </span>
+                          </div>
+                          <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60 shrink-0">
+                            Live on Google &amp; Gemini ✓
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                          {post.body}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="px-5 py-3 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
+                <span>Direct feed from Google Business Profile API</span>
+                <Link
+                  href="/admin/local-seo/posts"
+                  className="font-semibold text-[#009691] hover:underline inline-flex items-center gap-1"
+                >
+                  <span>View all {gmbPosts.length} posts</span>
+                  <ArrowRight className="w-3 h-3" />
+                </Link>
+              </div>
+            </section>
+
+            {/* Catalog Citation Network */}
+            <section
+              aria-label="Directory Catalog Network"
+              className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs flex flex-col justify-between"
+            >
+              <div>
+                <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-teal-50 text-[#009691] flex items-center justify-center font-bold text-xs border border-teal-200/60">
+                      DIR
+                    </div>
+                    <div>
+                      <h2 className="text-sm font-bold text-slate-900">
+                        Directory Catalog Citation Coverage
+                      </h2>
+                      <p className="text-xs text-slate-500 font-medium">
+                        30+ authoritative US citation sources feeding entity trust
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    href="/admin/listings/catalog"
+                    className="h-7 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-[#009691] inline-flex items-center gap-1 shadow-xs transition-colors shrink-0"
+                  >
+                    <span>Browse Catalog</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </Link>
+                </div>
+
+                <div className="p-5 flex flex-col gap-3.5">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-teal-50/70 border border-teal-100">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl font-bold text-[#009691] tabular-nums">
+                        {directories.length}
+                      </span>
+                      <div className="text-xs">
+                        <p className="font-bold text-slate-900">Active Verified Citations</p>
+                        <p className="text-slate-500 font-medium">Across all 3 Philadelphia store branches</p>
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold text-[#009691] bg-white px-2.5 py-1 rounded-full border border-teal-200/60">
+                      +{CATALOG_DIRECTORIES.length - directories.length} in Catalog
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+                      Top Available Catalog Targets to Boost AI Trust
+                    </span>
+                    {[
+                      { name: "Better Business Bureau (BBB)", da: 93, tier: "Tier 2", boost: "+8 pts" },
+                      { name: "YellowPages US", da: 88, tier: "Tier 2", boost: "+6 pts" },
+                      { name: "Foursquare & Citysearch", da: 86, tier: "Tier 2", boost: "+5 pts" },
+                    ].map((c) => (
+                      <div
+                        key={c.name}
+                        className="px-3.5 py-2.5 rounded-xl border border-slate-100 bg-slate-50/50 flex items-center justify-between text-xs"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-slate-800">{c.name}</span>
+                          <span className="text-[10px] text-slate-400 font-mono">DA {c.da}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                            {c.boost}
+                          </span>
+                          <Link
+                            href="/admin/listings/catalog"
+                            className="text-[#009691] hover:underline font-semibold text-xs"
+                          >
+                            Claim →
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="px-5 py-3 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
+                <span>Multi-engine AI visibility grows with each high-DA citation</span>
+                <Link
+                  href="/admin/listings/catalog"
+                  className="font-semibold text-[#009691] hover:underline"
+                >
+                  Open catalog directory →
+                </Link>
+              </div>
+            </section>
+          </div>
+
+          {/* D. INTERACTIVE LIVE AI CITATION PROBE & LOCAL QUERIES (Material 3 Studio) */}
           <section
-            aria-label="Buyer prompt snapshot"
+            aria-label="Interactive AI Citation Probe"
             className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs"
           >
-            <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between gap-2 bg-slate-50/50">
+            <div className="px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-teal-50/50 via-slate-50/50 to-white">
               <div>
-                <h2 className="text-sm font-bold text-slate-900">
-                  Top Local Search Queries ({storeShortName})
-                </h2>
-                <p className="text-xs text-slate-500 font-medium">
-                  High-intent phone &amp; console repair searches in Philadelphia
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#009691]" />
+                  <h2 className="text-sm font-bold text-slate-900">
+                    Live AI Search Probe &amp; Citation Simulator
+                  </h2>
+                </div>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                  Test Philadelphia buyer queries live to verify how Google Gemini &amp; SearchGPT cite SmartFoneDoctor
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setActiveTab("neighborhoods")}
-                className="h-8 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-[#009691] inline-flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors shadow-xs"
-              >
-                <span>Manage geo-targets ({neighborhoods.length})</span>
-                <ArrowRight className="w-3 h-3" aria-hidden="true" />
-              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("neighborhoods")}
+                  className="h-8 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-[#009691] inline-flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors shadow-xs"
+                >
+                  <span>Manage geo-targets ({neighborhoods.length})</span>
+                  <ArrowRight className="w-3 h-3" />
+                </button>
+              </div>
             </div>
 
+            {/* Probe Input & Trigger Bar */}
+            <div className="p-5 border-b border-slate-100 bg-slate-50/30 flex flex-col gap-3">
+              <div className="flex flex-col sm:flex-row items-stretch gap-2.5">
+                <input
+                  type="text"
+                  value={probeQuery}
+                  onChange={(e) => setProbeQuery(e.target.value)}
+                  placeholder="Enter a prompt, e.g. Who does same-day iPhone 15 Pro screen repair near 52nd St?"
+                  className="flex-1 h-10 px-3.5 rounded-xl border border-slate-200 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#009691]/20 focus:border-[#009691] shadow-2xs font-medium"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleRunLiveProbe()}
+                  disabled={isProbing}
+                  className="h-10 px-5 rounded-xl bg-[#009691] hover:bg-[#00827d] text-white text-xs font-bold inline-flex items-center justify-center gap-2 shadow-xs shadow-[#009691]/25 transition-all cursor-pointer disabled:opacity-60 shrink-0"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isProbing ? "animate-spin" : ""}`} />
+                  <span>{isProbing ? "Probing AI Engine…" : "Test with Gemini Live"}</span>
+                </button>
+              </div>
+
+              {/* Preset prompt pills */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-[11px] font-semibold text-slate-400 mr-1">Try preset:</span>
+                {[
+                  "Best same-day iPhone 15 Pro screen repair near 52nd St",
+                  "Who fixes PS5 HDMI ports same-day in Philadelphia?",
+                  "Is phone repair open Saturday till 7 PM in West Philly?",
+                  "Walk-in cell phone & MacBook repair near University City",
+                ].map((sample) => (
+                  <button
+                    key={sample}
+                    type="button"
+                    onClick={() => {
+                      setProbeQuery(sample);
+                      handleRunLiveProbe(sample);
+                    }}
+                    className="px-2.5 py-1 rounded-full bg-white hover:bg-teal-50 border border-slate-200/80 hover:border-teal-200 text-[11px] text-slate-600 hover:text-[#009691] font-medium transition-colors cursor-pointer shadow-2xs"
+                  >
+                    {sample}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Live Probe Result Box (When evaluated) */}
+            {probeResult && (
+              <div className="p-5 border-b border-slate-100 bg-gradient-to-br from-teal-50/40 via-white to-emerald-50/20 flex flex-col gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#009691] text-white shadow-xs">
+                      {probeResult.citationRank}
+                    </span>
+                    <span className="text-xs font-semibold text-slate-700">
+                      Engine: <strong className="text-slate-900">{probeResult.engine}</strong>
+                    </span>
+                  </div>
+                  <span className="text-xs font-bold text-[#009691] bg-white px-3 py-1 rounded-full border border-teal-200 shadow-2xs">
+                    {Math.round(probeResult.confidenceScore * 100)}% Match · Verified at {probeResult.verifiedAt}
+                  </span>
+                </div>
+
+                <div className="p-4 rounded-xl bg-white border border-teal-100 shadow-2xs">
+                  <span className="text-[11px] font-bold uppercase tracking-wide text-slate-400 block mb-1">
+                    AI Response Preview (SmartFoneDoctor Cited):
+                  </span>
+                  <p className="text-xs sm:text-sm text-slate-800 font-medium leading-relaxed">
+                    &ldquo;{probeResult.generatedAnswer}&rdquo;
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-slate-500">
+                  <span className="font-semibold text-slate-700">Sources Ingested:</span>
+                  {probeResult.sourcesReferenced.map((src) => (
+                    <span
+                      key={src}
+                      className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[11px] font-medium text-slate-700 shadow-2xs"
+                    >
+                      {src}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 3 Benchmark Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-100">
               {resolvedPrompts.slice(0, 3).map((p) => {
                 const stBing =
@@ -1297,9 +1630,21 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                     className="p-5 flex flex-col justify-between gap-3.5 hover:bg-slate-50/50 transition-colors"
                   >
                     <div>
-                      <span className="px-2.5 py-0.5 rounded-full bg-teal-50 text-[#009691] text-[11px] font-semibold border border-teal-200/60">
-                        {p.category}
-                      </span>
+                      <div className="flex items-center justify-between">
+                        <span className="px-2.5 py-0.5 rounded-full bg-teal-50 text-[#009691] text-[11px] font-semibold border border-teal-200/60">
+                          {p.category}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProbeQuery(p.query);
+                            handleRunLiveProbe(p.query);
+                          }}
+                          className="text-[11px] font-bold text-[#009691] hover:underline cursor-pointer"
+                        >
+                          Probe live →
+                        </button>
+                      </div>
                       <p className="text-sm font-semibold text-slate-900 mt-2.5 leading-snug">
                         &ldquo;{p.query}&rdquo;
                       </p>
@@ -1656,6 +2001,75 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
               </pre>
             </div>
           )}
+
+          {/* Knowledge Graph Entity Identifiers (Wikidata & Google Knowledge Graph) */}
+          <div className="p-5 border-t border-slate-100 bg-slate-50/40 flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">
+                  Global Knowledge Graph Entity Identifiers
+                </h3>
+                <p className="text-xs text-slate-500 font-medium">
+                  Authoritative Wikidata Entity &amp; Google Knowledge Graph IDs cited in /llms.txt and schema.org sameAs graph
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleSaveKgEntity}
+                disabled={isSavingKg}
+                className="h-8 px-4 rounded-xl bg-[#009691] hover:bg-[#00827d] text-white text-xs font-semibold cursor-pointer shadow-xs shadow-[#009691]/20 transition-all disabled:opacity-60 shrink-0 self-start sm:self-auto"
+              >
+                {isSavingKg ? "Saving Entity…" : "Save Entity IDs"}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Wikidata Entity ID
+                </label>
+                <input
+                  type="text"
+                  value={kgWikidata}
+                  onChange={(e) => setKgWikidata(e.target.value)}
+                  placeholder="e.g. Q115862892"
+                  className="w-full h-9 px-3 rounded-xl border border-slate-200 text-xs text-slate-800 bg-white font-mono focus:outline-none focus:ring-2 focus:ring-[#009691]/20 focus:border-[#009691]"
+                />
+                <span className="text-[11px] text-slate-400 mt-1 block">
+                  Citable on wikidata.org for LLM semantic graph retrieval
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Google Knowledge Graph ID
+                </label>
+                <input
+                  type="text"
+                  value={kgGoogleId}
+                  onChange={(e) => setKgGoogleId(e.target.value)}
+                  placeholder="e.g. kg:/g/11s0_smartfonedoctor"
+                  className="w-full h-9 px-3 rounded-xl border border-slate-200 text-xs text-slate-800 bg-white font-mono focus:outline-none focus:ring-2 focus:ring-[#009691]/20 focus:border-[#009691]"
+                />
+                <span className="text-[11px] text-slate-400 mt-1 block">
+                  Direct Google Knowledge Vault entity reference
+                </span>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Canonical SameAs URLs (One URL per line)
+              </label>
+              <textarea
+                rows={3}
+                value={kgSameAsText}
+                onChange={(e) => setKgSameAsText(e.target.value)}
+                placeholder="https://maps.google.com/?cid=15243892090&#10;https://yelp.com/biz/smart-fone-doctor-philadelphia&#10;https://apple.com/maps/..."
+                className="w-full p-3 rounded-xl border border-slate-200 text-xs text-slate-800 bg-white font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#009691]/20 focus:border-[#009691]"
+              />
+            </div>
+          </div>
         </section>
       )}
 

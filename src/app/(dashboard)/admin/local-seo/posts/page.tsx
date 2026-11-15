@@ -9,7 +9,15 @@ import {
   Calendar,
   ExternalLink,
   X,
+  Trash2,
+  CheckCircle2,
 } from "lucide-react";
+import {
+  getGmbPostsAction,
+  createGmbPostAction,
+  deleteGmbPostAction,
+  GmbPostItem,
+} from "@/actions/localSeo";
 
 type PostType = "Update" | "Offer";
 
@@ -86,8 +94,10 @@ export default function GmbPostsPage() {
     ? `All ${stores.length} Philadelphia locations`
     : selectedStore.name.replace("SmartFoneDoctor - ", "");
 
-  const [posts, setPosts] = useState<GmbPost[]>(INITIAL_POSTS);
+  const [posts, setPosts] = useState<GmbPostItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showComposer, setShowComposer] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [form, setForm] = useState({
     type: "Update" as PostType,
     title: "",
@@ -95,6 +105,19 @@ export default function GmbPostsPage() {
     ctaLabel: "Book online",
     couponCode: "",
   });
+
+  // Load from PostgreSQL DB
+  useEffect(() => {
+    async function loadPosts() {
+      setLoading(true);
+      const res = await getGmbPostsAction();
+      if (res.success && res.posts) {
+        setPosts(res.posts);
+      }
+      setLoading(false);
+    }
+    loadPosts();
+  }, []);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -126,36 +149,40 @@ export default function GmbPostsPage() {
     }
   };
 
-  const handlePublish = (e: React.FormEvent) => {
+  const handlePublish = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title.trim() || !form.body.trim()) return;
 
-    const created: GmbPost = {
-      id: Date.now(),
-      storeId: selectedStoreId,
+    setPublishing(true);
+    const targetStoreId = isAllStores ? 1 : selectedStoreId;
+
+    const res = await createGmbPostAction({
+      storeId: targetStoreId,
       type: form.type,
       title: form.title.trim(),
       body: form.body.trim(),
       ctaLabel: form.ctaLabel,
       ctaUrl: selectedStore.calendlyUrl,
-      couponCode:
-        form.type === "Offer" && form.couponCode.trim()
-          ? form.couponCode.trim()
-          : undefined,
-      publishedAt: new Date().toISOString().split("T")[0],
-      views: 0,
-      clicks: 0,
-    };
-
-    setPosts([created, ...posts]);
-    setForm({
-      type: "Update",
-      title: "",
-      body: "",
-      ctaLabel: "Book online",
-      couponCode: "",
+      couponCode: form.type === "Offer" && form.couponCode.trim() ? form.couponCode.trim() : undefined,
     });
-    setShowComposer(false);
+
+    if (res.success && res.post) {
+      setPosts((prev) => [res.post!, ...prev]);
+      setForm({
+        type: "Update",
+        title: "",
+        body: "",
+        ctaLabel: "Book online",
+        couponCode: "",
+      });
+      setShowComposer(false);
+    }
+    setPublishing(false);
+  };
+
+  const handleDeletePost = async (id: string) => {
+    setPosts((prev) => prev.filter((p) => p.id !== id));
+    await deleteGmbPostAction(id);
   };
 
   return (
@@ -217,9 +244,23 @@ export default function GmbPostsPage() {
                     </span>
                   </div>
 
-                  <span className="h-[20px] px-2 rounded-[4px] bg-[#dcfae5] text-[#04250e] text-[12px] font-medium inline-flex items-center">
-                    Live on Google
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-[20px] px-2 rounded-full bg-teal-50 text-[#009691] border border-teal-200/60 text-[11px] font-semibold inline-flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
+                      <span>AI Search Feed</span>
+                    </span>
+                    <span className="h-[20px] px-2 rounded-[4px] bg-[#dcfae5] text-[#04250e] text-[12px] font-medium inline-flex items-center">
+                      Live on Google
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleDeletePost(post.id)}
+                      className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded cursor-pointer transition-colors"
+                      aria-label="Delete post"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
 
                 <h2 className="text-[15px] font-semibold text-[#111111] mt-2.5">
