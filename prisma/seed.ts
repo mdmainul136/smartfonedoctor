@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { seedTaxonomies } from "./seeds/taxonomies.seed";
 import { seedNavigation } from "./seeds/navigation.seed";
 import { seedCmsPages } from "./seeds/cmsPages.seed";
+import { seedPageBuilder } from "./seeds/pageBuilder.seed";
 import { seedBlog } from "./seeds/blog.seed";
 import { seedServicesAndLocations } from "./seeds/services.seed";
 import { seedLeads } from "./seeds/leads.seed";
@@ -33,6 +34,11 @@ async function main() {
       case "pages":
         await seedCmsPages();
         break;
+      case "builder":
+      case "pagebuilder":
+      case "puck":
+        await seedPageBuilder();
+        break;
       case "blog":
       case "posts":
         await seedBlog();
@@ -46,7 +52,7 @@ async function main() {
         await seedLeads();
         break;
       default:
-        console.error(`❌ Unknown seed target: "${target}". Valid targets: taxonomies, navigation, cms, blog, services, leads`);
+        console.error(`❌ Unknown seed target: "${target}". Valid targets: taxonomies, navigation, cms, builder, blog, services, leads`);
         process.exit(1);
     }
   } else {
@@ -63,15 +69,19 @@ async function main() {
     await seedCmsPages();
     console.log("");
 
-    // 4. Technical repair guides & blog posts
+    // 4. Page Builder templates, global blocks & revision snapshots
+    await seedPageBuilder();
+    console.log("");
+
+    // 5. Technical repair guides & blog posts
     await seedBlog();
     console.log("");
 
-    // 5. Locations and FAQs
+    // 6. Locations and FAQs
     await seedServicesAndLocations();
     console.log("");
 
-    // 6. Repair leads & customer intake tickets
+    // 7. Repair leads & customer intake tickets
     await seedLeads();
   }
 

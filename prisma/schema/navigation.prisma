@@ -1,0 +1,13 @@
+// -------------------------------------------------------------
+// Navigation & Header/Footer Menus
+// -------------------------------------------------------------
+
+model NavMenu {
+  id        String   @id @default("default_header_menu")
+  name      String   @default("Main Navigation")
+  config    Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("nav_menus")
+}

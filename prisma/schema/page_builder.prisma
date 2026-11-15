@@ -1,0 +1,147 @@
+// -------------------------------------------------------------
+// Antigravity & Puck Page Builder System
+// -------------------------------------------------------------
+
+model CmsPage {
+  id             String    @id @default(cuid())
+  slug           String    @unique
+  name           String
+  path           String    @unique
+  category       String    @default("Core") // Core, Repairs, Devices, Landing, Marketing, Legal
+  title          String
+  metaDesc       String    @default("")
+  heroHeadline   String    @default("")
+  heroSubtitle   String    @default("")
+  heroBadge      String    @default("")
+  primaryCtaText String    @default("")
+  primaryCtaLink String    @default("")
+  status         String    @default("Published") // Draft, Published, Scheduled, Archived
+  publishedAt    DateTime?
+  scheduledAt    DateTime?
+  lastEdited     String    @default("")
+  author         String    @default("Admin")
+  contentHtml    String?   @db.Text
+  
+  // 🎨 Puck Page Builder Data & SSR CSS
+  puckData       Json?     // Puck component tree (content, root props, zones)
+  compiledCss    String?   @db.Text // Pre-compiled Puck Tailwind CSS (0ms SSR Hydration)
+  puckEditedAt   BigInt?   // Timestamp of last builder save
+  customCss      String?   @db.Text // Page-level custom CSS rules
+  customJs       String?   @db.Text // Page-level custom tracking/scripts
+
+  // 🔍 SEO, OpenGraph & Structured Schema
+  focusKeyword   String?
+  keywords       String[]  @default([])
+  featuredImage  String?
+  ogImage        String?
+  canonicalUrl   String?
+  schemaType     String?   @default("LocalBusiness")
+  custom         Boolean   @default(false)
+  headerVisible  Boolean   @default(true)
+  footerVisible  Boolean   @default(true)
+
+  // 🔄 Relations: Version History & Active Draft
+  revisions      PageBuilderRevision[]
+  activeDraft    PageBuilderDraft?
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([slug])
+  @@index([path])
+  @@index([status])
+  @@index([category])
+  @@map("cms_pages")
+}
+
+// -------------------------------------------------------------
+// Page Builder Version History & Rollback System
+// (Replaces client-side localStorage revisions)
+// -------------------------------------------------------------
+model PageBuilderRevision {
+  id           String   @id @default(cuid())
+  pageId       String
+  page         CmsPage  @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  label        String?  // e.g. "Initial Seed", "Hero Update", "Pre-Launch Snapshot"
+  data         Json     // Full Puck component tree snapshot
+  compiledCss  String?  @db.Text
+  author       String?  @default("Admin")
+  isPublished  Boolean  @default(false)
+  blockCount   Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@index([pageId])
+  @@index([createdAt])
+  @@map("page_builder_revisions")
+}
+
+// -------------------------------------------------------------
+// Live Auto-Save Draft Storage
+// (Replaces client-side localStorage autosave)
+// -------------------------------------------------------------
+model PageBuilderDraft {
+  id        String   @id @default(cuid())
+  pageId    String   @unique
+  page      CmsPage  @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  data      Json     // Auto-saved work-in-progress Puck state
+  author    String?  @default("Admin")
+  savedAt   DateTime @default(now()) @updatedAt
+
+  @@map("page_builder_drafts")
+}
+
+// -------------------------------------------------------------
+// Reusable Section & Page Templates
+// (Powers Puck TemplatesPanel from PostgreSQL)
+// -------------------------------------------------------------
+model PageBuilderTemplate {
+  id           String   @id @default(cuid())
+  name         String
+  category     String   @default("Sections") // Hero, Services, Pricing, Testimonials, FAQ, FullPage, CTA
+  description  String?
+  thumbnailUrl String?
+  content      Json     // Array of top-level Puck ComponentData blocks
+  isPreset     Boolean  @default(false) // true = system preset, false = custom user saved
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([category])
+  @@map("page_builder_templates")
+}
+
+// -------------------------------------------------------------
+// Global Synced Blocks (Master reusable widgets)
+// -------------------------------------------------------------
+model PageBuilderGlobalBlock {
+  id          String   @id @default(cuid())
+  name        String
+  identifier  String   @unique // e.g. "global-emergency-banner", "global-trust-badges"
+  category    String   @default("General")
+  blockType   String   // e.g. "Hero", "LeadWizard", "PricingTable", "ReviewsCarousel"
+  content     Json     // Puck ComponentData block definition
+  compiledCss String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@map("page_builder_global_blocks")
+}
+
+// -------------------------------------------------------------
+// Page Builder Media & Graphic Assets
+// -------------------------------------------------------------
+model PageBuilderAsset {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  altText   String?
+  category  String   @default("general") // icons, hero, stores, diagrams
+  width     Int?
+  height    Int?
+  fileSize  Int?
+  mimeType  String?
+  createdAt DateTime @default(now())
+
+  @@index([category])
+  @@map("page_builder_assets")
+}
