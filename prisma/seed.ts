@@ -10,6 +10,7 @@ import { seedBlog } from "./seeds/blog.seed";
 import { seedServicesAndLocations } from "./seeds/services.seed";
 import { seedLeads } from "./seeds/leads.seed";
 import { seedAdminUsers } from "./seeds/admin.seed";
+import { seedSettings } from "./seeds/settings.seed";
 
 const prisma = new PrismaClient();
 
@@ -74,8 +75,13 @@ async function main() {
       case "users":
         await seedAdminUsers();
         break;
+      case "settings":
+      case "stores":
+      case "branches":
+        await seedSettings();
+        break;
       default:
-        console.error(`❌ Unknown seed target: "${target}". Valid targets: taxonomies, navigation, cms, builder, seo, geo, apis, blog, services, leads, admin`);
+        console.error(`❌ Unknown seed target: "${target}". Valid targets: taxonomies, navigation, cms, builder, seo, geo, apis, blog, services, leads, admin, settings`);
         process.exit(1);
     }
   } else {
@@ -122,6 +128,10 @@ async function main() {
 
     // 11. Admin Users & Authentication Profiles
     await seedAdminUsers();
+    console.log("");
+
+    // 12. Store Branches & Global Application Settings
+    await seedSettings();
   }
 
   console.log("\n=================================================");

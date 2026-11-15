@@ -1,0 +1,45 @@
+// -------------------------------------------------------------
+// Store Branches and Global Application Settings Models
+// -------------------------------------------------------------
+
+model StoreBranch {
+  id            Int      @id @default(autoincrement())
+  name          String
+  type          String   @default("Branch Location") // Flagship HQ, University City Branch, Lancaster Express
+  address       String
+  cityStateZip  String   @default("Philadelphia, PA")
+  phone         String   @default("+1 (215) 598-2090")
+  email         String   @default("contact@smartfonedoctor.com")
+  businessHours String   @default("Mon - Sat: 10:00 AM - 7:00 PM")
+  calendlyUrl   String   @default("")
+  gmbUrl        String   @default("")
+  isActive      Boolean  @default(true)
+  order         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([order])
+}
+
+model AppSystemSettings {
+  id                 String   @id @default("global_config")
+  siteName           String   @default("SmartFone Doctor")
+  supportEmail       String   @default("support@smartfonedoctor.com")
+  supportPhone       String   @default("+1 (215) 598-2090")
+  headquarters       String   @default("33 S 52nd St, Philadelphia, PA 19139")
+  currency           String   @default("USD")
+  timezone           String   @default("America/New_York")
+  
+  // AI Page Builder Settings
+  defaultAiProvider  String   @default("gemini") // "gemini" | "openai"
+  geminiApiKey       String?
+  openaiApiKey       String?
+
+  // Notifications & Integrations
+  emailNotifications Boolean  @default(true)
+  smsNotifications   Boolean  @default(false)
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}

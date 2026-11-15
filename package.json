@@ -18,7 +18,8 @@
     "db:seed:leads": "tsx prisma/seeds/leads.seed.ts",
     "db:seed:navigation": "tsx prisma/seeds/navigation.seed.ts",
     "db:seed:services": "tsx prisma/seeds/services.seed.ts",
-    "db:seed:admin": "tsx prisma/seeds/admin.seed.ts"
+    "db:seed:admin": "tsx prisma/seeds/admin.seed.ts",
+    "db:seed:settings": "tsx prisma/seeds/settings.seed.ts"
   },
   "prisma": {
     "schema": "prisma/schema",

@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useStoreContext } from "@/lib/storeContext";
 import { StoreLocation } from "@/lib/stores";
 import {
-  getStoredAiSettings,
-  saveStoredAiSettings,
-  type StoredAiSettings,
-} from "@/lib/aiSettings";
+  getAppSystemSettingsAction,
+  updateAppSystemSettingsAction,
+  AppSystemSettingsData,
+} from "@/actions/settings";
+import { saveStoredAiSettings } from "@/lib/aiSettings";
 import {
   Plus,
   Trash2,
@@ -20,6 +21,12 @@ import {
   CheckCircle2,
   Sparkles,
   KeyRound,
+  AlertCircle,
+  Loader2,
+  Mail,
+  ShieldCheck,
+  Settings2,
+  Sliders,
 } from "lucide-react";
 
 const EMPTY_STORE: Omit<StoreLocation, "id"> = {
@@ -27,14 +34,14 @@ const EMPTY_STORE: Omit<StoreLocation, "id"> = {
   type: "Branch Location",
   address: "",
   cityStateZip: "Philadelphia, PA",
-  phone: "",
-  email: "",
+  phone: "+1 (215) 598-2090",
+  email: "contact@smartfonedoctor.com",
   businessHours: "Mon - Sat: 10:00 AM - 7:00 PM",
   calendlyUrl: "",
   gmbUrl: "",
 };
 
-const SettingsPage = () => {
+export default function SettingsPage() {
   const {
     stores,
     selectedStoreId,
@@ -43,32 +50,53 @@ const SettingsPage = () => {
     addStore,
     updateStore,
     deleteStore,
+    isLoading: isStoresLoading,
   } = useStoreContext();
 
+  const [activeTab, setActiveTab] = useState<"stores" | "ai" | "general">("stores");
   const [isAddingNew, setIsAddingNew] = useState(false);
-  const [savedNotice, setSavedNotice] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  // Store Editor Form State
   const [editForm, setEditForm] = useState<StoreLocation | null>(null);
   const [newStore, setNewStore] = useState<Omit<StoreLocation, "id">>(EMPTY_STORE);
-  const [aiSettings, setAiSettings] = useState<StoredAiSettings>({
-    defaultProvider: "gemini",
+
+  // App & AI Settings DB State
+  const [systemSettings, setSystemSettings] = useState<AppSystemSettingsData>({
+    id: "global_config",
+    siteName: "SmartFone Doctor",
+    supportEmail: "support@smartfonedoctor.com",
+    supportPhone: "+1 (215) 598-2090",
+    headquarters: "33 S 52nd St, Philadelphia, PA 19139",
+    currency: "USD",
+    timezone: "America/New_York",
+    defaultAiProvider: "gemini",
     geminiApiKey: "",
     openaiApiKey: "",
+    emailNotifications: true,
+    smsNotifications: true,
   });
 
-  useEffect(() => {
-    setAiSettings(getStoredAiSettings());
-  }, []);
+  const [isPending, startTransition] = useTransition();
 
-  const handleSaveAiSettings = (e: React.FormEvent) => {
-    e.preventDefault();
-    saveStoredAiSettings({
-      defaultProvider: aiSettings.defaultProvider,
-      geminiApiKey: aiSettings.geminiApiKey.trim(),
-      openaiApiKey: aiSettings.openaiApiKey.trim(),
-    });
-    setSavedNotice("AI Page Builder API keys saved!");
-    setTimeout(() => setSavedNotice(null), 3000);
+  const showNotification = (type: "success" | "error", message: string) => {
+    setFeedback({ type, message });
+    if (type === "success") {
+      setTimeout(() => setFeedback(null), 3500);
+    }
   };
+
+  // Load system settings from PostgreSQL on mount
+  useEffect(() => {
+    getAppSystemSettingsAction().then((res) => {
+      if (res.success && res.data) {
+        setSystemSettings(res.data);
+      }
+    });
+  }, []);
 
   // Sync editForm with currently active store unless user is actively editing
   const currentEditStore =
@@ -78,551 +106,768 @@ const SettingsPage = () => {
     setEditForm({ ...currentEditStore, [field]: value });
   };
 
+  // 1. Save Existing Store to PostgreSQL
   const handleSaveCurrent = (e: React.FormEvent) => {
     e.preventDefault();
-    updateStore(currentEditStore);
-    setEditForm(null);
-    setSavedNotice(`Changes saved for "${currentEditStore.name}"!`);
-    setTimeout(() => setSavedNotice(null), 3000);
+    setFeedback(null);
+
+    startTransition(async () => {
+      const ok = await updateStore(currentEditStore);
+      if (ok) {
+        setEditForm(null);
+        showNotification("success", `Store branch "${currentEditStore.name}" updated in PostgreSQL!`);
+      } else {
+        showNotification("error", "Failed to update store branch. Please try again.");
+      }
+    });
   };
 
+  // 2. Create New Store in PostgreSQL
   const handleCreateStore = (e: React.FormEvent) => {
     e.preventDefault();
-    const created: StoreLocation = {
-      ...newStore,
-      id: Date.now(),
-    };
-    addStore(created);
-    setIsAddingNew(false);
-    setNewStore(EMPTY_STORE);
-    setSavedNotice(`"${created.name}" has been added!`);
-    setTimeout(() => setSavedNotice(null), 3000);
+    setFeedback(null);
+
+    startTransition(async () => {
+      const created = await addStore(newStore);
+      if (created) {
+        setIsAddingNew(false);
+        setNewStore(EMPTY_STORE);
+        showNotification("success", `New branch "${created.name}" created in PostgreSQL!`);
+      } else {
+        showNotification("error", "Failed to create store location.");
+      }
+    });
   };
 
+  // 3. Delete Store from PostgreSQL
   const handleDeleteCurrent = (id: number) => {
     if (stores.length <= 1) {
-      alert("You need to keep at least one store location.");
+      showNotification("error", "Cannot remove the last remaining store location. At least one location is required.");
       return;
     }
-    if (confirm("Are you sure you want to delete this store location?")) {
-      deleteStore(id);
-      setEditForm(null);
-      setSavedNotice("Location removed successfully.");
-      setTimeout(() => setSavedNotice(null), 3000);
+    if (confirm("Are you sure you want to permanently delete this branch from the database?")) {
+      startTransition(async () => {
+        const ok = await deleteStore(id);
+        if (ok) {
+          setEditForm(null);
+          showNotification("success", "Location removed from database.");
+        } else {
+          showNotification("error", "Failed to delete store location.");
+        }
+      });
     }
+  };
+
+  // 4. Save AI & System Settings to PostgreSQL
+  const handleSaveSystemSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    setFeedback(null);
+
+    startTransition(async () => {
+      const res = await updateAppSystemSettingsAction({
+        siteName: systemSettings.siteName,
+        supportEmail: systemSettings.supportEmail,
+        supportPhone: systemSettings.supportPhone,
+        headquarters: systemSettings.headquarters,
+        currency: systemSettings.currency,
+        timezone: systemSettings.timezone,
+        defaultAiProvider: systemSettings.defaultAiProvider,
+        geminiApiKey: systemSettings.geminiApiKey,
+        openaiApiKey: systemSettings.openaiApiKey,
+        emailNotifications: systemSettings.emailNotifications,
+        smsNotifications: systemSettings.smsNotifications,
+      });
+
+      if (res.success && res.data) {
+        setSystemSettings(res.data);
+        // Also keep client localStorage in sync for instant client-side assistant use
+        saveStoredAiSettings({
+          defaultProvider: (res.data.defaultAiProvider as "gemini" | "openai") || "gemini",
+          geminiApiKey: res.data.geminiApiKey || "",
+          openaiApiKey: res.data.openaiApiKey || "",
+        });
+        showNotification("success", "System & AI settings saved to PostgreSQL!");
+      } else {
+        showNotification("error", res.error || "Failed to save settings.");
+      }
+    });
   };
 
   return (
-    <div className="flex-1 p-3 sm:p-4 lg:p-6 flex flex-col gap-4 max-w-7xl w-full mx-auto">
-      {/* 1. RESPONSIVE HEADER (Awesome-Design standard) */}
-      <div className="bg-lamaSky p-4 sm:py-5 sm:px-6 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs border border-teal-100/40">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-lg sm:text-xl font-bold text-gray-800 leading-tight">
-            Store Locations &amp; Integrations
-          </h1>
-          <p className="text-xs text-gray-600 mt-1 max-w-xl leading-relaxed text-pretty">
-            Add or edit store branches, manage Calendly booking links, and configure Google Business Profile (GMB) listings.
+    <div className="flex-1 p-4 sm:p-6 lg:p-8 flex flex-col gap-6 max-w-7xl w-full mx-auto antialiased">
+      {/* 1. HEADER (Shadcn Clean) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-200 pb-5">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-zinc-900">
+              Settings &amp; Integrations
+            </h1>
+            <span className="text-[11px] font-medium bg-zinc-100 text-zinc-700 border border-zinc-200 px-2 py-0.5 rounded-md">
+              PostgreSQL DB-First
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm text-zinc-500 mt-1">
+            Manage Philadelphia retail store branches, AI Page Builder API keys, and platform operations.
           </p>
         </div>
 
-        <div className="self-start sm:self-auto shrink-0 flex items-center gap-1.5 text-xs font-semibold bg-white text-teal-800 px-3 py-1.5 rounded-full shadow-2xs tabular-nums border border-white/60">
-          <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" aria-hidden="true" />
-          <span>{stores.length}&nbsp;Total Stores</span>
+        <div className="flex items-center gap-2">
+          <span className="h-8 px-3 rounded-md border border-zinc-200 bg-white text-xs font-medium text-zinc-700 inline-flex items-center gap-1.5 shadow-xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span>{stores.length} Active Stores</span>
+          </span>
         </div>
       </div>
 
-      {/* NOTIFICATION FEEDBACK */}
-      {savedNotice && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs px-4 py-2.5 rounded-xl flex items-center justify-between shadow-2xs animate-in fade-in">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
-            <span className="font-medium">{savedNotice}</span>
+      {/* FEEDBACK NOTIFICATION ALERTS */}
+      {feedback && (
+        <div
+          role="alert"
+          className={`p-3.5 rounded-lg border text-xs sm:text-sm flex items-center justify-between animate-in fade-in duration-150 ${
+            feedback.type === "success"
+              ? "bg-emerald-50/70 border-emerald-200 text-emerald-900"
+              : "bg-red-50/70 border-red-200 text-red-900"
+          }`}
+        >
+          <div className="flex items-center gap-2.5">
+            {feedback.type === "success" ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+            )}
+            <span className="font-medium">{feedback.message}</span>
           </div>
           <button
             type="button"
-            onClick={() => setSavedNotice(null)}
-            className="font-bold text-emerald-600 hover:text-emerald-900 px-2 py-0.5 rounded cursor-pointer"
-            aria-label="Dismiss notification"
+            onClick={() => setFeedback(null)}
+            className="text-zinc-400 hover:text-zinc-700 px-2 py-0.5 text-base leading-none cursor-pointer"
+            aria-label="Dismiss alert"
           >
             ×
           </button>
         </div>
       )}
 
-      {/* 2. MAIN RESPONSIVE 2-COLUMN LAYOUT */}
-      <div className="flex flex-col lg:flex-row gap-4 items-start w-full">
-        {/* LEFT COLUMN: LIST OF STORES */}
-        <div className="w-full lg:w-1/3 flex flex-col gap-3 shrink-0">
-          <div className="flex items-center justify-between bg-white p-3.5 rounded-xl shadow-2xs border border-gray-100">
-            <div className="flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-gray-500" aria-hidden="true" />
-              <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">
-                Branches ({stores.length})
+      {/* 2. TAB NAVIGATION (Shadcn Tabs) */}
+      <div className="flex items-center gap-1 border-b border-zinc-200 pb-px">
+        <button
+          type="button"
+          onClick={() => setActiveTab("stores")}
+          className={`h-9 px-4 text-xs sm:text-sm font-medium border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
+            activeTab === "stores"
+              ? "border-zinc-950 text-zinc-950 font-semibold"
+              : "border-transparent text-zinc-500 hover:text-zinc-900 hover:border-zinc-300"
+          }`}
+        >
+          <Building2 className="w-4 h-4" />
+          <span>Store Branches ({stores.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("ai")}
+          className={`h-9 px-4 text-xs sm:text-sm font-medium border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
+            activeTab === "ai"
+              ? "border-zinc-950 text-zinc-950 font-semibold"
+              : "border-transparent text-zinc-500 hover:text-zinc-900 hover:border-zinc-300"
+          }`}
+        >
+          <Sparkles className="w-4 h-4" />
+          <span>AI Engine &amp; Keys</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("general")}
+          className={`h-9 px-4 text-xs sm:text-sm font-medium border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
+            activeTab === "general"
+              ? "border-zinc-950 text-zinc-950 font-semibold"
+              : "border-transparent text-zinc-500 hover:text-zinc-900 hover:border-zinc-300"
+          }`}
+        >
+          <Sliders className="w-4 h-4" />
+          <span>General Operations</span>
+        </button>
+      </div>
+
+      {/* 3. TAB 1: STORE BRANCHES & LOCATIONS */}
+      {activeTab === "stores" && (
+        <div className="flex flex-col lg:flex-row gap-5 items-start w-full">
+          {/* LEFT: STORE CARDS LIST */}
+          <div className="w-full lg:w-1/3 flex flex-col gap-3 shrink-0">
+            <div className="flex items-center justify-between rounded-xl border border-zinc-200 bg-white p-3.5 shadow-xs">
+              <span className="text-xs font-semibold uppercase tracking-wider text-zinc-700">
+                Branches List
               </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAddingNew(true);
+                  setEditForm(null);
+                }}
+                className="h-7 px-2.5 rounded-md bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-medium inline-flex items-center gap-1 transition-colors shadow-xs cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Branch</span>
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                setIsAddingNew(true);
-                setEditForm(null);
-              }}
-              className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-medium shadow-2xs transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
-            >
-              <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Add Store</span>
-            </button>
-          </div>
 
-          {/* STORE CARDS LIST */}
-          <div className="flex flex-col gap-2.5 w-full">
-            {stores.map((store) => {
-              const isSelected = store.id === selectedStoreId && !isAddingNew;
-              return (
-                <div
-                  key={store.id}
-                  onClick={() => {
-                    setSelectedStoreId(store.id);
-                    setIsAddingNew(false);
-                    setEditForm(null);
-                  }}
-                  className={`p-4 rounded-xl cursor-pointer transition-all duration-150 border ${
-                    isSelected
-                      ? "bg-white border-teal-500 ring-2 ring-teal-500/15 shadow-sm"
-                      : "bg-white hover:bg-gray-50/80 border-gray-100 shadow-2xs"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <h3 className="text-xs font-bold text-gray-800 truncate">
-                        {store.name}
-                      </h3>
-                      <p className="text-[11px] text-gray-500 mt-1 flex items-center gap-1.5">
-                        <MapPin className="w-3 h-3 text-gray-400 shrink-0" aria-hidden="true" />
-                        <span className="truncate">
-                          {store.address}, {store.cityStateZip.split(",")[0]}
-                        </span>
-                      </p>
+            <div className="flex flex-col gap-2 w-full">
+              {stores.map((store) => {
+                const isSelected = store.id === selectedStoreId && !isAddingNew;
+                return (
+                  <div
+                    key={store.id}
+                    onClick={() => {
+                      setSelectedStoreId(store.id);
+                      setIsAddingNew(false);
+                      setEditForm(null);
+                    }}
+                    className={`p-3.5 rounded-xl cursor-pointer transition-all border ${
+                      isSelected
+                        ? "border-zinc-950 bg-white shadow-xs ring-1 ring-zinc-950"
+                        : "border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50/50 shadow-xs"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <h3 className="text-xs font-semibold text-zinc-900 truncate">
+                          {store.name}
+                        </h3>
+                        <p className="text-[11px] text-zinc-500 mt-1 flex items-center gap-1 truncate">
+                          <MapPin className="w-3 h-3 text-zinc-400 shrink-0" />
+                          <span className="truncate">
+                            {store.address}, {store.cityStateZip.split(",")[0]}
+                          </span>
+                        </p>
+                      </div>
+                      <span className="text-[10px] font-medium bg-zinc-100 text-zinc-700 border border-zinc-200 px-1.5 py-0.5 rounded shrink-0">
+                        {store.type}
+                      </span>
                     </div>
-                    <span
-                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-md shrink-0 ${
-                        isSelected
-                          ? "bg-teal-50 text-teal-700"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
-                    >
-                      {store.type}
-                    </span>
-                  </div>
 
-                  <div className="mt-2.5 pt-2 border-t border-gray-50 flex items-center justify-between text-[11px] text-gray-400">
-                    <span className="inline-flex items-center gap-1">
-                      <Phone className="w-3 h-3 text-gray-400" aria-hidden="true" />
-                      <span>{store.phone}</span>
-                    </span>
-                    <span className="text-teal-600 font-medium">
-                      {isSelected ? "● Editing" : "Click to edit →"}
-                    </span>
+                    <div className="mt-2.5 pt-2 border-t border-zinc-100 flex items-center justify-between text-[11px] text-zinc-400">
+                      <span className="inline-flex items-center gap-1 text-zinc-500">
+                        <Phone className="w-3 h-3 text-zinc-400" />
+                        <span>{store.phone}</span>
+                      </span>
+                      <span className="font-medium text-zinc-900">
+                        {isSelected ? "● Editing" : "Select →"}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
 
-        {/* RIGHT COLUMN: RESPONSIVE FORM EDITOR */}
-        <div className="w-full lg:w-2/3 bg-white p-4 sm:p-6 rounded-xl shadow-2xs border border-gray-100">
-          {isAddingNew ? (
-            /* ADD NEW STORE FORM */
-            <div>
-              <div className="flex items-center justify-between pb-3.5 border-b border-gray-100 mb-5">
-                <div>
-                  <h2 className="text-base font-bold text-gray-800">Add New Store Location</h2>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    Fill in branch details and dedicated booking &amp; map links.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsAddingNew(false)}
-                  className="text-xs text-gray-500 hover:text-gray-800 font-medium px-3 py-1 bg-gray-100 rounded-lg cursor-pointer"
-                >
-                  Cancel
-                </button>
-              </div>
-
-              <form onSubmit={handleCreateStore} className="flex flex-col gap-4 text-xs">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-gray-700 font-semibold">Store / Branch Name *</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. SmartFoneDoctor - South Philly"
-                      value={newStore.name}
-                      onChange={(e) => setNewStore({ ...newStore, name: e.target.value })}
-                      className="p-2.5 rounded-lg border border-gray-200 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 text-gray-700"
-                      required
-                    />
+          {/* RIGHT: STORE FORM EDITOR */}
+          <div className="w-full lg:w-2/3 rounded-xl border border-zinc-200 bg-white p-5 sm:p-6 shadow-xs">
+            {isAddingNew ? (
+              /* ADD NEW STORE FORM */
+              <div>
+                <div className="flex items-center justify-between pb-4 border-b border-zinc-100 mb-5">
+                  <div>
+                    <h2 className="text-base font-semibold text-zinc-900">Add New Store Location</h2>
+                    <p className="text-xs text-zinc-500 mt-0.5">
+                      Create and persist a new physical branch in PostgreSQL.
+                    </p>
                   </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-gray-700 font-semibold">Branch Tag</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Express Branch, Mall Kiosk"
-                      value={newStore.type}
-                      onChange={(e) => setNewStore({ ...newStore, type: e.target.value })}
-                      className="p-2.5 rounded-lg border border-gray-200 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 text-gray-700"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-gray-700 font-semibold">Phone Number *</label>
-                    <input
-                      type="tel"
-                      placeholder="+1 (215) 555-…"
-                      value={newStore.phone}
-                      onChange={(e) => setNewStore({ ...newStore, phone: e.target.value })}
-                      className="p-2.5 rounded-lg border border-gray-200 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 text-gray-700"
-                      required
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-gray-700 font-semibold">Branch Email Address *</label>
-                    <input
-                      type="email"
-                      placeholder="branch@smartfonedoctor.com"
-                      value={newStore.email}
-                      onChange={(e) => setNewStore({ ...newStore, email: e.target.value })}
-                      className="p-2.5 rounded-lg border border-gray-200 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 text-gray-700"
-                      required
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-gray-700 font-semibold">Street Address *</label>
-                    <input
-                      type="text"
-                      placeholder="1234 Main St"
-                      value={newStore.address}
-                      onChange={(e) => setNewStore({ ...newStore, address: e.target.value })}
-                      className="p-2.5 rounded-lg border border-gray-200 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 text-gray-700"
-                      required
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-gray-700 font-semibold">City, State, Zip *</label>
-                    <input
-                      type="text"
-                      value={newStore.cityStateZip}
-                      onChange={(e) => setNewStore({ ...newStore, cityStateZip: e.target.value })}
-                      className="p-2.5 rounded-lg border border-gray-200 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 text-gray-700"
-                      required
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5 sm:col-span-2">
-                    <label className="text-gray-700 font-semibold">Operating Hours *</label>
-                    <input
-                      type="text"
-                      value={newStore.businessHours}
-                      onChange={(e) => setNewStore({ ...newStore, businessHours: e.target.value })}
-                      className="p-2.5 rounded-lg border border-gray-200 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 text-gray-700"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* ONLINE LINKS */}
-                <div className="pt-4 border-t border-gray-100 flex flex-col gap-3">
-                  <h3 className="font-semibold text-gray-800 flex items-center gap-1.5">
-                    <Globe className="w-4 h-4 text-teal-600" aria-hidden="true" />
-                    <span>Online Booking &amp; Local SEO Links</span>
-                  </h3>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-gray-700 font-semibold flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-gray-400" aria-hidden="true" />
-                      <span>Calendly Booking URL *</span>
-                    </label>
-                    <input
-                      type="url"
-                      placeholder="https://calendly.com/smartfonedoctor/…"
-                      value={newStore.calendlyUrl}
-                      onChange={(e) => setNewStore({ ...newStore, calendlyUrl: e.target.value })}
-                      className="p-2.5 rounded-lg border border-gray-200 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 text-gray-700"
-                      required
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-gray-700 font-semibold flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-gray-400" aria-hidden="true" />
-                      <span>Google Business Profile (GMB) URL *</span>
-                    </label>
-                    <input
-                      type="url"
-                      placeholder="https://maps.google.com/?cid=…"
-                      value={newStore.gmbUrl}
-                      onChange={(e) => setNewStore({ ...newStore, gmbUrl: e.target.value })}
-                      className="p-2.5 rounded-lg border border-gray-200 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 text-gray-700"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-col-reverse sm:flex-row justify-end gap-2.5 sm:gap-3 mt-3">
                   <button
                     type="button"
                     onClick={() => setIsAddingNew(false)}
-                    className="w-full sm:w-auto px-4 py-2.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="h-8 px-3 rounded-md border border-zinc-200 bg-white text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
-                  <button
-                    type="submit"
-                    className="w-full sm:w-auto px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-lg shadow-2xs transition-colors cursor-pointer"
-                  >
-                    Save &amp; Create Branch
-                  </button>
                 </div>
-              </form>
-            </div>
-          ) : (
-            /* EDIT EXISTING SELECTED STORE FORM */
-            <div>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 border-b border-gray-100 mb-5 gap-2">
-                <div className="min-w-0">
-                  <h2 className="text-base font-bold text-gray-800 truncate">
-                    {currentEditStore.name}
-                  </h2>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    Edit branch contact details, Calendly booking link, and Google Maps listing.
-                  </p>
-                </div>
-                {stores.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteCurrent(currentEditStore.id)}
-                    className="self-start sm:self-auto inline-flex items-center gap-1 text-xs text-rose-600 hover:text-rose-800 font-semibold cursor-pointer py-1 px-2 rounded hover:bg-rose-50 transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Remove Store</span>
-                  </button>
-                )}
+
+                <form onSubmit={handleCreateStore} className="flex flex-col gap-4 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-medium text-zinc-900">Store / Branch Name *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. SmartFoneDoctor - South Philly"
+                        value={newStore.name}
+                        onChange={(e) => setNewStore({ ...newStore, name: e.target.value })}
+                        className="h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-medium text-zinc-900">Branch Tag</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Express Branch, Mall Kiosk"
+                        value={newStore.type}
+                        onChange={(e) => setNewStore({ ...newStore, type: e.target.value })}
+                        className="h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-medium text-zinc-900">Phone Number *</label>
+                      <input
+                        type="tel"
+                        required
+                        placeholder="+1 (215) 555-0100"
+                        value={newStore.phone}
+                        onChange={(e) => setNewStore({ ...newStore, phone: e.target.value })}
+                        className="h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-medium text-zinc-900">Branch Email *</label>
+                      <input
+                        type="email"
+                        required
+                        placeholder="branch@smartfonedoctor.com"
+                        value={newStore.email}
+                        onChange={(e) => setNewStore({ ...newStore, email: e.target.value })}
+                        className="h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-medium text-zinc-900">Street Address *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="1234 Market St"
+                        value={newStore.address}
+                        onChange={(e) => setNewStore({ ...newStore, address: e.target.value })}
+                        className="h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-medium text-zinc-900">City, State, Zip *</label>
+                      <input
+                        type="text"
+                        required
+                        value={newStore.cityStateZip}
+                        onChange={(e) => setNewStore({ ...newStore, cityStateZip: e.target.value })}
+                        className="h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5 sm:col-span-2">
+                      <label className="text-xs font-medium text-zinc-900">Operating Hours *</label>
+                      <input
+                        type="text"
+                        required
+                        value={newStore.businessHours}
+                        onChange={(e) => setNewStore({ ...newStore, businessHours: e.target.value })}
+                        className="h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-zinc-100 flex flex-col gap-3">
+                    <span className="text-xs font-semibold text-zinc-900 flex items-center gap-1.5">
+                      <Globe className="w-3.5 h-3.5 text-zinc-600" />
+                      <span>Online Booking &amp; Google Maps URLs</span>
+                    </span>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-medium text-zinc-900">Calendly Booking URL</label>
+                      <input
+                        type="url"
+                        placeholder="https://calendly.com/smartfonedoctor/..."
+                        value={newStore.calendlyUrl}
+                        onChange={(e) => setNewStore({ ...newStore, calendlyUrl: e.target.value })}
+                        className="h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-medium text-zinc-900">Google Business Profile (GMB) URL</label>
+                      <input
+                        type="url"
+                        placeholder="https://maps.google.com/?cid=..."
+                        value={newStore.gmbUrl}
+                        onChange={(e) => setNewStore({ ...newStore, gmbUrl: e.target.value })}
+                        className="h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-2.5 pt-4 border-t border-zinc-100">
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingNew(false)}
+                      className="h-9 px-4 rounded-md border border-zinc-200 bg-white text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isPending}
+                      className="h-9 rounded-md bg-zinc-950 px-4 py-2 text-xs sm:text-sm font-medium text-white shadow-xs hover:bg-zinc-800 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:pointer-events-none disabled:opacity-50 inline-flex items-center gap-2 cursor-pointer"
+                    >
+                      {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                      <span>Save &amp; Create Branch</span>
+                    </button>
+                  </div>
+                </form>
               </div>
-
-              <form onSubmit={handleSaveCurrent} className="flex flex-col gap-4 text-xs">
-                {/* 1. STORE ADDRESS & CONTACT */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-gray-700 font-semibold">Store / Branch Name</label>
-                    <input
-                      type="text"
-                      value={currentEditStore.name}
-                      onChange={(e) => handleFieldChange("name", e.target.value)}
-                      className="p-2.5 rounded-lg border border-gray-200 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 text-gray-700"
-                      required
-                    />
+            ) : (
+              /* EDIT EXISTING SELECTED STORE FORM */
+              <div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-zinc-100 mb-5 gap-2">
+                  <div>
+                    <h2 className="text-base font-semibold text-zinc-900 truncate">
+                      {currentEditStore.name}
+                    </h2>
+                    <p className="text-xs text-zinc-500 mt-0.5">
+                      Edit branch contact details and synchronized booking coordinates.
+                    </p>
                   </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-gray-700 font-semibold">Branch Tag / Label</label>
-                    <input
-                      type="text"
-                      value={currentEditStore.type}
-                      onChange={(e) => handleFieldChange("type", e.target.value)}
-                      className="p-2.5 rounded-lg border border-gray-200 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 text-gray-700"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-gray-700 font-semibold">Phone Number</label>
-                    <input
-                      type="tel"
-                      value={currentEditStore.phone}
-                      onChange={(e) => handleFieldChange("phone", e.target.value)}
-                      className="p-2.5 rounded-lg border border-gray-200 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 text-gray-700"
-                      required
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-gray-700 font-semibold">Branch Email Address</label>
-                    <input
-                      type="email"
-                      value={currentEditStore.email}
-                      onChange={(e) => handleFieldChange("email", e.target.value)}
-                      className="p-2.5 rounded-lg border border-gray-200 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 text-gray-700"
-                      required
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-gray-700 font-semibold">Street Address</label>
-                    <input
-                      type="text"
-                      value={currentEditStore.address}
-                      onChange={(e) => handleFieldChange("address", e.target.value)}
-                      className="p-2.5 rounded-lg border border-gray-200 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 text-gray-700"
-                      required
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-gray-700 font-semibold">City, State, Zip Code</label>
-                    <input
-                      type="text"
-                      value={currentEditStore.cityStateZip}
-                      onChange={(e) => handleFieldChange("cityStateZip", e.target.value)}
-                      className="p-2.5 rounded-lg border border-gray-200 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 text-gray-700"
-                      required
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5 sm:col-span-2">
-                    <label className="text-gray-700 font-semibold">Operating Hours</label>
-                    <input
-                      type="text"
-                      value={currentEditStore.businessHours}
-                      onChange={(e) => handleFieldChange("businessHours", e.target.value)}
-                      className="p-2.5 rounded-lg border border-gray-200 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 text-gray-700"
-                      required
-                    />
-                  </div>
+                  {stores.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCurrent(currentEditStore.id)}
+                      disabled={isPending}
+                      className="h-8 px-2.5 rounded-md border border-red-200 bg-white hover:bg-red-50 text-red-700 text-xs font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Remove Store</span>
+                    </button>
+                  )}
                 </div>
 
-                {/* 2. CALENDLY & GMB FOR THIS SPECIFIC STORE */}
-                <div className="pt-4 border-t border-gray-100 flex flex-col gap-3">
-                  <h3 className="font-semibold text-gray-800 flex items-center gap-1.5">
-                    <Globe className="w-4 h-4 text-teal-600" aria-hidden="true" />
-                    <span>Calendly &amp; Google Business Profile (This Branch)</span>
-                  </h3>
+                <form onSubmit={handleSaveCurrent} className="flex flex-col gap-4 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-medium text-zinc-900">Store / Branch Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={currentEditStore.name}
+                        onChange={(e) => handleFieldChange("name", e.target.value)}
+                        className="h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+                      />
+                    </div>
 
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-gray-700 font-semibold flex items-center justify-between">
-                      <span className="flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5 text-gray-400" aria-hidden="true" />
-                        <span>Calendly Booking URL</span>
-                      </span>
-                      <span className="text-teal-600 text-[10px] font-semibold">(Direct to branch)</span>
-                    </label>
-                    <input
-                      type="url"
-                      value={currentEditStore.calendlyUrl}
-                      onChange={(e) => handleFieldChange("calendlyUrl", e.target.value)}
-                      className="p-2.5 rounded-lg border border-gray-200 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 text-gray-700"
-                      required
-                    />
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-medium text-zinc-900">Branch Tag / Label</label>
+                      <input
+                        type="text"
+                        value={currentEditStore.type}
+                        onChange={(e) => handleFieldChange("type", e.target.value)}
+                        className="h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-medium text-zinc-900">Phone Number</label>
+                      <input
+                        type="tel"
+                        required
+                        value={currentEditStore.phone}
+                        onChange={(e) => handleFieldChange("phone", e.target.value)}
+                        className="h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-medium text-zinc-900">Branch Email</label>
+                      <input
+                        type="email"
+                        required
+                        value={currentEditStore.email}
+                        onChange={(e) => handleFieldChange("email", e.target.value)}
+                        className="h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-medium text-zinc-900">Street Address</label>
+                      <input
+                        type="text"
+                        required
+                        value={currentEditStore.address}
+                        onChange={(e) => handleFieldChange("address", e.target.value)}
+                        className="h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-medium text-zinc-900">City, State, Zip</label>
+                      <input
+                        type="text"
+                        required
+                        value={currentEditStore.cityStateZip}
+                        onChange={(e) => handleFieldChange("cityStateZip", e.target.value)}
+                        className="h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5 sm:col-span-2">
+                      <label className="text-xs font-medium text-zinc-900">Operating Hours</label>
+                      <input
+                        type="text"
+                        required
+                        value={currentEditStore.businessHours}
+                        onChange={(e) => handleFieldChange("businessHours", e.target.value)}
+                        className="h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+                      />
+                    </div>
                   </div>
 
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-gray-700 font-semibold flex items-center justify-between">
-                      <span className="flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-gray-400" aria-hidden="true" />
-                        <span>Google Business Profile (GMB) URL</span>
-                      </span>
-                      <span className="text-teal-600 text-[10px] font-semibold">(Google Maps listing)</span>
-                    </label>
-                    <input
-                      type="url"
-                      value={currentEditStore.gmbUrl}
-                      onChange={(e) => handleFieldChange("gmbUrl", e.target.value)}
-                      className="p-2.5 rounded-lg border border-gray-200 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 text-gray-700"
-                      required
-                    />
-                  </div>
-                </div>
+                  <div className="pt-4 border-t border-zinc-100 flex flex-col gap-3">
+                    <span className="text-xs font-semibold text-zinc-900 flex items-center gap-1.5">
+                      <Globe className="w-3.5 h-3.5 text-zinc-600" />
+                      <span>Online Booking &amp; Local SEO Links</span>
+                    </span>
 
-                <div className="flex justify-end gap-3 mt-4">
-                  <button
-                    type="submit"
-                    className="w-full sm:w-auto px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-lg shadow-2xs transition-colors duration-150 cursor-pointer"
-                  >
-                    Save Changes
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-medium text-zinc-900">Calendly Booking URL</label>
+                      <input
+                        type="url"
+                        value={currentEditStore.calendlyUrl}
+                        onChange={(e) => handleFieldChange("calendlyUrl", e.target.value)}
+                        className="h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-medium text-zinc-900">Google Business Profile (GMB) URL</label>
+                      <input
+                        type="url"
+                        value={currentEditStore.gmbUrl}
+                        onChange={(e) => handleFieldChange("gmbUrl", e.target.value)}
+                        className="h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-2.5 pt-4 border-t border-zinc-100">
+                    <button
+                      type="submit"
+                      disabled={isPending}
+                      className="h-9 rounded-md bg-zinc-950 px-4 py-2 text-xs sm:text-sm font-medium text-white shadow-xs hover:bg-zinc-800 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:pointer-events-none disabled:opacity-50 inline-flex items-center gap-2 cursor-pointer"
+                    >
+                      {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                      <span>Save Changes to Database</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* AI PAGE BUILDER INTEGRATIONS */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-2xs p-6">
-        <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-5">
-          <div>
-            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-teal-600" aria-hidden="true" />
-              <span>AI Page Builder Keys</span>
-            </h2>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Configure Gemini or OpenAI keys once here. The Puck Studio AI Assistant will use them automatically.
+      {/* 4. TAB 2: AI ENGINE & API KEYS */}
+      {activeTab === "ai" && (
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-xs max-w-3xl">
+          <div className="flex items-center justify-between border-b border-zinc-100 pb-4 mb-5">
+            <div>
+              <h2 className="text-base font-semibold text-zinc-900 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-zinc-950" />
+                <span>AI Page Builder Keys &amp; Model Engine</span>
+              </h2>
+              <p className="text-xs text-zinc-500 mt-0.5">
+                Saved directly in PostgreSQL database. The Puck Studio AI assistant uses these for automated section generation.
+              </p>
+            </div>
+            <span className="text-[11px] font-medium bg-zinc-100 text-zinc-800 border border-zinc-200 px-2 py-0.5 rounded-md flex items-center gap-1">
+              <KeyRound className="w-3 h-3" />
+              <span>DB Persisted</span>
+            </span>
+          </div>
+
+          <form onSubmit={handleSaveSystemSettings} className="flex flex-col gap-4 text-xs">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-zinc-900">Default AI Provider</label>
+              <select
+                value={systemSettings.defaultAiProvider}
+                onChange={(e) =>
+                  setSystemSettings((prev) => ({
+                    ...prev,
+                    defaultAiProvider: e.target.value,
+                  }))
+                }
+                className="h-9 rounded-md border border-zinc-200 bg-transparent px-3 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+              >
+                <option value="gemini">Google Gemini 2.5 Flash (Recommended - Native Multimodal)</option>
+                <option value="openai">OpenAI GPT-4o Mini (High Speed)</option>
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-zinc-900">Google Gemini API Key</label>
+              <input
+                type="password"
+                value={systemSettings.geminiApiKey || ""}
+                onChange={(e) =>
+                  setSystemSettings((prev) => ({ ...prev, geminiApiKey: e.target.value }))
+                }
+                placeholder="AIzaSy..."
+                className="h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+              />
+              <span className="text-[11px] text-zinc-400">
+                Used for generating Hero sections, FAQ content, and dynamic Puck blocks.
+              </span>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-zinc-900">OpenAI API Key</label>
+              <input
+                type="password"
+                value={systemSettings.openaiApiKey || ""}
+                onChange={(e) =>
+                  setSystemSettings((prev) => ({ ...prev, openaiApiKey: e.target.value }))
+                }
+                placeholder="sk-proj-..."
+                className="h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+              />
+              <span className="text-[11px] text-zinc-400">
+                Optional alternative provider for Page Builder content generation.
+              </span>
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-4 border-t border-zinc-100">
+              <button
+                type="submit"
+                disabled={isPending}
+                className="h-9 rounded-md bg-zinc-950 px-4 py-2 text-xs sm:text-sm font-medium text-white shadow-xs hover:bg-zinc-800 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:pointer-events-none disabled:opacity-50 inline-flex items-center gap-2 cursor-pointer"
+              >
+                {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                <span>Save AI Keys to PostgreSQL</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* 5. TAB 3: GENERAL OPERATIONS */}
+      {activeTab === "general" && (
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-xs max-w-3xl">
+          <div className="border-b border-zinc-100 pb-4 mb-5">
+            <h2 className="text-base font-semibold text-zinc-900">General Operations &amp; Company Data</h2>
+            <p className="text-xs text-zinc-500 mt-0.5">
+              Global organization parameters and dispatch notifications.
             </p>
           </div>
-          <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2.5 py-1 text-[11px] font-semibold text-teal-700 border border-teal-200">
-            <KeyRound className="w-3 h-3" />
-            Stored locally in browser
-          </span>
+
+          <form onSubmit={handleSaveSystemSettings} className="flex flex-col gap-4 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-zinc-900">Legal Company / Business Name</label>
+                <input
+                  type="text"
+                  value={systemSettings.siteName}
+                  onChange={(e) =>
+                    setSystemSettings((prev) => ({ ...prev, siteName: e.target.value }))
+                  }
+                  className="h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-zinc-900">Central Support Phone</label>
+                <input
+                  type="tel"
+                  value={systemSettings.supportPhone}
+                  onChange={(e) =>
+                    setSystemSettings((prev) => ({ ...prev, supportPhone: e.target.value }))
+                  }
+                  className="h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-zinc-900">Central Support Email</label>
+                <input
+                  type="email"
+                  value={systemSettings.supportEmail}
+                  onChange={(e) =>
+                    setSystemSettings((prev) => ({ ...prev, supportEmail: e.target.value }))
+                  }
+                  className="h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-zinc-900">Timezone</label>
+                <input
+                  type="text"
+                  value={systemSettings.timezone}
+                  onChange={(e) =>
+                    setSystemSettings((prev) => ({ ...prev, timezone: e.target.value }))
+                  }
+                  className="h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-zinc-900">Headquarters Address</label>
+              <input
+                type="text"
+                value={systemSettings.headquarters}
+                onChange={(e) =>
+                  setSystemSettings((prev) => ({ ...prev, headquarters: e.target.value }))
+                }
+                className="h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+              />
+            </div>
+
+            <div className="pt-3 border-t border-zinc-100 flex flex-col gap-2">
+              <span className="text-xs font-semibold text-zinc-900">Notification Channels</span>
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={systemSettings.emailNotifications}
+                  onChange={(e) =>
+                    setSystemSettings((prev) => ({
+                      ...prev,
+                      emailNotifications: e.target.checked,
+                    }))
+                  }
+                  className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-950"
+                />
+                <span className="text-xs text-zinc-700">
+                  Send email notifications when new customer repair leads arrive
+                </span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={systemSettings.smsNotifications}
+                  onChange={(e) =>
+                    setSystemSettings((prev) => ({
+                      ...prev,
+                      smsNotifications: e.target.checked,
+                    }))
+                  }
+                  className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-950"
+                />
+                <span className="text-xs text-zinc-700">
+                  Send SMS alerts to on-duty technician for urgent walk-in queue
+                </span>
+              </label>
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-4 border-t border-zinc-100">
+              <button
+                type="submit"
+                disabled={isPending}
+                className="h-9 rounded-md bg-zinc-950 px-4 py-2 text-xs sm:text-sm font-medium text-white shadow-xs hover:bg-zinc-800 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:pointer-events-none disabled:opacity-50 inline-flex items-center gap-2 cursor-pointer"
+              >
+                {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                <span>Save Operations Settings</span>
+              </button>
+            </div>
+          </form>
         </div>
-
-        <form onSubmit={handleSaveAiSettings} className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-gray-700 font-semibold">Default AI Provider</label>
-            <select
-              value={aiSettings.defaultProvider}
-              onChange={(e) =>
-                setAiSettings((prev) => ({
-                  ...prev,
-                  defaultProvider: e.target.value as "gemini" | "openai",
-                }))
-              }
-              className="p-2.5 rounded-lg border border-gray-200 bg-white outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 text-gray-800"
-            >
-              <option value="gemini">Google Gemini (gemini-2.5-flash)</option>
-              <option value="openai">OpenAI (gpt-4o-mini)</option>
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-gray-700 font-semibold">Gemini API Key</label>
-            <input
-              type="password"
-              value={aiSettings.geminiApiKey}
-              onChange={(e) =>
-                setAiSettings((prev) => ({ ...prev, geminiApiKey: e.target.value }))
-              }
-              placeholder="AIza..."
-              className="p-2.5 rounded-lg border border-gray-200 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 text-gray-800"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-gray-700 font-semibold">OpenAI API Key</label>
-            <input
-              type="password"
-              value={aiSettings.openaiApiKey}
-              onChange={(e) =>
-                setAiSettings((prev) => ({ ...prev, openaiApiKey: e.target.value }))
-              }
-              placeholder="sk-..."
-              className="p-2.5 rounded-lg border border-gray-200 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 text-gray-800"
-            />
-          </div>
-
-          <div className="md:col-span-3 flex justify-end pt-1">
-            <button
-              type="submit"
-              className="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-lg shadow-2xs transition-colors duration-150 cursor-pointer"
-            >
-              Save AI Keys
-            </button>
-          </div>
-        </form>
-      </div>
+      )}
     </div>
   );
-};
-
-export default SettingsPage;
+}
