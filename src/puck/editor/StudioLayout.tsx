@@ -522,7 +522,35 @@ export default function StudioLayout({
         </aside>
 
         {/* Canvas */}
-        <main className="relative flex min-w-0 flex-1 flex-col">
+        <main
+          className={`relative flex min-w-0 flex-1 flex-col ${
+            currentWidth === 375
+              ? "pb-canvas-mobile"
+              : currentWidth === 768
+              ? "pb-canvas-tablet"
+              : currentWidth === 1280
+              ? "pb-canvas-desktop"
+              : "pb-canvas-full"
+          }`}
+        >
+          {typeof currentWidth === "number" && currentWidth < 1280 && (
+            <div className="flex shrink-0 items-center justify-between border-b border-gray-200 bg-white/80 backdrop-blur-xs px-4 py-1.5 text-[11px] font-medium text-gray-700 shadow-2xs">
+              <div className="flex items-center gap-2">
+                <span className="inline-block h-2 w-2 rounded-full bg-[#009691] animate-pulse" />
+                <span>
+                  <strong>{currentWidth === 375 ? "Mobile Preview (375px)" : "Tablet Preview (768px)"}</strong>
+                  {" — inspecting responsive breakpoint layout"}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setViewportWidth("100%")}
+                className="font-semibold text-[#009691] hover:underline cursor-pointer"
+              >
+                Reset to Full Width
+              </button>
+            </div>
+          )}
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4">
             <Puck.Preview />
           </div>

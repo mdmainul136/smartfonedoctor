@@ -133,3 +133,23 @@
   font-size: 11px;
   letter-spacing: 0.04em;
 }
+
+/* Device Preview Frame & Styling */
+.pb-canvas-mobile [class*="_PuckCanvas-root_"],
+.pb-canvas-mobile [class*="_Canvas-root_"] {
+  border-radius: 24px !important;
+  box-shadow: 0 20px 48px -12px rgba(15, 23, 42, 0.28), 0 0 0 8px #0f172a, 0 0 0 10px #334155 !important;
+  margin-top: 16px !important;
+  margin-bottom: 32px !important;
+  overflow: hidden !important;
+}
+
+.pb-canvas-tablet [class*="_PuckCanvas-root_"],
+.pb-canvas-tablet [class*="_Canvas-root_"] {
+  border-radius: 16px !important;
+  box-shadow: 0 20px 48px -12px rgba(15, 23, 42, 0.24), 0 0 0 8px #1e293b, 0 0 0 10px #475569 !important;
+  margin-top: 16px !important;
+  margin-bottom: 32px !important;
+  overflow: hidden !important;
+}
+
