@@ -13,6 +13,7 @@
     "@payloadcms/db-postgres": "^3.91.0",
     "@payloadcms/next": "^3.91.0",
     "@payloadcms/richtext-lexical": "^3.91.0",
+    "@prisma/client": "^6.19.3",
     "@puckeditor/core": "^0.24.0",
     "@types/react-big-calendar": "^1.8.9",
     "graphql": "^17.1.0",
@@ -36,6 +37,7 @@
     "eslint": "^8",
     "eslint-config-next": "14.2.5",
     "postcss": "^8",
+    "prisma": "^6.19.3",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
   }

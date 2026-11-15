@@ -8,9 +8,17 @@ import { getStoredCMSPages, type CMSPage } from "@/lib/cmsData";
 import { Eye, AlertTriangle } from "lucide-react";
 
 /** Renders a page created in the CMS admin, looked up by its URL path. */
-export default function CustomPage({ path }: { path: string }) {
+export default function CustomPage({
+  path,
+  initialPage,
+}: {
+  path: string;
+  initialPage?: CMSPage | null;
+}) {
   // undefined = still looking, null = no such page.
-  const [page, setPage] = useState<CMSPage | null | undefined>(undefined);
+  const [page, setPage] = useState<CMSPage | null | undefined>(
+    initialPage !== undefined ? initialPage : undefined
+  );
   const [isPreview, setIsPreview] = useState(false);
 
   useEffect(() => {

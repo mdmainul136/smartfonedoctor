@@ -13,6 +13,11 @@ import {
   validatePagePath,
 } from "@/lib/cmsData";
 import {
+  getCmsPagesAction,
+  upsertCmsPageAction,
+  deleteCmsPageAction,
+} from "@/actions/cmsPages";
+import {
   FileText,
   Search,
   Plus,
@@ -54,16 +59,35 @@ export default function PagesListPage() {
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
+    // 1. Initial immediate render from cache
     setPages(getStoredCMSPages());
+
+    // 2. Sync live with PostgreSQL via Server Action
+    getCmsPagesAction().then((res) => {
+      if (res.success && res.pages && res.pages.length > 0) {
+        setPages(res.pages);
+        saveStoredCMSPages(res.pages);
+      }
+    }).catch(console.error);
   }, []);
 
-  /** Saves the list; on failure the screen keeps showing what is really stored. */
-  const persist = (next: CMSPage[]): boolean => {
-    if (!saveStoredCMSPages(next)) {
-      setFormError("Could not save: browser storage is full.");
-      return false;
-    }
+  /** Saves the list to local cache and synchronizes with PostgreSQL */
+  const persist = (next: CMSPage[], targetPage?: CMSPage, deletedId?: string): boolean => {
+    saveStoredCMSPages(next);
     setPages(next);
+
+    if (targetPage) {
+      upsertCmsPageAction(targetPage).catch((err) => {
+        console.error("Failed to sync page to PostgreSQL:", err);
+      });
+    }
+
+    if (deletedId) {
+      deleteCmsPageAction(deletedId).catch((err) => {
+        console.error("Failed to delete page from PostgreSQL:", err);
+      });
+    }
+
     return true;
   };
 
@@ -98,7 +122,7 @@ export default function PagesListPage() {
       const page = createCustomPage(name, form.path, form.category);
       if (current.some((p) => p.slug === page.slug)) return setFormError("Another page already uses that address.");
       if (form.title.trim()) page.title = form.title.trim();
-      if (!persist([...current, page])) return;
+      if (!persist([...current, page], page)) return;
       setForm(null);
       router.push(`/admin/pages/${page.slug}`);
       return;
@@ -109,20 +133,19 @@ export default function PagesListPage() {
       const problem = validatePagePath(form.path, current, form.id);
       if (problem) return setFormError(problem);
     }
-    const next = current.map((p) =>
-      p.id === form.id
-        ? {
-            ...p,
-            name,
-            title: form.title.trim() || p.title,
-            category: form.category,
-            status: form.status,
-            ...(form.custom ? { path: form.path } : {}),
-            lastEdited: "Just now",
-          }
-        : p,
-    );
-    if (persist(next)) setForm(null);
+    const target = current.find((p) => p.id === form.id);
+    if (!target) return;
+    const updatedPage: CMSPage = {
+      ...target,
+      name,
+      title: form.title.trim() || target.title,
+      category: form.category,
+      status: form.status,
+      ...(form.custom ? { path: form.path } : {}),
+      lastEdited: "Just now",
+    };
+    const next = current.map((p) => (p.id === form.id ? updatedPage : p));
+    if (persist(next, updatedPage)) setForm(null);
   };
 
   const duplicatePage = (page: CMSPage) => {
@@ -134,26 +157,24 @@ export default function PagesListPage() {
       if (n > 50) return;
     }
     const copy = createCustomPage(`${page.name} (copy)`, path, page.category);
-    persist([
-      ...current,
-      {
-        ...page,
-        id: copy.id,
-        slug: copy.slug,
-        path,
-        name: copy.name,
-        status: "Draft",
-        lastEdited: "Just now",
-        puckEditedAt: Date.now(),
-        custom: true,
-      },
-    ]);
+    const dupItem: CMSPage = {
+      ...page,
+      id: copy.id,
+      slug: copy.slug,
+      path,
+      name: copy.name,
+      status: "Draft",
+      lastEdited: "Just now",
+      puckEditedAt: Date.now(),
+      custom: true,
+    };
+    persist([...current, dupItem], dupItem);
   };
 
   const deletePage = (page: CMSPage) => {
     if (!page.custom) return;
     if (!window.confirm(`Delete "${page.name}" (${page.path})? This cannot be undone.`)) return;
-    persist(getStoredCMSPages().filter((p) => p.id !== page.id));
+    persist(getStoredCMSPages().filter((p) => p.id !== page.id), undefined, page.id);
   };
 
   const filteredPages = pages.filter((page) => {

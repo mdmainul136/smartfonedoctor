@@ -1,0 +1,545 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Lead {
+  id                            Int                             @id @default(autoincrement())
+  customer_name                 String                          @db.VarChar
+  phone                         String                          @db.VarChar
+  email                         String?                         @db.VarChar
+  device                        String                          @db.VarChar
+  issue                         String                          @db.VarChar
+  store                         enum_leads_store                @default(nd_st)
+  status                        enum_leads_status?              @default(new)
+  source                        enum_leads_source?              @default(website_form)
+  est_value                     Decimal?                        @default(99) @db.Decimal
+  notes                         String?                         @db.VarChar
+  updated_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  created_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  payload_locked_documents_rels payload_locked_documents_rels[]
+
+  @@index([created_at])
+  @@index([updated_at])
+  @@map("leads")
+}
+
+model faqs {
+  id                            Int                             @id @default(autoincrement())
+  question                      String                          @db.VarChar
+  answer                        String                          @db.VarChar
+  category                      enum_faqs_category?             @default(General)
+  order                         Decimal?                        @default(1) @db.Decimal
+  updated_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  created_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  payload_locked_documents_rels payload_locked_documents_rels[]
+
+  @@index([created_at])
+  @@index([updated_at])
+}
+
+model locations {
+  id                            Int                             @id @default(autoincrement())
+  name                          String                          @db.VarChar
+  store_code                    String                          @unique(map: "locations_store_code_idx") @db.VarChar
+  address                       String                          @db.VarChar
+  neighborhood                  String?                         @default("West Philadelphia, PA") @db.VarChar
+  phone                         String                          @default("+1 (215) 598-2090") @db.VarChar
+  hours                         String?                         @default("Mon–Sat: 10:00 AM – 7:00 PM | Sun: Closed") @db.VarChar
+  google_maps_url               String?                         @db.VarChar
+  google_rating                 Decimal?                        @default(4.9) @db.Decimal
+  total_reviews                 Decimal?                        @default(1520) @db.Decimal
+  is_active                     Boolean?                        @default(true)
+  updated_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  created_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  payload_locked_documents_rels payload_locked_documents_rels[]
+
+  @@index([created_at])
+  @@index([updated_at])
+}
+
+model media {
+  id                            Int                             @id @default(autoincrement())
+  alt                           String                          @db.VarChar
+  updated_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  created_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  url                           String?                         @db.VarChar
+  thumbnail_u_r_l               String?                         @db.VarChar
+  filename                      String?                         @unique(map: "media_filename_idx") @db.VarChar
+  mime_type                     String?                         @db.VarChar
+  filesize                      Decimal?                        @db.Decimal
+  width                         Decimal?                        @db.Decimal
+  height                        Decimal?                        @db.Decimal
+  focal_x                       Decimal?                        @db.Decimal
+  focal_y                       Decimal?                        @db.Decimal
+  payload_locked_documents_rels payload_locked_documents_rels[]
+
+  @@index([created_at])
+  @@index([updated_at])
+}
+
+model pages {
+  id                            Int                             @id @default(autoincrement())
+  title                         String                          @db.VarChar
+  slug                          String                          @unique(map: "pages_slug_idx") @db.VarChar
+  announcement_bar_enabled      Boolean?                        @default(true)
+  announcement_bar_text         String?                         @default("Philadelphia's Trusted Device Repair Experts · Walk-ins Welcome Mon–Sat") @db.VarChar
+  announcement_bar_promo_tag    String?                         @default("Free Glass Screen Protector with any Screen Repair") @db.VarChar
+  announcement_bar_phone_number String?                         @default("+1 (215) 598-2090") @db.VarChar
+  updated_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  created_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  pages_blocks_benefits         pages_blocks_benefits[]
+  pages_blocks_cta_banner       pages_blocks_cta_banner[]
+  pages_blocks_faq_section      pages_blocks_faq_section[]
+  pages_blocks_hero             pages_blocks_hero[]
+  pages_blocks_services_grid    pages_blocks_services_grid[]
+  payload_locked_documents_rels payload_locked_documents_rels[]
+
+  @@index([created_at])
+  @@index([updated_at])
+}
+
+model pages_blocks_benefits {
+  order                       Int                           @map("_order")
+  parent_id                   Int                           @map("_parent_id")
+  path                        String                        @map("_path")
+  id                          String                        @id @db.VarChar
+  section_title               String?                       @default("Why Philadelphians Choose SmartFoneDoctor") @db.VarChar
+  block_name                  String?                       @db.VarChar
+  pages                       pages                         @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "pages_blocks_benefits_parent_id_fk")
+  pages_blocks_benefits_items pages_blocks_benefits_items[]
+
+  @@index([order], map: "pages_blocks_benefits_order_idx")
+  @@index([parent_id], map: "pages_blocks_benefits_parent_id_idx")
+  @@index([path], map: "pages_blocks_benefits_path_idx")
+}
+
+model pages_blocks_benefits_items {
+  order                 Int                                    @map("_order")
+  parent_id             String                                 @map("_parent_id") @db.VarChar
+  id                    String                                 @id @db.VarChar
+  title                 String                                 @db.VarChar
+  description           String                                 @db.VarChar
+  icon                  enum_pages_blocks_benefits_items_icon? @default(shield)
+  pages_blocks_benefits pages_blocks_benefits                  @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "pages_blocks_benefits_items_parent_id_fk")
+
+  @@index([order], map: "pages_blocks_benefits_items_order_idx")
+  @@index([parent_id], map: "pages_blocks_benefits_items_parent_id_idx")
+}
+
+model pages_blocks_cta_banner {
+  order       Int     @map("_order")
+  parent_id   Int     @map("_parent_id")
+  path        String  @map("_path")
+  id          String  @id @db.VarChar
+  headline    String? @default("Need your phone fixed right now?") @db.VarChar
+  subtext     String? @default("Walk in today to any of our 3 West Philadelphia locations or schedule online for priority bench service.") @db.VarChar
+  button_text String? @default("Schedule Repair Online") @db.VarChar
+  button_link String? @default("/schedule-repair") @db.VarChar
+  block_name  String? @db.VarChar
+  pages       pages   @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "pages_blocks_cta_banner_parent_id_fk")
+
+  @@index([order], map: "pages_blocks_cta_banner_order_idx")
+  @@index([parent_id], map: "pages_blocks_cta_banner_parent_id_idx")
+  @@index([path], map: "pages_blocks_cta_banner_path_idx")
+}
+
+model pages_blocks_faq_section {
+  order                          Int                              @map("_order")
+  parent_id                      Int                              @map("_parent_id")
+  path                           String                           @map("_path")
+  id                             String                           @id @db.VarChar
+  heading                        String?                          @default("Frequently Asked Questions") @db.VarChar
+  block_name                     String?                          @db.VarChar
+  pages                          pages                            @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "pages_blocks_faq_section_parent_id_fk")
+  pages_blocks_faq_section_items pages_blocks_faq_section_items[]
+
+  @@index([order], map: "pages_blocks_faq_section_order_idx")
+  @@index([parent_id], map: "pages_blocks_faq_section_parent_id_idx")
+  @@index([path], map: "pages_blocks_faq_section_path_idx")
+}
+
+model pages_blocks_faq_section_items {
+  order                    Int                      @map("_order")
+  parent_id                String                   @map("_parent_id") @db.VarChar
+  id                       String                   @id @db.VarChar
+  question                 String                   @db.VarChar
+  answer                   String                   @db.VarChar
+  pages_blocks_faq_section pages_blocks_faq_section @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "pages_blocks_faq_section_items_parent_id_fk")
+
+  @@index([order], map: "pages_blocks_faq_section_items_order_idx")
+  @@index([parent_id], map: "pages_blocks_faq_section_items_parent_id_idx")
+}
+
+model pages_blocks_hero {
+  order              Int     @map("_order")
+  parent_id          Int     @map("_parent_id")
+  path               String  @map("_path")
+  id                 String  @id @db.VarChar
+  top_pill_tag       String? @default("Philadelphia's Trusted Leader in") @db.VarChar
+  headline           String  @default("Fast, reliable repairs that keep your tech working when it matters.") @db.VarChar
+  subtitle           String? @default("Repair services for smartphones, tablets, computers and game consoles, backed by certified technicians and a 90-day free warranty.") @db.VarChar
+  primary_cta_text   String? @default("Book your repair") @db.VarChar
+  primary_cta_link   String? @default("/schedule-repair") @db.VarChar
+  secondary_cta_text String? @default("Call (215) 598-2090") @db.VarChar
+  secondary_cta_link String? @default("tel:+12155982090") @db.VarChar
+  block_name         String? @db.VarChar
+  pages              pages   @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "pages_blocks_hero_parent_id_fk")
+
+  @@index([order], map: "pages_blocks_hero_order_idx")
+  @@index([parent_id], map: "pages_blocks_hero_parent_id_idx")
+  @@index([path], map: "pages_blocks_hero_path_idx")
+}
+
+model pages_blocks_services_grid {
+  order                Int      @map("_order")
+  parent_id            Int      @map("_parent_id")
+  path                 String   @map("_path")
+  id                   String   @id @db.VarChar
+  heading              String?  @default("Expert Repair Services for Every Device") @db.VarChar
+  subtitle             String?  @default("From screen replacements to logic board diagnostics, select your device to get started.") @db.VarChar
+  show_pricing_snippet Boolean? @default(true)
+  block_name           String?  @db.VarChar
+  pages                pages    @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "pages_blocks_services_grid_parent_id_fk")
+
+  @@index([order], map: "pages_blocks_services_grid_order_idx")
+  @@index([parent_id], map: "pages_blocks_services_grid_parent_id_idx")
+  @@index([path], map: "pages_blocks_services_grid_path_idx")
+}
+
+model payload_kv {
+  id   Int    @id @default(autoincrement())
+  key  String @unique(map: "payload_kv_key_idx") @db.VarChar
+  data Json
+}
+
+model payload_locked_documents {
+  id                            Int                             @id @default(autoincrement())
+  global_slug                   String?                         @db.VarChar
+  updated_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  created_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  payload_locked_documents_rels payload_locked_documents_rels[]
+
+  @@index([created_at])
+  @@index([global_slug])
+  @@index([updated_at])
+}
+
+model payload_locked_documents_rels {
+  id                       Int                      @id @default(autoincrement())
+  order                    Int?
+  parent_id                Int
+  path                     String                   @db.VarChar
+  users_id                 Int?
+  media_id                 Int?
+  pages_id                 Int?
+  faqs_id                  Int?
+  services_id              Int?
+  leads_id                 Int?
+  repairs_id               Int?
+  reviews_id               Int?
+  locations_id             Int?
+  faqs                     faqs?                    @relation(fields: [faqs_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_faqs_fk")
+  leads                    Lead?                    @relation(fields: [leads_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_leads_fk")
+  locations                locations?               @relation(fields: [locations_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_locations_fk")
+  media                    media?                   @relation(fields: [media_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_media_fk")
+  pages                    pages?                   @relation(fields: [pages_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_pages_fk")
+  payload_locked_documents payload_locked_documents @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_parent_fk")
+  repairs                  repairs?                 @relation(fields: [repairs_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_repairs_fk")
+  reviews                  reviews?                 @relation(fields: [reviews_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_reviews_fk")
+  services                 services?                @relation(fields: [services_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_services_fk")
+  users                    users?                   @relation(fields: [users_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_locked_documents_rels_users_fk")
+
+  @@index([faqs_id])
+  @@index([leads_id])
+  @@index([locations_id])
+  @@index([media_id])
+  @@index([order])
+  @@index([pages_id])
+  @@index([parent_id], map: "payload_locked_documents_rels_parent_idx")
+  @@index([path])
+  @@index([repairs_id])
+  @@index([reviews_id])
+  @@index([services_id])
+  @@index([users_id])
+}
+
+model payload_migrations {
+  id         Int      @id @default(autoincrement())
+  name       String?  @db.VarChar
+  batch      Decimal? @db.Decimal
+  updated_at DateTime @default(now()) @db.Timestamptz(3)
+  created_at DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([created_at])
+  @@index([updated_at])
+}
+
+model payload_preferences {
+  id                       Int                        @id @default(autoincrement())
+  key                      String?                    @db.VarChar
+  value                    Json?
+  updated_at               DateTime                   @default(now()) @db.Timestamptz(3)
+  created_at               DateTime                   @default(now()) @db.Timestamptz(3)
+  payload_preferences_rels payload_preferences_rels[]
+
+  @@index([created_at])
+  @@index([key])
+  @@index([updated_at])
+}
+
+model payload_preferences_rels {
+  id                  Int                 @id @default(autoincrement())
+  order               Int?
+  parent_id           Int
+  path                String              @db.VarChar
+  users_id            Int?
+  payload_preferences payload_preferences @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_preferences_rels_parent_fk")
+  users               users?              @relation(fields: [users_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "payload_preferences_rels_users_fk")
+
+  @@index([order])
+  @@index([parent_id], map: "payload_preferences_rels_parent_idx")
+  @@index([path])
+  @@index([users_id])
+}
+
+model repairs {
+  id                            Int                             @id @default(autoincrement())
+  ticket_number                 String                          @unique(map: "repairs_ticket_number_idx") @db.VarChar
+  customer_name                 String                          @db.VarChar
+  phone                         String                          @db.VarChar
+  device_model                  String                          @db.VarChar
+  serial_or_imei                String?                         @db.VarChar
+  issue_reported                String                          @db.VarChar
+  status                        enum_repairs_status             @default(received)
+  store_location                enum_repairs_store_location     @default(nd_st)
+  technician_name               String?                         @db.VarChar
+  total_cost                    Decimal?                        @db.Decimal
+  warranty_days                 Decimal?                        @default(90) @db.Decimal
+  technician_notes              String?                         @db.VarChar
+  updated_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  created_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  payload_locked_documents_rels payload_locked_documents_rels[]
+
+  @@index([created_at])
+  @@index([updated_at])
+}
+
+model reviews {
+  id                            Int                             @id @default(autoincrement())
+  customer_name                 String                          @db.VarChar
+  rating                        Decimal                         @default(5) @db.Decimal
+  review_text                   String                          @db.VarChar
+  store                         enum_reviews_store              @default(nd_st)
+  source                        enum_reviews_source?            @default(google)
+  published                     Boolean?                        @default(true)
+  staff_response                String?                         @db.VarChar
+  updated_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  created_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  payload_locked_documents_rels payload_locked_documents_rels[]
+
+  @@index([created_at])
+  @@index([updated_at])
+}
+
+model services {
+  id                            Int                             @id @default(autoincrement())
+  name                          String                          @db.VarChar
+  category                      enum_services_category
+  turnaround                    String?                         @default("25–45 min") @db.VarChar
+  active                        Boolean?                        @default(true)
+  prices_iphone                 String?                         @default("$129–$299") @db.VarChar
+  prices_samsung                String?                         @default("$99–$249") @db.VarChar
+  prices_google                 String?                         @default("$89–$179") @db.VarChar
+  prices_other                  String?                         @default("$59–$129") @db.VarChar
+  updated_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  created_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  payload_locked_documents_rels payload_locked_documents_rels[]
+
+  @@index([created_at])
+  @@index([updated_at])
+}
+
+model users {
+  id                            Int                             @id @default(autoincrement())
+  name                          String?                         @db.VarChar
+  role                          enum_users_role?                @default(admin)
+  updated_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  created_at                    DateTime                        @default(now()) @db.Timestamptz(3)
+  email                         String                          @unique(map: "users_email_idx") @db.VarChar
+  reset_password_token          String?                         @db.VarChar
+  reset_password_expiration     DateTime?                       @db.Timestamptz(3)
+  salt                          String?                         @db.VarChar
+  hash                          String?                         @db.VarChar
+  reset_password_requested_at   DateTime?                       @db.Timestamptz(3)
+  login_attempts                Decimal?                        @default(0) @db.Decimal
+  lock_until                    DateTime?                       @db.Timestamptz(3)
+  payload_locked_documents_rels payload_locked_documents_rels[]
+  payload_preferences_rels      payload_preferences_rels[]
+  users_sessions                users_sessions[]
+
+  @@index([created_at])
+  @@index([updated_at])
+}
+
+model users_sessions {
+  order      Int       @map("_order")
+  parent_id  Int       @map("_parent_id")
+  id         String    @id @db.VarChar
+  created_at DateTime? @db.Timestamptz(3)
+  expires_at DateTime  @db.Timestamptz(3)
+  users      users     @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "users_sessions_parent_id_fk")
+
+  @@index([order], map: "users_sessions_order_idx")
+  @@index([parent_id], map: "users_sessions_parent_id_idx")
+}
+
+enum enum_faqs_category {
+  General
+  Warranty
+  Pricing
+}
+
+enum enum_leads_source {
+  google_maps   @map("google-maps")
+  google_search @map("google-search")
+  website_form  @map("website-form")
+  phone_call    @map("phone-call")
+  walk_in       @map("walk-in")
+  ai
+  yelp
+  social
+}
+
+enum enum_leads_status {
+  new
+  contacted
+  scheduled
+  completed
+  lost
+}
+
+enum enum_leads_store {
+  nd_st          @map("52nd-st")
+  lancaster_4016 @map("4016-lancaster")
+  lancaster_4060 @map("4060-lancaster")
+}
+
+enum enum_pages_blocks_benefits_items_icon {
+  clock
+  shield
+  map_pin  @map("map-pin")
+  sparkles
+}
+
+enum enum_repairs_status {
+  received
+  diagnosing
+  waiting_parts
+  in_progress
+  ready_pickup
+  completed
+}
+
+enum enum_repairs_store_location {
+  nd_st          @map("52nd-st")
+  lancaster_4016 @map("4016-lancaster")
+  lancaster_4060 @map("4060-lancaster")
+}
+
+enum enum_reviews_source {
+  google
+  yelp
+  qr_code @map("qr-code")
+}
+
+enum enum_reviews_store {
+  nd_st          @map("52nd-st")
+  lancaster_4016 @map("4016-lancaster")
+  lancaster_4060 @map("4060-lancaster")
+}
+
+enum enum_services_category {
+  Screen_repair   @map("Screen repair")
+  Battery
+  Charging___HDMI @map("Charging & HDMI")
+  Water_damage    @map("Water damage")
+  Audio___camera  @map("Audio & camera")
+  Other
+}
+
+enum enum_users_role {
+  admin
+  editor
+}
+
+// -------------------------------------------------------------
+// Antigravity CMS & Page Builder Models
+// -------------------------------------------------------------
+
+model CmsPage {
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  name           String
+  path           String   @unique
+  category       String   @default("Core")
+  title          String
+  metaDesc       String   @default("")
+  heroHeadline   String   @default("")
+  heroSubtitle   String   @default("")
+  heroBadge      String   @default("")
+  primaryCtaText String   @default("")
+  primaryCtaLink String   @default("")
+  status         String   @default("Published")
+  lastEdited     String   @default("")
+  author         String   @default("Admin")
+  contentHtml    String?  @db.Text
+  focusKeyword   String?
+  keywords       String[] @default([])
+  featuredImage  String?
+  canonicalUrl   String?
+  schemaType     String?  @default("LocalBusiness")
+  custom         Boolean  @default(false)
+  puckData       Json?
+  puckEditedAt   BigInt?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([slug])
+  @@index([path])
+  @@index([status])
+  @@map("cms_pages")
+}
+
+model NavMenu {
+  id        String   @id @default("default_header_menu")
+  name      String   @default("Main Navigation")
+  config    Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("nav_menus")
+}
+
+model BlogPost {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  title         String
+  excerpt       String?
+  content       String   @db.Text
+  category      String   @default("Repair Guides")
+  author        String   @default("Certified Technician")
+  status        String   @default("Draft")
+  featuredImage String?
+  focusKeyword  String?
+  schemaType    String?  @default("TechArticle")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("blog_posts")
+}
+

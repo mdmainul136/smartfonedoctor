@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import CustomPage from "@/components/site/CustomPage";
+import { getCmsPageByPathAction } from "@/actions/cmsPages";
 import { getStoredCMSPages } from "@/lib/cmsData";
 
 type PageProps = {
@@ -7,20 +8,39 @@ type PageProps = {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
+/** Look up page via PostgreSQL Server Action with memory fallback */
+async function resolvePage(slug: string[]) {
+  const path = `/${slug.join("/")}`;
+
+  // 1. Query PostgreSQL via Server Action
+  try {
+    const dbRes = await getCmsPageByPathAction(path);
+    if (dbRes.success && dbRes.page) {
+      return { page: dbRes.page, path };
+    }
+  } catch (err) {
+    console.warn("[resolvePage] DB lookup failed, falling back to seed pages:", err);
+  }
+
+  // 2. Fallback to seed data
+  const pages = getStoredCMSPages();
+  const normalizedPath = path.toLowerCase().replace(/\/$/, "");
+  const found =
+    pages.find((p) => {
+      const pPath = (p.path || "").toLowerCase().replace(/\/$/, "");
+      return pPath === normalizedPath || p.slug === slug[slug.length - 1];
+    }) || null;
+
+  return { page: found, path };
+}
+
 /**
  * Dynamic metadata generator for custom CMS pages.
  * Delivers accurate server-side Title, Description, OpenGraph, Canonical, and Twitter cards.
  */
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const path = `/${slug.join("/")}`;
-  const pages = getStoredCMSPages();
-  const normalizedPath = path.toLowerCase().replace(/\/$/, "");
-
-  const page = pages.find((p) => {
-    const pPath = (p.path || "").toLowerCase().replace(/\/$/, "");
-    return pPath === normalizedPath || p.slug === slug[slug.length - 1];
-  });
+  const { page, path } = await resolvePage(slug);
 
   if (!page) {
     return {
@@ -83,5 +103,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
  */
 export default async function CustomPageRoute({ params }: PageProps) {
   const { slug } = await params;
-  return <CustomPage path={`/${slug.join("/")}`} />;
+  const { page, path } = await resolvePage(slug);
+
+  return <CustomPage path={path} initialPage={page} />;
 }

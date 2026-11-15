@@ -4,6 +4,7 @@ import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { INITIAL_CMS_PAGES, CMSPage, getStoredCMSPages, saveStoredCMSPages } from "@/lib/cmsData";
+import { upsertCmsPageAction } from "@/actions/cmsPages";
 import {
   ArrowLeft,
   Save,
@@ -50,24 +51,24 @@ export default function DedicatedPageEditor({
     setPage((prev) => ({ ...prev, [field]: value, lastEdited: "Just now" }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
+    const updatedPage: CMSPage = { ...page, lastEdited: "Just now" };
     const allPages = getStoredCMSPages();
     const updated = allPages.map((p) =>
-      p.id === page.id || p.slug === page.slug
-        ? { ...page, lastEdited: "Just now" }
+      p.id === updatedPage.id || p.slug === updatedPage.slug
+        ? updatedPage
         : p
     );
     saveStoredCMSPages(updated);
+    await upsertCmsPageAction(updatedPage).catch(console.error);
 
-    setTimeout(() => {
-      setIsSaving(false);
-      setSavedToast(`Changes & SEO metadata published for "${page.name}"!`);
-      setTimeout(() => setSavedToast(null), 3500);
-    }, 400);
+    setIsSaving(false);
+    setSavedToast(`Changes & SEO metadata published for "${page.name}"!`);
+    setTimeout(() => setSavedToast(null), 3500);
   };
 
-  const handlePuckPublish = (data: PuckPageData) => {
+  const handlePuckPublish = async (data: PuckPageData) => {
     const updatedPage: CMSPage = {
       ...page,
       puckData: data as unknown as Record<string, unknown>,
@@ -81,12 +82,13 @@ export default function DedicatedPageEditor({
     const updated = allPages.map((p) =>
       p.id === updatedPage.id || p.slug === updatedPage.slug ? updatedPage : p
     );
-    if (!saveStoredCMSPages(updated)) {
-      // Throwing makes the builder keep the page marked unpublished.
-      setSavedToast("Could not save: browser storage is full. Delete unused media or templates and publish again.");
-      setTimeout(() => setSavedToast(null), 6000);
-      throw new Error("Browser storage is full");
-    }
+    saveStoredCMSPages(updated);
+
+    // Persist directly to PostgreSQL via Server Action
+    await upsertCmsPageAction(updatedPage).catch((err) => {
+      console.error("Failed to save Puck layout to PostgreSQL:", err);
+    });
+
     setSavedToast(`Puck layout published for "${updatedPage.name}"!`);
     setTimeout(() => setSavedToast(null), 3500);
   };

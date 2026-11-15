@@ -32,6 +32,8 @@ import {
   type NavMenuConfig,
 } from "@/lib/navMenuData";
 import { getStoredCMSPages } from "@/lib/cmsData";
+import { getNavMenuAction, saveNavMenuAction } from "@/actions/navMenu";
+import { getCmsPagesAction } from "@/actions/cmsPages";
 
 const inputCls =
   "h-[34px] w-full rounded-[6px] border border-[#d1d5db] bg-white px-2.5 text-[13px] focus:outline-none focus:border-[#009691]";
@@ -91,10 +93,30 @@ export default function NavigationBuilderPage() {
   const [pages, setPages] = useState<{ name: string; path: string }[]>([]);
 
   useEffect(() => {
+    // 1. Instant local cache
     const stored = getStoredNavMenu();
     setConfig(stored);
     if (stored.items[0]) setSelectedId(stored.items[0].id);
     setPages(getStoredCMSPages().map((p) => ({ name: p.name, path: p.path })));
+
+    // 2. Load from PostgreSQL via Server Action
+    getNavMenuAction()
+      .then((res) => {
+        if (res.success && res.menu) {
+          setConfig(res.menu);
+          saveStoredNavMenu(res.menu);
+          if (res.menu.items[0]) setSelectedId(res.menu.items[0].id);
+        }
+      })
+      .catch(console.error);
+
+    getCmsPagesAction()
+      .then((res) => {
+        if (res.success && res.pages) {
+          setPages(res.pages.map((p) => ({ name: p.name, path: p.path })));
+        }
+      })
+      .catch(console.error);
   }, []);
 
   const flash = (ok: boolean, text: string) => {
@@ -112,25 +134,29 @@ export default function NavigationBuilderPage() {
   const patchItem = (id: string, changes: Partial<NavItem>) =>
     update({ ...config, items: config.items.map((i) => (i.id === id ? { ...i, ...changes } : i)) });
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const empty = config.items.find((i) => !i.label.trim());
     if (empty) return flash(false, "Every menu item needs a label.");
-    if (saveStoredNavMenu(config)) {
-      setDirty(false);
-      flash(true, "Menu saved. The site header now shows it.");
+
+    saveStoredNavMenu(config);
+    setDirty(false);
+
+    const res = await saveNavMenuAction(config);
+    if (res.success) {
+      flash(true, "Menu saved to PostgreSQL. The site header now shows it live.");
     } else {
-      flash(false, "Could not save: browser storage is full.");
+      flash(false, `Saved locally, but DB sync failed: ${res.error}`);
     }
   };
 
-  const handleReset = () => {
+  const handleReset = async () => {
     if (!confirm("Reset the menu, header button and top bar to the original defaults?")) return;
     setConfig(DEFAULT_NAV_MENU);
     setSelectedId(DEFAULT_NAV_MENU.items[0].id);
-    if (saveStoredNavMenu(DEFAULT_NAV_MENU)) {
-      setDirty(false);
-      flash(true, "Menu reset to defaults.");
-    }
+    saveStoredNavMenu(DEFAULT_NAV_MENU);
+    await saveNavMenuAction(DEFAULT_NAV_MENU);
+    setDirty(false);
+    flash(true, "Menu reset to defaults in PostgreSQL and browser.");
   };
 
   const addItem = () => {
