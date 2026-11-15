@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import CustomPage from "@/components/site/CustomPage";
 import { getCmsPageByPathAction } from "@/actions/cmsPages";
 import { getStoredCMSPages } from "@/lib/cmsData";
+import { compilePageCss } from "@/puck/style/compilePage";
 
 type PageProps = {
   params: Promise<{ slug: string[] }>;
@@ -108,14 +109,20 @@ export default async function CustomPageRoute({ params }: PageProps) {
   const { slug } = await params;
   const { page, path } = await resolvePage(slug);
 
+  const css =
+    page?.compiledCss ||
+    (page?.puckData && (page.puckData as { content?: unknown[] }).content
+      ? compilePageCss((page.puckData as { content: unknown[] }).content)
+      : "");
+
   return (
     <>
-      {page?.compiledCss && (
+      {css ? (
         <style
-          id={`pb-css-${page.slug}`}
-          dangerouslySetInnerHTML={{ __html: page.compiledCss }}
+          id={`pb-css-${page?.slug}`}
+          dangerouslySetInnerHTML={{ __html: css }}
         />
-      )}
+      ) : null}
       <CustomPage path={path} initialPage={page} />
     </>
   );

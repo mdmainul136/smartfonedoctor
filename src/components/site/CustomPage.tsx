@@ -131,7 +131,7 @@ export default function CustomPage({
         </div>
       )}
 
-      <CMSSectionRenderer slug={page.slug} />
+      <CMSSectionRenderer slug={page.slug} initialPage={page} />
       <Footer />
     </main>
   );

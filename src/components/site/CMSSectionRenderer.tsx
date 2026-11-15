@@ -35,6 +35,7 @@ import {
 
 export interface CMSSectionRendererProps {
   slug: string;
+  initialPage?: CMSPage | null;
   children?: React.ReactNode;
   defaultChildren?: React.ReactNode;
   fallbackHero?: React.ReactNode;
@@ -221,12 +222,13 @@ function CMSFaqAccordionItem({
 
 export default function CMSSectionRenderer({
   slug,
+  initialPage,
   children,
   defaultChildren,
   fallbackHero,
 }: CMSSectionRendererProps) {
   const [mounted, setMounted] = useState(false);
-  const [cmsPage, setCmsPage] = useState<CMSPage | null>(null);
+  const [cmsPage, setCmsPage] = useState<CMSPage | null>(initialPage ?? null);
 
   useEffect(() => {
     const loadPage = () => {
@@ -246,7 +248,9 @@ export default function CMSSectionRenderer({
       }
     };
 
-    loadPage();
+    if (!initialPage) {
+      loadPage();
+    }
     setMounted(true);
 
     const handleStorage = (e: StorageEvent) => {
@@ -261,16 +265,11 @@ export default function CMSSectionRenderer({
       window.removeEventListener("storage", handleStorage);
       window.removeEventListener("sfd-cms-pages-updated", loadPage);
     };
-  }, [slug]);
+  }, [slug, initialPage]);
 
   const fallbackContent = children ?? defaultChildren;
 
-  // Hydration safety: during SSR and before mount, render default children without layout flash
-  if (!mounted) {
-    return <>{fallbackContent}</>;
-  }
-
-  // If this page has been published with Puck, render directly with the shared Puck config
+  // If this page has Puck data, render directly with the shared Puck config
   const puckContent = (cmsPage?.puckData as { content?: unknown[] } | undefined)?.content;
   if (cmsPage?.puckData && Array.isArray(puckContent) && puckContent.length > 0) {
     return (
@@ -278,6 +277,11 @@ export default function CMSSectionRenderer({
         <Render config={withStyleEngine(puckConfig)} data={cmsPage.puckData as unknown as PuckPageData} />
       </div>
     );
+  }
+
+  // Hydration safety: during SSR and before mount, render default children without layout flash
+  if (!mounted && !initialPage) {
+    return <>{fallbackContent}</>;
   }
 
   // Check if custom sections or custom page structure exist in storage
@@ -289,7 +293,7 @@ export default function CMSSectionRenderer({
     return <>{fallbackContent}</>;
   }
 
-  const initialPage = INITIAL_CMS_PAGES.find(
+  const defaultSeedPage = INITIAL_CMS_PAGES.find(
     (p) => p.slug === slug || p.id === slug
   );
 
@@ -299,9 +303,9 @@ export default function CMSSectionRenderer({
       cmsPage?.heroStyle?.accentColor ||
       cmsPage?.heroStyle?.padding ||
       cmsPage?.heroStyle?.align ||
-      (initialPage &&
+      (defaultSeedPage &&
         cmsPage?.heroHeadline &&
-        cmsPage.heroHeadline !== initialPage.heroHeadline)
+        cmsPage.heroHeadline !== defaultSeedPage.heroHeadline)
   );
 
   const heroStyle: HeroStyle = cmsPage?.heroStyle || {
