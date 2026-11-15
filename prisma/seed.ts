@@ -3,6 +3,7 @@ import { seedTaxonomies } from "./seeds/taxonomies.seed";
 import { seedNavigation } from "./seeds/navigation.seed";
 import { seedCmsPages } from "./seeds/cmsPages.seed";
 import { seedPageBuilder } from "./seeds/pageBuilder.seed";
+import { seedSeoMetadata } from "./seeds/seo.seed";
 import { seedBlog } from "./seeds/blog.seed";
 import { seedServicesAndLocations } from "./seeds/services.seed";
 import { seedLeads } from "./seeds/leads.seed";
@@ -39,6 +40,10 @@ async function main() {
       case "puck":
         await seedPageBuilder();
         break;
+      case "seo":
+      case "metadata":
+        await seedSeoMetadata();
+        break;
       case "blog":
       case "posts":
         await seedBlog();
@@ -52,7 +57,7 @@ async function main() {
         await seedLeads();
         break;
       default:
-        console.error(`❌ Unknown seed target: "${target}". Valid targets: taxonomies, navigation, cms, builder, blog, services, leads`);
+        console.error(`❌ Unknown seed target: "${target}". Valid targets: taxonomies, navigation, cms, builder, seo, blog, services, leads`);
         process.exit(1);
     }
   } else {
@@ -77,11 +82,15 @@ async function main() {
     await seedBlog();
     console.log("");
 
-    // 6. Locations and FAQs
+    // 6. Pluggable SEO Metadata Engine
+    await seedSeoMetadata();
+    console.log("");
+
+    // 7. Locations and FAQs
     await seedServicesAndLocations();
     console.log("");
 
-    // 7. Repair leads & customer intake tickets
+    // 8. Repair leads & customer intake tickets
     await seedLeads();
   }
 

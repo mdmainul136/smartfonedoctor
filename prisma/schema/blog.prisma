@@ -13,10 +13,11 @@ model BlogPost {
   status        String   @default("Draft")
   featuredImage String?
   focusKeyword  String?
-  schemaType    String?  @default("TechArticle")
+  schemaType    String?      @default("TechArticle")
   articleData   Json?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  seo           SeoMetadata?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
   @@map("blog_posts")
 }

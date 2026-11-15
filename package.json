@@ -10,6 +10,7 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:cms": "tsx prisma/seeds/cmsPages.seed.ts",
     "db:seed:builder": "tsx prisma/seeds/pageBuilder.seed.ts",
+    "db:seed:seo": "tsx prisma/seeds/seo.seed.ts",
     "db:seed:blog": "tsx prisma/seeds/blog.seed.ts",
     "db:seed:taxonomies": "tsx prisma/seeds/taxonomies.seed.ts",
     "db:seed:leads": "tsx prisma/seeds/leads.seed.ts",

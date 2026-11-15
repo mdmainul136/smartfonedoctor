@@ -1,0 +1,40 @@
+// -------------------------------------------------------------
+// Plugin-Style Reusable SEO & OpenGraph Metadata Engine
+// Pluggable across Pages, Blog Posts, Services & Landing Pages
+// -------------------------------------------------------------
+
+model SeoMetadata {
+  id                 String    @id @default(cuid())
+  metaTitle          String?
+  metaDescription    String?
+  focusKeyword       String?
+  keywords           String[]  @default([])
+  canonicalUrl       String?
+  robotsIndex        Boolean   @default(true)
+  robotsFollow       Boolean   @default(true)
+  ogTitle            String?
+  ogDescription      String?
+  ogImage            String?
+  ogType             String?   @default("website")
+  twitterCard        String?   @default("summary_large_image")
+  twitterTitle       String?
+  twitterDescription String?
+  twitterImage       String?
+  schemaType         String?   @default("LocalBusiness") // LocalBusiness, TechArticle, Service, FAQPage
+  structuredData     Json?     // Custom Schema.org JSON-LD snippet
+  score              Int?      @default(85) // RankMath SEO score (0-100)
+  sitemapPriority    Decimal?  @default(0.7) @db.Decimal
+  changeFrequency    String?   @default("weekly")
+
+  // Pluggable 1-to-1 relations
+  pageId             String?   @unique
+  page               CmsPage?  @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  postId             String?   @unique
+  post               BlogPost? @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@map("seo_metadata")
+}

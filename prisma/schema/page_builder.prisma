@@ -22,14 +22,17 @@ model CmsPage {
   author         String    @default("Admin")
   contentHtml    String?   @db.Text
   
-  // 🎨 Puck Page Builder Data & SSR CSS
+  //  Puck Page Builder Data & SSR CSS
   puckData       Json?     // Puck component tree (content, root props, zones)
   compiledCss    String?   @db.Text // Pre-compiled Puck Tailwind CSS (0ms SSR Hydration)
   puckEditedAt   BigInt?   // Timestamp of last builder save
   customCss      String?   @db.Text // Page-level custom CSS rules
   customJs       String?   @db.Text // Page-level custom tracking/scripts
 
-  // 🔍 SEO, OpenGraph & Structured Schema
+  //  SEO Plugin Relation (Independent Reusable Schema)
+  seo            SeoMetadata?
+
+  //  SEO, OpenGraph & Structured Schema
   focusKeyword   String?
   keywords       String[]  @default([])
   featuredImage  String?
@@ -40,7 +43,7 @@ model CmsPage {
   headerVisible  Boolean   @default(true)
   footerVisible  Boolean   @default(true)
 
-  // 🔄 Relations: Version History & Active Draft
+  // Relations: Version History & Active Draft
   revisions      PageBuilderRevision[]
   activeDraft    PageBuilderDraft?
 
