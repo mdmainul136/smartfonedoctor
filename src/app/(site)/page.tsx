@@ -1,37 +1,14 @@
 import type { Metadata } from "next";
-import { getCmsPageByPathAction } from "@/actions/cmsPages";
-import { INITIAL_CMS_PAGES, getStoredCMSPages, type CMSPage } from "@/lib/cmsData";
+import { getCmsPage } from "@/actions/cmsPages";
 import { compilePageCss } from "@/puck/style/compilePage";
 import HomePageClient from "@/components/site/HomePageClient";
-
-/** Look up Homepage from PostgreSQL with memory seed fallback */
-async function resolveHomePage(): Promise<CMSPage | null> {
-  // 1. Query PostgreSQL via Server Action
-  try {
-    const dbRes = await getCmsPageByPathAction("/");
-    if (dbRes.success && dbRes.page) {
-      return dbRes.page;
-    }
-  } catch (err) {
-    console.warn("[resolveHomePage] DB query failed, falling back to seed:", err);
-  }
-
-  // 2. Fallback to seed data
-  const pages = getStoredCMSPages();
-  const found =
-    pages.find((p) => p.slug === "home" || p.id === "home" || p.path === "/") ||
-    INITIAL_CMS_PAGES.find((p) => p.slug === "home" || p.id === "home") ||
-    null;
-
-  return found;
-}
 
 /**
  * Dynamic metadata generator for the Homepage.
  * Pulls current Title, Meta Description, OpenGraph, Canonical, and Schema metadata.
  */
 export async function generateMetadata(): Promise<Metadata> {
-  const page = await resolveHomePage();
+  const page = await getCmsPage("/");
 
   const title =
     page?.title ||
@@ -87,7 +64,7 @@ export async function generateMetadata(): Promise<Metadata> {
  * Ensures zero Layout Shift (CLS) and zero FOUC for both Puck designs and custom layouts.
  */
 export default async function HomePage() {
-  const page = await resolveHomePage();
+  const page = await getCmsPage("/");
 
   // If page has pre-compiled CSS, use it; otherwise JIT-compile from puckData content
   const puckContent = (page?.puckData as { content?: unknown[] } | undefined)?.content;

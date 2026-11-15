@@ -150,6 +150,39 @@ export async function getCmsPageByPathAction(path: string): Promise<{
   }
 }
 
+/**
+ * Standard server-side loader for CMS Pages.
+ * Directly queries Prisma with zero client-side dependencies,
+ * falling back cleanly to INITIAL_CMS_PAGES if not in DB.
+ */
+export async function getCmsPage(pathOrSlug: string): Promise<CMSPage | null> {
+  const normalized = pathOrSlug.toLowerCase().replace(/\/$/, "") || "/";
+  const defaultPage =
+    INITIAL_CMS_PAGES.find((p) => {
+      const pNorm = (p.path || "").toLowerCase().replace(/\/$/, "") || "/";
+      return pNorm === normalized || p.slug.toLowerCase() === normalized;
+    }) || null;
+
+  try {
+    const row = await prisma.cmsPage.findFirst({
+      where: {
+        OR: [
+          { path: normalized },
+          { path: `${normalized}/` },
+          { path: pathOrSlug },
+          { slug: normalized },
+        ],
+      },
+    });
+
+    if (row) return rowToCmsPage(row);
+  } catch {
+    // Graceful fallback to default seed data if DB is temporarily unreachable
+  }
+
+  return defaultPage;
+}
+
 /** Server Action: Upsert a CMS Page in PostgreSQL */
 export async function upsertCmsPageAction(page: CMSPage): Promise<{
   success: boolean;

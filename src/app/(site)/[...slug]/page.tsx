@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import CustomPage from "@/components/site/CustomPage";
-import { getCmsPageByPathAction } from "@/actions/cmsPages";
-import { getStoredCMSPages } from "@/lib/cmsData";
+import { getCmsPage } from "@/actions/cmsPages";
 import { compilePageCss } from "@/puck/style/compilePage";
 
 type PageProps = {
@@ -9,30 +8,11 @@ type PageProps = {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-/** Look up page via PostgreSQL Server Action with memory fallback */
+/** Look up page via standard PostgreSQL query with seed fallback */
 async function resolvePage(slug: string[]) {
   const path = `/${slug.join("/")}`;
-
-  // 1. Query PostgreSQL via Server Action
-  try {
-    const dbRes = await getCmsPageByPathAction(path);
-    if (dbRes.success && dbRes.page) {
-      return { page: dbRes.page, path };
-    }
-  } catch (err) {
-    console.warn("[resolvePage] DB lookup failed, falling back to seed pages:", err);
-  }
-
-  // 2. Fallback to seed data
-  const pages = getStoredCMSPages();
-  const normalizedPath = path.toLowerCase().replace(/\/$/, "");
-  const found =
-    pages.find((p) => {
-      const pPath = (p.path || "").toLowerCase().replace(/\/$/, "");
-      return pPath === normalizedPath || p.slug === slug[slug.length - 1];
-    }) || null;
-
-  return { page: found, path };
+  const page = await getCmsPage(path);
+  return { page, path };
 }
 
 /**
