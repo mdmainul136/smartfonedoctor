@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import {
+  icons,
   Shield,
   ShieldCheck,
   Clock,
@@ -289,15 +290,70 @@ export function RenderItemIcon({
   size?: number | string;
 }) {
   if (!name || name === "None") return null;
-  const Component = ICON_MAP[name];
-  if (!Component) return null;
 
   const mergedStyle: React.CSSProperties = {
     ...(size ? { width: `${size}px`, height: `${size}px` } : {}),
     ...style,
   };
 
-  return <Component className={className} style={mergedStyle} />;
+  const trimmed = name.trim();
+
+  // 1. Raw Custom SVG Code (e.g. <svg viewBox="...">...</svg>)
+  if (trimmed.startsWith("<svg") && trimmed.includes("</svg>")) {
+    return (
+      <span
+        className={`inline-flex items-center justify-center shrink-0 [&>svg]:w-full [&>svg]:h-full ${className}`}
+        style={mergedStyle}
+        dangerouslySetInnerHTML={{ __html: trimmed }}
+      />
+    );
+  }
+
+  // 2. Custom Image / SVG Icon URL (e.g. https://... or /icons/...)
+  if (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("/") ||
+    /\.(svg|png|webp|jpg|jpeg|gif)$/i.test(trimmed)
+  ) {
+    return (
+      <img
+        src={trimmed}
+        alt="icon"
+        className={`object-contain shrink-0 ${className}`}
+        style={mergedStyle}
+      />
+    );
+  }
+
+  // 3. Lucide Icons (all 2,000+ icons supported dynamically)
+  // Try direct match, normalized PascalCase, or from curated static map
+  const pascalName = trimmed
+    .replace(/[-_ ]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ""))
+    .replace(/^[a-z]/, (c) => c.toUpperCase());
+
+  const LucideComp =
+    (icons as Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>>)[trimmed] ||
+    (icons as Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>>)[pascalName] ||
+    ICON_MAP[trimmed] ||
+    ICON_MAP[pascalName];
+
+  if (LucideComp) {
+    return <LucideComp className={className} style={mergedStyle} />;
+  }
+
+  // 4. Emoji or short text symbol (e.g. 🛠️, ⚡, 🍎, 5★)
+  return (
+    <span
+      className={`inline-flex items-center justify-center leading-none select-none shrink-0 ${className}`}
+      style={{
+        fontSize: size ? `${Math.round(Number(size) * 0.75)}px` : undefined,
+        ...mergedStyle,
+      }}
+    >
+      {trimmed}
+    </span>
+  );
 }
 
 export function sanitizeSectionId(raw?: string, fallback = "puck-block"): string {
