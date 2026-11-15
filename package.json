@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "setup": "tsx scripts/installer.ts",
+    "setup:auto": "tsx scripts/installer.ts --auto",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:cms": "tsx prisma/seeds/cmsPages.seed.ts",
     "db:seed:builder": "tsx prisma/seeds/pageBuilder.seed.ts",
