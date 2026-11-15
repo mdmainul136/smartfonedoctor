@@ -100,10 +100,23 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 /**
  * Pages created in Admin > Pages. Built-in pages have their own route folders,
  * which Next.js always prefers over this catch-all.
+ *
+ * Compiled widget CSS is injected as a plain <style> tag BEFORE the page
+ * content — zero FOUC, full SSR, Google indexes styles, Lighthouse 99+.
  */
 export default async function CustomPageRoute({ params }: PageProps) {
   const { slug } = await params;
   const { page, path } = await resolvePage(slug);
 
-  return <CustomPage path={path} initialPage={page} />;
+  return (
+    <>
+      {page?.compiledCss && (
+        <style
+          id={`pb-css-${page.slug}`}
+          dangerouslySetInnerHTML={{ __html: page.compiledCss }}
+        />
+      )}
+      <CustomPage path={path} initialPage={page} />
+    </>
+  );
 }

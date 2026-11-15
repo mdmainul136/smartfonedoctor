@@ -498,6 +498,7 @@ model CmsPage {
   lastEdited     String   @default("")
   author         String   @default("Admin")
   contentHtml    String?  @db.Text
+  compiledCss    String?  @db.Text
   focusKeyword   String?
   keywords       String[] @default([])
   featuredImage  String?

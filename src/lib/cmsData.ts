@@ -131,6 +131,8 @@ export interface CMSPage {
   puckData?: Record<string, unknown>;
   /** Set when someone publishes the page in the builder; seed upgrades never overwrite it after that. */
   puckEditedAt?: number;
+  /** Pre-compiled CSS for all pbStyle widget data — saved on Publish, delivered as inline <style> in SSR. */
+  compiledCss?: string;
   /** Created in Admin > Pages (not one of the built-in pages). Only these can be deleted. */
   custom?: boolean;
 }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { INITIAL_CMS_PAGES, CMSPage, getStoredCMSPages, saveStoredCMSPages } from "@/lib/cmsData";
 import { upsertCmsPageAction } from "@/actions/cmsPages";
+import { compilePageCss } from "@/puck/style/compilePage";
 import {
   ArrowLeft,
   Save,
@@ -69,9 +70,15 @@ export default function DedicatedPageEditor({
   };
 
   const handlePuckPublish = async (data: PuckPageData) => {
+    // 🎨 Compile all widget pbStyle data → single CSS string → save to DB
+    const compiledCss = compilePageCss(
+      (data.content || []) as unknown[]
+    );
+
     const updatedPage: CMSPage = {
       ...page,
       puckData: data as unknown as Record<string, unknown>,
+      compiledCss,
       puckEditedAt: Date.now(),
       // Publishing in the builder puts a draft page live.
       status: "Published",
@@ -84,12 +91,12 @@ export default function DedicatedPageEditor({
     );
     saveStoredCMSPages(updated);
 
-    // Persist directly to PostgreSQL via Server Action
+    // Persist directly to PostgreSQL via Server Action (non-blocking)
     await upsertCmsPageAction(updatedPage).catch((err) => {
       console.error("Failed to save Puck layout to PostgreSQL:", err);
     });
 
-    setSavedToast(`Puck layout published for "${updatedPage.name}"!`);
+    setSavedToast(`Page & CSS published for "${updatedPage.name}"!`);
     setTimeout(() => setSavedToast(null), 3500);
   };
 

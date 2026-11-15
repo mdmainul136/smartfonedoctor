@@ -23,6 +23,7 @@ function rowToCmsPage(row: {
   lastEdited: string;
   author: string;
   contentHtml: string | null;
+  compiledCss: string | null;
   focusKeyword: string | null;
   keywords: string[];
   featuredImage: string | null;
@@ -49,6 +50,7 @@ function rowToCmsPage(row: {
     lastEdited: row.lastEdited,
     author: row.author,
     contentHtml: row.contentHtml ?? undefined,
+    compiledCss: row.compiledCss ?? undefined,
     focusKeyword: row.focusKeyword ?? undefined,
     keywords: row.keywords,
     featuredImage: row.featuredImage ?? undefined,
@@ -84,6 +86,7 @@ async function ensureSeededPages(): Promise<void> {
         lastEdited: page.lastEdited || "Initial Seed",
         author: page.author || "System",
         contentHtml: page.contentHtml || null,
+        compiledCss: page.compiledCss || null,
         focusKeyword: page.focusKeyword || null,
         keywords: page.keywords || [],
         featuredImage: page.featuredImage || null,
@@ -170,6 +173,7 @@ export async function upsertCmsPageAction(page: CMSPage): Promise<{
       lastEdited: page.lastEdited || "Just now",
       author: page.author || "Admin",
       contentHtml: page.contentHtml || null,
+      compiledCss: page.compiledCss || null,
       focusKeyword: page.focusKeyword || null,
       keywords: page.keywords || [],
       featuredImage: page.featuredImage || null,
