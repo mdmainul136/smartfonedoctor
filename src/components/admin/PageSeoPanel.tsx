@@ -1,50 +1,184 @@
 "use client";
 
-import React, { useMemo } from "react";
-import { Globe, Eye } from "lucide-react";
+import React, { useMemo, useState, useRef } from "react";
+import {
+  Globe,
+  Eye,
+  Image as ImageIcon,
+  Upload,
+  Sparkles,
+  Check,
+  Trash2,
+  RefreshCw,
+  ExternalLink,
+} from "lucide-react";
 import type { CMSPage } from "@/lib/cmsData";
 import type { PuckPageData } from "@/puck/types";
 import RankMathSeoSuite from "@/components/admin/RankMathSeoSuite";
+import MediaModal, { type SelectedMediaPayload } from "@/components/admin/MediaModal";
 
-function extractPuckContentHtml(puckData?: PuckPageData): string {
+const PRESET_REPAIR_IMAGES = [
+  {
+    name: "Repair Bench",
+    url: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=1200&q=80",
+    desc: "iPhone technician battery & display bench",
+  },
+  {
+    name: "OLED Micro-lab",
+    url: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=1200&q=80",
+    desc: "Precision microscope micro-soldering",
+  },
+  {
+    name: "MacBook Lab",
+    url: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1200&q=80",
+    desc: "Ultrasonic logic board diagnostics",
+  },
+  {
+    name: "Brand Logo",
+    url: "/logo-png.jpg",
+    desc: "Official SmartFoneDoctor logo",
+  },
+];
+
+/**
+ * Deeply walk Puck content tree to extract all text, headings, links,
+ * and image URLs for rich SEO analysis and image syncing.
+ */
+function extractPuckContentDetails(puckData?: PuckPageData): {
+  html: string;
+  images: string[];
+} {
   const blocks = puckData?.content;
-  if (!Array.isArray(blocks) || blocks.length === 0) return "";
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    return { html: "", images: [] };
+  }
 
   const parts: string[] = [];
-  for (const block of blocks) {
-    const props = (block?.props || {}) as Record<string, unknown>;
-    if (block.type === "HeadingBlock" && typeof props.text === "string" && props.text) {
-      const tag = typeof props.tag === "string" ? props.tag : "h2";
-      parts.push(`<${tag}>${props.text}</${tag}>`);
-    }
-    if (block.type === "ParagraphBlock" && typeof props.text === "string" && props.text) {
-      parts.push(`<p>${props.text}</p>`);
-    }
+  const images = new Set<string>();
+
+  const isImageUrl = (val: unknown): val is string => {
+    if (typeof val !== "string") return false;
+    const v = val.trim();
+    return (
+      (v.startsWith("http://") || v.startsWith("https://") || v.startsWith("/") || v.startsWith("./")) &&
+      /\.(jpg|jpeg|png|webp|avif|svg)(\?.*)?$/i.test(v)
+    );
+  };
+
+  const walkProps = (props: Record<string, unknown>, blockType?: string) => {
+    if (!props || typeof props !== "object") return;
+
+    // Headings & Text
     if (typeof props.heading === "string" && props.heading) {
-      const tag = block.type === "HeroBlock" ? "h1" : "h2";
+      const tag = blockType === "HeroBlock" ? "h1" : "h2";
       parts.push(`<${tag}>${props.heading}</${tag}>`);
+    }
+    if (typeof props.headline === "string" && props.headline) {
+      parts.push(`<h2>${props.headline}</h2>`);
     }
     if (typeof props.subheading === "string" && props.subheading) {
       parts.push(`<p>${props.subheading}</p>`);
     }
+    if (typeof props.text === "string" && props.text) {
+      const tag =
+        blockType === "HeadingBlock" ? (typeof props.tag === "string" ? props.tag : "h2") : "p";
+      parts.push(`<${tag}>${props.text}</${tag}>`);
+    }
+    if (typeof props.badgeText === "string" && props.badgeText) {
+      parts.push(`<span>${props.badgeText}</span>`);
+    }
     if (typeof props.bodyHtml === "string" && props.bodyHtml) {
       parts.push(props.bodyHtml);
     }
-    if (Array.isArray(props.items)) {
-      for (const item of props.items) {
-        if (item && typeof item === "object") {
-          const rec = item as Record<string, unknown>;
-          if (typeof rec.title === "string" && rec.title) {
-            parts.push(`<h3>${rec.title}</h3>`);
-          }
-          if (typeof rec.description === "string" && rec.description) {
-            parts.push(`<p>${rec.description}</p>`);
+    if (typeof props.html === "string" && props.html) {
+      parts.push(props.html);
+    }
+
+    // CTA links & buttons
+    if (typeof props.ctaLink === "string" && props.ctaLink) {
+      const label = typeof props.ctaText === "string" ? props.ctaText : "Click Here";
+      parts.push(`<a href="${props.ctaLink}">${label}</a>`);
+    }
+    if (typeof props.buttonLink === "string" && props.buttonLink) {
+      const label = typeof props.buttonText === "string" ? props.buttonText : "Learn More";
+      parts.push(`<a href="${props.buttonLink}">${label}</a>`);
+    }
+    if (typeof props.link === "string" && props.link) {
+      parts.push(`<a href="${props.link}">Link</a>`);
+    }
+
+    // Images
+    if (typeof props.src === "string" && isImageUrl(props.src)) {
+      images.add(props.src);
+      const alt = typeof props.alt === "string" ? props.alt : "SmartFoneDoctor Philadelphia";
+      parts.push(`<img src="${props.src}" alt="${alt}" />`);
+    }
+    if (typeof props.image === "string" && isImageUrl(props.image)) {
+      images.add(props.image);
+      parts.push(`<img src="${props.image}" alt="Repair service" />`);
+    }
+    if (typeof props.bgImage === "string" && isImageUrl(props.bgImage)) {
+      images.add(props.bgImage);
+      parts.push(`<img src="${props.bgImage}" alt="Background image" />`);
+    }
+
+    // Nested arrays (items, steps, features, tabs, cards, etc.)
+    for (const key of Object.keys(props)) {
+      const val = props[key];
+      if (Array.isArray(val)) {
+        for (const item of val) {
+          if (item && typeof item === "object") {
+            const itemRec = item as Record<string, unknown>;
+            if (typeof itemRec.title === "string" && itemRec.title) {
+              parts.push(`<h3>${itemRec.title}</h3>`);
+            }
+            if (typeof itemRec.heading === "string" && itemRec.heading) {
+              parts.push(`<h3>${itemRec.heading}</h3>`);
+            }
+            if (typeof itemRec.name === "string" && itemRec.name) {
+              parts.push(`<h4>${itemRec.name}</h4>`);
+            }
+            if (typeof itemRec.description === "string" && itemRec.description) {
+              parts.push(`<p>${itemRec.description}</p>`);
+            }
+            if (typeof itemRec.quote === "string" && itemRec.quote) {
+              parts.push(`<blockquote>${itemRec.quote}</blockquote>`);
+            }
+            if (typeof itemRec.subtext === "string" && itemRec.subtext) {
+              parts.push(`<p>${itemRec.subtext}</p>`);
+            }
+            if (typeof itemRec.badge === "string" && itemRec.badge) {
+              parts.push(`<span>${itemRec.badge}</span>`);
+            }
+            if (typeof itemRec.image === "string" && isImageUrl(itemRec.image)) {
+              images.add(itemRec.image);
+              parts.push(`<img src="${itemRec.image}" alt="${itemRec.title || "Image"}" />`);
+            }
+            if (typeof itemRec.avatar === "string" && isImageUrl(itemRec.avatar)) {
+              images.add(itemRec.avatar);
+              parts.push(`<img src="${itemRec.avatar}" alt="Avatar" />`);
+            }
+            if (typeof itemRec.link === "string" && itemRec.link) {
+              parts.push(`<a href="${itemRec.link}">${itemRec.title || "Link"}</a>`);
+            }
+            if (typeof itemRec.url === "string" && itemRec.url) {
+              parts.push(`<a href="${itemRec.url}">Link</a>`);
+            }
           }
         }
       }
     }
+  };
+
+  for (const block of blocks) {
+    const props = (block?.props || {}) as Record<string, unknown>;
+    walkProps(props, block.type);
   }
-  return parts.join("\n");
+
+  return {
+    html: parts.join("\n"),
+    images: Array.from(images),
+  };
 }
 
 export default function PageSeoPanel({
@@ -58,15 +192,73 @@ export default function PageSeoPanel({
   onChangeField: (field: keyof CMSPage, value: unknown) => void;
   compact?: boolean;
 }) {
-  const liveContentHtml = useMemo(() => {
-    const fromPuck = extractPuckContentHtml(
+  const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Extract full HTML and images from Puck editor state
+  const extracted = useMemo(() => {
+    return extractPuckContentDetails(
       livePuckData || (page.puckData as unknown as PuckPageData | undefined)
     );
-    return fromPuck || page.contentHtml || page.heroSubtitle || "";
-  }, [livePuckData, page.puckData, page.contentHtml, page.heroSubtitle]);
+  }, [livePuckData, page.puckData]);
+
+  const liveContentHtml = useMemo(() => {
+    return extracted.html || page.contentHtml || page.heroSubtitle || "";
+  }, [extracted.html, page.contentHtml, page.heroSubtitle]);
+
+  // Direct file upload handler
+  const handleDirectUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("alt", page.title || "SmartFoneDoctor Philadelphia");
+      const res = await fetch("/api/admin/media", { method: "POST", body: fd });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.item?.url) {
+          onChangeField("featuredImage", data.item.url);
+        }
+      }
+    } catch (err) {
+      console.error("Direct upload failed:", err);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   return (
-    <div className={compact ? "flex flex-col gap-3" : "grid grid-cols-1 lg:grid-cols-12 gap-5 items-start"}>
+    <div
+      className={
+        compact ? "flex flex-col gap-3" : "grid grid-cols-1 lg:grid-cols-12 gap-5 items-start"
+      }
+    >
+      {/* Hidden file input for direct upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleDirectUpload}
+        className="hidden"
+      />
+
+      {/* Media Management Modal */}
+      <MediaModal
+        isOpen={isMediaModalOpen}
+        onClose={() => setIsMediaModalOpen(false)}
+        onSelect={(payload: SelectedMediaPayload) => {
+          onChangeField("featuredImage", payload.url);
+          setIsMediaModalOpen(false);
+        }}
+        title="Select Featured & Social Share Card Image"
+        selectButtonText="Set as Social Thumbnail"
+        initialSelectedUrl={page.featuredImage}
+      />
+
       {/* RankMath Live SEO Analyzer */}
       <div className={compact ? "order-2" : "lg:col-span-7"}>
         <RankMathSeoSuite
@@ -78,14 +270,18 @@ export default function PageSeoPanel({
           featuredImage={page.featuredImage}
           canonicalUrl={page.canonicalUrl || `https://smartfonedoctor.com${page.path}`}
           schemaType={page.schemaType}
+          pageImages={extracted.images}
           compact={compact}
           onKeywordChange={(kw) => onChangeField("focusKeyword", kw)}
           onSchemaChange={(schema) => onChangeField("schemaType", schema)}
+          onFeaturedImageChange={(url) => onChangeField("featuredImage", url)}
         />
       </div>
 
-      {/* Status + Google Search Listing */}
-      <div className={compact ? "order-1 flex flex-col gap-3" : "lg:col-span-5 flex flex-col gap-4"}>
+      {/* Status + Google Search Listing & Media Studio */}
+      <div
+        className={compact ? "order-1 flex flex-col gap-3" : "lg:col-span-5 flex flex-col gap-4"}
+      >
         {/* Status & Visibility */}
         <div className="bg-white border border-[#e8e8e8] rounded-[10px] p-3.5 shadow-2xs flex flex-col gap-2.5">
           <div className="flex items-center justify-between pb-2 border-b border-[#f2f2f2]">
@@ -132,7 +328,7 @@ export default function PageSeoPanel({
               <label className="text-[11px] font-medium text-gray-700">SEO Page Title</label>
               <span
                 className={`text-[10px] font-mono ${
-                  page.title.length > 60 ? "text-amber-600" : "text-gray-400"
+                  page.title.length > 60 ? "text-amber-600 font-bold" : "text-gray-400"
                 }`}
               >
                 {page.title.length}/60
@@ -151,7 +347,7 @@ export default function PageSeoPanel({
               <label className="text-[11px] font-medium text-gray-700">Meta Description</label>
               <span
                 className={`text-[10px] font-mono ${
-                  page.metaDesc.length > 160 ? "text-amber-600" : "text-gray-400"
+                  page.metaDesc.length > 160 ? "text-amber-600 font-bold" : "text-gray-400"
                 }`}
               >
                 {page.metaDesc.length}/160
@@ -173,7 +369,7 @@ export default function PageSeoPanel({
               type="text"
               value={page.focusKeyword || ""}
               onChange={(e) => onChangeField("focusKeyword", e.target.value)}
-              placeholder="e.g. phone repair philadelphia"
+              placeholder="e.g. About SmartFoneDoctor Philadelphia"
               className="w-full h-[32px] px-2.5 rounded-[5px] border border-gray-300 text-[12px] text-[#009691] font-semibold focus:outline-none focus:border-[#009691]"
             />
           </div>
@@ -199,17 +395,163 @@ export default function PageSeoPanel({
             />
           </div>
 
-          <div>
-            <label className="block text-[11px] font-medium text-gray-700 mb-1">
-              Social Share Image URL (OpenGraph / Twitter)
-            </label>
-            <input
-              type="text"
-              value={page.featuredImage || ""}
-              onChange={(e) => onChangeField("featuredImage", e.target.value)}
-              placeholder="https://... or /images/..."
-              className="w-full h-[32px] px-2.5 rounded-[5px] border border-gray-300 text-[12px] text-[#111111] focus:outline-none focus:border-[#009691]"
-            />
+          {/* ── FEATURED & SOCIAL SHARE CARD IMAGE STUDIO ── */}
+          <div className="pt-2 border-t border-gray-200 flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-bold text-gray-800 flex items-center gap-1.5">
+                <ImageIcon className="w-3.5 h-3.5 text-[#009691]" />
+                <span>Featured / Social Share Image</span>
+              </label>
+              <span className="text-[10px] text-gray-400 font-mono">1200×630</span>
+            </div>
+
+            {/* Thumbnail Preview Card */}
+            <div className="relative rounded-lg border border-gray-300 overflow-hidden bg-gray-900 aspect-[1.91/1] max-h-44 group">
+              {page.featuredImage ? (
+                <>
+                  <img
+                    src={page.featuredImage}
+                    alt="Social card preview"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsMediaModalOpen(true)}
+                      className="px-2.5 py-1 rounded bg-white text-gray-900 text-[11px] font-semibold shadow hover:bg-gray-50 cursor-pointer"
+                    >
+                      Change
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onChangeField("featuredImage", "")}
+                      className="px-2 py-1 rounded bg-red-600 text-white text-[11px] font-semibold shadow hover:bg-red-700 cursor-pointer"
+                      title="Remove"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div
+                  onClick={() => setIsMediaModalOpen(true)}
+                  className="w-full h-full flex flex-col items-center justify-center text-gray-400 text-xs gap-1.5 cursor-pointer hover:bg-gray-800 transition"
+                >
+                  <ImageIcon className="w-7 h-7 opacity-40" />
+                  <span className="font-medium text-[11px]">No Thumbnail Selected</span>
+                  <span className="text-[10px] text-gray-500">
+                    Click to pick from Media Library or upload
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons Row */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setIsMediaModalOpen(true)}
+                className="flex-1 h-[30px] px-2 rounded-[5px] border border-gray-300 bg-white hover:bg-gray-50 text-[11px] font-semibold text-gray-700 inline-flex items-center justify-center gap-1.5 shadow-2xs transition cursor-pointer"
+              >
+                <ImageIcon className="w-3.5 h-3.5 text-[#009691]" />
+                <span>Media Library</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="flex-1 h-[30px] px-2 rounded-[5px] bg-[#009691] hover:bg-[#007f7b] text-white text-[11px] font-semibold inline-flex items-center justify-center gap-1.5 shadow-2xs transition cursor-pointer disabled:opacity-50"
+              >
+                {isUploading ? (
+                  <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <Upload className="w-3.5 h-3.5" />
+                )}
+                <span>{isUploading ? "Uploading..." : "Upload File"}</span>
+              </button>
+
+              {extracted.images.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => onChangeField("featuredImage", extracted.images[0])}
+                  className="h-[30px] px-2.5 rounded-[5px] border border-teal-200 bg-teal-50 hover:bg-teal-100 text-[#009691] text-[11px] font-semibold inline-flex items-center gap-1 transition cursor-pointer"
+                  title="Copy hero / page image to social thumbnail"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Sync Hero</span>
+                </button>
+              )}
+            </div>
+
+            {/* Detected Page Images Quick-Pick */}
+            {extracted.images.length > 0 && (
+              <div className="p-2 rounded-md bg-gray-50 border border-gray-200 flex flex-col gap-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                  Images on this Page (Click to select):
+                </span>
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
+                  {extracted.images.map((imgUrl, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => onChangeField("featuredImage", imgUrl)}
+                      className={`relative w-11 h-10 rounded border overflow-hidden shrink-0 transition-all cursor-pointer ${
+                        page.featuredImage === imgUrl
+                          ? "border-[#009691] ring-2 ring-[#009691]/30"
+                          : "border-gray-200 hover:border-gray-400"
+                      }`}
+                      title="Set as social card thumbnail"
+                    >
+                      <img src={imgUrl} alt="Detected" className="w-full h-full object-cover" />
+                      {page.featuredImage === imgUrl && (
+                        <div className="absolute inset-0 bg-[#009691]/40 flex items-center justify-center">
+                          <Check className="w-3 h-3 text-white" />
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Quick Repair Presets */}
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                Quick Shop Presets:
+              </span>
+              <div className="grid grid-cols-2 gap-1">
+                {PRESET_REPAIR_IMAGES.map((preset) => (
+                  <button
+                    key={preset.name}
+                    type="button"
+                    onClick={() => onChangeField("featuredImage", preset.url)}
+                    className={`px-2 py-1 rounded text-left text-[11px] font-medium border transition cursor-pointer truncate ${
+                      page.featuredImage === preset.url
+                        ? "border-[#009691] bg-teal-50 text-[#009691] font-bold"
+                        : "border-gray-200 bg-white hover:bg-gray-50 text-gray-700"
+                    }`}
+                    title={preset.desc}
+                  >
+                    {preset.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Manual Image URL */}
+            <div>
+              <label className="block text-[10px] text-gray-500 font-medium mb-1">
+                Image URL (OpenGraph / Twitter)
+              </label>
+              <input
+                type="text"
+                value={page.featuredImage || ""}
+                onChange={(e) => onChangeField("featuredImage", e.target.value)}
+                placeholder="https://... or /uploads/..."
+                className="w-full h-[30px] px-2.5 rounded-[5px] border border-gray-300 text-[11px] font-mono text-gray-700 focus:outline-none focus:border-[#009691]"
+              />
+            </div>
           </div>
 
           <div>

@@ -1836,6 +1836,10 @@ export const INITIAL_CMS_PAGES: CMSPage[] = [
     status: "Published",
     lastEdited: "Oct 28",
     author: "Dr. Mike",
+    focusKeyword: "About SmartFoneDoctor Philadelphia",
+    featuredImage: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=1200&q=80",
+    canonicalUrl: "https://smartfonedoctor.com/about",
+    schemaType: "AboutPage",
     puckData: {
       root: { props: {} },
       content: [
@@ -2906,7 +2910,21 @@ export function getStoredCMSPages(): CMSPage[] {
         (Array.isArray(seedContent) && seedContent.length > (storedContent?.length || 0))
       ) {
         changed = true;
-        return { ...stored, puckData: seed.puckData };
+        return {
+          ...stored,
+          puckData: seed.puckData,
+          featuredImage: stored.featuredImage?.includes("1581092160607")
+            ? seed.featuredImage
+            : stored.featuredImage || seed.featuredImage,
+        };
+      }
+
+      if (
+        stored.featuredImage?.includes("1581092160607") &&
+        seed?.featuredImage
+      ) {
+        changed = true;
+        return { ...stored, featuredImage: seed.featuredImage };
       }
       return stored;
     });

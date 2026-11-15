@@ -14,7 +14,7 @@ async function main() {
     seoScore: aboutPage.seo?.score,
   } : "None");
 
-  const featuredImg = "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1600&auto=format&fit=crop&q=85";
+  const featuredImg = "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=1600&auto=format&fit=crop&q=85";
   const title = "About SmartFoneDoctor | Philadelphia's Top-Rated Device Repair Specialists";
   const metaDesc = "Discover SmartFoneDoctor: Philadelphia's trusted electronics repair center at 33 S 52nd St & Lancaster Ave. WISE-certified technicians, same-day repairs, 90-day warranty, and sustainable recycling.";
   const focusKeyword = "About SmartFoneDoctor Philadelphia";
