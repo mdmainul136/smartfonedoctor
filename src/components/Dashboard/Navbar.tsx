@@ -225,12 +225,16 @@ const Navbar = () => {
           <span>Live site</span>
         </Link>
 
-        <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-[#e8e8e8]">
-          <span className="w-6 h-6 rounded-full bg-[#e8e8e8] text-[#111111] text-[11px] font-medium flex items-center justify-center">
+        <Link
+          href="/profile"
+          className="hidden sm:flex items-center gap-2 pl-2 border-l border-[#e8e8e8] hover:opacity-80 transition-opacity"
+          title="Admin Profile & Security Settings"
+        >
+          <span className="w-6 h-6 rounded-full bg-teal-700 text-white text-[11px] font-semibold flex items-center justify-center">
             DM
           </span>
-          <span className="text-[13px] text-[#5f6368]">Dr. Mike</span>
-        </div>
+          <span className="text-[13px] text-[#5f6368] hover:text-[#111111]">Dr. Mike</span>
+        </Link>
       </div>
     </header>
   );
