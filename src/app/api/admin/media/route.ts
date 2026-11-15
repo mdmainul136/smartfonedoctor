@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     }
 
     const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const fileData = new Uint8Array(bytes);
 
     // Sanitize filename
     const ext = path.extname(file.name) || ".jpg";
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
     const uniqueName = `${Date.now()}-${baseName}${ext}`;
     const filePath = path.join(UPLOADS_DIR, uniqueName);
 
-    await fs.writeFile(filePath, buffer);
+    await fs.writeFile(filePath, fileData);
 
     const newItem: MediaItem = {
       id: `media-upload-${Date.now()}`,
@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
       url: `/uploads/${uniqueName}`,
       alt: altText || baseName.replace(/-/g, " "),
       caption: caption || undefined,
-      filesize: buffer.length,
+      filesize: fileData.byteLength,
       mimeType: file.type || "image/jpeg",
       createdAt: new Date().toISOString(),
     };
