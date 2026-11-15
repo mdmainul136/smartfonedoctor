@@ -99,13 +99,25 @@ export async function deleteGeoNeighborhoodAction(id: string) {
 }
 
 /**
+ * Helper to ensure plain objects cross the Server-Action boundary (stripping Decimal & Date prototypes)
+ */
+function serializeGuardrail<T extends { confidenceScore?: any }>(item: T): T & { confidenceScore: number | null } {
+  if (!item) return item as any;
+  return {
+    ...item,
+    confidenceScore: item.confidenceScore != null ? Number(item.confidenceScore) : 1.0,
+  };
+}
+
+/**
  * Fetch all AEO Brand Truth Guardrails
  */
 export async function getAeoBrandGuardrailsAction() {
   try {
-    const guardrails = await prisma.aeoBrandGuardrail.findMany({
+    const rawGuardrails = await prisma.aeoBrandGuardrail.findMany({
       orderBy: { createdAt: "asc" },
     });
+    const guardrails = rawGuardrails.map(serializeGuardrail);
     return { success: true, guardrails };
   } catch (err: unknown) {
     console.error("Failed to fetch AEO guardrails:", err);
@@ -131,7 +143,7 @@ export async function upsertAeoBrandGuardrailAction(input: BrandGuardrailInput) 
       });
       revalidatePath("/admin/listings/ai-visibility");
       revalidatePath("/llms.txt");
-      return { success: true, guardrail: updated };
+      return { success: true, guardrail: serializeGuardrail(updated) };
     } else {
       const created = await prisma.aeoBrandGuardrail.create({
         data: {
@@ -144,7 +156,7 @@ export async function upsertAeoBrandGuardrailAction(input: BrandGuardrailInput) 
       });
       revalidatePath("/admin/listings/ai-visibility");
       revalidatePath("/llms.txt");
-      return { success: true, guardrail: created };
+      return { success: true, guardrail: serializeGuardrail(created) };
     }
   } catch (err: unknown) {
     console.error("Failed to upsert AEO guardrail:", err);

@@ -306,7 +306,7 @@ export default function AiVisibilityPage() {
       setNewNeighborZips("");
       setNewNeighborLandmarks("");
       setShowNeighborForm(false);
-      setNoticeBanner(`Saved ${res.neighborhood.name} to PostgreSQL geo-fencing targets.`);
+      setNoticeBanner(`Saved ${res.neighborhood.name} to geo-fencing targets.`);
     }
   };
 
@@ -314,7 +314,7 @@ export default function AiVisibilityPage() {
     const target = neighborhoods.find((n) => n.id === id);
     setNeighborhoods((prev) => prev.filter((n) => n.id !== id));
     await deleteGeoNeighborhoodAction(id);
-    setNoticeBanner(`Removed ${target?.name ?? "geo-target"} from database.`);
+    setNoticeBanner(`Removed ${target?.name ?? "geo-target"} from active targets.`);
   };
 
   const [showGuardForm, setShowGuardForm] = useState(false);
@@ -341,7 +341,7 @@ export default function AiVisibilityPage() {
       setNewGuardClaim("");
       setNewGuardAnswer("");
       setShowGuardForm(false);
-      setNoticeBanner(`Saved truth guardrail "${res.guardrail.topic}" to PostgreSQL and published to llms.txt.`);
+      setNoticeBanner(`Published truth guardrail "${res.guardrail.topic}" to AI knowledge graph.`);
     }
   };
 
@@ -349,7 +349,7 @@ export default function AiVisibilityPage() {
     const target = guardrails.find((g) => g.id === id);
     setGuardrails((prev) => prev.filter((g) => g.id !== id));
     await deleteAeoBrandGuardrailAction(id);
-    setNoticeBanner(`Removed guardrail "${target?.topic ?? "fact"}" from database.`);
+    setNoticeBanner(`Removed guardrail "${target?.topic ?? "fact"}".`);
   };
 
   const getDirScore = (dirId: string, storeId?: number) => {
@@ -739,177 +739,191 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
   };
 
   return (
-    <div className="flex-1 min-w-0 w-full px-4 sm:px-6 py-5 flex flex-col gap-5 overflow-x-hidden">
-      {/* 1. HEADER & CLEAN TABS */}
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h1 className="text-[20px] font-semibold text-[#111111] tracking-tight">
+    <div className="flex-1 min-w-0 w-full px-4 sm:px-6 py-6 flex flex-col gap-6 overflow-x-hidden antialiased">
+      {/* 1. MATERIAL 3 HERO HEADER (SmartFoneDoctor Brand Teal & Elevated Surface) */}
+      <div className="rounded-3xl bg-gradient-to-br from-teal-50/70 via-white to-emerald-50/30 p-5 sm:p-7 border border-teal-100/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-2xl bg-[#009691] text-white flex items-center justify-center shadow-md shadow-[#009691]/25 shrink-0">
+            <Sparkles className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 leading-tight">
                 Search &amp; GEO Visibility
               </h1>
-              <span className="text-[12px] text-[#5f6368] font-normal">
-                · {isAllStores ? "All 3 Philly stores" : storeShortName}
+              <span className="inline-flex items-center gap-1 rounded-full bg-teal-100/80 text-[#009691] text-[11px] font-semibold px-2.5 py-0.5">
+                {isAllStores ? "All 3 Philly stores" : storeShortName}
               </span>
             </div>
-            <p className="text-[13px] text-[#5f6368] mt-0.5">
-              Directory sync, local search presence, and structured data for search engines
+            <p className="text-xs sm:text-sm text-slate-600 font-medium mt-0.5">
+              Multi-engine directory sync, AI crawler indexing, and ground-truth knowledge graph
             </p>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <Link
-              href="/admin/listings"
-              className="h-[30px] px-3 rounded-[6px] border border-[#d1d5db] bg-white hover:bg-[#f9f9f9] text-[12px] font-medium text-[#111111] inline-flex items-center gap-1.5 transition-colors"
-            >
-              <span>Directory listings</span>
-            </Link>
-
-            <button
-              type="button"
-              onClick={handleRunScan}
-              disabled={isScanning}
-              className="h-[30px] px-3 rounded-[6px] bg-[#111111] hover:bg-[#222222] text-white text-[12px] font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-60"
-            >
-              <RefreshCw
-                className={`w-3 h-3 ${isScanning ? "animate-spin" : ""}`}
-                aria-hidden="true"
-              />
-              <span>{isScanning ? "Checking…" : "Check status"}</span>
-            </button>
           </div>
         </div>
 
-        {/* Minimal Tab Navigation */}
-        <nav
-          aria-label="Visibility workspace views"
-          className="flex items-center gap-6 border-b border-[#e5e7eb] overflow-x-auto no-scrollbar"
-        >
-          {[
-            {
-              key: "overview" as AiTab,
-              label: "Multi-Engine Index",
-              count: pendingCount,
-            },
-            {
-              key: "neighborhoods" as AiTab,
-              label: "Neighborhoods & Geo-Fences",
-              count: (isAllStores
-                ? neighborhoods
-                : neighborhoods.filter((n) => n.storeId === selectedStoreId)
-              ).length,
-            },
-            {
-              key: "schema-crawlers" as AiTab,
-              label: "Schema & AI Crawlers",
-            },
-            {
-              key: "guardrails" as AiTab,
-              label: "Truth Guardrails",
-              count: guardrails.length,
-            },
-          ].map((tab) => {
-            const isActive = activeTab === tab.key;
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setActiveTab(tab.key)}
-                className={`py-2 text-[13px] border-b-2 -mb-px transition-colors cursor-pointer flex items-center gap-1.5 ${
-                  isActive
-                    ? "border-[#111111] text-[#111111] font-semibold"
-                    : "border-transparent text-[#5f6368] hover:text-[#111111]"
-                }`}
-              >
-                <span>{tab.label}</span>
-                {tab.count !== undefined && tab.count > 0 && (
-                  <span className="text-[11px] font-mono px-1.5 py-0.2 rounded-full bg-[#f3f4f6] text-[#5f6368]">
-                    {tab.count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start sm:self-auto">
+          <Link
+            href="/admin/listings"
+            className="h-9 px-4 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-xs inline-flex items-center gap-1.5 transition-colors"
+          >
+            <span>Directory listings</span>
+          </Link>
+
+          <button
+            type="button"
+            onClick={handleRunScan}
+            disabled={isScanning}
+            className="h-9 px-4 rounded-xl bg-[#009691] hover:bg-[#00827d] text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm shadow-[#009691]/25 transition-all cursor-pointer disabled:opacity-60"
+          >
+            <RefreshCw
+              className={`w-3.5 h-3.5 ${isScanning ? "animate-spin" : ""}`}
+              aria-hidden="true"
+            />
+            <span>{isScanning ? "Checking…" : "Run Live Audit"}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Material 3 Segmented Navigation Tabs */}
+      <div className="bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200/60 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+        {[
+          {
+            key: "overview" as AiTab,
+            label: "Multi-Engine Index",
+            count: pendingCount,
+          },
+          {
+            key: "neighborhoods" as AiTab,
+            label: "Neighborhoods & Geo-Fences",
+            count: (isAllStores
+              ? neighborhoods
+              : neighborhoods.filter((n) => n.storeId === selectedStoreId)
+            ).length,
+          },
+          {
+            key: "schema-crawlers" as AiTab,
+            label: "Schema & AI Crawlers",
+          },
+          {
+            key: "guardrails" as AiTab,
+            label: "Truth Guardrails",
+            count: guardrails.length,
+          },
+        ].map((tab) => {
+          const isActive = activeTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-4 py-2 rounded-xl text-xs sm:text-[13px] font-semibold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
+                isActive
+                  ? "bg-white text-[#009691] shadow-xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
+              }`}
+            >
+              <span>{tab.label}</span>
+              {tab.count !== undefined && tab.count > 0 && (
+                <span
+                  className={`text-[11px] font-mono px-2 py-0.5 rounded-full ${
+                    isActive
+                      ? "bg-teal-50 text-[#009691] border border-teal-200/60 font-semibold"
+                      : "bg-slate-200 text-slate-700"
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {noticeBanner && (
         <div
           role="status"
           aria-live="polite"
-          className="bg-[#f0fdf4] border border-[#bbf7d0] text-[#166534] rounded-[6px] px-3.5 py-2 flex items-center justify-between gap-3 text-[12px]"
+          className="bg-teal-50 border border-teal-200 text-[#009691] font-medium rounded-xl px-4 py-2.5 flex items-center justify-between gap-3 text-xs shadow-xs"
         >
           <span>{noticeBanner}</span>
           <button
             type="button"
             onClick={() => setNoticeBanner(null)}
             aria-label="Dismiss notice"
-            className="p-0.5 hover:opacity-75 cursor-pointer shrink-0"
+            className="p-1 hover:bg-teal-100 rounded-md cursor-pointer shrink-0"
           >
             <X className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
         </div>
       )}
 
-      {/* 2. SIMPLE, CLEAN 4 METRIC CARDS (No fake meters, no neon badges) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white border border-[#e8e8e8] rounded-[8px] p-3.5 flex flex-col justify-between">
-          <span className="text-[12px] text-[#5f6368]">Google Search &amp; Maps</span>
-          <div className="flex items-baseline gap-1.5 mt-2">
-            <span className="text-[22px] font-semibold text-[#111111] tabular-nums leading-none">
+      {/* 2. MATERIAL 3 LAYERED METRIC SURFACES */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
+          <span className="text-xs font-medium text-slate-500">Google Search &amp; Maps</span>
+          <div className="flex items-baseline gap-2 mt-2">
+            <span className="text-2xl font-bold text-slate-900 tabular-nums leading-none">
               {scores.googleAi}%
             </span>
-            <span className="text-[12px] text-[#5f6368]">verified</span>
+            <span className="text-xs font-semibold text-[#009691] bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200/60">
+              verified
+            </span>
           </div>
         </div>
 
-        <div className="bg-white border border-[#e8e8e8] rounded-[8px] p-3.5 flex flex-col justify-between">
-          <span className="text-[12px] text-[#5f6368]">Apple Maps &amp; Siri</span>
-          <div className="flex items-baseline gap-1.5 mt-2">
-            <span className="text-[22px] font-semibold text-[#111111] tabular-nums leading-none">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
+          <span className="text-xs font-medium text-slate-500">Apple Maps &amp; Siri</span>
+          <div className="flex items-baseline gap-2 mt-2">
+            <span className="text-2xl font-bold text-slate-900 tabular-nums leading-none">
               {scores.appleSiri}%
             </span>
-            <span className="text-[12px] text-[#5f6368]">coordinates</span>
+            <span className="text-xs font-semibold text-[#009691] bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200/60">
+              coordinates
+            </span>
           </div>
         </div>
 
-        <div className="bg-white border border-[#e8e8e8] rounded-[8px] p-3.5 flex flex-col justify-between">
-          <span className="text-[12px] text-[#5f6368]">Bing &amp; Windows Search</span>
-          <div className="flex items-baseline gap-1.5 mt-2">
-            <span className="text-[22px] font-semibold text-[#111111] tabular-nums leading-none">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
+          <span className="text-xs font-medium text-slate-500">Bing &amp; Windows Search</span>
+          <div className="flex items-baseline gap-2 mt-2">
+            <span className="text-2xl font-bold text-slate-900 tabular-nums leading-none">
               {scores.chatgpt}%
             </span>
-            <span className="text-[12px] text-[#5f6368]">hours synced</span>
+            <span className="text-xs font-semibold text-[#009691] bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200/60">
+              hours synced
+            </span>
           </div>
         </div>
 
-        <div className="bg-white border border-[#e8e8e8] rounded-[8px] p-3.5 flex flex-col justify-between">
-          <span className="text-[12px] text-[#5f6368]">Schema &amp; Structured Data</span>
-          <div className="flex items-baseline gap-1.5 mt-2">
-            <span className="text-[18px] font-semibold text-[#15803d] leading-none">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
+          <span className="text-xs font-medium text-slate-500">Schema &amp; Structured Data</span>
+          <div className="flex items-baseline gap-2 mt-2">
+            <span className="text-xl font-bold text-[#009691] leading-none">
               Active
             </span>
-            <span className="text-[12px] text-[#5f6368]">LocalBusiness</span>
+            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
+              LocalBusiness
+            </span>
           </div>
         </div>
       </div>
 
       {/* ===================================================================
-          TAB 1: OVERVIEW & AUTO-FIXES (Visual, Scannable, Low Text Clutter)
+          TAB 1: OVERVIEW & AUTO-FIXES (Material 3 Cards & Brand Teal Accents)
       =================================================================== */}
       {activeTab === "overview" && (
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-6">
           {/* A. DIRECTORY ALIGNMENT CHECKLIST */}
           <section
             aria-label="Directory alignment queue"
-            className="bg-white border border-[#e8e8e8] rounded-[8px] overflow-hidden"
+            className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs"
           >
-            <div className="px-4 py-3 border-b border-[#e5e7eb] flex flex-wrap items-center justify-between gap-2">
+            <div className="px-5 py-3.5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 bg-slate-50/50">
               <div className="flex items-center gap-2.5">
-                <h2 className="text-[14px] font-semibold text-[#111111]">
+                <h2 className="text-sm font-bold text-slate-900">
                   Directory Alignment Checklist
                 </h2>
-                <span className="text-[12px] text-[#5f6368] tabular-nums">
+                <span className="text-xs text-slate-500 tabular-nums font-medium">
                   · {4 - pendingCount} of 4 verified
                 </span>
               </div>
@@ -918,61 +932,61 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                 <button
                   type="button"
                   onClick={handleRunAllFixes}
-                  className="h-[28px] px-3 rounded-[5px] bg-[#111111] hover:bg-[#222222] text-white text-[12px] font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                  className="h-7 px-3.5 rounded-xl bg-[#009691] hover:bg-[#00827d] text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs shadow-[#009691]/20 transition-all cursor-pointer"
                 >
                   <span>Sync all ({pendingCount})</span>
                 </button>
               )}
             </div>
 
-            <div className="divide-y divide-[#f2f2f2]">
+            <div className="divide-y divide-slate-100">
               {agentActions.map((act) => {
                 const isDone = act.status === "Completed";
                 return (
                   <div
                     key={act.id}
-                    className="px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-[#f9f9f9] transition-colors"
+                    className="px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/70 transition-colors"
                   >
                     <div className="flex items-start sm:items-center gap-3 min-w-0">
                       {isDone ? (
                         <CheckCircle2
-                          className="w-4 h-4 text-[#15803d] shrink-0 mt-0.5 sm:mt-0"
+                          className="w-4 h-4 text-[#009691] shrink-0 mt-0.5 sm:mt-0"
                           aria-hidden="true"
                         />
                       ) : (
                         <AlertCircle
-                          className="w-4 h-4 text-[#d97706] shrink-0 mt-0.5 sm:mt-0"
+                          className="w-4 h-4 text-amber-500 shrink-0 mt-0.5 sm:mt-0"
                           aria-hidden="true"
                         />
                       )}
 
                       <div className="min-w-0 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2.5">
                         <span
-                          className={`text-[14px] font-medium truncate ${
-                            isDone ? "text-[#5f6368]" : "text-[#111111]"
+                          className={`text-sm font-medium truncate ${
+                            isDone ? "text-slate-600" : "text-slate-900 font-semibold"
                           }`}
                         >
                           {act.title}
                         </span>
-                        <span className="hidden sm:inline text-[#d1d5db]">
+                        <span className="hidden sm:inline text-slate-300">
                           ·
                         </span>
-                        <span className="text-[12px] text-[#5f6368] truncate">
+                        <span className="text-xs text-slate-500 truncate">
                           {act.rootCause}
                         </span>
                       </div>
                     </div>
 
                     <div className="flex items-center justify-end gap-2 shrink-0 pl-7 sm:pl-0">
-                      <span className="px-2 py-0.5 rounded-[4px] bg-[#f3f4f6] text-[#5f6368] text-[11px] font-medium">
+                      <span className="px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[11px] font-medium">
                         {act.targetEngine}
                       </span>
 
                       <span
-                        className={`px-2 py-0.5 rounded-[4px] text-[11px] font-medium tabular-nums ${
+                        className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold tabular-nums ${
                           isDone
-                            ? "bg-[#dcfae5] text-[#04250e]"
-                            : "bg-[#fffbeb] text-[#92400e] border border-[#fde68a]"
+                            ? "bg-teal-50 text-[#009691] border border-teal-200/60"
+                            : "bg-amber-50 text-amber-800 border border-amber-200"
                         }`}
                       >
                         {act.impactBadge}
@@ -981,7 +995,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                       {isDone &&
                       act.id !== "deploy-schema-llms" &&
                       act.id !== "sync-entity-bio" ? (
-                        <span className="h-[28px] px-2.5 rounded-[5px] text-[#04250e] text-[12px] font-medium inline-flex items-center gap-1">
+                        <span className="h-7 px-3 rounded-lg text-[#009691] text-xs font-semibold inline-flex items-center gap-1">
                           <Check className="w-3.5 h-3.5" aria-hidden="true" />
                           <span>Done</span>
                         </span>
@@ -989,10 +1003,10 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                         <button
                           type="button"
                           onClick={act.onExecute}
-                          className={`h-[28px] px-3 rounded-[5px] text-[12px] font-medium inline-flex items-center gap-1 transition-colors cursor-pointer ${
+                          className={`h-7 px-3.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition-all cursor-pointer ${
                             isDone
-                              ? "border border-[#d1d5db] bg-white text-[#111111] hover:bg-[#f9f9f9]"
-                              : "bg-[#1d1f20] hover:bg-[#111111] text-white"
+                              ? "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                              : "bg-[#009691] hover:bg-[#00827d] text-white shadow-xs shadow-[#009691]/20"
                           }`}
                         >
                           <span>{act.actionLabel}</span>
@@ -1006,33 +1020,33 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
           </section>
 
           {/* B. 2-COLUMN VISUAL ANALYTICS: SHARE OF VOICE BARS + CITATION FEEDS */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
             {/* Left: Visual Bar Chart for Local Competitor Share of Voice */}
             <section
               aria-label="Philadelphia competitor AI share of voice"
-              className="bg-white border border-[#e8e8e8] rounded-[8px] overflow-hidden flex flex-col justify-between"
+              className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs flex flex-col justify-between"
             >
               <div>
-                <div className="px-4 py-3 border-b border-[#e5e7eb] flex items-center justify-between">
+                <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                   <div>
-                    <h2 className="text-[14px] font-semibold text-[#111111]">
+                    <h2 className="text-sm font-bold text-slate-900">
                       Philadelphia Local Benchmarks
                     </h2>
-                    <p className="text-[12px] text-[#5f6368]">
+                    <p className="text-xs text-slate-500 font-medium">
                       Visibility index across local Philadelphia repair searches
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setActiveTab("neighborhoods")}
-                    className="text-[12px] font-medium text-[#111111] hover:underline inline-flex items-center gap-1 cursor-pointer shrink-0"
+                    className="text-xs font-semibold text-[#009691] hover:underline inline-flex items-center gap-1 cursor-pointer shrink-0"
                   >
                     <span>View geo-targets</span>
                     <ArrowRight className="w-3 h-3" aria-hidden="true" />
                   </button>
                 </div>
 
-                <div className="p-4 flex flex-col gap-3.5">
+                <div className="p-5 flex flex-col gap-4">
                   {[
                     {
                       shop: `Smart Fone Doctor (${
@@ -1068,36 +1082,44 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                     },
                   ].map((item) => (
                     <div key={item.shop} className="flex flex-col gap-1.5">
-                      <div className="flex items-center justify-between gap-2 text-[13px]">
+                      <div className="flex items-center justify-between gap-2 text-xs sm:text-[13px]">
                         <div className="flex items-center gap-2 min-w-0">
                           <span
                             className={`truncate ${
                               item.isSelf
-                                ? "font-semibold text-[#111111]"
-                                : "font-normal text-[#111111]"
+                                ? "font-bold text-slate-900"
+                                : "font-medium text-slate-700"
                             }`}
                           >
                             {item.shop}
                           </span>
-                          <span className="px-1.5 py-0.2 rounded-[4px] bg-[#f3f4f6] text-[#5f6368] text-[11px] shrink-0">
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[11px] shrink-0 font-medium ${
+                              item.isSelf
+                                ? "bg-teal-50 text-[#009691] border border-teal-200/60 font-semibold"
+                                : "bg-slate-100 text-slate-500"
+                            }`}
+                          >
                             {item.tag}
                           </span>
                         </div>
                         <span
-                          className={`text-[13px] tabular-nums shrink-0 ${
+                          className={`text-xs sm:text-[13px] tabular-nums shrink-0 ${
                             item.isSelf
-                              ? "font-semibold text-[#15803d]"
-                              : "text-[#5f6368]"
+                              ? "font-bold text-[#009691]"
+                              : "text-slate-500 font-medium"
                           }`}
                         >
                           {item.pct}%
                         </span>
                       </div>
 
-                      <div className="w-full h-[7px] rounded-full bg-[#f1f3f4] overflow-hidden">
+                      <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all duration-300 ${
-                            item.isSelf ? "bg-[#111111]" : "bg-[#cbd5e1]"
+                            item.isSelf
+                              ? "bg-gradient-to-r from-[#009691] to-teal-400"
+                              : "bg-slate-300"
                           }`}
                           style={{ width: `${item.pct}%` }}
                         />
@@ -1107,13 +1129,13 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                 </div>
               </div>
 
-              <div className="px-4 py-2.5 bg-[#f9fafb] border-t border-[#eaeaea] flex items-center justify-between text-[12px] text-[#5f6368]">
+              <div className="px-5 py-3 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
                 <span>
                   {scores.overall >= 85
                     ? "Smart Fone Doctor ranks #1 across Philadelphia AI engines"
                     : "Syncing Bing Places & Apple Maps pushes your share above 88%"}
                 </span>
-                <span className="font-medium text-[#111111] tabular-nums">
+                <span className="font-bold text-[#009691] tabular-nums">
                   Target: 90%+
                 </span>
               </div>
@@ -1122,28 +1144,28 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
             {/* Right: Directory Citation Feeds with Visual Health Bars */}
             <section
               aria-label="Directory citation feeds powering AI engines"
-              className="bg-white border border-[#e8e8e8] rounded-[8px] overflow-hidden flex flex-col justify-between"
+              className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs flex flex-col justify-between"
             >
               <div>
-                <div className="px-4 py-3 border-b border-[#e5e7eb] flex items-center justify-between">
+                <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                   <div>
-                    <h2 className="text-[15px] font-semibold text-[#111111]">
+                    <h2 className="text-sm font-bold text-slate-900">
                       Directory feeds powering AI
                     </h2>
-                    <p className="text-[12px] text-[#5f6368]">
+                    <p className="text-xs text-slate-500 font-medium">
                       Citation accuracy feeding LLM search indexes
                     </p>
                   </div>
                   <Link
                     href="/admin/listings"
-                    className="text-[12px] font-medium text-[#111111] hover:underline inline-flex items-center gap-1 shrink-0"
+                    className="text-xs font-semibold text-[#009691] hover:underline inline-flex items-center gap-1 shrink-0"
                   >
                     <span>All 11 directories</span>
                     <ArrowRight className="w-3 h-3" aria-hidden="true" />
                   </Link>
                 </div>
 
-                <div className="p-4 flex flex-col gap-3.5">
+                <div className="p-5 flex flex-col gap-4">
                   {[
                     {
                       id: "gmb",
@@ -1177,41 +1199,41 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                     );
                     return (
                       <div key={item.id} className="flex flex-col gap-1.5">
-                        <div className="flex items-center justify-between gap-2 text-[13px]">
+                        <div className="flex items-center justify-between gap-2 text-xs sm:text-[13px]">
                           <div className="flex items-center gap-1.5 min-w-0">
-                            <span className="font-medium text-[#111111] truncate">
+                            <span className="font-semibold text-slate-800 truncate">
                               {item.label}
                             </span>
                             {item.feeds.map((f) => (
                               <span
                                 key={f}
-                                className="hidden sm:inline-flex px-1.5 py-0.2 rounded-[4px] bg-[#f3f4f6] text-[#5f6368] text-[11px]"
+                                className="hidden sm:inline-flex px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-medium"
                               >
                                 {f}
                               </span>
                             ))}
                           </div>
                           <span
-                            className={`text-[12px] font-medium tabular-nums shrink-0 ${
+                            className={`text-xs font-bold tabular-nums shrink-0 ${
                               score >= 95
-                                ? "text-[#15803d]"
+                                ? "text-[#009691]"
                                 : score >= 70
-                                ? "text-[#92400e]"
-                                : "text-[#b91c1c]"
+                                ? "text-amber-700"
+                                : "text-rose-700"
                             }`}
                           >
                             {score}% synced
                           </span>
                         </div>
 
-                        <div className="w-full h-[7px] rounded-full bg-[#f1f3f4] overflow-hidden">
+                        <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all duration-300 ${
                               score >= 95
-                                ? "bg-[#15803d]"
+                                ? "bg-[#009691]"
                                 : score >= 70
-                                ? "bg-[#d97706]"
-                                : "bg-[#dc2626]"
+                                ? "bg-amber-500"
+                                : "bg-rose-500"
                             }`}
                             style={{ width: `${Math.max(score, 8)}%` }}
                           />
@@ -1222,11 +1244,11 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                 </div>
               </div>
 
-              <div className="px-4 py-2.5 bg-[#f9fafb] border-t border-[#eaeaea] flex items-center justify-between text-[12px] text-[#5f6368]">
+              <div className="px-5 py-3 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
                 <span>Connected via Google OAuth, Yelp Fusion &amp; Schema</span>
                 <Link
                   href="/admin/listings/api-sync"
-                  className="font-medium text-[#111111] hover:underline"
+                  className="font-semibold text-[#009691] hover:underline"
                 >
                   API connections →
                 </Link>
@@ -1234,31 +1256,31 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
             </section>
           </div>
 
-          {/* C. COMPACT 3-PROMPT SNAPSHOT (Links cleanly to Tab 2 instead of dumping all 6 rows) */}
+          {/* C. COMPACT 3-PROMPT SNAPSHOT (Material 3 Cards & Brand Teal Badges) */}
           <section
             aria-label="Buyer prompt snapshot"
-            className="bg-white border border-[#e8e8e8] rounded-[8px] overflow-hidden"
+            className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs"
           >
-            <div className="px-4 py-3 border-b border-[#e5e7eb] flex items-center justify-between gap-2">
+            <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between gap-2 bg-slate-50/50">
               <div>
-                <h2 className="text-[14px] font-semibold text-[#111111]">
+                <h2 className="text-sm font-bold text-slate-900">
                   Top Local Search Queries ({storeShortName})
                 </h2>
-                <p className="text-[12px] text-[#5f6368]">
+                <p className="text-xs text-slate-500 font-medium">
                   High-intent phone &amp; console repair searches in Philadelphia
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setActiveTab("neighborhoods")}
-                className="h-[28px] px-2.5 rounded-[5px] border border-[#d1d5db] bg-white hover:bg-[#f9f9f9] text-[12px] font-medium text-[#111111] inline-flex items-center gap-1 cursor-pointer shrink-0"
+                className="h-8 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-[#009691] inline-flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors shadow-xs"
               >
                 <span>Manage geo-targets ({neighborhoods.length})</span>
                 <ArrowRight className="w-3 h-3" aria-hidden="true" />
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#eaeaea]">
+            <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-100">
               {resolvedPrompts.slice(0, 3).map((p) => {
                 const stBing =
                   directories.find((d) => d.id === "bing")?.stores[
@@ -1272,36 +1294,36 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                 return (
                   <div
                     key={p.id}
-                    className="p-4 flex flex-col justify-between gap-3 hover:bg-[#f9f9f9] transition-colors"
+                    className="p-5 flex flex-col justify-between gap-3.5 hover:bg-slate-50/50 transition-colors"
                   >
                     <div>
-                      <span className="px-2 py-0.5 rounded-[4px] bg-[#f3f4f6] text-[#5f6368] text-[11px] font-medium">
+                      <span className="px-2.5 py-0.5 rounded-full bg-teal-50 text-[#009691] text-[11px] font-semibold border border-teal-200/60">
                         {p.category}
                       </span>
-                      <p className="text-[14px] font-medium text-[#111111] mt-2 leading-snug">
+                      <p className="text-sm font-semibold text-slate-900 mt-2.5 leading-snug">
                         &ldquo;{p.query}&rdquo;
                       </p>
                     </div>
 
-                    <div className="flex items-center justify-between pt-2 border-t border-[#f2f2f2] text-[12px]">
-                      <div className="flex items-center gap-1.5">
+                    <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-xs">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <span
-                          className={`px-1.5 py-0.5 rounded-[4px] font-medium ${
+                          className={`px-2 py-0.5 rounded-md font-semibold text-[11px] ${
                             stBing
-                              ? "bg-[#dcfae5] text-[#04250e]"
-                              : "bg-[#ffedea] text-[#831c1e]"
+                              ? "bg-teal-50 text-[#009691] border border-teal-200/60"
+                              : "bg-rose-50 text-rose-700 border border-rose-200/60"
                           }`}
                         >
                           ChatGPT: {stBing ? "#1" : "Unranked"}
                         </span>
-                        <span className="px-1.5 py-0.5 rounded-[4px] bg-[#dcfae5] text-[#04250e] font-medium">
+                        <span className="px-2 py-0.5 rounded-md bg-teal-50 text-[#009691] border border-teal-200/60 font-semibold text-[11px]">
                           Gemini: #1
                         </span>
                         <span
-                          className={`px-1.5 py-0.5 rounded-[4px] font-medium ${
+                          className={`px-2 py-0.5 rounded-md font-semibold text-[11px] ${
                             stApple
-                              ? "bg-[#dcfae5] text-[#04250e]"
-                              : "bg-[#fffbeb] text-[#92400e]"
+                              ? "bg-teal-50 text-[#009691] border border-teal-200/60"
+                              : "bg-amber-50 text-amber-800 border border-amber-200/60"
                           }`}
                         >
                           Siri: {stApple ? "#1" : "#2"}
@@ -1317,34 +1339,34 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
       )}
 
       {/* ===================================================================
-          TAB 2: MICRO-NEIGHBORHOODS & GEO-FENCES
+          TAB 2: MICRO-NEIGHBORHOODS & GEO-FENCES (Material 3 Surface)
       =================================================================== */}
       {activeTab === "neighborhoods" && (
         <section
           aria-label="Micro-neighborhoods and campus geo-targets"
-          className="bg-white border border-[#e8e8e8] rounded-[8px] overflow-hidden flex flex-col gap-0"
+          className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs flex flex-col gap-0"
         >
-          <div className="px-4 py-3 border-b border-[#e5e7eb] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="px-5 py-3.5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
             <div>
-              <h2 className="text-[14px] font-semibold text-[#111111]">
+              <h2 className="text-sm font-bold text-slate-900">
                 Philadelphia Micro-Neighborhoods &amp; Campus Geo-Fences
               </h2>
-              <p className="text-[12px] text-[#5f6368]">
+              <p className="text-xs text-slate-500 font-medium">
                 Localized geographic anchor entities targeted for proximity ranking in Gemini, Apple Maps, and SearchGPT
               </p>
             </div>
             <button
               type="button"
               onClick={() => setShowNeighborForm(!showNeighborForm)}
-              className="h-[30px] px-3 rounded-[6px] bg-[#111111] hover:bg-[#222222] text-white text-[12px] font-medium inline-flex items-center gap-1 cursor-pointer transition-colors shrink-0"
+              className="h-8 px-3.5 rounded-xl bg-[#009691] hover:bg-[#00827d] text-white text-xs font-semibold inline-flex items-center gap-1 cursor-pointer transition-all shadow-xs shadow-[#009691]/20 shrink-0"
             >
               <span>{showNeighborForm ? "Cancel" : "+ Add Geo-Target"}</span>
             </button>
           </div>
 
           {showNeighborForm && (
-            <div className="p-4 bg-[#f9fafb] border-b border-[#e5e7eb] flex flex-col gap-3">
-              <span className="text-[13px] font-semibold text-[#111111]">
+            <div className="p-5 bg-slate-50/80 border-b border-slate-100 flex flex-col gap-3.5">
+              <span className="text-xs font-bold text-slate-800">
                 Target new Philadelphia neighborhood or campus
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -1353,7 +1375,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                   placeholder="Target Name (e.g. Spruce Hill)"
                   value={newNeighborName}
                   onChange={(e) => setNewNeighborName(e.target.value)}
-                  className="h-[32px] px-2.5 rounded-[5px] border border-[#d1d5db] text-[12px] text-[#111111] bg-white"
+                  className="h-9 px-3 rounded-xl border border-slate-200 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#009691]/20 focus:border-[#009691]"
                 />
                 <select
                   value={newNeighborType}
@@ -1362,7 +1384,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                       e.target.value as GeoNeighborhood["type"]
                     )
                   }
-                  className="h-[32px] px-2.5 rounded-[5px] border border-[#d1d5db] text-[12px] text-[#111111] bg-white"
+                  className="h-9 px-3 rounded-xl border border-slate-200 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#009691]/20 focus:border-[#009691]"
                 >
                   <option value="Neighborhood">Neighborhood</option>
                   <option value="Campus">Campus</option>
@@ -1374,14 +1396,14 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                   placeholder="Radius (e.g. 2.5 mi)"
                   value={newNeighborRadius}
                   onChange={(e) => setNewNeighborRadius(e.target.value)}
-                  className="h-[32px] px-2.5 rounded-[5px] border border-[#d1d5db] text-[12px] text-[#111111] bg-white"
+                  className="h-9 px-3 rounded-xl border border-slate-200 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#009691]/20 focus:border-[#009691]"
                 />
                 <input
                   type="text"
                   placeholder="Zip Codes (comma separated, e.g. 19104, 19139)"
                   value={newNeighborZips}
                   onChange={(e) => setNewNeighborZips(e.target.value)}
-                  className="h-[32px] px-2.5 rounded-[5px] border border-[#d1d5db] text-[12px] text-[#111111] bg-white"
+                  className="h-9 px-3 rounded-xl border border-slate-200 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#009691]/20 focus:border-[#009691]"
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -1390,12 +1412,12 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                   placeholder="Key Landmarks (e.g. Clark Park, 40th St Station)"
                   value={newNeighborLandmarks}
                   onChange={(e) => setNewNeighborLandmarks(e.target.value)}
-                  className="flex-1 h-[32px] px-2.5 rounded-[5px] border border-[#d1d5db] text-[12px] text-[#111111] bg-white"
+                  className="flex-1 h-9 px-3 rounded-xl border border-slate-200 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#009691]/20 focus:border-[#009691]"
                 />
                 <button
                   type="button"
                   onClick={handleAddNeighborhood}
-                  className="h-[32px] px-4 rounded-[5px] bg-[#111111] text-white text-[12px] font-medium cursor-pointer shrink-0"
+                  className="h-9 px-4 rounded-xl bg-[#009691] hover:bg-[#00827d] text-white text-xs font-semibold cursor-pointer shadow-xs shadow-[#009691]/20 shrink-0 transition-all"
                 >
                   Save target
                 </button>
@@ -1404,64 +1426,64 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
           )}
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-[13px]">
+            <table className="w-full text-left border-collapse text-xs sm:text-[13px]">
               <thead>
-                <tr className="border-b border-[#e5e7eb] bg-[#f9fafb] text-[12px] text-[#5f6368] font-medium">
-                  <th className="py-2.5 px-4">Geo-Target</th>
-                  <th className="py-2.5 px-3">Type</th>
-                  <th className="py-2.5 px-3">Serviced Store</th>
-                  <th className="py-2.5 px-3">Radius</th>
-                  <th className="py-2.5 px-3">Zip Codes</th>
-                  <th className="py-2.5 px-3">Key Landmarks</th>
-                  <th className="py-2.5 px-4 text-right">Status</th>
+                <tr className="border-b border-slate-100 bg-slate-50/70 text-xs text-slate-600 font-semibold">
+                  <th className="py-3 px-5">Geo-Target</th>
+                  <th className="py-3 px-3">Type</th>
+                  <th className="py-3 px-3">Serviced Store</th>
+                  <th className="py-3 px-3">Radius</th>
+                  <th className="py-3 px-3">Zip Codes</th>
+                  <th className="py-3 px-3">Key Landmarks</th>
+                  <th className="py-3 px-5 text-right">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#eaeaea]">
+              <tbody className="divide-y divide-slate-100">
                 {(isAllStores
                   ? neighborhoods
                   : neighborhoods.filter((n) => n.storeId === selectedStoreId)
                 ).map((n) => (
-                  <tr key={n.id} className="hover:bg-[#fafafa] transition-colors">
-                    <td className="py-3 px-4 font-semibold text-[#111111]">
+                  <tr key={n.id} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="py-3.5 px-5 font-bold text-slate-900">
                       {n.name}
                     </td>
-                    <td className="py-3 px-3">
-                      <span className="px-2 py-0.5 rounded-[4px] bg-[#f3f4f6] text-[#5f6368] text-[11px] font-medium">
+                    <td className="py-3.5 px-3">
+                      <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-medium">
                         {n.type}
                       </span>
                     </td>
-                    <td className="py-3 px-3 text-[#5f6368] text-[12px]">
+                    <td className="py-3.5 px-3 text-slate-500 text-xs font-medium">
                       {storeShortName}
                     </td>
-                    <td className="py-3 px-3 font-mono text-[12px] text-[#111111]">
+                    <td className="py-3.5 px-3 font-mono text-xs text-slate-800 font-medium">
                       {n.radius}
                     </td>
-                    <td className="py-3 px-3">
+                    <td className="py-3.5 px-3">
                       <div className="flex flex-wrap gap-1">
                         {n.zipCodes.map((z) => (
                           <span
                             key={z}
-                            className="px-1.5 py-0.2 rounded bg-white border border-[#e5e7eb] font-mono text-[11px] text-[#111111]"
+                            className="px-2 py-0.5 rounded-md bg-white border border-slate-200 font-mono text-[11px] text-slate-700 shadow-2xs"
                           >
                             {z}
                           </span>
                         ))}
                       </div>
                     </td>
-                    <td className="py-3 px-3 text-[12px] text-[#5f6368] max-w-[240px] truncate">
+                    <td className="py-3.5 px-3 text-xs text-slate-500 max-w-[240px] truncate font-medium">
                       {n.keyLandmarks.join(" · ")}
                     </td>
-                    <td className="py-3 px-4 text-right">
+                    <td className="py-3.5 px-5 text-right">
                       <div className="inline-flex items-center gap-2 justify-end">
-                        <span className="inline-flex items-center gap-1 text-[12px] font-medium text-[#15803d]">
-                          <Check className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#009691] bg-teal-50 px-2.5 py-0.5 rounded-full border border-teal-200/60">
+                          <Check className="w-3 h-3" aria-hidden="true" />
                           <span>{n.status}</span>
                         </span>
                         <button
                           type="button"
                           onClick={() => handleDeleteNeighborhood(n.id)}
                           aria-label={`Delete ${n.name}`}
-                          className="p-1 hover:bg-[#fee2e2] rounded text-[#5f6368] hover:text-[#dc2626] cursor-pointer"
+                          className="p-1.5 hover:bg-rose-50 rounded-lg text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -1476,15 +1498,15 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
       )}
 
       {/* ===================================================================
-          TAB 3: SCHEMA & AI CRAWLER DIRECTIVES
+          TAB 3: SCHEMA & AI CRAWLER DIRECTIVES (Material 3 Tabs & Brand Teal)
       =================================================================== */}
       {activeTab === "schema-crawlers" && (
         <section
           aria-label="Schema and crawler directives"
-          className="bg-white border border-[#e8e8e8] rounded-[8px] overflow-hidden"
+          className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs"
         >
-          <div className="px-4 py-3 border-b border-[#e5e7eb] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-1.5">
+          <div className="px-5 py-3.5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
+            <div className="flex flex-wrap items-center gap-2">
               {[
                 {
                   id: "jsonld" as StudioArtifact,
@@ -1503,10 +1525,10 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                   key={item.id}
                   type="button"
                   onClick={() => setActiveArtifact(item.id)}
-                  className={`h-[30px] px-3 rounded-[6px] text-[12px] font-medium cursor-pointer transition-colors ${
+                  className={`h-8 px-3.5 rounded-xl text-xs font-semibold cursor-pointer transition-all ${
                     activeArtifact === item.id
-                      ? "bg-[#111111] text-white"
-                      : "bg-[#f3f4f6] text-[#5f6368] hover:text-[#111111]"
+                      ? "bg-[#009691] text-white shadow-xs shadow-[#009691]/20"
+                      : "bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
                   }`}
                 >
                   {item.label}
@@ -1523,7 +1545,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                     "Published latest JSON-LD graph, /llms.txt, and robots.txt crawler rules."
                   );
                 }}
-                className="h-[30px] px-3 rounded-[6px] bg-[#111111] hover:bg-[#222222] text-white text-[12px] font-medium cursor-pointer transition-colors"
+                className="h-8 px-4 rounded-xl bg-[#009691] hover:bg-[#00827d] text-white text-xs font-semibold cursor-pointer transition-all shadow-xs shadow-[#009691]/20"
               >
                 {schemaDeployed ? "Active on site ✓" : "Publish to site"}
               </button>
@@ -1531,105 +1553,105 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
           </div>
 
           {activeArtifact === "jsonld" && (
-            <div className="p-4 flex flex-col gap-3">
-              <div className="flex items-center justify-between">
+            <div className="p-5 flex flex-col gap-3.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
-                  <h3 className="text-[14px] font-semibold text-[#111111]">
+                  <h3 className="text-sm font-bold text-slate-900">
                     MobilePhoneRepairShop JSON-LD ({storeShortName})
                   </h3>
-                  <p className="text-[12px] text-[#5f6368]">
+                  <p className="text-xs text-slate-500 font-medium">
                     Embeds verified Google, Yelp, Bing, and Trustpilot URLs into a single sameAs knowledge graph
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => copyCode("jsonld", generatedJsonLd)}
-                  className="h-[28px] px-3 rounded-[5px] border border-[#d1d5db] bg-white hover:bg-[#f9f9f9] text-[12px] font-medium text-[#111111] inline-flex items-center gap-1.5 cursor-pointer"
+                  className="h-8 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-[#009691] inline-flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors self-start sm:self-auto"
                 >
                   {copiedKey === "jsonld" ? (
                     <>
-                      <Check className="w-3.5 h-3.5 text-[#15803d]" aria-hidden="true" />
-                      <span>Copied</span>
+                      <Check className="w-3.5 h-3.5 text-[#009691]" aria-hidden="true" />
+                      <span className="text-[#009691]">Copied</span>
                     </>
                   ) : (
                     <>
-                      <Copy className="w-3.5 h-3.5 text-[#6b6b6b]" aria-hidden="true" />
+                      <Copy className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" />
                       <span>Copy JSON-LD</span>
                     </>
                   )}
                 </button>
               </div>
-              <pre className="p-4 rounded-[6px] bg-[#f9fafb] border border-[#e8e8e8] text-[12px] font-mono text-[#111111] overflow-x-auto leading-relaxed">
+              <pre className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-xs font-mono text-slate-800 overflow-x-auto leading-relaxed">
                 {generatedJsonLd}
               </pre>
             </div>
           )}
 
           {activeArtifact === "llms" && (
-            <div className="p-4 flex flex-col gap-3">
-              <div className="flex items-center justify-between">
+            <div className="p-5 flex flex-col gap-3.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
-                  <h3 className="text-[14px] font-semibold text-[#111111]">
+                  <h3 className="text-sm font-bold text-slate-900">
                     Public /llms.txt manifest (All 3 Philadelphia stores)
                   </h3>
-                  <p className="text-[12px] text-[#5f6368]">
+                  <p className="text-xs text-slate-500 font-medium">
                     Machine-readable markdown file read by GPTBot, PerplexityBot, and ClaudeBot
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => copyCode("llms", generatedLlmsTxt)}
-                  className="h-[28px] px-3 rounded-[5px] border border-[#d1d5db] bg-white hover:bg-[#f9f9f9] text-[12px] font-medium text-[#111111] inline-flex items-center gap-1.5 cursor-pointer"
+                  className="h-8 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-[#009691] inline-flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors self-start sm:self-auto"
                 >
                   {copiedKey === "llms" ? (
                     <>
-                      <Check className="w-3.5 h-3.5 text-[#15803d]" aria-hidden="true" />
-                      <span>Copied</span>
+                      <Check className="w-3.5 h-3.5 text-[#009691]" aria-hidden="true" />
+                      <span className="text-[#009691]">Copied</span>
                     </>
                   ) : (
                     <>
-                      <Copy className="w-3.5 h-3.5 text-[#6b6b6b]" aria-hidden="true" />
+                      <Copy className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" />
                       <span>Copy /llms.txt</span>
                     </>
                   )}
                 </button>
               </div>
-              <pre className="p-4 rounded-[6px] bg-[#f9fafb] border border-[#e8e8e8] text-[12px] font-mono text-[#111111] overflow-x-auto whitespace-pre-wrap leading-relaxed">
+              <pre className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-xs font-mono text-slate-800 overflow-x-auto whitespace-pre-wrap leading-relaxed">
                 {generatedLlmsTxt}
               </pre>
             </div>
           )}
 
           {activeArtifact === "robots" && (
-            <div className="p-4 flex flex-col gap-3">
-              <div className="flex items-center justify-between">
+            <div className="p-5 flex flex-col gap-3.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
-                  <h3 className="text-[14px] font-semibold text-[#111111]">
+                  <h3 className="text-sm font-bold text-slate-900">
                     robots.txt AI Crawler Allow Directives
                   </h3>
-                  <p className="text-[12px] text-[#5f6368]">
+                  <p className="text-xs text-slate-500 font-medium">
                     Explicit access permissions allowing AI engines to crawl pricing, hours, and repair capabilities
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => copyCode("robots", generatedRobotsTxt)}
-                  className="h-[28px] px-3 rounded-[5px] border border-[#d1d5db] bg-white hover:bg-[#f9f9f9] text-[12px] font-medium text-[#111111] inline-flex items-center gap-1.5 cursor-pointer"
+                  className="h-8 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-[#009691] inline-flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors self-start sm:self-auto"
                 >
                   {copiedKey === "robots" ? (
                     <>
-                      <Check className="w-3.5 h-3.5 text-[#15803d]" aria-hidden="true" />
-                      <span>Copied</span>
+                      <Check className="w-3.5 h-3.5 text-[#009691]" aria-hidden="true" />
+                      <span className="text-[#009691]">Copied</span>
                     </>
                   ) : (
                     <>
-                      <Copy className="w-3.5 h-3.5 text-[#6b6b6b]" aria-hidden="true" />
+                      <Copy className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" />
                       <span>Copy robots.txt</span>
                     </>
                   )}
                 </button>
               </div>
-              <pre className="p-4 rounded-[6px] bg-[#f9fafb] border border-[#e8e8e8] text-[12px] font-mono text-[#111111] overflow-x-auto whitespace-pre-wrap leading-relaxed">
+              <pre className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-xs font-mono text-slate-800 overflow-x-auto whitespace-pre-wrap leading-relaxed">
                 {generatedRobotsTxt}
               </pre>
             </div>
@@ -1638,30 +1660,30 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
       )}
 
       {/* ===================================================================
-          TAB 4: BRAND TRUTH & ANTI-HALLUCINATION GUARDRAILS
+          TAB 4: BRAND TRUTH & ANTI-HALLUCINATION GUARDRAILS (Material 3)
       =================================================================== */}
       {activeTab === "guardrails" && (
         <section
           aria-label="Brand truth and anti-hallucination guardrails"
-          className="bg-white border border-[#e8e8e8] rounded-[8px] overflow-hidden"
+          className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs"
         >
-          <div className="px-4 py-3 border-b border-[#e5e7eb] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="px-5 py-3.5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
             <div>
-              <h2 className="text-[14px] font-semibold text-[#111111]">
+              <h2 className="text-sm font-bold text-slate-900">
                 Brand Truth &amp; Anti-Hallucination Guardrails
               </h2>
-              <p className="text-[12px] text-[#5f6368]">
+              <p className="text-xs text-slate-500 font-medium">
                 Canonical facts fed into /llms.txt and directory FAQs so AI engines never hallucinate prices or policies
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <span className="text-[12px] text-[#5f6368] font-medium hidden sm:inline">
+              <span className="text-xs text-slate-500 font-semibold hidden sm:inline">
                 {guardrails.length} canonical facts verified
               </span>
               <button
                 type="button"
                 onClick={() => setShowGuardForm(!showGuardForm)}
-                className="h-[30px] px-3 rounded-[6px] bg-[#111111] hover:bg-[#222222] text-white text-[12px] font-medium inline-flex items-center gap-1 cursor-pointer transition-colors shrink-0"
+                className="h-8 px-3.5 rounded-xl bg-[#009691] hover:bg-[#00827d] text-white text-xs font-semibold inline-flex items-center gap-1 cursor-pointer transition-all shadow-xs shadow-[#009691]/20 shrink-0"
               >
                 <span>{showGuardForm ? "Cancel" : "+ Add Guardrail"}</span>
               </button>
@@ -1669,13 +1691,13 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
           </div>
 
           {showGuardForm && (
-            <div className="p-4 bg-[#f9fafb] border-b border-[#e5e7eb] flex flex-col gap-3">
-              <span className="text-[13px] font-semibold text-[#111111]">
+            <div className="p-5 bg-slate-50/80 border-b border-slate-100 flex flex-col gap-3.5">
+              <span className="text-xs font-bold text-slate-800">
                 Add new canonical truth fact (Anti-Hallucination)
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[12px] text-[#5f6368] mb-1">
+                  <label className="block text-xs font-medium text-slate-600 mb-1">
                     Topic / Category
                   </label>
                   <input
@@ -1683,11 +1705,11 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                     placeholder="e.g. Water Damage Diagnostics"
                     value={newGuardTopic}
                     onChange={(e) => setNewGuardTopic(e.target.value)}
-                    className="w-full h-[32px] px-2.5 rounded-[5px] border border-[#d1d5db] text-[12px] text-[#111111] bg-white"
+                    className="w-full h-9 px-3 rounded-xl border border-slate-200 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#009691]/20 focus:border-[#009691]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[12px] text-[#5f6368] mb-1">
+                  <label className="block text-xs font-medium text-slate-600 mb-1">
                     Verified Sources (comma separated)
                   </label>
                   <input
@@ -1695,12 +1717,12 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                     placeholder="e.g. Website, GBP, Service Menu"
                     value={newGuardSources}
                     onChange={(e) => setNewGuardSources(e.target.value)}
-                    className="w-full h-[32px] px-2.5 rounded-[5px] border border-[#d1d5db] text-[12px] text-[#111111] bg-white"
+                    className="w-full h-9 px-3 rounded-xl border border-slate-200 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#009691]/20 focus:border-[#009691]"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-[12px] text-[#5f6368] mb-1">
+                <label className="block text-xs font-medium text-slate-600 mb-1">
                   Customer Query / Claim
                 </label>
                 <input
@@ -1708,11 +1730,11 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                   placeholder="e.g. Does Smart Fone Doctor repair liquid damaged iPhones or laptops?"
                   value={newGuardClaim}
                   onChange={(e) => setNewGuardClaim(e.target.value)}
-                  className="w-full h-[32px] px-2.5 rounded-[5px] border border-[#d1d5db] text-[12px] text-[#111111] bg-white"
+                  className="w-full h-9 px-3 rounded-xl border border-slate-200 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#009691]/20 focus:border-[#009691]"
                 />
               </div>
               <div>
-                <label className="block text-[12px] text-[#5f6368] mb-1">
+                <label className="block text-xs font-medium text-slate-600 mb-1">
                   Canonical Ground Truth Answer (Fed to LLMs)
                 </label>
                 <textarea
@@ -1720,21 +1742,21 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                   placeholder="e.g. Yes, all 3 Philadelphia stores perform ultrasonic motherboard cleaning and diagnostics with same-day turnaround."
                   value={newGuardAnswer}
                   onChange={(e) => setNewGuardAnswer(e.target.value)}
-                  className="w-full p-2.5 rounded-[5px] border border-[#d1d5db] text-[12px] text-[#111111] bg-white"
+                  className="w-full p-3 rounded-xl border border-slate-200 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#009691]/20 focus:border-[#009691]"
                 />
               </div>
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setShowGuardForm(false)}
-                  className="h-[30px] px-3 rounded-[5px] border border-[#d1d5db] bg-white text-[12px] font-medium text-[#111111] hover:bg-[#f9f9f9] cursor-pointer"
+                  className="h-8 px-3.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleAddGuardrail}
-                  className="h-[30px] px-4 rounded-[5px] bg-[#111111] text-white text-[12px] font-medium cursor-pointer"
+                  className="h-8 px-4 rounded-xl bg-[#009691] hover:bg-[#00827d] text-white text-xs font-semibold cursor-pointer shadow-xs shadow-[#009691]/20 transition-all"
                 >
                   Save guardrail
                 </button>
@@ -1742,15 +1764,15 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
             </div>
           )}
 
-          <div className="divide-y divide-[#eaeaea]">
+          <div className="divide-y divide-slate-100">
             {guardrails.map((g) => (
-              <div key={g.id} className="p-4 flex flex-col gap-2 hover:bg-[#fafafa] transition-colors">
+              <div key={g.id} className="p-5 flex flex-col gap-2 hover:bg-slate-50/60 transition-colors">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
-                    <span className="text-[13px] font-semibold text-[#111111]">
+                    <span className="text-sm font-bold text-slate-900">
                       {g.topic}
                     </span>
-                    <span className="px-2 py-0.5 rounded-[4px] bg-[#f3f4f6] text-[#5f6368] text-[11px] font-medium">
+                    <span className="px-2.5 py-0.5 rounded-full bg-teal-50 text-[#009691] text-[11px] font-semibold border border-teal-200/60">
                       {g.status}
                     </span>
                   </div>
@@ -1759,7 +1781,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                       {g.sourcesVerified.map((src) => (
                         <span
                           key={src}
-                          className="px-1.5 py-0.2 rounded bg-white border border-[#e5e7eb] text-[11px] text-[#5f6368]"
+                          className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[11px] font-medium text-slate-600 shadow-2xs"
                         >
                           {src}
                         </span>
@@ -1769,18 +1791,18 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                       type="button"
                       onClick={() => handleDeleteGuardrail(g.id)}
                       aria-label={`Delete ${g.topic}`}
-                      className="p-1 hover:bg-[#fee2e2] rounded text-[#5f6368] hover:text-[#dc2626] cursor-pointer"
+                      className="p-1.5 hover:bg-rose-50 rounded-lg text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
 
-                <div className="text-[13px]">
-                  <p className="text-[#5f6368] italic font-normal">
+                <div className="text-xs sm:text-[13px]">
+                  <p className="text-slate-500 italic font-medium">
                     &ldquo;{g.claim}&rdquo;
                   </p>
-                  <p className="text-[#111111] font-medium mt-1">
+                  <p className="text-slate-900 font-medium mt-1 leading-relaxed">
                     {g.canonicalAnswer}
                   </p>
                 </div>
