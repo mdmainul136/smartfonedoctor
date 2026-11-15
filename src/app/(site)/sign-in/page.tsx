@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import {
   Lock,
@@ -11,10 +10,10 @@ import {
   EyeOff,
   ShieldCheck,
   AlertCircle,
+  Loader2,
   ArrowRight,
-  CheckCircle2,
+  User,
   Wrench,
-  Smartphone,
 } from "lucide-react";
 import { loginAdminAction } from "@/actions/auth";
 
@@ -42,11 +41,10 @@ export default function SignInPage() {
       });
 
       if (!res.success) {
-        setError(res.error || "Authentication failed. Please verify your credentials.");
+        setError(res.error || "Invalid credentials. Please verify and try again.");
         return;
       }
 
-      // Successful login redirect
       const target = from.startsWith("/") ? from : "/admin";
       router.push(target);
       router.refresh();
@@ -60,43 +58,64 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-50 via-white to-gray-50">
-      <div className="w-full max-w-md space-y-6">
-        {/* BRAND LOGO & HEADER */}
-        <div className="text-center">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-teal-600 text-white shadow-lg shadow-teal-600/20 mb-4">
-            <Smartphone className="w-7 h-7" />
+    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#fafafa] px-4 py-12 antialiased">
+      {/* Background Subtle Grid / Clean Texture */}
+      <div className="w-full max-w-[420px] flex flex-col gap-6">
+        {/* Brand & Workspace Scope */}
+        <div className="flex flex-col items-center text-center gap-2">
+          <Link
+            href="/"
+            className="flex items-center gap-2.5 px-2 py-1 rounded-md hover:opacity-80 transition-opacity"
+          >
+            <span
+              aria-hidden="true"
+              className="w-9 h-9 rounded-lg bg-zinc-950 text-white flex items-center justify-center text-sm font-semibold tracking-tight shadow-xs"
+            >
+              SF
+            </span>
+            <div className="flex flex-col text-left">
+              <span className="text-base font-semibold text-zinc-900 leading-tight tracking-tight">
+                SmartFone Doctor
+              </span>
+              <span className="text-xs text-zinc-500 leading-tight">
+                Philadelphia · Flagship Admin
+              </span>
+            </div>
+          </Link>
+
+          <div className="mt-2">
+            <h1 className="text-xl font-semibold tracking-tight text-zinc-900">
+              Sign in to your account
+            </h1>
+            <p className="text-xs text-zinc-500 mt-1">
+              Enter your administrator credentials to access the command center
+            </p>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
-            SmartFone<span className="text-teal-600">Doctor</span> Portal
-          </h1>
-          <p className="mt-2 text-sm text-gray-600 font-medium">
-            Philly Flagship Store • Executive & Technician Access
-          </p>
         </div>
 
-        {/* LOGIN CARD */}
-        <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-xl border border-gray-100 backdrop-blur-sm">
+        {/* Shadcn Card Container */}
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 sm:p-8 shadow-xs">
+          {/* Error Alert */}
           {error && (
-            <div className="mb-5 p-3.5 rounded-xl bg-red-50 border border-red-200/80 flex items-start gap-3 text-red-700 animate-in fade-in duration-200">
-              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-red-600" />
-              <div className="text-xs sm:text-sm font-medium">{error}</div>
+            <div
+              role="alert"
+              className="mb-5 rounded-lg border border-red-200 bg-red-50/60 p-3 text-xs text-red-900 flex items-start gap-2.5 animate-in fade-in duration-150"
+            >
+              <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+              <div className="font-medium leading-relaxed">{error}</div>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* EMAIL INPUT */}
-            <div>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            {/* Email Field */}
+            <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="admin-email"
-                className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5"
+                className="text-xs font-medium text-zinc-900 leading-none"
               >
-                Work Email Address
+                Email
               </label>
-              <div className="relative rounded-xl shadow-xs">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
-                  <Mail className="h-4 w-4" />
-                </div>
+              <div className="relative">
                 <input
                   id="admin-email"
                   type="email"
@@ -104,29 +123,29 @@ export default function SignInPage() {
                   autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@smartfonedoctor.com"
-                  className="block w-full pl-10 pr-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 transition-colors"
+                  placeholder="name@smartfonedoctor.com"
+                  className="h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50"
                 />
               </div>
             </div>
 
-            {/* PASSWORD INPUT */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
+            {/* Password Field */}
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between">
                 <label
                   htmlFor="admin-password"
-                  className="block text-xs font-semibold text-gray-700 uppercase tracking-wider"
+                  className="text-xs font-medium text-zinc-900 leading-none"
                 >
                   Password
                 </label>
-                <span className="text-xs text-teal-600 hover:text-teal-700 font-medium cursor-pointer">
+                <Link
+                  href="/contact"
+                  className="text-xs text-zinc-500 hover:text-zinc-900 underline-offset-4 hover:underline transition-colors"
+                >
                   Forgot password?
-                </span>
+                </Link>
               </div>
-              <div className="relative rounded-xl shadow-xs">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
-                  <Lock className="h-4 w-4" />
-                </div>
+              <div className="relative">
                 <input
                   id="admin-password"
                   type={showPassword ? "text" : "password"}
@@ -135,85 +154,82 @@ export default function SignInPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="block w-full pl-10 pr-10 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 transition-colors"
+                  className="h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 pr-9 py-1 text-sm shadow-xs transition-colors placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                  className="absolute right-0 top-0 h-9 w-9 flex items-center justify-center text-zinc-400 hover:text-zinc-700 transition-colors focus-visible:outline-none"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
-            {/* REMEMBER ME & SECURITY BADGE */}
-            <div className="flex items-center justify-between pt-1">
+            {/* Remember Me & Security Notice */}
+            <div className="flex items-center justify-between pt-0.5">
               <label className="flex items-center gap-2 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500 focus:ring-offset-0"
+                  className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-950"
                 />
-                <span className="text-xs text-gray-600 font-medium">Keep me signed in</span>
+                <span className="text-xs text-zinc-600">Remember for 30 days</span>
               </label>
-              <div className="flex items-center gap-1 text-[11px] text-gray-400 font-medium">
-                <ShieldCheck className="w-3.5 h-3.5 text-teal-600" />
-                <span>256-bit Encrypted</span>
-              </div>
+              <span className="text-[11px] text-zinc-400 inline-flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-zinc-500" />
+                <span>NIST scrypt</span>
+              </span>
             </div>
 
-            {/* SUBMIT BUTTON */}
+            {/* Primary Submit Button */}
             <button
               type="submit"
               disabled={isPending}
-              className="w-full mt-2 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 active:bg-teal-800 shadow-md shadow-teal-600/20 focus:outline-none focus:ring-2 focus:ring-teal-500/40 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+              className="h-9 w-full rounded-md bg-zinc-950 px-4 py-2 text-sm font-medium text-white shadow-xs hover:bg-zinc-800 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:pointer-events-none disabled:opacity-50 inline-flex items-center justify-center gap-2 cursor-pointer mt-1"
             >
               {isPending ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Signing In...</span>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Signing in...</span>
                 </>
               ) : (
-                <>
-                  <span>Sign In to Dashboard</span>
-                  <ArrowRight className="w-4 h-4" />
-                </>
+                <span>Sign in</span>
               )}
             </button>
           </form>
 
-          {/* DEMO / QUICK FILL SHORTCUT PILLS */}
-          <div className="mt-6 pt-5 border-t border-gray-100">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 text-center mb-2.5">
-              Quick Test Credentials
-            </p>
+          {/* Quick Demo Access Badges */}
+          <div className="mt-6 pt-5 border-t border-zinc-100 flex flex-col gap-2.5">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-400 text-center">
+              Quick Test Accounts
+            </span>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => handleQuickFill("admin@smartfonedoctor.com", "admin123456")}
-                className="flex items-center justify-center gap-1.5 p-2 rounded-lg bg-teal-50 hover:bg-teal-100/70 border border-teal-200/60 text-teal-800 text-xs font-semibold transition-colors text-left"
+                className="h-8 rounded-md border border-zinc-200 bg-zinc-50/60 px-2.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors inline-flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <ShieldCheck className="w-3.5 h-3.5 text-teal-600 shrink-0" />
-                <span className="truncate">Super Admin</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span>Super Admin</span>
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickFill("tech@smartfonedoctor.com", "tech123456")}
-                className="flex items-center justify-center gap-1.5 p-2 rounded-lg bg-purple-50 hover:bg-purple-100/70 border border-purple-200/60 text-purple-800 text-xs font-semibold transition-colors text-left"
+                className="h-8 rounded-md border border-zinc-200 bg-zinc-50/60 px-2.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors inline-flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <Wrench className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                <span className="truncate">Technician</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                <span>Technician</span>
               </button>
             </div>
           </div>
         </div>
 
-        {/* FOOTER NOTICE */}
-        <p className="text-center text-xs text-gray-400">
-          Authorized personnel only. All access attempts are cryptographically audited.
+        {/* Footer info */}
+        <p className="text-center text-xs text-zinc-400">
+          Authorized personnel only · SmartFoneDoctor Flagship Operating System
         </p>
       </div>
     </div>
