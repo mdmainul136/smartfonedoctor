@@ -1,11 +1,21 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Mail } from 'lucide-react';
+import { DEFAULT_NAV_MENU, NAV_MENU_EVENT, getStoredNavMenu, telHref } from '@/lib/navMenuData';
 
 export default function TopBar() {
   const pathname = usePathname();
+  // Tagline and phone come from Admin > Navigation & Menus.
+  const [topBar, setTopBar] = useState(DEFAULT_NAV_MENU.topBar);
+
+  useEffect(() => {
+    const load = () => setTopBar(getStoredNavMenu().topBar);
+    load();
+    window.addEventListener(NAV_MENU_EVENT, load);
+    return () => window.removeEventListener(NAV_MENU_EVENT, load);
+  }, []);
   const isDashboard =
     pathname?.startsWith('/portal') ||
     pathname?.startsWith('/review') ||
@@ -14,7 +24,7 @@ export default function TopBar() {
     pathname?.startsWith('/sign-in') ||
     pathname?.startsWith('/list');
 
-  if (isDashboard) {
+  if (isDashboard || !topBar.enabled) {
     return null;
   }
 
@@ -24,7 +34,7 @@ export default function TopBar() {
         
         {/* Left Side: Tagline (Hides on tablet/mobile to prevent crunching) */}
         <div className="hidden md:block text-[12px] text-neutral-100 font-medium tracking-wide whitespace-nowrap">
-          <span>Philadelphia&apos;s Trusted Device Repair Experts</span>
+          <span>{topBar.tagline}</span>
         </div>
 
         {/* Right Side: Social Media Icons + Text Number */}
@@ -96,9 +106,9 @@ export default function TopBar() {
 
           {/* Text / Phone Number */}
           <div className="text-white text-[13px] tracking-wide flex items-center gap-1 shrink-0 whitespace-nowrap pl-2">
-            <span className="text-neutral-200">Text:</span>
-            <a href="tel:+12155982090" className="font-bold hover:underline">
-              (215) 598-2090
+            <span className="text-neutral-200">{topBar.phoneLabel}</span>
+            <a href={telHref(topBar.phone)} className="font-bold hover:underline">
+              {topBar.phone}
             </a>
           </div>
 

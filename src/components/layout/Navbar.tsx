@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { DEFAULT_NAV_MENU, NAV_MENU_EVENT, getStoredNavMenu, isNavItemActive, telHref } from '@/lib/navMenuData';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -32,6 +33,15 @@ export default function Navbar() {
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<CategoryKey>('smartphones');
   const [menuConfig, setMenuConfig] = useState(DEFAULT_MEGA_MENU_CONFIG);
+  // Menu items and the header button come from Admin > Navigation & Menus.
+  const [nav, setNav] = useState(DEFAULT_NAV_MENU);
+
+  useEffect(() => {
+    const load = () => setNav(getStoredNavMenu());
+    load();
+    window.addEventListener(NAV_MENU_EVENT, load);
+    return () => window.removeEventListener(NAV_MENU_EVENT, load);
+  }, []);
 
   useEffect(() => {
     setMenuConfig(getStoredMegaMenu());
@@ -53,10 +63,6 @@ export default function Navbar() {
 
   if (isDashboard) return null;
 
-  const isAbout = pathname === '/about' || pathname?.startsWith('/about/');
-  const isLocations = pathname?.startsWith('/locations');
-  const isTrack = pathname?.startsWith('/track') || pathname?.startsWith('/repair-status');
-  const isRepairs = pathname?.startsWith('/repairs') || pathname?.startsWith('/common-issues');
 
   const closeMegaMenu = () => {
     setMegaMenuOpen(false);
@@ -105,116 +111,117 @@ export default function Navbar() {
         {/* 2. Desktop Navigation Menu */}
         <nav className="hidden xl:flex items-center gap-6 2xl:gap-8 text-[15px] font-medium text-sfd-dark">
 
-          {/* Mega Menu Trigger Button ("Repair") */}
-          <div
-            className="h-20 flex items-center"
-            onMouseEnter={() => setMegaMenuOpen(true)}
-          >
-            <button
-              type="button"
-              onClick={() => setMegaMenuOpen(!megaMenuOpen)}
-              className={`px-3.5 py-2 flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap border ${
-                megaMenuOpen
-                  ? 'border-sfd-dark bg-white text-sfd-dark'
-                  : 'border-transparent hover:text-sfd-teal'
-              }`}
-            >
-              <span>Repair</span>
-              <ChevronDown
-                className={`w-4 h-4 transition-transform duration-200 ${
-                  megaMenuOpen ? 'rotate-180 text-sfd-teal' : 'text-neutral-500'
+          {nav.items.filter((item) => !item.hidden).map((item) => {
+            const active = isNavItemActive(item.href, pathname);
+
+            // Opens the mega menu panel below the header.
+            if (item.type === 'mega') {
+              return (
+                <div key={item.id} className="h-20 flex items-center" onMouseEnter={() => setMegaMenuOpen(true)}>
+                  <button
+                    type="button"
+                    onClick={() => setMegaMenuOpen(!megaMenuOpen)}
+                    className={`px-3.5 py-2 flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap border ${
+                      megaMenuOpen
+                        ? 'border-sfd-dark bg-white text-sfd-dark'
+                        : 'border-transparent hover:text-sfd-teal'
+                    }`}
+                  >
+                    <span>{item.label}</span>
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform duration-200 ${
+                        megaMenuOpen ? 'rotate-180 text-sfd-teal' : 'text-neutral-500'
+                      }`}
+                    />
+                  </button>
+                </div>
+              );
+            }
+
+            if (item.type === 'dropdown') {
+              return (
+                <div
+                  key={item.id}
+                  onMouseEnter={closeMegaMenu}
+                  className="relative group cursor-pointer flex items-center gap-1 hover:text-sfd-teal transition-colors py-2 whitespace-nowrap"
+                >
+                  <Link href={item.href}>{item.label}</Link>
+                  <ChevronDown className="w-4 h-4 text-neutral-400 group-hover:text-sfd-teal transition-transform group-hover:rotate-180" />
+                  {(item.children?.length ?? 0) > 0 && (
+                    <div className="absolute top-full left-0 w-56 bg-white text-sfd-dark border border-neutral-200 shadow-lg rounded-md py-2 hidden group-hover:block transition-all z-50">
+                      {item.children?.map((sub) => (
+                        <Link key={sub.id} href={sub.href} className="block px-4 py-2 hover:bg-neutral-50 hover:text-sfd-teal text-sm">
+                          {sub.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            if (item.style === 'pill') {
+              return (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  onMouseEnter={closeMegaMenu}
+                  className="px-3.5 py-1.5 rounded-full bg-sfd-teal/10 text-sfd-teal font-semibold hover:bg-sfd-teal hover:text-white transition-all duration-300 flex items-center gap-2 whitespace-nowrap group cursor-pointer"
+                >
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sfd-teal group-hover:bg-white opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-sfd-teal group-hover:bg-white"></span>
+                  </span>
+                  <span>{item.label}</span>
+                </Link>
+              );
+            }
+
+            if (item.style === 'outline') {
+              return (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  onMouseEnter={closeMegaMenu}
+                  className={`px-3 py-1 rounded-full border border-sfd-teal font-semibold transition-all duration-300 flex items-center whitespace-nowrap ${
+                    active
+                      ? 'bg-sfd-teal text-white shadow-md'
+                      : 'text-sfd-dark bg-sfd-teal/20 shadow-md shadow-sfd-teal/30 animate-pulse hover:animate-none hover:-translate-y-0.5 hover:scale-105 hover:bg-sfd-teal hover:text-white'
+                  }`}
+                >
+                  <span>{item.label}</span>
+                </Link>
+              );
+            }
+
+            return (
+              <Link
+                key={item.id}
+                href={item.href}
+                onMouseEnter={closeMegaMenu}
+                className={`relative py-1 transition-colors whitespace-nowrap after:content-[''] after:absolute after:bottom-0 after:left-0 after:h-[2px] after:bg-sfd-teal after:transition-all after:duration-300 ${
+                  active
+                    ? 'text-sfd-teal font-bold after:w-full'
+                    : 'hover:text-sfd-teal after:w-0 hover:after:w-full text-sfd-dark'
                 }`}
-              />
-            </button>
-          </div>
-
-          {/* Dropdown Menu ("Repairs & Services") */}
-          <div
-            onMouseEnter={closeMegaMenu}
-            className="relative group cursor-pointer flex items-center gap-1 hover:text-sfd-teal transition-colors py-2 whitespace-nowrap"
-          >
-            <Link href="/repairs/iphone">Repairs & Services</Link>
-            <ChevronDown className="w-4 h-4 text-neutral-400 group-hover:text-sfd-teal transition-transform group-hover:rotate-180" />
-
-            {/* Standard Dropdown Box */}
-            <div className="absolute top-full left-0 w-56 bg-white text-sfd-dark border border-neutral-200 shadow-lg rounded-md py-2 hidden group-hover:block transition-all z-50">
-              <Link href="/repairs/smartphone/iphone-repair" className="block px-4 py-2 hover:bg-neutral-50 hover:text-sfd-teal text-sm">
-                iPhone Repair
+              >
+                {item.label}
               </Link>
-              <Link href="/repairs/tablet/ipad-repair" className="block px-4 py-2 hover:bg-neutral-50 hover:text-sfd-teal text-sm">
-                iPad & Tablet Repair
-              </Link>
-              <Link href="/repairs/computer/imac-repair" className="block px-4 py-2 hover:bg-neutral-50 hover:text-sfd-teal text-sm">
-                iMac & Computer Repair
-              </Link>
-              <Link href="/repairs/console/playstation-repair" className="block px-4 py-2 hover:bg-neutral-50 hover:text-sfd-teal text-sm">
-                Game Console Repair
-              </Link>
-              <div className="border-t border-neutral-100 my-1"></div>
-              <Link href="/common-issues" className="block px-4 py-2 hover:bg-neutral-50 hover:text-[#c8102e] font-semibold text-sm">
-                All Common Issues →
-              </Link>
-            </div>
-          </div>
-
-          <Link
-            href="/schedule-repair"
-            onMouseEnter={closeMegaMenu}
-            className="px-3.5 py-1.5 rounded-full bg-sfd-teal/10 text-sfd-teal font-semibold hover:bg-sfd-teal hover:text-white transition-all duration-300 flex items-center gap-2 whitespace-nowrap group cursor-pointer"
-          >
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sfd-teal group-hover:bg-white opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-sfd-teal group-hover:bg-white"></span>
-            </span>
-            <span>Free Estimate</span>
-          </Link>
-
-          <Link
-            href="/locations/i/book-repair"
-            onMouseEnter={closeMegaMenu}
-            className={`relative py-1 transition-colors whitespace-nowrap after:content-[''] after:absolute after:bottom-0 after:left-0 after:h-[2px] after:bg-sfd-teal after:transition-all after:duration-300 ${
-              isLocations
-                ? 'text-sfd-teal font-bold after:w-full'
-                : 'hover:text-sfd-teal after:w-0 hover:after:w-full text-sfd-dark'
-            }`}
-          >
-            Locations
-          </Link>
-
-          <Link
-            href="/track"
-            onMouseEnter={closeMegaMenu}
-            className={`px-3 py-1 rounded-full border border-sfd-teal font-semibold transition-all duration-300 flex items-center whitespace-nowrap ${
-              isTrack
-                ? 'bg-sfd-teal text-white shadow-md'
-                : 'text-sfd-dark bg-sfd-teal/20 shadow-md shadow-sfd-teal/30 animate-pulse hover:animate-none hover:-translate-y-0.5 hover:scale-105 hover:bg-sfd-teal hover:text-white'
-            }`}
-          >
-            <span>Track Status</span>
-          </Link>
-
-          <Link
-            href="/about"
-            onMouseEnter={closeMegaMenu}
-            className={`relative py-1 transition-colors whitespace-nowrap after:content-[''] after:absolute after:bottom-0 after:left-0 after:h-[2px] after:bg-sfd-teal after:transition-all after:duration-300 ${
-              isAbout
-                ? 'text-sfd-teal font-bold after:w-full'
-                : 'hover:text-sfd-teal after:w-0 hover:after:w-full text-sfd-dark'
-            }`}
-          >
-            About Us
-          </Link>
+            );
+          })}
         </nav>
 
         {/* 3. Action Right Area: Phone + CTA Button */}
         <div className="hidden lg:flex items-center gap-4 xl:gap-5 shrink-0">
-          <Link
-            href="/locations/i/book-repair"
-            onMouseEnter={closeMegaMenu}
-            className="inline-flex items-center justify-center px-5 py-2.5 rounded bg-sfd-teal hover:bg-sfd-dark text-white font-bold text-sm tracking-wide uppercase transition whitespace-nowrap shadow-xs active:scale-95"
-          >
-            Start Repair
-          </Link>
+          {nav.cta.enabled && (
+            <Link
+              href={nav.cta.href}
+              onMouseEnter={closeMegaMenu}
+              className="inline-flex items-center justify-center px-5 py-2.5 rounded bg-sfd-teal hover:bg-sfd-dark text-white font-bold text-sm tracking-wide uppercase transition whitespace-nowrap shadow-xs active:scale-95"
+            >
+              {nav.cta.label}
+            </Link>
+          )}
         </div>
 
         {/* 4. Mobile & Tablet Menu Toggle Button (< xl screens) */}
@@ -420,71 +427,57 @@ export default function Navbar() {
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="xl:hidden bg-white border-t border-neutral-200 px-6 py-5 space-y-4 shadow-xl animate-in slide-in-from-top-2 duration-200">
-          <Link
-            href="/repairs/smartphone"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block text-base font-semibold text-sfd-dark hover:text-sfd-teal"
-          >
-            Repairs & Services
-          </Link>
-          <Link
-            href="/schedule-repair"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block text-base font-semibold text-sfd-teal hover:text-sfd-dark flex items-center gap-2"
-          >
-            <span className="w-2 h-2 rounded-full bg-sfd-teal inline-block animate-ping" />
-            <span>Free Estimate / Book Repair</span>
-          </Link>
-          <Link
-            href="/locations/i/book-repair"
-            onClick={() => setMobileMenuOpen(false)}
-            className={`block text-base transition-colors ${
-              isLocations
-                ? 'font-bold text-sfd-teal bg-sfd-teal/10 pl-3 py-1.5 rounded-r-md border-l-4 border-sfd-teal'
-                : 'font-semibold text-sfd-dark hover:text-sfd-teal'
-            }`}
-          >
-            Locations
-          </Link>
-          <Link
-            href="/track"
-            onClick={() => setMobileMenuOpen(false)}
-            className={`block text-base transition-colors ${
-              isTrack
-                ? 'font-bold text-sfd-teal bg-sfd-teal/10 pl-3 py-1.5 rounded-r-md border-l-4 border-sfd-teal'
-                : 'font-semibold text-sfd-dark hover:text-sfd-teal'
-            }`}
-          >
-            Track Status
-          </Link>
-          <Link
-            href="/about"
-            onClick={() => setMobileMenuOpen(false)}
-            className={`block text-base transition-colors ${
-              isAbout
-                ? 'font-bold text-sfd-teal bg-sfd-teal/10 pl-3 py-1.5 rounded-r-md border-l-4 border-sfd-teal'
-                : 'font-semibold text-sfd-dark hover:text-sfd-teal'
-            }`}
-          >
-            About Us
-          </Link>
+          {nav.items.filter((item) => !item.hidden).map((item) => {
+            const active = item.type === 'link' && item.style !== 'pill' && isNavItemActive(item.href, pathname);
+            return (
+              <div key={item.id} className="space-y-2">
+                <Link
+                  href={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block text-base transition-colors ${
+                    item.style === 'pill'
+                      ? 'font-semibold text-sfd-teal hover:text-sfd-dark flex items-center gap-2'
+                      : active
+                        ? 'font-bold text-sfd-teal bg-sfd-teal/10 pl-3 py-1.5 rounded-r-md border-l-4 border-sfd-teal'
+                        : 'font-semibold text-sfd-dark hover:text-sfd-teal'
+                  }`}
+                >
+                  {item.style === 'pill' && <span className="w-2 h-2 rounded-full bg-sfd-teal inline-block animate-ping" />}
+                  <span>{item.label}</span>
+                </Link>
+                {item.type === 'dropdown' &&
+                  item.children?.map((sub) => (
+                    <Link
+                      key={sub.id}
+                      href={sub.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block pl-4 text-sm font-medium text-neutral-600 hover:text-sfd-teal"
+                    >
+                      {sub.label}
+                    </Link>
+                  ))}
+              </div>
+            );
+          })}
 
           <div className="pt-2 border-t border-neutral-100 flex flex-col gap-3">
             <a
-              href="tel:+12155982090"
+              href={telHref(nav.topBar.phone)}
               className="flex items-center gap-2 text-base font-bold text-sfd-teal"
             >
               <PhoneCall className="w-4 h-4" />
-              <span>Call: (215) 598-2090</span>
+              <span>Call: {nav.topBar.phone}</span>
             </a>
 
-            <Link
-              href="/locations/i/book-repair"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block w-full text-center py-3 rounded bg-sfd-teal text-white font-bold uppercase tracking-wider"
-            >
-              Start Repair
-            </Link>
+            {nav.cta.enabled && (
+              <Link
+                href={nav.cta.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className="block w-full text-center py-3 rounded bg-sfd-teal text-white font-bold uppercase tracking-wider"
+              >
+                {nav.cta.label}
+              </Link>
+            )}
           </div>
         </div>
       )}
