@@ -45,7 +45,7 @@ export default function ListingsNav() {
   return (
     <nav
       aria-label="Directory listings navigation"
-      className="flex items-center gap-6 border-b border-[#e5e7eb] overflow-x-auto overflow-y-hidden no-scrollbar"
+      className="bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200/60 flex items-center gap-1.5 overflow-x-auto no-scrollbar"
     >
       {tabs.map((tab) => {
         const isActive = pathname === tab.href;
@@ -54,15 +54,15 @@ export default function ListingsNav() {
             key={tab.href}
             href={tab.href}
             aria-current={isActive ? "page" : undefined}
-            className={`shrink-0 inline-flex items-center gap-2 py-2.5 text-[13px] border-b-2 -mb-px transition-colors whitespace-nowrap ${
+            className={`shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-[13px] font-semibold transition-all whitespace-nowrap ${
               isActive
-                ? "border-[#111111] text-[#111111] font-medium"
-                : "border-transparent text-[#5f6368] hover:text-[#111111]"
+                ? "bg-white text-[#009691] shadow-xs"
+                : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
             }`}
           >
             <span>{tab.label}</span>
             {tab.alertCount > 0 && (
-              <span className="px-1.5 py-0.5 rounded-[4px] bg-[#ffedea] text-[#831c1e] text-[11px] font-medium tabular-nums">
+              <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-bold tabular-nums">
                 {tab.alertLabel}
               </span>
             )}

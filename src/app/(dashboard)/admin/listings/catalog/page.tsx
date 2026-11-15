@@ -17,6 +17,11 @@ import {
   Copy,
   Search,
   X,
+  Layers,
+  Globe,
+  ShieldCheck,
+  ArrowRight,
+  Sparkles,
 } from "lucide-react";
 
 export default function ListingsCatalogPage() {
@@ -142,102 +147,160 @@ export default function ListingsCatalogPage() {
   };
 
   return (
-    <div className="flex-1 min-w-0 w-full px-4 sm:px-6 py-5 flex flex-col gap-4 overflow-x-hidden">
-      {/* 1. CANVAS TITLE ROW + UNDERLINE TABS */}
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-          <div>
-            <h1 className="text-[22px] sm:text-[24px] font-semibold text-[#111111] tracking-[-0.02em] leading-tight">
-              Missing citations &amp; directory catalog
-            </h1>
-            <p className="text-[14px] text-[#5f6368] mt-1">
-              {missingInActiveList.length} unclaimed listings for{" "}
-              <span className="text-[#111111] font-medium">{storeShortName}</span>{" "}
-              · {CATALOG_DIRECTORIES.length} mainstream US directories available to add
-            </p>
+    <div className="flex-1 min-w-0 w-full px-4 sm:px-6 py-6 flex flex-col gap-6 overflow-x-hidden antialiased">
+      {/* 1. MATERIAL 3 HERO HEADER (Brand Teal & Elevated Surface) */}
+      <div className="rounded-3xl bg-gradient-to-br from-teal-50/70 via-white to-emerald-50/30 p-5 sm:p-7 border border-teal-100/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-2xl bg-[#009691] text-white flex items-center justify-center shadow-md shadow-[#009691]/25 shrink-0">
+            <Layers className="w-5 h-5" />
           </div>
-
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={copyStoreNap}
-              className="h-[32px] px-3 rounded-[6px] border border-[#d1d5db] bg-white hover:bg-[#f9f9f9] text-[13px] font-medium text-[#111111] inline-flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              {copiedNap ? (
-                <>
-                  <Check className="w-3.5 h-3.5 text-[#247b50]" />
-                  <span className="text-[#247b50]">Copied NAP</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3.5 h-3.5 text-[#6b6b6b]" />
-                  <span>Copy {storeShortName} NAP</span>
-                </>
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setShowCustomModal(true)}
-              className="h-[32px] px-3 rounded-[6px] bg-[#1d1f20] hover:bg-[#111111] text-white text-[13px] font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Custom directory</span>
-            </button>
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 leading-tight">
+                Missing Citations &amp; Directory Catalog
+              </h1>
+              <span className="inline-flex items-center gap-1 rounded-full bg-teal-100/80 text-[#009691] text-[11px] font-semibold px-2.5 py-0.5">
+                {storeShortName}
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm text-slate-600 font-medium mt-0.5">
+              {missingInActiveList.length} unclaimed listings · {CATALOG_DIRECTORIES.length} mainstream US directories feeding local AI visibility
+            </p>
           </div>
         </div>
 
-        <ListingsNav />
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={copyStoreNap}
+            className="h-9 px-4 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            {copiedNap ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-[#009691]" />
+                <span className="text-[#009691]">Copied Store NAP</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-3.5 h-3.5 text-slate-500" />
+                <span>Copy {storeShortName} NAP</span>
+              </>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowCustomModal(true)}
+            className="h-9 px-4 rounded-xl bg-[#009691] hover:bg-[#00827d] text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm shadow-[#009691]/25 transition-all cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" aria-hidden="true" />
+            <span>Custom directory</span>
+          </button>
+        </div>
       </div>
 
-      {/* 2. UNCLAIMED CITATIONS QUEUE FOR SELECTED STORE (Scoped via top-bar location switcher) */}
+      {/* Navigation Sub-Links */}
+      <ListingsNav />
+
+      {/* Material 3 Metric Tiles */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
+          <span className="text-xs font-medium text-slate-500">Unclaimed for Location</span>
+          <div className="flex items-baseline gap-2 mt-2">
+            <span className="text-2xl font-bold text-slate-900 tabular-nums leading-none">
+              {missingInActiveList.length}
+            </span>
+            <span className="text-xs font-semibold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+              in active queue
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
+          <span className="text-xs font-medium text-slate-500">Active Claimed Citations</span>
+          <div className="flex items-baseline gap-2 mt-2">
+            <span className="text-2xl font-bold text-slate-900 tabular-nums leading-none">
+              {directories.length}
+            </span>
+            <span className="text-xs font-semibold text-[#009691] bg-teal-50 px-2.5 py-0.5 rounded-full border border-teal-200/60">
+              live &amp; verified
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
+          <span className="text-xs font-medium text-slate-500">Mainstream Directory Catalog</span>
+          <div className="flex items-baseline gap-2 mt-2">
+            <span className="text-2xl font-bold text-slate-900 tabular-nums leading-none">
+              {CATALOG_DIRECTORIES.length}
+            </span>
+            <span className="text-xs font-semibold text-[#009691] bg-teal-50 px-2.5 py-0.5 rounded-full border border-teal-200/60">
+              high-DA sources
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
+          <span className="text-xs font-medium text-slate-500">Core Authority Score</span>
+          <div className="flex items-baseline gap-2 mt-2">
+            <span className="text-xl font-bold text-[#009691] leading-none">
+              DA 100
+            </span>
+            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/60">
+              Tier 1 Maps
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. UNCLAIMED CITATIONS QUEUE FOR SELECTED STORE (Material 3 Layered Surface) */}
       <section
         aria-label="Unclaimed citations queue"
-        className="bg-white border border-[#e8e8e8] rounded-[8px] overflow-hidden"
+        className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs"
       >
-        <div className="px-4 py-3 border-b border-[#e5e7eb] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="px-5 py-3.5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-50/50">
           <div className="flex items-center gap-2">
-            <h2 className="text-[15px] font-semibold text-[#111111]">
+            <h2 className="text-sm font-bold text-slate-900">
               Unclaimed listings in active list ({missingInActiveList.length})
             </h2>
-            <span className="text-[13px] text-[#5f6368]">· {storeShortName}</span>
+            <span className="text-xs text-slate-500 font-medium">· {storeShortName}</span>
           </div>
-          <span className="text-[12px] text-[#5f6368]">
-            Opening a portal copies the canonical store NAP to your clipboard
+          <span className="text-xs text-slate-500 font-medium">
+            Opening a portal automatically copies the canonical store NAP to your clipboard
           </span>
         </div>
 
         {missingInActiveList.length === 0 ? (
-          <div className="px-4 py-6 text-[13px] text-[#5f6368]">
-            All tracked directories are claimed for {storeShortName}. Add more mainstream citations from the catalog below.
+          <div className="px-5 py-8 text-center text-xs sm:text-sm text-slate-500 font-medium bg-slate-50/30">
+            All tracked directories are claimed for {storeShortName}. Add more mainstream citations from the catalog below to boost AI visibility.
           </div>
         ) : (
-          <div className="divide-y divide-[#f2f2f2]">
+          <div className="divide-y divide-slate-100">
             {missingInActiveList.map((dir) => {
               const entry = dir.stores[selectedStoreId];
               return (
                 <div
                   key={dir.id}
-                  className="px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-[#f9f9f9] transition-colors"
+                  className="px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/70 transition-colors"
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-[14px] font-medium text-[#111111]">
+                      <span className="text-sm font-bold text-slate-900">
                         {dir.name}
                       </span>
-                      <span className="text-[12px] text-[#5f6368]">
+                      <span className="text-xs text-slate-500 font-medium">
                         {dir.domain} · {dir.syncMode}
                       </span>
                     </div>
                     {entry.issue && (
-                      <p className="text-[13px] text-[#831c1e] mt-0.5">
+                      <p className="text-xs font-medium text-rose-700 mt-0.5">
                         {entry.issue}
                       </p>
                     )}
                   </div>
 
                   <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-[12px] text-[#5f6368] tabular-nums">
+                    <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-mono text-[11px] font-bold tabular-nums">
                       DA {dir.authority}
                     </span>
                     <a
@@ -245,17 +308,17 @@ export default function ListingsCatalogPage() {
                       target="_blank"
                       rel="noreferrer"
                       onClick={copyStoreNap}
-                      className="h-[28px] px-2.5 rounded-[5px] border border-[#d1d5db] bg-white hover:bg-[#f9f9f9] text-[13px] text-[#111111] inline-flex items-center gap-1 transition-colors"
+                      className="h-8 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-[#009691] inline-flex items-center gap-1 transition-colors shadow-xs"
                     >
                       <span>Open portal</span>
-                      <ExternalLink className="w-3 h-3 text-[#6b6b6b]" />
+                      <ExternalLink className="w-3 h-3 text-slate-400" />
                     </a>
                     <button
                       type="button"
                       onClick={() =>
                         handleQuickClaimActive(dir.id, dir.claimPortalUrl)
                       }
-                      className="h-[28px] px-2.5 rounded-[5px] bg-[#1d1f20] hover:bg-[#111111] text-white text-[13px] font-medium inline-flex items-center gap-1 transition-colors cursor-pointer"
+                      className="h-8 px-3.5 rounded-xl bg-[#009691] hover:bg-[#00827d] text-white text-xs font-semibold inline-flex items-center gap-1 shadow-xs shadow-[#009691]/20 transition-all cursor-pointer"
                     >
                       <span>Mark claimed</span>
                     </button>
@@ -267,25 +330,25 @@ export default function ListingsCatalogPage() {
         )}
       </section>
 
-      {/* 3. MAINSTREAM DIRECTORY CATALOG TABLE */}
+      {/* 3. MAINSTREAM DIRECTORY CATALOG TABLE (Material 3 Surface & Brand Accents) */}
       <section
         aria-label="Mainstream US directory catalog"
-        className="bg-white border border-[#e8e8e8] rounded-[8px] overflow-hidden"
+        className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs"
       >
-        <div className="px-4 py-3 border-b border-[#e5e7eb] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
           <div>
-            <h2 className="text-[15px] font-semibold text-[#111111]">
-              Mainstream directory catalog ({filteredCatalog.length})
+            <h2 className="text-sm font-bold text-slate-900">
+              Mainstream Directory Catalog ({filteredCatalog.length})
             </h2>
-            <p className="text-[12px] text-[#5f6368]">
-              Add high-authority national and Philadelphia citations across all 3 stores
+            <p className="text-xs text-slate-500 font-medium">
+              Add high-authority national and Philadelphia citations to reinforce AI entity confidence
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2.5">
             <div className="relative">
               <Search
-                className="w-3.5 h-3.5 text-[#6b6b6b] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
                 aria-hidden="true"
               />
               <input
@@ -294,7 +357,7 @@ export default function ListingsCatalogPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search BBB, Foursquare, Angi…"
                 aria-label="Search catalog"
-                className="h-[32px] w-48 sm:w-56 pl-8 pr-2.5 rounded-[6px] border border-[#d1d5db] bg-white text-[13px] text-[#111111] placeholder:text-[#6b6b6b] focus:outline-none focus:border-[#111111]"
+                className="h-9 w-48 sm:w-56 pl-9 pr-3 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#009691]/20 focus:border-[#009691] shadow-2xs"
               />
             </div>
 
@@ -304,7 +367,7 @@ export default function ListingsCatalogPage() {
               onChange={(e) =>
                 setTierFilter(e.target.value as "All" | DirectoryTier)
               }
-              className="h-[32px] px-2.5 rounded-[6px] border border-[#d1d5db] bg-white text-[13px] text-[#111111] focus:outline-none focus:border-[#111111]"
+              className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#009691]/20 focus:border-[#009691] shadow-2xs"
             >
               <option value="All">All tiers</option>
               <option value="Tier 1 (Core Maps & Reviews)">
@@ -321,25 +384,25 @@ export default function ListingsCatalogPage() {
         </div>
 
         {/* Mobile & Tablet Rows (< lg) */}
-        <div className="lg:hidden divide-y divide-[#f2f2f2]">
+        <div className="lg:hidden divide-y divide-slate-100">
           {filteredCatalog.map((item) => {
             const alreadyAdded = directories.some((d) => d.id === item.id);
             return (
-              <div key={item.id} className="p-4 flex flex-col gap-2">
+              <div key={item.id} className="p-4 flex flex-col gap-2.5">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <div className="text-[14px] font-medium text-[#111111] truncate">
+                    <div className="text-sm font-bold text-slate-900 truncate">
                       {item.name}
                     </div>
-                    <div className="text-[12px] text-[#5f6368] truncate">
+                    <div className="text-xs text-slate-500 font-medium truncate mt-0.5">
                       {item.domain} · {item.category} · {item.syncMode} · DA {item.authority}
                     </div>
                   </div>
                 </div>
-                <p className="text-[12px] text-[#5f6368]">{item.description}</p>
+                <p className="text-xs text-slate-600 leading-relaxed">{item.description}</p>
                 <div className="flex items-center justify-end gap-2 pt-1">
                   {alreadyAdded ? (
-                    <span className="h-[22px] px-2 rounded-[4px] bg-[#dcfae5] text-[#04250e] text-[12px] font-medium inline-flex items-center gap-1">
+                    <span className="h-7 px-3 rounded-full bg-teal-50 text-[#009691] border border-teal-200/60 text-xs font-semibold inline-flex items-center gap-1">
                       <Check className="w-3 h-3" />
                       <span>In active list</span>
                     </span>
@@ -348,14 +411,14 @@ export default function ListingsCatalogPage() {
                       <button
                         type="button"
                         onClick={() => handleAddCatalogItem(item, false)}
-                        className="h-[28px] px-2.5 rounded-[5px] border border-[#d1d5db] bg-white text-[13px] font-medium text-[#111111] cursor-pointer"
+                        className="h-8 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:text-[#009691] cursor-pointer shadow-xs transition-colors"
                       >
                         + Add to queue
                       </button>
                       <button
                         type="button"
                         onClick={() => handleAddCatalogItem(item, true)}
-                        className="h-[28px] px-2.5 rounded-[5px] bg-[#1d1f20] text-white text-[13px] font-medium cursor-pointer"
+                        className="h-8 px-3.5 rounded-xl bg-[#009691] hover:bg-[#00827d] text-white text-xs font-semibold shadow-xs shadow-[#009691]/20 cursor-pointer transition-all"
                       >
                         Add &amp; sync
                       </button>
@@ -367,49 +430,49 @@ export default function ListingsCatalogPage() {
           })}
         </div>
 
-        {/* Desktop Table (lg+): 4 balanced columns — never clips right-most Action buttons */}
+        {/* Desktop Table (lg+): 4 balanced columns */}
         <div className="hidden lg:block w-full">
           <table className="w-full table-fixed text-left border-collapse">
             <thead>
-              <tr className="h-[38px] border-b border-[#e5e7eb] text-[12px] font-normal text-[#5f6368]">
-                <th className="px-4 font-normal w-[28%]">Directory &amp; category</th>
-                <th className="px-4 font-normal w-[18%]">Sync &amp; authority</th>
-                <th className="px-4 font-normal w-[32%]">Role in local SEO</th>
-                <th className="px-4 font-normal text-right w-[22%]">Action</th>
+              <tr className="h-10 border-b border-slate-100 bg-slate-50/70 text-xs font-semibold text-slate-600">
+                <th className="px-5 font-semibold w-[28%]">Directory &amp; category</th>
+                <th className="px-4 font-semibold w-[18%]">Sync &amp; authority</th>
+                <th className="px-4 font-semibold w-[32%]">Role in AI Visibility</th>
+                <th className="px-5 font-semibold text-right w-[22%]">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#f2f2f2] text-[14px]">
+            <tbody className="divide-y divide-slate-100 text-xs sm:text-[13px]">
               {filteredCatalog.map((item) => {
                 const alreadyAdded = directories.some((d) => d.id === item.id);
                 return (
                   <tr
                     key={item.id}
-                    className="h-[58px] hover:bg-[#f9f9f9] transition-colors"
+                    className="hover:bg-slate-50/70 transition-colors"
                   >
-                    <td className="px-4 py-2.5 min-w-0">
-                      <div className="font-medium text-[#111111] truncate">
+                    <td className="px-5 py-3.5 min-w-0">
+                      <div className="font-bold text-slate-900 truncate">
                         {item.name}
                       </div>
-                      <div className="text-[12px] text-[#5f6368] truncate">
+                      <div className="text-xs text-slate-500 font-medium truncate mt-0.5">
                         {item.domain} · {item.category}
                       </div>
                     </td>
-                    <td className="px-4 py-2.5 min-w-0">
-                      <div className="text-[13px] text-[#111111] truncate">
+                    <td className="px-4 py-3.5 min-w-0">
+                      <div className="text-xs font-semibold text-slate-800 truncate">
                         {item.syncMode}
                       </div>
-                      <div className="text-[12px] text-[#5f6368] tabular-nums">
+                      <div className="text-xs text-slate-500 tabular-nums font-mono mt-0.5">
                         DA {item.authority}
                       </div>
                     </td>
-                    <td className="px-4 py-2.5 text-[13px] text-[#5f6368] min-w-0">
+                    <td className="px-4 py-3.5 text-xs text-slate-600 min-w-0 font-medium">
                       <span className="line-clamp-2" title={item.description}>
                         {item.description}
                       </span>
                     </td>
-                    <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                    <td className="px-5 py-3.5 text-right whitespace-nowrap">
                       {alreadyAdded ? (
-                        <span className="h-[22px] px-2 rounded-[4px] bg-[#dcfae5] text-[#04250e] text-[12px] font-medium inline-flex items-center gap-1">
+                        <span className="h-7 px-3 rounded-full bg-teal-50 text-[#009691] border border-teal-200/60 text-xs font-semibold inline-flex items-center gap-1">
                           <Check className="w-3 h-3" />
                           <span>In active list</span>
                         </span>
@@ -418,14 +481,14 @@ export default function ListingsCatalogPage() {
                           <button
                             type="button"
                             onClick={() => handleAddCatalogItem(item, false)}
-                            className="h-[28px] px-2.5 rounded-[5px] border border-[#d1d5db] bg-white hover:bg-[#f9f9f9] text-[13px] font-medium text-[#111111] transition-colors cursor-pointer"
+                            className="h-8 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-[#009691] transition-colors cursor-pointer shadow-xs"
                           >
                             + Add to queue
                           </button>
                           <button
                             type="button"
                             onClick={() => handleAddCatalogItem(item, true)}
-                            className="h-[28px] px-2.5 rounded-[5px] bg-[#1d1f20] hover:bg-[#111111] text-white text-[13px] font-medium transition-colors cursor-pointer"
+                            className="h-8 px-3.5 rounded-xl bg-[#009691] hover:bg-[#00827d] text-white text-xs font-semibold shadow-xs shadow-[#009691]/20 transition-all cursor-pointer"
                           >
                             Add &amp; sync
                           </button>
@@ -440,24 +503,24 @@ export default function ListingsCatalogPage() {
         </div>
       </section>
 
-      {/* MODAL: ADD CUSTOM DIRECTORY */}
+      {/* MODAL: ADD CUSTOM DIRECTORY (Material 3 Dialog) */}
       {showCustomModal && (
         <div
           role="dialog"
           aria-modal="true"
           aria-labelledby="custom-dir-title"
-          className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4"
         >
-          <div className="bg-white border border-[#e5e7eb] rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.12)] w-full max-w-md overflow-hidden">
-            <div className="px-5 py-4 border-b border-[#f2f2f2] flex items-center justify-between">
+          <div className="bg-white border border-slate-200 rounded-3xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="px-6 py-4.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div>
                 <h2
                   id="custom-dir-title"
-                  className="text-[16px] font-semibold text-[#111111]"
+                  className="text-base font-bold text-slate-900"
                 >
-                  Add custom directory
+                  Add Custom Directory
                 </h2>
-                <p className="text-[12px] text-[#5f6368] mt-0.5">
+                <p className="text-xs text-slate-500 font-medium mt-0.5">
                   Adds citation tracking across all 3 Philadelphia locations
                 </p>
               </div>
@@ -465,7 +528,7 @@ export default function ListingsCatalogPage() {
                 type="button"
                 onClick={() => setShowCustomModal(false)}
                 aria-label="Close dialog"
-                className="p-1 rounded-[5px] text-[#6b6b6b] hover:text-[#111111] hover:bg-[#f2f2f2] cursor-pointer"
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -473,10 +536,10 @@ export default function ListingsCatalogPage() {
 
             <form
               onSubmit={handleAddCustomSubmit}
-              className="p-5 flex flex-col gap-4 text-[14px]"
+              className="p-6 flex flex-col gap-4 text-xs sm:text-[13px]"
             >
               <div>
-                <label className="block text-[14px] font-medium text-[#111111] mb-2">
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   Directory name
                 </label>
                 <input
@@ -485,13 +548,13 @@ export default function ListingsCatalogPage() {
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
                   placeholder="e.g., RepairPal, Philly Inquirer Directory"
-                  className="w-full h-[38px] px-3 rounded-[6px] border border-[#e5e7eb] bg-white text-[14px] text-[#111111] focus:outline-none focus:border-[#111111]"
+                  className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#009691]/20 focus:border-[#009691]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[14px] font-medium text-[#111111] mb-2">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                     Domain
                   </label>
                   <input
@@ -499,11 +562,11 @@ export default function ListingsCatalogPage() {
                     value={customDomain}
                     onChange={(e) => setCustomDomain(e.target.value)}
                     placeholder="repairpal.com"
-                    className="w-full h-[38px] px-3 rounded-[6px] border border-[#e5e7eb] bg-white text-[14px] text-[#111111] focus:outline-none focus:border-[#111111]"
+                    className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#009691]/20 focus:border-[#009691]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[14px] font-medium text-[#111111] mb-2">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                     Category
                   </label>
                   <input
@@ -511,13 +574,13 @@ export default function ListingsCatalogPage() {
                     value={customCategory}
                     onChange={(e) => setCustomCategory(e.target.value)}
                     placeholder="Local citation"
-                    className="w-full h-[38px] px-3 rounded-[6px] border border-[#e5e7eb] bg-white text-[14px] text-[#111111] focus:outline-none focus:border-[#111111]"
+                    className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#009691]/20 focus:border-[#009691]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[14px] font-medium text-[#111111] mb-2">
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   Sync method
                 </label>
                 <select
@@ -525,7 +588,7 @@ export default function ListingsCatalogPage() {
                   onChange={(e) =>
                     setCustomSyncMode(e.target.value as SyncMode)
                   }
-                  className="w-full h-[38px] px-3 rounded-[6px] border border-[#d1d5db] bg-white text-[14px] text-[#111111] focus:outline-none focus:border-[#111111]"
+                  className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#009691]/20 focus:border-[#009691]"
                 >
                   <option value="Manual Claim">Manual claim</option>
                   <option value="DataForSEO Audit">DataForSEO audit</option>
@@ -535,7 +598,7 @@ export default function ListingsCatalogPage() {
               </div>
 
               <div>
-                <label className="block text-[14px] font-medium text-[#111111] mb-2">
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   Claim portal URL
                 </label>
                 <input
@@ -543,21 +606,21 @@ export default function ListingsCatalogPage() {
                   value={customPortalUrl}
                   onChange={(e) => setCustomPortalUrl(e.target.value)}
                   placeholder="https://..."
-                  className="w-full h-[38px] px-3 rounded-[6px] border border-[#e5e7eb] bg-white text-[14px] text-[#111111] focus:outline-none focus:border-[#111111]"
+                  className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#009691]/20 focus:border-[#009691]"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#f2f2f2]">
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowCustomModal(false)}
-                  className="h-[32px] px-3 rounded-[6px] border border-[#d1d5db] bg-white text-[13px] font-medium text-[#111111] hover:bg-[#f9f9f9] cursor-pointer"
+                  className="h-9 px-4 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="h-[32px] px-3.5 rounded-[6px] bg-[#1d1f20] hover:bg-[#111111] text-white text-[13px] font-medium cursor-pointer"
+                  className="h-9 px-4 rounded-xl bg-[#009691] hover:bg-[#00827d] text-white text-xs font-semibold cursor-pointer shadow-xs shadow-[#009691]/20 transition-all"
                 >
                   Add directory
                 </button>
