@@ -1,9 +1,25 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useStoreContext } from "@/lib/storeContext";
 import LocalSeoNav from "@/components/Dashboard/LocalSeoNav";
-import { ExternalLink, ArrowRight } from "lucide-react";
+import {
+  ExternalLink,
+  ArrowRight,
+  Plus,
+  MessageSquare,
+  TrendingUp,
+  MapPin,
+  PhoneCall,
+  Navigation,
+  Globe,
+  Star,
+  CheckCircle2,
+  RefreshCw,
+  Eye,
+  Megaphone,
+} from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -15,28 +31,11 @@ import {
   LineChart,
   Line,
 } from "recharts";
+import { getGmbOverviewAction, type GmbOverviewData } from "@/actions/localSeo";
 
-const GMB_DATA: Record<
+const FALLBACK_GMB_DATA: Record<
   number,
-  {
-    impressions: number;
-    profileViews: number;
-    calls: number;
-    directions: number;
-    websiteClicks: number;
-    messages: number;
-    reviews: number;
-    unrepliedReviews: number;
-    rating: number;
-    daysSinceLastPost: number;
-    monthlyTrend: {
-      month: string;
-      searchViews: number;
-      mapViews: number;
-      calls: number;
-      directions: number;
-    }[];
-  }
+  GmbOverviewData
 > = {
   1: {
     impressions: 3840,
@@ -49,6 +48,8 @@ const GMB_DATA: Record<
     unrepliedReviews: 3,
     rating: 4.8,
     daysSinceLastPost: 9,
+    activeOffersCount: 1,
+    activeUpdatesCount: 1,
     monthlyTrend: [
       { month: "Jun", searchViews: 1800, mapViews: 1100, calls: 165, directions: 130 },
       { month: "Jul", searchViews: 1920, mapViews: 1180, calls: 180, directions: 145 },
@@ -69,6 +70,8 @@ const GMB_DATA: Record<
     unrepliedReviews: 2,
     rating: 4.6,
     daysSinceLastPost: 16,
+    activeOffersCount: 0,
+    activeUpdatesCount: 1,
     monthlyTrend: [
       { month: "Jun", searchViews: 1050, mapViews: 650, calls: 110, directions: 72 },
       { month: "Jul", searchViews: 1140, mapViews: 710, calls: 118, directions: 78 },
@@ -89,6 +92,8 @@ const GMB_DATA: Record<
     unrepliedReviews: 1,
     rating: 4.5,
     daysSinceLastPost: 14,
+    activeOffersCount: 1,
+    activeUpdatesCount: 0,
     monthlyTrend: [
       { month: "Jun", searchViews: 820, mapViews: 480, calls: 72, directions: 54 },
       { month: "Jul", searchViews: 900, mapViews: 520, calls: 79, directions: 59 },
@@ -101,299 +106,331 @@ const GMB_DATA: Record<
 };
 
 export default function LocalSEOPage() {
-  const { stores, selectedStoreId, selectedStore, isAllStores } =
-    useStoreContext();
+  const { stores, selectedStoreId, selectedStore, isAllStores } = useStoreContext();
+  const [data, setData] = useState<GmbOverviewData>(
+    FALLBACK_GMB_DATA[selectedStoreId] ?? FALLBACK_GMB_DATA[1]
+  );
+  const [isLoading, setIsLoading] = useState(false);
+
   const storeShortName = isAllStores
     ? `All ${stores.length} Philadelphia locations`
     : selectedStore.name.replace("SmartFoneDoctor - ", "");
-  const data = isAllStores
-    ? {
-        impressions:
-          GMB_DATA[1].impressions +
-          GMB_DATA[2].impressions +
-          GMB_DATA[3].impressions,
-        profileViews:
-          GMB_DATA[1].profileViews +
-          GMB_DATA[2].profileViews +
-          GMB_DATA[3].profileViews,
-        calls: GMB_DATA[1].calls + GMB_DATA[2].calls + GMB_DATA[3].calls,
-        directions:
-          GMB_DATA[1].directions +
-          GMB_DATA[2].directions +
-          GMB_DATA[3].directions,
-        websiteClicks:
-          GMB_DATA[1].websiteClicks +
-          GMB_DATA[2].websiteClicks +
-          GMB_DATA[3].websiteClicks,
-        messages:
-          GMB_DATA[1].messages + GMB_DATA[2].messages + GMB_DATA[3].messages,
-        reviews:
-          GMB_DATA[1].reviews + GMB_DATA[2].reviews + GMB_DATA[3].reviews,
-        unrepliedReviews:
-          GMB_DATA[1].unrepliedReviews +
-          GMB_DATA[2].unrepliedReviews +
-          GMB_DATA[3].unrepliedReviews,
-        rating: 4.7,
-        daysSinceLastPost: 9,
-        monthlyTrend: GMB_DATA[1].monthlyTrend.map((m, idx) => ({
-          month: m.month,
-          searchViews:
-            m.searchViews +
-            GMB_DATA[2].monthlyTrend[idx].searchViews +
-            GMB_DATA[3].monthlyTrend[idx].searchViews,
-          mapViews:
-            m.mapViews +
-            GMB_DATA[2].monthlyTrend[idx].mapViews +
-            GMB_DATA[3].monthlyTrend[idx].mapViews,
-          calls:
-            m.calls +
-            GMB_DATA[2].monthlyTrend[idx].calls +
-            GMB_DATA[3].monthlyTrend[idx].calls,
-          directions:
-            m.directions +
-            GMB_DATA[2].monthlyTrend[idx].directions +
-            GMB_DATA[3].monthlyTrend[idx].directions,
-        })),
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadMetrics() {
+      setIsLoading(true);
+      const res = await getGmbOverviewAction(isAllStores ? undefined : selectedStoreId);
+      if (isMounted && res.success && res.data) {
+        setData(res.data);
       }
-    : GMB_DATA[selectedStoreId] ?? GMB_DATA[1];
-  const totalActions =
-    data.calls + data.directions + data.websiteClicks + data.messages;
+      if (isMounted) setIsLoading(false);
+    }
+    loadMetrics();
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedStoreId, isAllStores]);
+
+  const totalActions = data.calls + data.directions + data.websiteClicks + data.messages;
 
   return (
-    <div className="flex-1 min-w-0 w-full px-4 sm:px-6 py-5 flex flex-col gap-4 overflow-x-hidden">
-      {/* 1. CANVAS TITLE ROW + UNDERLINE TABS */}
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+    <div className="flex-1 min-w-0 w-full px-4 sm:px-6 py-6 flex flex-col gap-6">
+      {/* ── 1. MATERIAL 3 HERO ROW ── */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
           <div>
-            <h1 className="text-[22px] sm:text-[24px] font-semibold text-[#111111] tracking-[-0.02em] leading-tight">
-              GMB &amp; Local SEO
-            </h1>
-            <p className="text-[14px] text-[#5f6368] mt-1">
-              <span className="text-[#111111] font-medium">{storeShortName}</span>{" "}
-              is rated {data.rating.toFixed(1)} /5 ({data.reviews} reviews) ·{" "}
-              {data.unrepliedReviews} {data.unrepliedReviews === 1 ? "review needs" : "reviews need"} a reply and last Google post was {data.daysSinceLastPost} days ago
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+                GMB &amp; Local SEO
+              </h1>
+              <span className="bg-[#009691]/10 text-[#009691] text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-[#009691]/20 inline-flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3" />
+                Google Verified Profile
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5 flex-wrap">
+              <span className="font-semibold text-slate-800">{storeShortName}</span>
+              <span>·</span>
+              <span className="inline-flex items-center gap-1 text-amber-600 font-bold">
+                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                {data.rating.toFixed(1)} / 5.0
+              </span>
+              <span>({data.reviews} reviews)</span>
+              <span>·</span>
+              <span className={data.unrepliedReviews > 0 ? "text-amber-700 font-semibold" : "text-emerald-700"}>
+                {data.unrepliedReviews} {data.unrepliedReviews === 1 ? "review needs" : "reviews need"} reply
+              </span>
+              <span>·</span>
+              <span>Last post {data.daysSinceLastPost} days ago</span>
             </p>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
             <a
               href={selectedStore.gmbUrl}
               target="_blank"
               rel="noreferrer"
-              className="h-[32px] px-3 rounded-[6px] border border-[#d1d5db] bg-white hover:bg-[#f9f9f9] text-[13px] font-medium text-[#111111] inline-flex items-center gap-1.5 transition-colors"
+              className="h-9 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 inline-flex items-center gap-1.5 shadow-2xs transition-colors"
             >
-              <span>Open Google Maps</span>
-              <ExternalLink className="w-3 h-3 text-[#6b6b6b]" aria-hidden="true" />
+              <MapPin className="w-3.5 h-3.5 text-[#009691]" />
+              <span>Google Maps</span>
+              <ExternalLink className="w-3 h-3 text-slate-400" />
             </a>
 
             <Link
               href="/admin/reviews"
-              className="h-[32px] px-3 rounded-[6px] bg-[#1d1f20] hover:bg-[#111111] text-white text-[13px] font-medium inline-flex items-center gap-1.5 transition-colors"
+              className="h-9 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 inline-flex items-center gap-1.5 shadow-2xs transition-colors"
             >
-              <span>Reply to reviews ({data.unrepliedReviews})</span>
+              <MessageSquare className="w-3.5 h-3.5 text-amber-600" />
+              <span>Reviews ({data.unrepliedReviews})</span>
+            </Link>
+
+            <Link
+              href="/admin/local-seo/posts"
+              className="h-9 px-4 rounded-xl bg-[#009691] hover:bg-[#007f7b] text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs transition-all"
+            >
+              <Megaphone className="w-3.5 h-3.5" />
+              <span>Publish Post / Offer</span>
             </Link>
           </div>
         </div>
 
+        {/* SUB NAVIGATION */}
         <LocalSeoNav />
       </div>
 
-      {/* 2. DIVIDED 30-DAY PERFORMANCE FUNNEL (1 container split by 1px hairlines, no icons) */}
+      {/* ── 2. MATERIAL 3 PERFORMANCE FUNNEL TILES ── */}
       <section
-        aria-label="Last 30 days performance funnel"
-        className="bg-white border border-[#e8e8e8] rounded-[8px] grid grid-cols-2 lg:grid-cols-4"
+        aria-label="30-day performance funnel"
+        className="grid grid-cols-2 lg:grid-cols-4 gap-3.5"
       >
-        <div className="p-4 flex flex-col justify-between border-b lg:border-b-0 border-r border-[#eaeaea]">
-          <span className="text-[12px] text-[#5f6368]">
-            Search &amp; map impressions (30d)
-          </span>
-          <div className="mt-1.5">
-            <span className="text-[28px] font-semibold text-[#111111] tabular-nums leading-none">
+        {/* Metric 1 */}
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs flex flex-col justify-between hover:border-[#009691]/40 transition-colors">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              Impressions (30d)
+            </span>
+            <div className="w-7 h-7 rounded-lg bg-[#009691]/10 flex items-center justify-center text-[#009691]">
+              <Eye className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <span className="text-2xl font-black text-slate-900 tracking-tight tabular-nums block">
               {data.impressions.toLocaleString()}
             </span>
-            <span className="block text-[12px] text-[#5f6368] mt-1">
-              +6.2% vs prior 30 days
-            </span>
+            <div className="flex items-center gap-1 text-[11px] text-emerald-700 font-semibold mt-1">
+              <TrendingUp className="w-3 h-3 text-emerald-600" />
+              <span>+6.2% vs prior month</span>
+            </div>
           </div>
         </div>
 
-        <div className="p-4 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-[#eaeaea]">
-          <span className="text-[12px] text-[#5f6368]">Profile views (30d)</span>
-          <div className="mt-1.5">
-            <span className="text-[24px] font-normal text-[#111111] tabular-nums leading-none">
+        {/* Metric 2 */}
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs flex flex-col justify-between hover:border-[#009691]/40 transition-colors">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              Profile Views (30d)
+            </span>
+            <div className="w-7 h-7 rounded-lg bg-teal-50 flex items-center justify-center text-teal-600">
+              <MapPin className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <span className="text-2xl font-black text-slate-900 tracking-tight tabular-nums block">
               {data.profileViews.toLocaleString()}
             </span>
-            <span className="block text-[12px] text-[#5f6368] mt-1">
-              {Math.round((data.profileViews / data.impressions) * 100)}% view rate from search
+            <span className="text-[11px] text-slate-500 font-medium block mt-1">
+              {Math.round((data.profileViews / (data.impressions || 1)) * 100)}% view rate from search
             </span>
           </div>
         </div>
 
-        <div className="p-4 flex flex-col justify-between border-r border-[#eaeaea]">
-          <span className="text-[12px] text-[#5f6368]">Customer actions (30d)</span>
-          <div className="mt-1.5">
-            <span className="text-[24px] font-normal text-[#111111] tabular-nums leading-none">
-              {totalActions}
+        {/* Metric 3 */}
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs flex flex-col justify-between hover:border-[#009691]/40 transition-colors">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              Customer Actions (30d)
             </span>
-            <span className="block text-[12px] text-[#247b50] mt-1">
-              {Math.round((totalActions / data.profileViews) * 100)}% conversion from views
+            <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+              <PhoneCall className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <span className="text-2xl font-black text-[#009691] tracking-tight tabular-nums block">
+              {totalActions.toLocaleString()}
+            </span>
+            <span className="text-[11px] text-emerald-700 font-semibold block mt-1">
+              {Math.round((totalActions / (data.profileViews || 1)) * 100)}% conversion rate
             </span>
           </div>
         </div>
 
-        {/* Key-value breakdown cell */}
-        <div className="p-4 flex flex-col justify-center gap-1.5 text-[13px]">
-          <div className="flex items-center justify-between">
-            <span className="text-[#5f6368]">Phone calls</span>
-            <span className="font-medium text-[#111111] tabular-nums">
-              {data.calls}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[#5f6368]">Directions requests</span>
-            <span className="font-medium text-[#111111] tabular-nums">
-              {data.directions}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[#5f6368]">Website clicks</span>
-            <span className="font-medium text-[#111111] tabular-nums">
-              {data.websiteClicks}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[#5f6368]">Messages &amp; bookings</span>
-            <span className="font-medium text-[#111111] tabular-nums">
-              {data.messages}
-            </span>
+        {/* Metric 4: Key Conversion Breakdown */}
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs flex flex-col justify-between">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
+            Action Breakdown
+          </span>
+          <div className="space-y-1.5 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500 inline-flex items-center gap-1.5">
+                <PhoneCall className="w-3 h-3 text-[#009691]" />
+                Phone calls
+              </span>
+              <span className="font-bold text-slate-900 tabular-nums">{data.calls}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500 inline-flex items-center gap-1.5">
+                <Navigation className="w-3 h-3 text-teal-600" />
+                Directions
+              </span>
+              <span className="font-bold text-slate-900 tabular-nums">{data.directions}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500 inline-flex items-center gap-1.5">
+                <Globe className="w-3 h-3 text-sky-600" />
+                Website visits
+              </span>
+              <span className="font-bold text-slate-900 tabular-nums">{data.websiteClicks}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500 inline-flex items-center gap-1.5">
+                <MessageSquare className="w-3 h-3 text-indigo-600" />
+                Messages
+              </span>
+              <span className="font-bold text-slate-900 tabular-nums">{data.messages}</span>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* 3. CHARTS ROW (Minimal chrome, 4 faint horizontal gridlines, no y-axis line, square bars & straight lines) */}
+      {/* ── 3. CHARTS ROW WITH BRAND TEAL PALETTE ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white p-5 rounded-[8px] border border-[#e8e8e8]">
+        {/* Discovery Impressions Bar Chart */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-[15px] font-semibold text-[#111111]">
-                Discovery impressions
+              <h2 className="text-sm font-bold text-slate-900">
+                Discovery Impressions
               </h2>
-              <p className="text-[12px] text-[#5f6368]">
-                Jun – Nov · Google Search vs Maps
+              <p className="text-xs text-slate-500">
+                Jun – Nov · Google Search vs Google Maps
               </p>
             </div>
-            <div className="flex items-center gap-4 text-[12px] text-[#5f6368]">
+            <div className="flex items-center gap-3.5 text-xs text-slate-500">
               <span className="inline-flex items-center gap-1.5">
-                <span className="w-2 h-2 bg-[#009691]" />
-                Search
+                <span className="w-2.5 h-2.5 rounded-sm bg-[#009691]" />
+                <span className="font-medium text-slate-700">Search</span>
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <span className="w-2 h-2 bg-[#d1d5db]" />
-                Maps
+                <span className="w-2.5 h-2.5 rounded-sm bg-[#99F6E4] border border-[#2DD4BF]" />
+                <span className="font-medium text-slate-700">Maps</span>
               </span>
             </div>
           </div>
 
-          <ResponsiveContainer width="100%" height={210}>
+          <ResponsiveContainer width="100%" height={220}>
             <BarChart
               data={data.monthlyTrend}
-              margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
+              margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
             >
               <CartesianGrid
                 vertical={false}
-                stroke="#e5e5e5"
+                stroke="#F1F5F9"
                 strokeDasharray="3 3"
               />
               <XAxis
                 dataKey="month"
-                axisLine={{ stroke: "#e5e5e5" }}
+                axisLine={{ stroke: "#E2E8F0" }}
                 tickLine={false}
-                tick={{ fontSize: 12, fill: "#5f6368" }}
+                tick={{ fontSize: 11, fill: "#64748B" }}
               />
               <YAxis
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 12, fill: "#5f6368" }}
+                tick={{ fontSize: 11, fill: "#64748B" }}
               />
               <Tooltip
                 contentStyle={{
                   fontSize: 12,
-                  borderRadius: 6,
-                  borderColor: "#e5e7eb",
-                  boxShadow: "none",
+                  borderRadius: 12,
+                  borderColor: "#E2E8F0",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
                 }}
               />
-              <Bar dataKey="searchViews" fill="#009691" name="Google Search" />
-              <Bar dataKey="mapViews" fill="#d1d5db" name="Google Maps" />
+              <Bar dataKey="searchViews" fill="#009691" radius={[4, 4, 0, 0]} name="Google Search" />
+              <Bar dataKey="mapViews" fill="#99F6E4" stroke="#2DD4BF" radius={[4, 4, 0, 0]} name="Google Maps" />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white p-5 rounded-[8px] border border-[#e8e8e8]">
+        {/* Customer Calls & Directions Line Chart */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-[15px] font-semibold text-[#111111]">
-                Customer calls &amp; direction requests
+              <h2 className="text-sm font-bold text-slate-900">
+                Direct Conversion Trend
               </h2>
-              <p className="text-[12px] text-[#5f6368]">
-                Jun – Nov · Direct conversions per month
+              <p className="text-xs text-slate-500">
+                Jun – Nov · High-intent calls &amp; navigation requests
               </p>
             </div>
-            <div className="flex items-center gap-4 text-[12px] text-[#5f6368]">
+            <div className="flex items-center gap-3.5 text-xs text-slate-500">
               <span className="inline-flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[#111111]" />
-                Calls
+                <span className="w-2.5 h-2.5 rounded-full bg-[#009691]" />
+                <span className="font-medium text-slate-700">Phone Calls</span>
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[#949494]" />
-                Directions
+                <span className="w-2.5 h-2.5 rounded-full bg-[#64748B]" />
+                <span className="font-medium text-slate-700">Directions</span>
               </span>
             </div>
           </div>
 
-          <ResponsiveContainer width="100%" height={210}>
+          <ResponsiveContainer width="100%" height={220}>
             <LineChart
               data={data.monthlyTrend}
-              margin={{ top: 4, right: 8, left: -20, bottom: 0 }}
+              margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
             >
               <CartesianGrid
                 vertical={false}
-                stroke="#e5e5e5"
+                stroke="#F1F5F9"
                 strokeDasharray="3 3"
               />
               <XAxis
                 dataKey="month"
-                axisLine={{ stroke: "#e5e5e5" }}
+                axisLine={{ stroke: "#E2E8F0" }}
                 tickLine={false}
-                tick={{ fontSize: 12, fill: "#5f6368" }}
+                tick={{ fontSize: 11, fill: "#64748B" }}
               />
               <YAxis
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 12, fill: "#5f6368" }}
+                tick={{ fontSize: 11, fill: "#64748B" }}
               />
               <Tooltip
                 contentStyle={{
                   fontSize: 12,
-                  borderRadius: 6,
-                  borderColor: "#e5e7eb",
-                  boxShadow: "none",
+                  borderRadius: 12,
+                  borderColor: "#E2E8F0",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
                 }}
               />
               <Line
-                type="linear"
+                type="monotone"
                 dataKey="calls"
-                stroke="#111111"
-                strokeWidth={2}
-                dot={false}
-                name="Phone calls"
+                stroke="#009691"
+                strokeWidth={2.5}
+                dot={{ r: 3, fill: "#009691" }}
+                name="Phone Calls"
               />
               <Line
-                type="linear"
+                type="monotone"
                 dataKey="directions"
-                stroke="#949494"
+                stroke="#64748B"
                 strokeWidth={2}
-                dot={false}
+                strokeDasharray="4 4"
+                dot={{ r: 3, fill: "#64748B" }}
                 name="Directions"
               />
             </LineChart>
@@ -401,109 +438,148 @@ export default function LocalSEOPage() {
         </div>
       </div>
 
-      {/* 4. PHILADELPHIA SEARCH DEMAND & NEARBY COMPETITOR BENCHMARK (Balanced 4-row cards) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+      {/* ── 4. PHILADELPHIA LOCAL SEARCH DEMAND & COMPETITOR RADAR ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Trending Search Terms */}
-        <div className="bg-white p-5 rounded-[8px] border border-[#e8e8e8] flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-[15px] font-semibold text-[#111111]">
-                Trending search terms in Philadelphia
-              </h2>
-              <p className="text-[12px] text-[#5f6368]">
-                Last 14 days vs prior 14 days · University City &amp; West Philly
-              </p>
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h2 className="text-sm font-bold text-slate-900">
+                  Trending Philadelphia Search Queries
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Top repair demand in West Philly &amp; University City (Last 14 days)
+                </p>
+              </div>
+              <Link
+                href="/admin/local-seo/posts"
+                className="text-xs font-bold text-[#009691] hover:text-[#007f7b] inline-flex items-center gap-1"
+              >
+                <span>Target in post</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
-            <Link
-              href="/admin/local-seo/posts"
-              className="text-[13px] font-medium text-[#111111] hover:underline inline-flex items-center gap-1"
-            >
-              <span>Publish offer</span>
-              <ArrowRight className="w-3 h-3" aria-hidden="true" />
-            </Link>
+
+            <div className="divide-y divide-slate-100 text-xs">
+              {[
+                { term: "iPhone 15 / 16 Pro back glass laser repair", change: "+126%", searchVol: "1,420/mo" },
+                { term: "PS5 HDMI port replacement same day", change: "+118%", searchVol: "890/mo" },
+                { term: "MacBook liquid damage logic board clean", change: "+94%", searchVol: "640/mo" },
+                { term: "Walk-in cell phone screen repair near 52nd St", change: "+78%", searchVol: "1,850/mo" },
+              ].map((item) => (
+                <div key={item.term} className="py-3 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <span className="font-semibold text-slate-800 block truncate">{item.term}</span>
+                    <span className="text-[11px] text-slate-400">Est. local search volume: {item.searchVol}</span>
+                  </div>
+                  <span className="text-[11px] text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full font-bold border border-emerald-200 shrink-0">
+                    {item.change}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="divide-y divide-[#f2f2f2] text-[14px]">
-            {[
-              { term: "iPhone 15 / 16 back glass repair", change: "+126%" },
-              { term: "HDMI port / gaming console repair", change: "+118%" },
-              { term: "Apple Watch screen replacement", change: "+78%" },
-              { term: "Same-day cell phone repair", change: "+27%" },
-            ].map((item) => (
-              <div
-                key={item.term}
-                className="h-[44px] flex items-center justify-between gap-3"
-              >
-                <span className="text-[#111111] truncate">{item.term}</span>
-                <span className="text-[13px] text-[#247b50] font-medium tabular-nums shrink-0">
-                  {item.change}
-                </span>
-              </div>
-            ))}
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span className="text-slate-500">Auto-synced into AI Search bio keywords</span>
+            <Link
+              href="/admin/listings/ai-visibility"
+              className="text-[#009691] font-bold hover:underline inline-flex items-center gap-1"
+            >
+              <span>View AI Knowledge Graph</span>
+              <ArrowRight className="w-3 h-3" />
+            </Link>
           </div>
         </div>
 
-        {/* Nearby Competitors */}
-        <div className="bg-white p-5 rounded-[8px] border border-[#e8e8e8] flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-[15px] font-semibold text-[#111111]">
-                Nearby Philadelphia competitors
-              </h2>
-              <p className="text-[12px] text-[#5f6368]">
-                Last 30 days · Compared against {storeShortName}
-              </p>
-            </div>
-            <Link
-              href="/admin/listings"
-              className="text-[13px] font-medium text-[#111111] hover:underline inline-flex items-center gap-1"
-            >
-              <span>Check citations</span>
-              <ArrowRight className="w-3 h-3" aria-hidden="true" />
-            </Link>
-          </div>
-
-          <div className="divide-y divide-[#f2f2f2] text-[14px]">
-            {[
-              {
-                name: "iPhone Repair Philly - University City",
-                sub: "0.8 mi · 94 reviews",
-                rating: "4.6",
-              },
-              {
-                name: "Mr Fix Cell Phone & Computer Repair",
-                sub: "1.4 mi · 68 reviews",
-                rating: "4.4",
-              },
-              {
-                name: "Apple Walnut Street",
-                sub: "2.3 mi · 215 reviews (2h+ appointment wait complaints)",
-                rating: "2.9",
-              },
-              {
-                name: "GadgetSolutions Philadelphia",
-                sub: "3.1 mi · 41 reviews",
-                rating: "4.7",
-              },
-            ].map((comp) => (
-              <div
-                key={comp.name}
-                className="h-[44px] flex items-center justify-between gap-3"
+        {/* Nearby Competitors Radar */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h2 className="text-sm font-bold text-slate-900">
+                  Nearby Philadelphia Competitor Radar
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Local citation &amp; review benchmark vs {storeShortName}
+                </p>
+              </div>
+              <Link
+                href="/admin/listings"
+                className="text-xs font-bold text-[#009691] hover:text-[#007f7b] inline-flex items-center gap-1"
               >
-                <div className="min-w-0">
-                  <span className="text-[#111111] font-medium truncate block leading-tight">
-                    {comp.name}
-                  </span>
-                  <span className="text-[12px] text-[#5f6368] truncate block leading-tight">
-                    {comp.sub}
+                <span>Audit citations</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            <div className="divide-y divide-slate-100 text-xs">
+              {[
+                {
+                  name: "SmartFoneDoctor (Your Store)",
+                  sub: "Flagship West Philly · 500+ reviews",
+                  rating: "4.9",
+                  highlight: true,
+                },
+                {
+                  name: "iPhone Repair Philly - University City",
+                  sub: "0.8 mi away · 94 reviews",
+                  rating: "4.6",
+                  highlight: false,
+                },
+                {
+                  name: "Mr Fix Cell Phone & Computer Repair",
+                  sub: "1.4 mi away · 68 reviews",
+                  rating: "4.4",
+                  highlight: false,
+                },
+                {
+                  name: "Apple Store Walnut Street",
+                  sub: "2.3 mi away · Long repair wait times",
+                  rating: "2.9",
+                  highlight: false,
+                },
+              ].map((comp) => (
+                <div
+                  key={comp.name}
+                  className={`py-2.5 px-3 rounded-xl flex items-center justify-between gap-3 ${
+                    comp.highlight ? "bg-[#009691]/5 border border-[#009691]/20 my-1" : ""
+                  }`}
+                >
+                  <div className="min-w-0">
+                    <span
+                      className={`block font-semibold truncate ${
+                        comp.highlight ? "text-[#009691] font-bold" : "text-slate-800"
+                      }`}
+                    >
+                      {comp.name}
+                    </span>
+                    <span className="text-[11px] text-slate-400 block truncate">{comp.sub}</span>
+                  </div>
+                  <span
+                    className={`text-xs tabular-nums font-bold px-2 py-0.5 rounded-md shrink-0 ${
+                      comp.highlight
+                        ? "bg-[#009691] text-white"
+                        : "bg-slate-100 text-slate-700"
+                    }`}
+                  >
+                    ★ {comp.rating}
                   </span>
                 </div>
-                <span className="text-[13px] text-[#111111] tabular-nums shrink-0">
-                  {comp.rating}
-                  <span className="text-[12px] text-[#6b6b6b]"> /5</span>
-                </span>
-              </div>
-            ))}
+              ))}
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span className="text-slate-500">30+ local directory citations monitored</span>
+            <Link
+              href="/admin/listings/catalog"
+              className="text-[#009691] font-bold hover:underline inline-flex items-center gap-1"
+            >
+              <span>Explore Directory Catalog</span>
+              <ArrowRight className="w-3 h-3" />
+            </Link>
           </div>
         </div>
       </div>
