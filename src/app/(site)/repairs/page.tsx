@@ -24,6 +24,10 @@ import {
   STORES,
 } from "@/lib/schema";
 import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
+import { getTaxonomyAction } from "@/actions/taxonomy";
+import { getBlogPostsAction } from "@/actions/blog";
+import { getStoreBranchesAction } from "@/actions/settings";
+import type { DeviceModelTaxonomy, ServiceIssueTaxonomy } from "@/lib/taxonomy";
 
 export const metadata: Metadata = {
   title: "Professional Device Repair in Philadelphia | Same-Day Service | SmartFoneDoctor",
@@ -78,15 +82,67 @@ const CATEGORIES = [
   },
 ];
 
-export default function RepairsHubPage() {
-  const popularDevices = PSEO_DEVICES.slice(0, 8);
-  const coreIssues = PSEO_ISSUES.slice(0, 6);
+export default async function RepairsHubPage() {
+  const [modelsRes, issuesRes, blogsRes, branchesRes] = await Promise.all([
+    getTaxonomyAction<DeviceModelTaxonomy>("models"),
+    getTaxonomyAction<ServiceIssueTaxonomy>("issues"),
+    getBlogPostsAction(),
+    getStoreBranchesAction(),
+  ]);
+
+  const activeStores =
+    branchesRes.success && branchesRes.data && branchesRes.data.length > 0
+      ? branchesRes.data.map((b, idx) => ({
+          id: typeof b.id === "number" ? b.id : idx + 1,
+          name: b.name,
+          type: b.type || (idx === 0 ? "Flagship HQ" : "Branch"),
+          address: b.address,
+          cityStateZip: b.cityStateZip || "Philadelphia, PA 19139",
+          phone: b.phone,
+          email: b.email || "contact@smartfonedoctor.com",
+          businessHours: b.businessHours || "Mon - Sat: 10:00 AM - 7:00 PM",
+          calendlyUrl: b.calendlyUrl || "https://calendly.com/smartfonedoctor",
+          gmbUrl:
+            b.gmbUrl ||
+            `https://maps.google.com/?q=${encodeURIComponent(
+              b.address + ", " + (b.cityStateZip || "Philadelphia, PA")
+            )}`,
+        }))
+      : STORES;
+
+  const popularDevices =
+    modelsRes.success && modelsRes.data && modelsRes.data.length > 0
+      ? modelsRes.data.slice(0, 8).map((m) => ({
+          name: m.name,
+          slug: m.url ? m.url.split("/").pop() || m.id : m.id,
+          category: m.categorySlug,
+          specs: `${m.brandSlug?.toUpperCase() || "OEM"} · Diagnostic Ready`,
+          image: "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400&auto=format&fit=crop&q=80",
+        }))
+      : PSEO_DEVICES.slice(0, 8);
+
+  const coreIssues =
+    issuesRes.success && issuesRes.data && issuesRes.data.length > 0
+      ? issuesRes.data.slice(0, 6).map((iss) => ({
+          slug: iss.slug,
+          name: iss.title,
+          category: iss.categorySlug,
+          turnaroundDisplay: iss.turnaround || "20–30 min",
+          basePrice: iss.startingPrice || 69,
+          symptoms: [iss.badge || "Precision hardware replacement with 90-day warranty."],
+        }))
+      : PSEO_ISSUES.slice(0, 6);
+
+  const recentGuides =
+    blogsRes.success && blogsRes.articles && blogsRes.articles.length > 0
+      ? blogsRes.articles.slice(0, 2)
+      : null;
 
   const breadcrumbSchema = buildBreadcrumbSchema([
     { name: "Home", url: "/" },
     { name: "Repair Directory", url: "/repairs" },
   ]);
-  const storeSchema = buildMultiStoreSchema(STORES);
+  const storeSchema = buildMultiStoreSchema(activeStores);
 
   return (
     <main className="bg-[#fafbfc] min-h-screen pb-20">
@@ -276,39 +332,63 @@ export default function RepairsHubPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-            <Link
-              href="/blog/iphone-battery-health-guide"
-              className="p-5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/10 transition-all group flex flex-col justify-between"
-            >
-              <div>
-                <span className="text-[10px] font-bold text-[#4dd0e1] uppercase tracking-wider block mb-1">
-                  iPhone Repair Guide
-                </span>
-                <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-[#4dd0e1] transition-colors leading-snug">
-                  When to Replace Your iPhone Battery: Signs, Cycles &amp; Peak Performance
-                </h3>
-              </div>
-              <span className="text-xs text-gray-400 mt-4 flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5" /> 4 min read →
-              </span>
-            </Link>
+            {recentGuides ? (
+              recentGuides.map((guide) => (
+                <Link
+                  key={guide.slug}
+                  href={`/blog/${guide.slug}`}
+                  className="p-5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/10 transition-all group flex flex-col justify-between"
+                >
+                  <div>
+                    <span className="text-[10px] font-bold text-[#4dd0e1] uppercase tracking-wider block mb-1">
+                      {guide.categoryName || "Repair Guide"}
+                    </span>
+                    <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-[#4dd0e1] transition-colors leading-snug">
+                      {guide.title}
+                    </h3>
+                  </div>
+                  <span className="text-xs text-gray-400 mt-4 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" /> {guide.readTime || "4 min read"} →
+                  </span>
+                </Link>
+              ))
+            ) : (
+              <>
+                <Link
+                  href="/blog/iphone-battery-health-guide"
+                  className="p-5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/10 transition-all group flex flex-col justify-between"
+                >
+                  <div>
+                    <span className="text-[10px] font-bold text-[#4dd0e1] uppercase tracking-wider block mb-1">
+                      iPhone Repair Guide
+                    </span>
+                    <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-[#4dd0e1] transition-colors leading-snug">
+                      When to Replace Your iPhone Battery: Signs, Cycles &amp; Peak Performance
+                    </h3>
+                  </div>
+                  <span className="text-xs text-gray-400 mt-4 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" /> 4 min read →
+                  </span>
+                </Link>
 
-            <Link
-              href="/blog/what-to-do-water-damaged-phone"
-              className="p-5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/10 transition-all group flex flex-col justify-between"
-            >
-              <div>
-                <span className="text-[10px] font-bold text-[#4dd0e1] uppercase tracking-wider block mb-1">
-                  Emergency First Aid
-                </span>
-                <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-[#4dd0e1] transition-colors leading-snug">
-                  Dropped Phone in Water? 4 Critical Steps Before Bringing It to the Shop
-                </h3>
-              </div>
-              <span className="text-xs text-gray-400 mt-4 flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5" /> 5 min read →
-              </span>
-            </Link>
+                <Link
+                  href="/blog/what-to-do-water-damaged-phone"
+                  className="p-5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/10 transition-all group flex flex-col justify-between"
+                >
+                  <div>
+                    <span className="text-[10px] font-bold text-[#4dd0e1] uppercase tracking-wider block mb-1">
+                      Emergency First Aid
+                    </span>
+                    <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-[#4dd0e1] transition-colors leading-snug">
+                      Dropped Phone in Water? 4 Critical Steps Before Bringing It to the Shop
+                    </h3>
+                  </div>
+                  <span className="text-xs text-gray-400 mt-4 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" /> 5 min read →
+                  </span>
+                </Link>
+              </>
+            )}
           </div>
 
           <div className="pt-2">

@@ -15,13 +15,14 @@ import {
   MessageSquare,
 } from "lucide-react";
 import Footer from "@/components/layout/Footer";
-import { STORES } from "@/lib/stores";
+import { STORES, StoreLocation } from "@/lib/stores";
 import {
   JsonLd,
   buildBreadcrumbSchema,
   buildMultiStoreSchema,
 } from "@/lib/schema";
 import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
+import { getStoreBranchesAction } from "@/actions/settings";
 
 export const metadata: Metadata = {
   title: "Customer Reviews & Store Ratings | SmartFoneDoctor Philadelphia",
@@ -110,13 +111,29 @@ const FEATURED_REVIEWS = [
   },
 ];
 
-export default function ReviewHubPage() {
+export default async function ReviewHubPage() {
+  const branchesRes = await getStoreBranchesAction();
+  const stores: StoreLocation[] = (branchesRes.success && branchesRes.data && branchesRes.data.length > 0)
+    ? branchesRes.data.map((b, idx) => ({
+        id: typeof b.id === "number" ? b.id : idx + 1,
+        name: b.name,
+        type: b.type || (idx === 0 ? "Flagship HQ" : (idx === 1 ? "University City Branch" : "Lancaster Express")),
+        address: b.address,
+        cityStateZip: b.cityStateZip || "Philadelphia, PA 19139",
+        phone: b.phone,
+        email: b.email || "contact@smartfonedoctor.com",
+        businessHours: b.businessHours || "Mon - Sat: 10:00 AM - 7:00 PM",
+        calendlyUrl: b.calendlyUrl || "https://calendly.com/smartfonedoctor",
+        gmbUrl: b.gmbUrl || `https://maps.google.com/?q=${encodeURIComponent(b.address + ", " + (b.cityStateZip || "Philadelphia, PA"))}`,
+      }))
+    : STORES;
+
   const breadcrumbSchema = buildBreadcrumbSchema([
     { name: "Home", url: "/" },
     { name: "Customer Reviews", url: "/review" },
   ]);
 
-  const multiStoreSchema = buildMultiStoreSchema(STORES);
+  const multiStoreSchema = buildMultiStoreSchema(stores);
 
   return (
     <main className="bg-[#fcfcfc] min-h-screen text-[#1d1c1a]">
@@ -203,9 +220,20 @@ export default function ReviewHubPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {STORES.map((store) => {
+            {stores.map((store) => {
               const slug = STORE_SLUG_MAP[store.id] || `phl-0${store.id}`;
-              const highlight = STORE_HIGHLIGHTS[store.id];
+              const highlight = STORE_HIGHLIGHTS[store.id] || {
+                rating: "4.9",
+                reviewsCount: 150,
+                badge: store.type || "Philadelphia Store Branch",
+                description:
+                  "Full service device repair bench with certified technician and same-day turnaround.",
+                topRepairs: [
+                  "iPhone Screen Repair",
+                  "Battery Replacement",
+                  "Charging Port Fix",
+                ],
+              };
 
               return (
                 <div

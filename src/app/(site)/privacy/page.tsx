@@ -2,6 +2,7 @@ import React from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import Footer from "@/components/layout/Footer";
+import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | SmartFoneDoctor",
@@ -13,7 +14,8 @@ export const metadata: Metadata = {
 export default function PrivacyPolicyPage() {
   return (
     <main className="bg-[#fcfcfc] min-h-screen">
-      <div className="max-w-[1140px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20">
+      <CMSSectionRenderer slug="privacy">
+        <div className="max-w-[1140px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20">
         
         {/* Breadcrumbs */}
         <nav aria-label="Breadcrumb" className="mb-4 text-[12.5px] text-neutral-500 font-normal">
@@ -117,6 +119,7 @@ export default function PrivacyPolicyPage() {
         </div>
 
       </div>
+      </CMSSectionRenderer>
 
       <Footer />
     </main>

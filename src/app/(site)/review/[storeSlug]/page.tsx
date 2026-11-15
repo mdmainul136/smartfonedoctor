@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { STORES } from "@/lib/stores";
+import { STORES, StoreLocation } from "@/lib/stores";
 import { useQrTracking, TrackingChannelId } from "@/lib/qrTracking";
 import { ChannelBrandBadge } from "@/components/Dashboard/QrCodeSvg";
 import { Star, Check, ExternalLink, MapPin, Phone } from "lucide-react";
+import { getStoreBranchesAction } from "@/actions/settings";
 
 const SLUG_TO_STORE_ID: Record<string, number> = {
   "phl-01": 1,
@@ -28,7 +29,33 @@ export default function CustomerQrReviewHubPage() {
   const params = useParams<{ storeSlug: string }>();
   const rawSlug = params?.storeSlug || "phl-01";
   const storeId = SLUG_TO_STORE_ID[rawSlug.toLowerCase()] ?? 1;
-  const store = STORES.find((s) => s.id === storeId) ?? STORES[0];
+  const initialStore = STORES.find((s) => s.id === storeId) ?? STORES[0];
+  const [store, setStore] = useState<StoreLocation>(initialStore);
+
+  useEffect(() => {
+    async function loadDbStore() {
+      try {
+        const res = await getStoreBranchesAction();
+        if (res.success && res.data && res.data.length > 0) {
+          const match = res.data.find((b) => b.id === storeId) || res.data[storeId - 1];
+          if (match) {
+            setStore((prev) => ({
+              ...prev,
+              name: match.name,
+              address: match.address,
+              phone: match.phone,
+              email: match.email || prev.email,
+              businessHours: match.businessHours || prev.businessHours,
+              gmbUrl: match.gmbUrl || prev.gmbUrl,
+            }));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load store branch from db:", err);
+      }
+    }
+    loadDbStore();
+  }, [storeId]);
 
   const { recordQrScan, recordChannelClick, recordShieldIntercept } =
     useQrTracking();

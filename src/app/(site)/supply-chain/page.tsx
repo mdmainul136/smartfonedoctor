@@ -3,13 +3,15 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Footer from "@/components/layout/Footer";
+import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
 
 export default function SupplyChainPage() {
   const [activeTab, setActiveTab] = useState<"code" | "california">("code");
 
   return (
     <main className="bg-[#fcfcfc] min-h-screen">
-      <div className="max-w-[1140px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20">
+      <CMSSectionRenderer slug="supply-chain">
+        <div className="max-w-[1140px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20">
         
         {/* 1. Breadcrumbs */}
         <nav aria-label="Breadcrumb" className="mb-4 text-[12.5px] text-neutral-500 font-normal">
@@ -295,6 +297,7 @@ export default function SupplyChainPage() {
         </div>
 
       </div>
+      </CMSSectionRenderer>
 
       {/* Global Footer */}
       <Footer />

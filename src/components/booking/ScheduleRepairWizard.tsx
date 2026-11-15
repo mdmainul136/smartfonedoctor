@@ -22,8 +22,16 @@ import {
 import { JsonLd, buildBreadcrumbSchema } from "@/lib/schema";
 import { submitLeadAction } from "@/actions/leads";
 
+export interface WizardStore {
+  id: number;
+  name: string;
+  address: string;
+  phone: string;
+  displayPhone: string;
+}
+
 // Store Data
-const STORES = [
+const STORES: WizardStore[] = [
   {
     id: 1,
     name: "Smart Fone Doctor (Smartphone Doctor)",
@@ -206,10 +214,15 @@ const ISSUES_LIST: IssueItem[] = [
   },
 ];
 
-export function ScheduleRepairWizard() {
+interface ScheduleRepairWizardProps {
+  initialStores?: WizardStore[];
+}
+
+export function ScheduleRepairWizard({ initialStores }: ScheduleRepairWizardProps = {}) {
+  const stores = initialStores && initialStores.length > 0 ? initialStores : STORES;
   const searchParams = useSearchParams();
   const storeIdParam = Number(searchParams.get("store")) || 1;
-  const store = STORES.find((s) => s.id === storeIdParam) || STORES[0];
+  const store = stores.find((s) => s.id === storeIdParam) || stores[0];
 
   // Resolve query parameters from pSEO and service pages
   const paramDevice = searchParams.get("device") || "";

@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Plus, Minus, MapPin, ExternalLink, Phone, Navigation } from "lucide-react";
 
-interface StorePoint {
+export interface StorePoint {
   id: number;
   name: string;
   badge?: string;
@@ -19,7 +19,7 @@ interface StorePoint {
   gmbUrl: string;
 }
 
-const STORES: StorePoint[] = [
+const DEFAULT_STORES: StorePoint[] = [
   {
     id: 1,
     name: "Smart Fone Doctor (Smartphone Doctor)",
@@ -65,7 +65,8 @@ const STORES: StorePoint[] = [
   },
 ];
 
-export default function AboutMap() {
+export default function AboutMap({ initialStores }: { initialStores?: StorePoint[] } = {}) {
+  const STORES = initialStores && initialStores.length > 0 ? initialStores : DEFAULT_STORES;
   const containerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<{ [key: number]: any }>({});

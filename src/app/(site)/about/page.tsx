@@ -4,8 +4,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { Sparkles, MapPin } from "lucide-react";
 import Footer from "@/components/layout/Footer";
-import AboutMap from "@/components/about/AboutMap";
+import AboutMap, { StorePoint } from "@/components/about/AboutMap";
 import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
+import { getStoreBranchesAction } from "@/actions/settings";
 
 export const metadata: Metadata = {
   title: "About Us | SmartFoneDoctor",
@@ -13,7 +14,28 @@ export const metadata: Metadata = {
     "Learn about SmartFoneDoctor. Expert phone, tablet, and computer repair focused on quality craftsmanship, sustainability, and community service.",
 };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const branchesRes = await getStoreBranchesAction();
+  const branches = branchesRes?.success && branchesRes.data ? branchesRes.data : [];
+
+  const mappedStores: StorePoint[] | undefined = branches.length > 0
+    ? branches.map((b, idx) => ({
+        id: typeof b.id === "number" ? b.id : idx + 1,
+        name: b.name,
+        badge: idx === 0 ? "Flagship" : undefined,
+        address: b.address,
+        cityStateZip: b.cityStateZip || "Philadelphia, PA 19139",
+        phone: b.phone,
+        rating: 4.9,
+        reviewsCount: idx === 0 ? 1524 : (idx === 1 ? 880 : 940),
+        category: "Cell phone store · Phone repair service",
+        hours: b.businessHours || "Mon - Sat: 10:00 AM - 7:00 PM",
+        lat: idx === 0 ? 39.9575 : (idx === 1 ? 39.9628 : 39.9635),
+        lng: idx === 0 ? -75.2263 : (idx === 1 ? -75.2045 : -75.2062),
+        gmbUrl: b.gmbUrl || `https://maps.google.com/?q=${encodeURIComponent(b.address + ", " + (b.cityStateZip || "Philadelphia, PA"))}`,
+      }))
+    : undefined;
+
   return (
     <main className="bg-[#fcfcfc] min-h-screen">
       <CMSSectionRenderer slug="about">
@@ -111,7 +133,7 @@ export default function AboutPage() {
 
             {/* Graphic Column: Interactive Leaflet Map with 3 Store Pins */}
             <div className="lg:col-span-6 min-h-[440px] sm:min-h-[480px] flex flex-col order-1 lg:order-2">
-              <AboutMap />
+              <AboutMap initialStores={mappedStores} />
             </div>
           </div>
 

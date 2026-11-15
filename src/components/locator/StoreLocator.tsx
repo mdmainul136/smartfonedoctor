@@ -62,6 +62,7 @@ interface StoreLocatorProps {
   showBreadcrumbs?: boolean;
   title?: string;
   subtitle?: string;
+  initialStores?: MapStore[];
 }
 
 export function StoreLocator({
@@ -69,11 +70,13 @@ export function StoreLocator({
   showBreadcrumbs = true,
   title,
   subtitle,
+  initialStores,
 }: StoreLocatorProps = {}) {
+  const activeStores = initialStores && initialStores.length > 0 ? initialStores : STORES;
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedStoreId, setSelectedStoreId] = useState<number>(1);
+  const [selectedStoreId, setSelectedStoreId] = useState<number>(activeStores[0]?.id || 1);
 
-  const filteredStores = STORES.filter(
+  const filteredStores = activeStores.filter(
     (s) =>
       s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -326,7 +329,7 @@ export function StoreLocator({
           {/* Right Column: Real Interactive Map (OpenStreetMap - 100% Free & No Watermark) */}
           <div className="lg:col-span-7 h-[740px] relative bg-[#f4f3f0] overflow-hidden isolate z-0">
             <InteractiveMap
-              stores={STORES}
+              stores={activeStores}
               selectedStoreId={selectedStoreId}
               onSelectStore={(id) => setSelectedStoreId(id)}
               onGeolocateRequest={handleGeolocate}
