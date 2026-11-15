@@ -33,7 +33,10 @@ export function verifyPassword(password: string, storedHash: string): boolean {
     if (keyBuffer.length !== derivedKey.length) {
       return false;
     }
-    return crypto.timingSafeEqual(keyBuffer, derivedKey);
+    return crypto.timingSafeEqual(
+      keyBuffer as unknown as Parameters<typeof crypto.timingSafeEqual>[0],
+      derivedKey as unknown as Parameters<typeof crypto.timingSafeEqual>[1]
+    );
   } catch (error) {
     console.error("Error verifying password hash:", error);
     return false;
