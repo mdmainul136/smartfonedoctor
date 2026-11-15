@@ -424,11 +424,10 @@ export default function DeviceModelsCRUDPage() {
           <button
             type="button"
             onClick={() => setOnlyPopular(!onlyPopular)}
-            className={`h-[34px] px-3 rounded-[6px] text-xs font-semibold inline-flex items-center gap-1.5 transition cursor-pointer border ${
-              onlyPopular
-                ? "bg-amber-50 border-amber-300 text-amber-800"
-                : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
-            }`}
+            className={`h-[34px] px-3 rounded-[6px] text-xs font-semibold inline-flex items-center gap-1.5 transition cursor-pointer border ${onlyPopular
+              ? "bg-amber-50 border-amber-300 text-amber-800"
+              : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
+              }`}
           >
             <Star className={`w-3.5 h-3.5 ${onlyPopular ? "fill-amber-500 text-amber-500" : ""}`} />
             <span>Popular Only</span>
@@ -710,11 +709,10 @@ export default function DeviceModelsCRUDPage() {
                         key={preset.name}
                         type="button"
                         onClick={() => setFormData({ ...formData, image: preset.url })}
-                        className={`px-2 py-1 rounded text-[10px] font-semibold whitespace-nowrap border transition cursor-pointer ${
-                          formData.image === preset.url
-                            ? "bg-teal-50 border-[#009691] text-[#009691]"
-                            : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
-                        }`}
+                        className={`px-2 py-1 rounded text-[10px] font-semibold whitespace-nowrap border transition cursor-pointer ${formData.image === preset.url
+                          ? "bg-teal-50 border-[#009691] text-[#009691]"
+                          : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+                          }`}
                       >
                         {preset.name}
                       </button>

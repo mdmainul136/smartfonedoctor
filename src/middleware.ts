@@ -25,13 +25,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // 2. Authenticated users visiting sign-in page should be redirected to admin
-  if (isAuthRoute && sessionToken) {
-    const fromParam = request.nextUrl.searchParams.get("from");
-    const targetUrl = fromParam ? decodeURIComponent(fromParam) : "/admin";
-    const redirectUrl = new URL(targetUrl.startsWith("/") ? targetUrl : "/admin", request.url);
-    return NextResponse.redirect(redirectUrl);
-  }
+  // Auto-login redirect disabled: Users visiting /sign-in or /login always see the sign-in page
+  return NextResponse.next();
 
   return NextResponse.next();
 }
