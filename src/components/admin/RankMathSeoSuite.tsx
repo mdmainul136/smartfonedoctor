@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   CheckCircle2,
   XCircle,
@@ -24,6 +24,7 @@ export interface RankMathSeoProps {
   featuredImage?: string;
   canonicalUrl?: string;
   compact?: boolean;
+  schemaType?: string;
   onKeywordChange?: (keyword: string) => void;
   onSchemaChange?: (schemaType: string) => void;
 }
@@ -46,13 +47,20 @@ export default function RankMathSeoSuite({
   featuredImage,
   canonicalUrl,
   compact = false,
+  schemaType: initialSchemaType,
   onKeywordChange,
   onSchemaChange,
 }: RankMathSeoProps) {
   const [activeTab, setActiveTab] = useState<"general" | "social" | "schema">("general");
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
   const [socialPlatform, setSocialPlatform] = useState<"facebook" | "twitter">("facebook");
-  const [schemaType, setSchemaType] = useState<string>("TechArticle");
+  const [schemaType, setSchemaType] = useState<string>(initialSchemaType || "TechArticle");
+
+  useEffect(() => {
+    if (initialSchemaType && initialSchemaType !== schemaType) {
+      setSchemaType(initialSchemaType);
+    }
+  }, [initialSchemaType]);
 
   // Helper: strip HTML to get clean text
   const plainText = useMemo(() => {

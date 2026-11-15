@@ -75,8 +75,12 @@ export default function PageSeoPanel({
           excerpt={page.metaDesc}
           contentHtml={liveContentHtml}
           focusKeyword={page.focusKeyword || ""}
+          featuredImage={page.featuredImage}
+          canonicalUrl={page.canonicalUrl || `https://smartfonedoctor.com${page.path}`}
+          schemaType={page.schemaType}
           compact={compact}
           onKeywordChange={(kw) => onChangeField("focusKeyword", kw)}
+          onSchemaChange={(schema) => onChangeField("schemaType", schema)}
         />
       </div>
 
@@ -191,6 +195,32 @@ export default function PageSeoPanel({
                 )
               }
               placeholder="e.g. screen repair, battery fix, 19139"
+              className="w-full h-[32px] px-2.5 rounded-[5px] border border-gray-300 text-[12px] text-[#111111] focus:outline-none focus:border-[#009691]"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-medium text-gray-700 mb-1">
+              Social Share Image URL (OpenGraph / Twitter)
+            </label>
+            <input
+              type="text"
+              value={page.featuredImage || ""}
+              onChange={(e) => onChangeField("featuredImage", e.target.value)}
+              placeholder="https://... or /images/..."
+              className="w-full h-[32px] px-2.5 rounded-[5px] border border-gray-300 text-[12px] text-[#111111] focus:outline-none focus:border-[#009691]"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-medium text-gray-700 mb-1">
+              Canonical URL (Optional override)
+            </label>
+            <input
+              type="text"
+              value={page.canonicalUrl || ""}
+              onChange={(e) => onChangeField("canonicalUrl", e.target.value)}
+              placeholder={`https://smartfonedoctor.com${page.path}`}
               className="w-full h-[32px] px-2.5 rounded-[5px] border border-gray-300 text-[12px] text-[#111111] focus:outline-none focus:border-[#009691]"
             />
           </div>

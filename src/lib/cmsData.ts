@@ -124,6 +124,8 @@ export interface CMSPage {
   focusKeyword?: string;
   keywords?: string[];
   featuredImage?: string;
+  canonicalUrl?: string;
+  schemaType?: string;
   heroStyle?: HeroStyle;
   sections?: PageSection[];
   puckData?: Record<string, unknown>;
