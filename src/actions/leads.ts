@@ -363,11 +363,18 @@ export async function lookupRepairTicketAction(
       [enum_leads_store.lancaster_4060]: "4060 Lancaster Ave",
     };
 
+    // Privacy-safe masked customer name (e.g. "Marcus Johnson" -> "Marcus J.")
+    const nameParts = lead.customer_name.trim().split(/\s+/);
+    const maskedName =
+      nameParts.length > 1
+        ? `${nameParts[0]} ${nameParts[nameParts.length - 1][0].toUpperCase()}.`
+        : nameParts[0];
+
     return {
       success: true,
       ticket: {
         ticketNumber: `SFD-${10000 + lead.id}`,
-        customerName: lead.customer_name,
+        customerName: maskedName,
         device: lead.device,
         issue: lead.issue,
         status: mapEnumToStatus(lead.status),
