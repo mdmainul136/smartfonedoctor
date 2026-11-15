@@ -192,6 +192,69 @@ export async function seedSeoMetadata() {
     console.log(`  ✓ Synced enterprise SEO & AI metadata for blog: "${post.title}"`);
   }
 
+  // 3. Seed Global Site SEO Settings
+  await prisma.siteSeoSettings.upsert({
+    where: { id: "global_seo_settings" },
+    update: {
+      siteName: "SmartFoneDoctor",
+      titleSeparator: "|",
+      defaultMetaTitle: "SmartFoneDoctor | Fast & Reliable Phone & Electronics Repair in Philadelphia",
+      defaultMetaDescription: "Expert cell phone, iPhone, iPad, MacBook, computer, and gaming console repair in Philadelphia, PA. Fast 30-minute screen and battery replacement with warranty.",
+      defaultOgImage: "/logo-png.jpg",
+      googleSiteVerification: "google-site-verification=sfd-philly-search-console-token-2025",
+      bingSiteVerification: "bing-webmaster-sfd-philly-token",
+      twitterHandle: "@smartfonedoctor",
+      enableSitemap: true,
+      enableRobotsTxt: true,
+      enableLlmsTxt: true,
+      enableAiBots: true,
+    },
+    create: {
+      id: "global_seo_settings",
+      siteName: "SmartFoneDoctor",
+      titleSeparator: "|",
+      defaultMetaTitle: "SmartFoneDoctor | Fast & Reliable Phone & Electronics Repair in Philadelphia",
+      defaultMetaDescription: "Expert cell phone, iPhone, iPad, MacBook, computer, and gaming console repair in Philadelphia, PA. Fast 30-minute screen and battery replacement with warranty.",
+      defaultOgImage: "/logo-png.jpg",
+      googleSiteVerification: "google-site-verification=sfd-philly-search-console-token-2025",
+      bingSiteVerification: "bing-webmaster-sfd-philly-token",
+      twitterHandle: "@smartfonedoctor",
+      enableSitemap: true,
+      enableRobotsTxt: true,
+      enableLlmsTxt: true,
+      enableAiBots: true,
+    },
+  });
+  console.log(`  ✓ Synced Global Site SEO Settings & Webmaster Tokens`);
+
+  // 4. Seed 301/302 Redirect Rules
+  const SAMPLE_REDIRECTS = [
+    { sourceUrl: "/repair/iphone", targetUrl: "/repairs/iphone", statusCode: 301, notes: "Legacy slug migration" },
+    { sourceUrl: "/repair/screen-replacement", targetUrl: "/repairs/iphone", statusCode: 301, notes: "Old WordPress landing page" },
+    { sourceUrl: "/locations/52nd-st", targetUrl: "/locations", statusCode: 301, notes: "Consolidated multi-store page" },
+    { sourceUrl: "/estimate", targetUrl: "/schedule-repair", statusCode: 302, notes: "Temporary promo campaign" },
+  ];
+
+  for (const red of SAMPLE_REDIRECTS) {
+    await prisma.urlRedirect.upsert({
+      where: { sourceUrl: red.sourceUrl },
+      update: {
+        targetUrl: red.targetUrl,
+        statusCode: red.statusCode,
+        notes: red.notes,
+        isActive: true,
+      },
+      create: {
+        sourceUrl: red.sourceUrl,
+        targetUrl: red.targetUrl,
+        statusCode: red.statusCode,
+        notes: red.notes,
+        isActive: true,
+      },
+    });
+    console.log(`  ✓ Synced URL Redirect: ${red.sourceUrl} → ${red.targetUrl} [${red.statusCode}]`);
+  }
+
   console.log("✅ [Seeder] Enterprise SEO & AI/LLM Metadata seeded successfully.");
 }
 

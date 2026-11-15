@@ -80,3 +80,46 @@ model SeoMetadata {
   @@index([allowAiCrawlers])
   @@map("seo_metadata")
 }
+
+// -------------------------------------------------------------
+// Global Site SEO Configuration (Search Console, Social, Defaults)
+// -------------------------------------------------------------
+model SiteSeoSettings {
+  id                     String   @id @default("global_seo_settings")
+  siteName               String   @default("SmartFoneDoctor")
+  titleSeparator         String   @default("|")
+  defaultMetaTitle       String   @default("SmartFoneDoctor | Fast & Reliable Phone & Electronics Repair in Philadelphia")
+  defaultMetaDescription String   @default("Expert cell phone, iPhone, iPad, MacBook, computer, and gaming console repair in Philadelphia, PA. Fast 30-minute screen and battery replacement with warranty.") @db.Text
+  defaultOgImage         String?  @default("/logo-png.jpg")
+  googleSiteVerification String?
+  bingSiteVerification   String?
+  pinterestVerification  String?
+  facebookAppId          String?
+  twitterHandle          String?  @default("@smartfonedoctor")
+  enableSitemap          Boolean  @default(true)
+  enableRobotsTxt        Boolean  @default(true)
+  enableLlmsTxt          Boolean  @default(true)
+  enableAiBots           Boolean  @default(true)
+  updatedAt              DateTime @updatedAt
+
+  @@map("site_seo_settings")
+}
+
+// -------------------------------------------------------------
+// 301 / 302 Redirection & Canonical URL Engine
+// -------------------------------------------------------------
+model UrlRedirect {
+  id          String   @id @default(cuid())
+  sourceUrl   String   @unique
+  targetUrl   String
+  statusCode  Int      @default(301) // 301 (Permanent) or 302 (Temporary)
+  hitCount    Int      @default(0)
+  isActive    Boolean  @default(true)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([sourceUrl])
+  @@index([isActive])
+  @@map("url_redirects")
+}
