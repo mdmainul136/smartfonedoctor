@@ -538,9 +538,18 @@ model BlogPost {
   featuredImage String?
   focusKeyword  String?
   schemaType    String?  @default("TechArticle")
+  articleData   Json?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   @@map("blog_posts")
+}
+
+model TaxonomyStore {
+  id        String   @id
+  data      Json
+  updatedAt DateTime @updatedAt
+
+  @@map("taxonomy_stores")
 }
 

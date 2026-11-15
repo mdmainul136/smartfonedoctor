@@ -21,6 +21,7 @@ import {
   saveStoredBlogArticles,
   getStoredBlogCategories,
 } from "@/lib/blogData";
+import { getBlogPostsAction, deleteBlogPostAction } from "@/actions/blog";
 
 export default function BlogGuidesDirectoryPage() {
   const [articles, setArticles] = useState<BlogArticle[]>([]);
@@ -30,7 +31,23 @@ export default function BlogGuidesDirectoryPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
+    // 1. Initial cached state
     setArticles(getStoredBlogArticles());
+
+    // 2. Sync with PostgreSQL
+    let mounted = true;
+    getBlogPostsAction()
+      .then((res) => {
+        if (mounted && res.success && res.articles.length > 0) {
+          setArticles(res.articles);
+          saveStoredBlogArticles(res.articles);
+        }
+      })
+      .catch(console.error);
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const showToast = (msg: string) => {
@@ -38,12 +55,13 @@ export default function BlogGuidesDirectoryPage() {
     setTimeout(() => setToastMessage(null), 2500);
   };
 
-  const handleDelete = (id: string, title: string) => {
+  const handleDelete = async (id: string, title: string) => {
     if (confirm(`Are you sure you want to delete article "${title}"?`)) {
       const updated = articles.filter((a) => a.id !== id);
       setArticles(updated);
       saveStoredBlogArticles(updated);
       showToast(`Deleted "${title}"`);
+      await deleteBlogPostAction(id).catch(console.error);
     }
   };
 

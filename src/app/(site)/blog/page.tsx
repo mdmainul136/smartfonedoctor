@@ -24,6 +24,7 @@ import {
   getStoredBlogArticles,
   getStoredBlogCategories,
 } from "@/lib/blogData";
+import { getBlogPostsAction } from "@/actions/blog";
 import {
   JsonLd,
   buildBreadcrumbSchema,
@@ -40,12 +41,24 @@ export default function PublicBlogHubPage() {
     setArticles(getStoredBlogArticles());
     setCategories(getStoredBlogCategories());
 
+    let mounted = true;
+    getBlogPostsAction()
+      .then((res) => {
+        if (mounted && res.success && res.articles.length > 0) {
+          setArticles(res.articles);
+        }
+      })
+      .catch(console.error);
+
     const handleUpdate = () => {
       setArticles(getStoredBlogArticles());
       setCategories(getStoredBlogCategories());
     };
     window.addEventListener("sfd-blog-updated", handleUpdate);
-    return () => window.removeEventListener("sfd-blog-updated", handleUpdate);
+    return () => {
+      mounted = false;
+      window.removeEventListener("sfd-blog-updated", handleUpdate);
+    };
   }, []);
 
   const filtered = articles.filter((a) => {

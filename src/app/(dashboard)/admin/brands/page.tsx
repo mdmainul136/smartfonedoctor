@@ -19,6 +19,7 @@ import {
   getStoredBrands,
   saveStoredBrands,
 } from "@/lib/taxonomy";
+import { getTaxonomyAction, saveTaxonomyAction } from "@/actions/taxonomy";
 
 export default function BrandsCRUDPage() {
   const [brands, setBrands] = useState<BrandTaxonomy[]>([]);
@@ -39,6 +40,20 @@ export default function BrandsCRUDPage() {
 
   useEffect(() => {
     setBrands(getStoredBrands());
+
+    let mounted = true;
+    getTaxonomyAction<BrandTaxonomy>("brands")
+      .then((res) => {
+        if (mounted && res.success && res.data.length > 0) {
+          setBrands(res.data);
+          saveStoredBrands(res.data);
+        }
+      })
+      .catch(console.error);
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const showToast = (msg: string) => {
@@ -116,14 +131,17 @@ export default function BrandsCRUDPage() {
     setBrands(updated);
     saveStoredBrands(updated);
     setIsModalOpen(false);
+
+    saveTaxonomyAction("brands", updated).catch(console.error);
   };
 
-  const handleDelete = (id: string, name: string) => {
+  const handleDelete = async (id: string, name: string) => {
     if (confirm(`Are you sure you want to delete brand "${name}"?`)) {
       const updated = brands.filter((b) => b.id !== id);
       setBrands(updated);
       saveStoredBrands(updated);
       showToast(`Deleted "${name}"`);
+      await saveTaxonomyAction("brands", updated).catch(console.error);
     }
   };
 

@@ -23,6 +23,7 @@ import {
   getStoredCategories,
   saveStoredCategories,
 } from "@/lib/taxonomy";
+import { getTaxonomyAction, saveTaxonomyAction } from "@/actions/taxonomy";
 
 export default function CategoriesCRUDPage() {
   const [categories, setCategories] = useState<DeviceCategory[]>([]);
@@ -43,6 +44,20 @@ export default function CategoriesCRUDPage() {
 
   useEffect(() => {
     setCategories(getStoredCategories());
+
+    let mounted = true;
+    getTaxonomyAction<DeviceCategory>("categories")
+      .then((res) => {
+        if (mounted && res.success && res.data.length > 0) {
+          setCategories(res.data);
+          saveStoredCategories(res.data);
+        }
+      })
+      .catch(console.error);
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const showToast = (msg: string) => {
@@ -106,14 +121,17 @@ export default function CategoriesCRUDPage() {
     setCategories(updated);
     saveStoredCategories(updated);
     setIsModalOpen(false);
+
+    saveTaxonomyAction("categories", updated).catch(console.error);
   };
 
-  const handleDelete = (id: string, name: string) => {
+  const handleDelete = async (id: string, name: string) => {
     if (confirm(`Are you sure you want to delete category "${name}"?`)) {
       const updated = categories.filter((c) => c.id !== id);
       setCategories(updated);
       saveStoredCategories(updated);
       showToast(`Deleted "${name}"`);
+      await saveTaxonomyAction("categories", updated).catch(console.error);
     }
   };
 

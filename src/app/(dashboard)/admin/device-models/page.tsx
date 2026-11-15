@@ -20,6 +20,7 @@ import {
   getStoredModels,
   saveStoredModels,
 } from "@/lib/taxonomy";
+import { getTaxonomyAction, saveTaxonomyAction } from "@/actions/taxonomy";
 
 export default function DeviceModelsCRUDPage() {
   const [models, setModels] = useState<DeviceModelTaxonomy[]>([]);
@@ -41,6 +42,20 @@ export default function DeviceModelsCRUDPage() {
 
   useEffect(() => {
     setModels(getStoredModels());
+
+    let mounted = true;
+    getTaxonomyAction<DeviceModelTaxonomy>("models")
+      .then((res) => {
+        if (mounted && res.success && res.data.length > 0) {
+          setModels(res.data);
+          saveStoredModels(res.data);
+        }
+      })
+      .catch(console.error);
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const showToast = (msg: string) => {
@@ -101,14 +116,17 @@ export default function DeviceModelsCRUDPage() {
     setModels(updated);
     saveStoredModels(updated);
     setIsModalOpen(false);
+
+    saveTaxonomyAction("models", updated).catch(console.error);
   };
 
-  const handleDelete = (id: string, name: string) => {
+  const handleDelete = async (id: string, name: string) => {
     if (confirm(`Are you sure you want to delete model "${name}"?`)) {
       const updated = models.filter((m) => m.id !== id);
       setModels(updated);
       saveStoredModels(updated);
       showToast(`Deleted "${name}"`);
+      await saveTaxonomyAction("models", updated).catch(console.error);
     }
   };
 

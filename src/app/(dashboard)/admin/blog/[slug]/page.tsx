@@ -33,6 +33,7 @@ import {
   saveStoredBlogArticles,
   getStoredBlogCategories,
 } from "@/lib/blogData";
+import { getBlogPostBySlugAction, upsertBlogPostAction } from "@/actions/blog";
 import RichTextEditor from "@/components/admin/RichTextEditor";
 import MediaModal from "@/components/admin/MediaModal";
 import RankMathSeoSuite from "@/components/admin/RankMathSeoSuite";
@@ -100,32 +101,17 @@ export default function BlogPostEditorPage({ params }: EditorPageProps) {
     if (!isNew) {
       const found = list.find((a) => a.slug === resolvedParams.slug);
       if (found) {
-        // If contentHtml is not present yet, compile initial HTML from sections
-        if (!found.contentHtml && found.sections && found.sections.length > 0) {
-          const styles = {
-            tip: "background: #f0fdfa; border-left: 4px solid #00897b; color: #134e48; padding: 12px 16px; margin: 16px 0; border-radius: 6px;",
-            warning: "background: #fef2f2; border-left: 4px solid #dc2626; color: #7f1d1d; padding: 12px 16px; margin: 16px 0; border-radius: 6px;",
-            note: "background: #eff6ff; border-left: 4px solid #2563eb; color: #1e3a8a; padding: 12px 16px; margin: 16px 0; border-radius: 6px;",
-          };
-          const compiled = found.sections
-            .map((s) => {
-              let calloutHtml = "";
-              if (s.calloutType && s.calloutText) {
-                const title =
-                  s.calloutType === "tip"
-                    ? "💡 Technician Tip"
-                    : s.calloutType === "warning"
-                    ? "⚠️ Technician Warning"
-                    : "ℹ️ Important Note";
-                calloutHtml = `<div style="${styles[s.calloutType]}"><strong>${title}:</strong> ${s.calloutText}</div>`;
-              }
-              return `<h2>${s.heading}</h2><p>${s.body}</p>${calloutHtml}`;
-            })
-            .join("<p><br></p>");
-          found.contentHtml = compiled;
-        }
         setArticle(found);
       }
+
+      // Also sync latest from PostgreSQL
+      getBlogPostBySlugAction(resolvedParams.slug)
+        .then((res) => {
+          if (res.success && res.article) {
+            setArticle(res.article);
+          }
+        })
+        .catch(console.error);
     } else {
       // New article default HTML
       setArticle((prev) => ({
@@ -165,7 +151,7 @@ export default function BlogPostEditorPage({ params }: EditorPageProps) {
   };
 
   // Save Post
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!article.title.trim() || !article.slug.trim()) {
       alert("Please provide both an Article Title and a URL slug.");
       return;
@@ -184,6 +170,10 @@ export default function BlogPostEditorPage({ params }: EditorPageProps) {
 
     saveStoredBlogArticles(updatedList);
     setSaveSuccess(true);
+
+    // Persist directly to PostgreSQL
+    await upsertBlogPostAction(article).catch(console.error);
+
     setTimeout(() => {
       setSaveSuccess(false);
       if (isNew) {

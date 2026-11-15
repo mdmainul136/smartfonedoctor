@@ -19,6 +19,7 @@ import {
   getStoredIssues,
   saveStoredIssues,
 } from "@/lib/taxonomy";
+import { getTaxonomyAction, saveTaxonomyAction } from "@/actions/taxonomy";
 
 export default function IssueTypesCRUDPage() {
   const [issues, setIssues] = useState<ServiceIssueTaxonomy[]>([]);
@@ -41,6 +42,20 @@ export default function IssueTypesCRUDPage() {
 
   useEffect(() => {
     setIssues(getStoredIssues());
+
+    let mounted = true;
+    getTaxonomyAction<ServiceIssueTaxonomy>("issues")
+      .then((res) => {
+        if (mounted && res.success && res.data.length > 0) {
+          setIssues(res.data);
+          saveStoredIssues(res.data);
+        }
+      })
+      .catch(console.error);
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const showToast = (msg: string) => {
@@ -114,14 +129,17 @@ export default function IssueTypesCRUDPage() {
     setIssues(updated);
     saveStoredIssues(updated);
     setIsModalOpen(false);
+
+    saveTaxonomyAction("issues", updated).catch(console.error);
   };
 
-  const handleDelete = (id: string, title: string) => {
+  const handleDelete = async (id: string, title: string) => {
     if (confirm(`Are you sure you want to delete "${title}"?`)) {
       const updated = issues.filter((i) => i.id !== id);
       setIssues(updated);
       saveStoredIssues(updated);
       showToast(`Deleted "${title}"`);
+      await saveTaxonomyAction("issues", updated).catch(console.error);
     }
   };
 

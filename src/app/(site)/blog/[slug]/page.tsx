@@ -21,6 +21,7 @@ import {
   X,
 } from "lucide-react";
 import { BlogArticle, getStoredBlogArticles } from "@/lib/blogData";
+import { getBlogPostBySlugAction } from "@/actions/blog";
 
 interface TOCItem {
   id: string;
@@ -217,18 +218,14 @@ export default function SingleBlogPostPage({ params }: BlogPostPageProps) {
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const list = getStoredBlogArticles();
-    setAllArticles(list);
-    const found = list.find((a) => a.slug === resolvedParams.slug);
-    if (found) {
+    const applyArticle = (found: BlogArticle) => {
       setArticle(found);
       if (found.contentHtml) {
         const injected = injectHeadingIds(found.contentHtml);
         setProcessedHtml(injected);
         const items = extractTOC(injected);
         setTocItems(items);
-      } else {
-        // Build TOC from sections
+      } else if (found.sections && found.sections.length > 0) {
         const items = found.sections.map((sec, i) => ({
           id: `toc-heading-${i}`,
           text: sec.heading,
@@ -236,7 +233,28 @@ export default function SingleBlogPostPage({ params }: BlogPostPageProps) {
         }));
         setTocItems(items);
       }
+    };
+
+    const list = getStoredBlogArticles();
+    setAllArticles(list);
+    const cached = list.find((a) => a.slug === resolvedParams.slug);
+    if (cached) {
+      applyArticle(cached);
     }
+
+    // Sync latest from PostgreSQL
+    let mounted = true;
+    getBlogPostBySlugAction(resolvedParams.slug)
+      .then((res) => {
+        if (mounted && res.success && res.article) {
+          applyArticle(res.article);
+        }
+      })
+      .catch(console.error);
+
+    return () => {
+      mounted = false;
+    };
   }, [resolvedParams.slug]);
 
   // ── Intersection Observer for active TOC heading ─────────────────────────
