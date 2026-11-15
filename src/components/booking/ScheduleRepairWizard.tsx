@@ -20,6 +20,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { JsonLd, buildBreadcrumbSchema } from "@/lib/schema";
+import { submitLeadAction } from "@/actions/leads";
 
 // Store Data
 const STORES = [
@@ -282,6 +283,9 @@ export function ScheduleRepairWizard() {
   const [phone, setPhone] = useState("");
   const [contactPref, setContactPref] = useState<"Call" | "Text" | "Email">("Call");
   const [marketingOptIn, setMarketingOptIn] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [confirmedTicket, setConfirmedTicket] = useState<string | null>(null);
 
   // Sidebar toggle
   const [summaryOpen, setSummaryOpen] = useState(true);
@@ -751,14 +755,45 @@ export function ScheduleRepairWizard() {
                 </p>
 
                 <form
-                  onSubmit={(e) => {
+                  onSubmit={async (e) => {
                     e.preventDefault();
-                    if (firstName && lastName && email && phone) {
+                    if (!firstName || !lastName || !phone) return;
+
+                    setIsSubmitting(true);
+                    setSubmitError(null);
+
+                    const issueLabels = selectedIssues
+                      .map((id) => ISSUES_LIST.find((i: IssueItem) => i.id === id)?.name || id)
+                      .join(", ");
+
+                    const res = await submitLeadAction({
+                      customerName: `${firstName.trim()} ${lastName.trim()}`,
+                      phone: phone.trim(),
+                      email: email.trim() || undefined,
+                      device: `${selectedMake} ${selectedModel}`,
+                      issue: issueLabels || "Hardware Diagnostic Intake",
+                      storeId: storeIdParam,
+                      source: "Website Booking Form",
+                      estValue: 99,
+                      notes: `Contact preference: ${contactPref}. Marketing opt-in: ${marketingOptIn ? "Yes" : "No"}. Device: ${selectedDevice}`,
+                    });
+
+                    setIsSubmitting(false);
+
+                    if (res.success && res.ticketNumber) {
+                      setConfirmedTicket(res.ticketNumber);
                       setCurrentStep(5);
+                    } else {
+                      setSubmitError(res.error || "Failed to submit repair intake. Please check your phone number and try again.");
                     }
                   }}
                   className="space-y-5"
                 >
+                  {submitError && (
+                    <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
+                      {submitError}
+                    </div>
+                  )}
                   {/* Name Row */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -876,17 +911,27 @@ export function ScheduleRepairWizard() {
 
                     <button
                       type="submit"
-                      className="px-8 py-2.5 rounded-full bg-[#c8102e] hover:bg-[#a60d26] text-white text-[13.5px] font-medium shadow-xs hover:shadow transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                      disabled={isSubmitting}
+                      className="px-8 py-2.5 rounded-full bg-[#c8102e] hover:bg-[#a60d26] disabled:opacity-50 text-white text-[13.5px] font-medium shadow-xs hover:shadow transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
                     >
-                      <span>Continue</span>
-                      <span className="text-sm font-semibold select-none leading-none">↗</span>
+                      {isSubmitting ? (
+                        <>
+                          <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          <span>Submitting...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Continue</span>
+                          <span className="text-sm font-semibold select-none leading-none">↗</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </form>
               </div>
             )}
 
-            {/* ================= STEP 5: SUCCESS RECAP (Image 4) ================= */}
+            {/* ================= STEP 5: SUCCESS RECAP ================= */}
             {currentStep === 5 && (
               <div className="py-6 flex flex-col justify-between h-full">
                 <div className="text-center max-w-xl mx-auto">
@@ -897,20 +942,21 @@ export function ScheduleRepairWizard() {
                     <span className="text-sfd-teal font-black text-xs leading-none">*</span>
                   </div>
 
-                  <h2 className="text-[26px] sm:text-[30px] font-bold text-[#1d1c1a] tracking-tight mb-4">
-                    Thank you for submitting your information
+                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold font-mono mb-4">
+                    <span>Reference Ticket:</span>
+                    <span className="text-emerald-900 font-extrabold">{confirmedTicket || "SFD-CONFIRMED"}</span>
+                  </div>
+
+                  <h2 className="text-[24px] sm:text-[28px] font-bold text-[#1d1c1a] tracking-tight mb-3">
+                    Repair Request Successfully Received!
                   </h2>
 
                   <p className="text-[13.5px] text-neutral-600 leading-relaxed mb-6 font-normal">
-                    A store associate will contact you to gather any additional details and share your price quote, then walk you through next steps. You can also call or stop by your local store if you have questions or prefer in-person assistance.
-                  </p>
-
-                  <p className="text-[14px] font-bold text-neutral-900 mb-6">
-                    Want your repair done sooner? Book your appointment now to skip the wait.
+                    We&apos;ve booked your bench priority queue at our <strong>{store.name}</strong> location. A technician is reviewing your device details and will prepare OEM parts for intake.
                   </p>
 
                   {/* Gray Customer Recap Box matching Image 4 */}
-                  <div className="bg-[#f4f5f7] rounded-[14px] p-5 mb-8 text-left grid grid-cols-1 sm:grid-cols-3 gap-4 border border-neutral-200/80">
+                  <div className="bg-[#f4f5f7] rounded-[14px] p-5 mb-6 text-left grid grid-cols-1 sm:grid-cols-3 gap-4 border border-neutral-200/80">
                     <div>
                       <div className="text-[11.5px] font-bold text-neutral-800 mb-1">Name</div>
                       <div className="text-[12.5px] text-neutral-600 font-medium">
@@ -919,34 +965,57 @@ export function ScheduleRepairWizard() {
                     </div>
 
                     <div>
-                      <div className="text-[11.5px] font-bold text-neutral-800 mb-1">Email Address</div>
-                      <div className="text-[12.5px] text-neutral-600 break-all font-medium">
-                        {email}
+                      <div className="text-[11.5px] font-bold text-neutral-800 mb-1">Device &amp; Issue</div>
+                      <div className="text-[12.5px] text-neutral-600 break-words font-medium">
+                        {selectedMake} {selectedModel}
                       </div>
                     </div>
 
                     <div>
-                      <div className="text-[11.5px] font-bold text-neutral-800 mb-1">Mobile Number</div>
+                      <div className="text-[11.5px] font-bold text-neutral-800 mb-1">Store Intake</div>
                       <div className="text-[12.5px] text-neutral-600 font-medium">
-                        {phone}
+                        {store.name}
                       </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-200/60 text-left flex items-start gap-3 mb-6">
+                    <Activity className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                    <div className="text-xs text-blue-900 leading-relaxed">
+                      <strong className="block mb-0.5">Track your diagnostic live:</strong>
+                      You can check bench inspection updates anytime at our{" "}
+                      <Link href={`/repair-status?ticket=${confirmedTicket || ""}`} className="font-bold underline hover:text-blue-700">
+                        Repair Status Tracker
+                      </Link>{" "}
+                      using your ticket number.
                     </div>
                   </div>
 
                 </div>
 
-                {/* Bottom Red CTA Button matching Image 4 */}
-                <div className="flex justify-end pt-6 border-t border-neutral-100">
+                {/* Bottom Actions */}
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-6 border-t border-neutral-100">
                   <button
                     type="button"
                     onClick={() => {
-                      alert("Appointment successfully registered! See you at SmartFoneDoctor.");
+                      setFirstName("");
+                      setLastName("");
+                      setEmail("");
+                      setPhone("");
+                      setConfirmedTicket(null);
                       setCurrentStep(1);
                     }}
-                    className="px-8 py-3 rounded-full bg-[#c8102e] hover:bg-[#b31924] text-white text-[13px] font-bold shadow-md transition-colors"
+                    className="px-6 py-2.5 rounded-full border border-neutral-300 bg-white text-neutral-700 text-[13px] font-medium hover:bg-neutral-50 transition cursor-pointer"
                   >
-                    Schedule my Repair
+                    Book Another Device
                   </button>
+
+                  <Link
+                    href="/"
+                    className="px-8 py-3 rounded-full bg-[#009691] hover:bg-[#007f7b] text-white text-[13px] font-bold shadow-md transition-colors"
+                  >
+                    Return to Homepage
+                  </Link>
                 </div>
               </div>
             )}

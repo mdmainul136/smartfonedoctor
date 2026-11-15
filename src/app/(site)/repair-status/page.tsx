@@ -25,6 +25,7 @@ import {
 import Footer from "@/components/layout/Footer";
 import { JsonLd, buildBreadcrumbSchema } from "@/lib/schema";
 import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
+import { lookupRepairTicketAction } from "@/actions/leads";
 
 interface TimelineStep {
   title: string;
@@ -61,74 +62,155 @@ export default function RepairStatusPage() {
   const [copied, setCopied] = useState(false);
   const [result, setResult] = useState<TrackingResult | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const paramTicket = new URLSearchParams(window.location.search).get("ticket");
+      if (paramTicket) {
+        setTicketId(paramTicket);
+        lookupRepairTicketAction(paramTicket).then((res) => {
+          if (res.success && res.ticket) {
+            populateResult(res.ticket, "Customer");
+          }
+        }).catch(console.error);
+      }
+    }
+  }, []);
+
+  const populateResult = (t: NonNullable<Awaited<ReturnType<typeof lookupRepairTicketAction>>["ticket"]>, userLastName: string) => {
+    const isCompleted = t.status === "Completed";
+    const isScheduled = t.status === "Confirmed";
+
+    setResult({
+      ticketId: t.ticketNumber,
+      lastName: userLastName,
+      device: t.device,
+      service: t.issue,
+      checkInDate: t.createdAt,
+      estimatedReady: isCompleted ? "Ready for Collection" : "Same Day (~2-4 hrs)",
+      status: isCompleted ? "Ready for Pickup" : isScheduled ? "In Progress" : "Diagnostic Inspection",
+      progressPercent: isCompleted ? 100 : isScheduled ? 65 : 30,
+      store: {
+        name: `SmartFoneDoctor - ${t.store}`,
+        badge: "Official Repair Center",
+        address: t.store.includes("Lancaster") ? "Lancaster Ave, Philadelphia, PA" : "33 S 52nd St, Philadelphia, PA 19139",
+        phone: "(215) 598-2090",
+        gmbUrl: "https://share.google/gTlyWLewR88ToAdJQ",
+      },
+      timeline: [
+        {
+          title: "Device Checked In",
+          subtitle: "Intake registration & physical condition audit",
+          timestamp: t.createdAt,
+          status: "completed",
+          technicianNote: `Device safely logged into bench queue for ${t.customerName}.`,
+        },
+        {
+          title: "Diagnostic Inspection",
+          subtitle: "Multi-point hardware and circuit verification",
+          timestamp: isCompleted || isScheduled ? "Completed" : "In Progress",
+          status: isCompleted || isScheduled ? "completed" : "current",
+          technicianNote: `Technician inspection for: ${t.issue}.`,
+        },
+        {
+          title: "Bench Repair & Sensor Calibration",
+          subtitle: "Component replacement and precision re-sealing",
+          timestamp: isCompleted ? "Completed" : isScheduled ? "In Progress" : "Pending Diagnostic",
+          status: isCompleted ? "completed" : isScheduled ? "current" : "upcoming",
+          technicianNote: isCompleted
+            ? "All replacement parts installed and 18-point functional tests passed."
+            : "Repair bench active with ESD-safe precautions.",
+        },
+        {
+          title: "Ready for Customer Pickup",
+          subtitle: "Cleaned, sanitized, and warranty paperwork ready",
+          timestamp: isCompleted ? "Ready Now" : "Estimated Today",
+          status: isCompleted ? "completed" : "upcoming",
+          technicianNote: isCompleted
+            ? "Your device is ready for collection at the store counter. Bring photo ID."
+            : "Automated SMS notification will be dispatched when ready.",
+        },
+      ],
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (!ticketId.trim() || !lastName.trim()) {
-      setError("Please provide both your Ticket ID and Last Name to track status.");
+    if (!ticketId.trim()) {
+      setError("Please provide your Ticket ID (e.g. SFD-10001) or phone number.");
       return;
     }
 
     setLoading(true);
 
-    setTimeout(() => {
+    try {
+      const res = await lookupRepairTicketAction(ticketId.trim(), lastName.trim() || undefined);
+      if (res.success && res.ticket) {
+        populateResult(res.ticket, lastName.trim() || res.ticket.customerName.split(" ").slice(-1)[0] || "Customer");
+      } else {
+        // Fallback for hardcoded demo ticket
+        if (ticketId.toUpperCase().includes("84920")) {
+          handleFillDemoData();
+        } else {
+          setError(res.error || "No active repair ticket found with that ID. Please check your drop-off receipt.");
+        }
+      }
+    } catch {
+      setError("Database or network error querying ticket. Please try again.");
+    } finally {
       setLoading(false);
-      setResult({
-        ticketId: ticketId.trim().toUpperCase(),
-        lastName: lastName.trim(),
-        device: "Apple iPhone 15 Pro",
-        service: "Screen Damage Repair & Battery Replacement",
-        checkInDate: "Today, 11:30 AM",
-        estimatedReady: "Today by 4:30 PM",
-        status: "In Progress",
-        progressPercent: 60,
-        store: {
-          name: "SmartFoneDoctor (Flagship)",
-          badge: "Philadelphia Store #1",
-          address: "33 S 52nd St, Philadelphia, PA 19139",
-          phone: "(215) 598-2090",
-          gmbUrl: "https://share.google/gTlyWLewR88ToAdJQ",
+    }
+  };
+
+  const handleFillDemoData = () => {
+    setResult({
+      ticketId: "SFD-84920",
+      lastName: lastName.trim() || "Smith",
+      device: "Apple iPhone 15 Pro",
+      service: "Screen Damage Repair & Battery Replacement",
+      checkInDate: "Today, 11:30 AM",
+      estimatedReady: "Today by 4:30 PM",
+      status: "In Progress",
+      progressPercent: 60,
+      store: {
+        name: "SmartFoneDoctor (Flagship)",
+        badge: "Philadelphia Store #1",
+        address: "33 S 52nd St, Philadelphia, PA 19139",
+        phone: "(215) 598-2090",
+        gmbUrl: "https://share.google/gTlyWLewR88ToAdJQ",
+      },
+      timeline: [
+        {
+          title: "Device Checked In",
+          subtitle: "Intake registration & physical condition audit",
+          timestamp: "Today, 11:30 AM",
+          status: "completed",
+          technicianNote: "Device safely logged into secure store vault at 33 S 52nd St.",
         },
-        timeline: [
-          {
-            title: "Device Checked In",
-            subtitle: "Intake registration & physical condition audit",
-            timestamp: "Today, 11:30 AM",
-            status: "completed",
-            technicianNote: "Device safely logged into secure store vault at 33 S 52nd St.",
-          },
-          {
-            title: "Diagnostic Inspection",
-            subtitle: "Full 21-point multi-touch and logic verification",
-            timestamp: "Today, 12:15 PM",
-            status: "completed",
-            technicianNote: "Technician confirmed cracked outer glass and diminished battery cycle health (79%).",
-          },
-          {
-            title: "Repair in Progress",
-            subtitle: "Component replacement and precision re-sealing",
-            timestamp: "Today, 1:45 PM",
-            status: "current",
-            technicianNote: "OEM OLED panel installed; genuine water-resistant gasket and fresh battery cell replacement underway.",
-          },
-          {
-            title: "Quality Control & Sensor Calibration",
-            subtitle: "FaceID, TrueTone, audio & charging bench tests",
-            timestamp: "Estimated ~3:45 PM",
-            status: "upcoming",
-            technicianNote: "Standard post-assembly bench testing to verify factory performance.",
-          },
-          {
-            title: "Ready for Customer Pickup",
-            subtitle: "Cleaned, sanitized, and sealed for collection",
-            timestamp: "Estimated ~4:30 PM",
-            status: "upcoming",
-            technicianNote: "Automated SMS notification will be dispatched when ready.",
-          },
-        ],
-      });
-    }, 500);
+        {
+          title: "Diagnostic Inspection",
+          subtitle: "Full 21-point multi-touch and logic verification",
+          timestamp: "Today, 12:15 PM",
+          status: "completed",
+          technicianNote: "Technician confirmed cracked outer glass and diminished battery health.",
+        },
+        {
+          title: "Repair in Progress",
+          subtitle: "Component replacement and precision re-sealing",
+          timestamp: "Today, 1:45 PM",
+          status: "current",
+          technicianNote: "OEM OLED panel installed; fresh battery cell replacement underway.",
+        },
+        {
+          title: "Ready for Customer Pickup",
+          subtitle: "Cleaned, sanitized, and sealed for collection",
+          timestamp: "Estimated ~4:30 PM",
+          status: "upcoming",
+          technicianNote: "Automated SMS notification will be dispatched when ready.",
+        },
+      ],
+    });
   };
 
   const handleFillDemo = () => {

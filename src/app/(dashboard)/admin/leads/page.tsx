@@ -3,6 +3,12 @@
 import { useState, useMemo, useEffect } from "react";
 import { useStoreContext } from "@/lib/storeContext";
 import {
+  getLeadsAction,
+  submitLeadAction,
+  updateLeadAction,
+  deleteLeadAction,
+} from "@/actions/leads";
+import {
   Phone,
   Search,
   ExternalLink,
@@ -103,7 +109,22 @@ export default function LeadsPage() {
     estValue: 99,
   });
 
+  const [isLoading, setIsLoading] = useState(false);
+
   useEffect(() => {
+    let mounted = true;
+    setIsLoading(true);
+    getLeadsAction()
+      .then((res) => {
+        if (mounted && res.success && res.leads.length > 0) {
+          setLeads(res.leads as unknown as Lead[]);
+        }
+      })
+      .catch(console.error)
+      .finally(() => {
+        if (mounted) setIsLoading(false);
+      });
+
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setShowAddModal(false);
@@ -112,41 +133,53 @@ export default function LeadsPage() {
       }
     };
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    return () => {
+      mounted = false;
+      window.removeEventListener("keydown", onKeyDown);
+    };
   }, []);
 
-  const handleStatusChange = (id: number, nextStatus: LeadStatus) => {
+  const handleStatusChange = async (id: number, nextStatus: LeadStatus) => {
     setLeads((prev) =>
       prev.map((item) =>
         item.id === id ? { ...item, status: nextStatus } : item
       )
     );
     notify(`Status updated to ${nextStatus}.`);
+    await updateLeadAction(id, { status: nextStatus }).catch(console.error);
   };
 
-  const handleUpdateLead = (e: React.FormEvent) => {
+  const handleUpdateLead = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingLead) return;
     setLeads((prev) =>
       prev.map((l) => (l.id === editingLead.id ? editingLead : l))
     );
     notify(`Lead for ${editingLead.name} updated.`);
+    const target = editingLead;
     setEditingLead(null);
+    await updateLeadAction(target.id, {
+      status: target.status,
+      estValue: target.estValue,
+      storeId: target.storeId,
+    }).catch(console.error);
   };
 
-  const handleDeleteLead = (id: number) => {
+  const handleDeleteLead = async (id: number) => {
     const target = leads.find((l) => l.id === id);
     setLeads((prev) => prev.filter((l) => l.id !== id));
     notify(`Deleted lead for ${target?.name ?? "customer"}.`);
     setDeletingLead(null);
+    await deleteLeadAction(id).catch(console.error);
   };
 
-  const handleAddLead = (e: React.FormEvent) => {
+  const handleAddLead = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newLead.name.trim() || !newLead.phone.trim()) return;
 
+    const tempId = Date.now();
     const created: Lead = {
-      id: Date.now(),
+      id: tempId,
       name: newLead.name.trim(),
       phone: newLead.phone.trim(),
       device: newLead.device.trim() || "Smartphone",
@@ -168,6 +201,23 @@ export default function LeadsPage() {
       estValue: 99,
     });
     setShowAddModal(false);
+    notify(`New repair lead logged for ${created.name}.`);
+
+    const res = await submitLeadAction({
+      customerName: created.name,
+      phone: created.phone,
+      device: created.device,
+      issue: created.issue,
+      storeId: created.storeId,
+      source: created.source,
+      estValue: created.estValue,
+    }).catch(console.error);
+
+    if (res && res.success && res.leadId) {
+      setLeads((prev) =>
+        prev.map((l) => (l.id === tempId ? { ...l, id: res.leadId! } : l))
+      );
+    }
   };
 
   const scopedLeads = useMemo(() => {
