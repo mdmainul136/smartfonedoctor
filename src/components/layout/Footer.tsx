@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
-import Image from 'next/image';
+import Image from "next/image";
+import { MapPin, Phone, Clock, ArrowRight } from "lucide-react";
 
 const socials = [
   {
@@ -25,89 +26,128 @@ const socials = [
   },
 ];
 
-// link: 14px always
 const linkClass =
-  "inline-block py-1 text-[14px] text-[#fcfcfc] hover:text-sfd-teal transition-colors";
-// heading: 15px always
+  "inline-block py-1 text-[14px] text-neutral-300 hover:text-[#009691] transition-colors";
 const headingClass =
-  "text-[15px] font-bold text-[#fcfcfc] mb-3 sm:mb-4 tracking-tight";
+  "text-[15px] font-bold text-white mb-3 sm:mb-4 tracking-tight";
 
 export default function Footer() {
   return (
-    <footer className="bg-[#fcfcfc] py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-[1280px] mx-auto flex flex-col gap-3 sm:gap-4">
+    <footer className="bg-[#fcfcfc] pt-12 pb-8 sm:pb-12 px-4 sm:px-6 lg:px-8 border-t border-neutral-200/50">
+      <div className="max-w-[1280px] mx-auto flex flex-col gap-4">
 
-        {/* ===== Dark card ===== */}
-        <div className="bg-[#0b0b0f] text-white rounded-2xl sm:rounded-[20px] border-t border-[#302f2c] w-full p-5 sm:p-8 lg:p-10 shadow-sm">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8 lg:gap-10">
+        {/* ===== 1. MAIN DARK CARD (4-Column Layout) ===== */}
+        <div className="bg-[#111315] text-white rounded-2xl sm:rounded-[20px] border border-neutral-800/80 w-full p-6 sm:p-8 lg:p-10 shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-10">
 
-            {/* Brand: mobile-এ full width */}
-            <div className="col-span-2 lg:col-span-1">
-              <Link href="/" className="inline-flex items-center gap-3 group">
-                 <Image
-                            src="/logo-png.jpg"
-                            alt="SmartFone Doctor Logo"
-                            width={180}
-                            height={60}
-                            priority
-                            className="h-11 sm:h-14 w-auto object-contain"
-                          />
-                <div className="flex flex-col">
-                  <span className="text-[15px] font-bold tracking-tight text-white group-hover:text-sfd-teal transition-colors">
-                    SMARTFONE DOCTOR
-                  </span>
-                  <span className="text-[11px] text-neutral-400 tracking-wider">
-                    by CERTIFIED TECH
-                  </span>
+            {/* Column 1: Brand & Contact (4 Columns on Desktop) */}
+            <div className="col-span-1 md:col-span-12 lg:col-span-4 flex flex-col justify-between gap-5">
+              <div className="space-y-3">
+                <Link href="/" className="inline-flex items-center gap-3 group">
+                  <Image
+                    src="/logo-png.jpg"
+                    alt="SmartFone Doctor Logo"
+                    width={180}
+                    height={60}
+                    priority
+                    className="h-10 sm:h-12 w-auto object-contain rounded-md"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-[15px] font-bold tracking-tight text-white group-hover:text-[#009691] transition-colors">
+                      SMARTFONE DOCTOR
+                    </span>
+                    <span className="text-[11px] text-neutral-400 tracking-wider uppercase font-medium">
+                      by Certified Tech
+                    </span>
+                  </div>
+                </Link>
+
+                <p className="text-[13px] text-neutral-400 leading-relaxed max-w-sm">
+                  Philadelphia&apos;s trusted experts for fast, same-day device repairs.
+                </p>
+              </div>
+
+              {/* Quick Contact Block */}
+              <div className="space-y-2 text-[13px] text-neutral-300 pt-3 border-t border-neutral-800/80">
+                <div className="flex items-start gap-2.5">
+                  <MapPin className="w-4 h-4 text-[#009691] shrink-0 mt-0.5" />
+                  <Link href="/locations" className="hover:text-[#009691] transition-colors">
+                    33 S 52nd St, Philadelphia, PA 19139
+                  </Link>
                 </div>
-              </Link>
+                <div className="flex items-center gap-2.5">
+                  <Phone className="w-4 h-4 text-[#009691] shrink-0" />
+                  <a href="tel:2155982090" className="hover:text-[#009691] transition-colors font-medium">
+                    (215) 598-2090
+                  </a>
+                </div>
+                <div className="flex items-center gap-2.5 text-neutral-400">
+                  <Clock className="w-4 h-4 text-[#009691] shrink-0" />
+                  <span>Mon–Sat: 10:00 AM – 7:00 PM</span>
+                </div>
+              </div>
             </div>
 
-            {/* Repair Services */}
-            <nav aria-label="Repair services">
+            {/* Column 2: Repair Services (3 Columns on Desktop) */}
+            <nav aria-label="Repair services" className="col-span-1 md:col-span-4 lg:col-span-3">
               <h4 className={headingClass}>Repair Services</h4>
-              <ul className="space-y-0.5">
+              <ul className="space-y-1">
                 <li><Link href="/repairs/iphone" className={linkClass}>iPhone Repair</Link></li>
                 <li><Link href="/repairs/smartphone" className={linkClass}>Smartphone Repair</Link></li>
-                <li><Link href="/repairs/ipad" className={linkClass}>iPod Repair</Link></li>
                 <li><Link href="/repairs/mac" className={linkClass}>Mac Repair</Link></li>
                 <li><Link href="/repairs/computer" className={linkClass}>Laptop/Computer Repair</Link></li>
                 <li><Link href="/repairs/tablet" className={linkClass}>Tablet Repair</Link></li>
+                <li><Link href="/repairs/ipad" className={linkClass}>iPod Repair</Link></li>
               </ul>
             </nav>
 
-            {/* Information */}
-            <nav aria-label="Information">
+            {/* Column 3: Information (2 Columns on Desktop) */}
+            <nav aria-label="Information" className="col-span-1 md:col-span-3 lg:col-span-2">
               <h4 className={headingClass}>Information</h4>
-              <ul className="space-y-0.5">
-                <li><Link href="/blog" className={linkClass}>Blog</Link></li>
-                <li><Link href="/common-issues" className={linkClass}>Common Issues</Link></li>
-                <li><Link href="/franchise" className={linkClass}>Franchise info</Link></li>
-                <li><Link href="/media" className={linkClass}>Media Inquiries</Link></li>
+              <ul className="space-y-1">
+                <li><Link href="/about" className={linkClass}>About Us</Link></li>
                 <li><Link href="/locations" className={linkClass}>Locations</Link></li>
+                <li><Link href="/common-issues" className={linkClass}>Common Issues</Link></li>
                 <li><Link href="/faq" className={linkClass}>FAQ</Link></li>
+                <li><Link href="/warranty" className={linkClass}>Limited Warranty</Link></li>
+                <li><Link href="/blog" className={linkClass}>Blog</Link></li>
               </ul>
             </nav>
 
-            {/* Business & Programs */}
-            <nav aria-label="Business and programs" className="col-span-2 lg:col-span-1">
-              <h4 className={`${headingClass} lg:invisible`}>Programs</h4>
-              <ul className="grid grid-cols-2 lg:grid-cols-1 gap-x-6 space-y-0.5 lg:space-y-0.5">
-                <li><Link href="/business" className={linkClass}>SFD for Business</Link></li>
-                <li><Link href="/education" className={linkClass}>SFD for Education</Link></li>
-                <li><Link href="/warranty" className={linkClass}>Limited Warranty</Link></li>
-                <li><Link href="/about" className={linkClass}>About Us</Link></li>
-              </ul>
-            </nav>
+            {/* Column 4: Business & Action (3 Columns on Desktop) */}
+            <div className="col-span-1 md:col-span-5 lg:col-span-3 flex flex-col justify-between gap-6">
+              <nav aria-label="Programs and support">
+                <h4 className={headingClass}>Programs &amp; Support</h4>
+                <ul className="space-y-1">
+                  <li><Link href="/business" className={linkClass}>SFD for Business</Link></li>
+                  <li><Link href="/education" className={linkClass}>SFD for Education</Link></li>
+                  <li><Link href="/franchise" className={linkClass}>Franchise Info</Link></li>
+                  <li><Link href="/media" className={linkClass}>Media Inquiries</Link></li>
+                </ul>
+              </nav>
+
+              {/* High-conversion CTA Button */}
+              <div className="pt-2">
+                <Link
+                  href="/locations"
+                  className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-[#009691] hover:bg-[#007e7a] text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-all cursor-pointer group active:scale-[0.99]"
+                >
+                  <span>Get Free Estimate</span>
+                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              </div>
+            </div>
+
           </div>
         </div>
 
-        {/* ===== Light card ===== */}
-        <div className="bg-[#f4f4f6] text-neutral-800 rounded-2xl sm:rounded-[20px] p-5 sm:p-8 lg:p-10 border border-neutral-200/80">
+        {/* ===== 2. BOTTOM LIGHT CARD (Legal & Trust Section) ===== */}
+        <div className="bg-[#f4f4f6] text-neutral-800 rounded-2xl sm:rounded-[20px] p-5 sm:p-8 border border-neutral-200/80">
 
-          {/* Social + policy links */}
-          <div className="flex flex-col md:flex-row items-center md:items-center justify-between gap-4 pb-5 border-b border-neutral-300/80">
-            <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Upper Row: Social Media + Policy Links */}
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 pb-5 border-b border-neutral-300/80">
+            {/* Social media icons in soft circular buttons */}
+            <div className="flex items-center gap-2">
               {socials.map((s) => (
                 <a
                   key={s.name}
@@ -115,44 +155,44 @@ export default function Footer() {
                   target="_blank"
                   rel="noreferrer"
                   aria-label={s.name}
-                  className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white hover:text-sfd-teal transition-colors"
+                  className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-white hover:bg-[#009691] hover:text-white border border-neutral-200/90 shadow-2xs transition-all text-neutral-700"
                 >
-                  <svg className="w-[18px] h-[18px] fill-current" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24" aria-hidden="true">
                     <path d={s.path} />
                   </svg>
                 </a>
               ))}
             </div>
 
-            {/* Policy links: 13px always */}
-            <div className="flex flex-wrap items-center justify-center md:justify-end gap-x-5 sm:gap-x-6 gap-y-1 text-[16px] text-[#1d1c1a]">
-              <Link href="/privacy" className="py-1 hover:text-sfd-teal transition-colors">Privacy Policy</Link>
-              <Link href="/terms" className="py-1 hover:text-sfd-teal transition-colors">Terms of Use</Link>
-              <Link href="/supply-chain" className="py-1 hover:text-sfd-teal transition-colors">California Supply Chain Act</Link>
-              <Link href="/accessibility" className="py-1 hover:text-sfd-teal transition-colors">Accessibility Statement</Link>
+            {/* Policy links */}
+            <div className="flex flex-wrap items-center justify-center md:justify-end gap-x-5 sm:gap-x-6 gap-y-1.5 text-xs sm:text-[13px] font-medium text-neutral-700">
+              <Link href="/privacy" className="hover:text-[#009691] transition-colors py-0.5">Privacy Policy</Link>
+              <Link href="/terms" className="hover:text-[#009691] transition-colors py-0.5">Terms of Use</Link>
+              <Link href="/supply-chain" className="hover:text-[#009691] transition-colors py-0.5">California Supply Chain Act</Link>
+              <Link href="/accessibility" className="hover:text-[#009691] transition-colors py-0.5">Accessibility Statement</Link>
             </div>
           </div>
 
-          {/* Badges + disclaimer */}
+          {/* Lower Row: Badges, copyright & disclaimer */}
           <div className="pt-5 flex flex-col lg:flex-row justify-between items-start gap-5 lg:gap-8">
             <div className="w-full lg:w-[320px] shrink-0 flex flex-col gap-3">
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3 font-bold text-neutral-800">
-                <span className="tracking-widest uppercase font-black text-[16px]">SAMSUNG</span>
-                <span className="px-2 py-0.5 rounded border border-neutral-300 text-[11px] bg-white font-medium">WISE Certified</span>
-                <span className="px-2 py-0.5 rounded bg-neutral-900 text-white text-[16px] font-bold">Top 500</span>
+              <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 font-bold text-neutral-800">
+                <span className="tracking-widest uppercase font-black text-xs text-neutral-900">SAMSUNG</span>
+                <span className="px-2 py-0.5 rounded border border-neutral-300 text-[11px] bg-white font-medium text-neutral-700">WISE Certified</span>
+                <span className="px-2 py-0.5 rounded bg-neutral-900 text-white text-[11px] font-bold">Top 500</span>
               </div>
-              {/* copyright: 13px */}
-              <p className="text-[13px] leading-relaxed text-[#1d1c1a] m-0">
+              <p className="text-xs text-neutral-600 m-0 leading-normal">
                 © 2026 SmartFoneDoctor. All Rights Reserved
               </p>
             </div>
 
-            {/* disclaimer: 12px always — no responsive override */}
-            <p className="w-full lg:max-w-[856px] text-[14px] leading-relaxed text-[#1d1c1a] m-0">
+            <p className="w-full lg:max-w-[856px] text-xs leading-relaxed text-neutral-500 m-0">
               All SmartFoneDoctor stores are independently owned and operated and may not offer all of the repair and warranty types listed on this website. Contact your local store for their specific repair capabilities and warranty terms. SmartFoneDoctor and its stores are not liable for warranties made by third parties on specific accessories or devices sold at SmartFoneDoctor stores. All product and company names are trademarks of their respective holders. iPhone, iPad, iPod, iPod touch, Mac and iMac are registered trademarks and property of Apple, Inc. SmartFoneDoctor is a third-party repair company and is not affiliated with Apple.
             </p>
           </div>
+
         </div>
+
       </div>
     </footer>
   );
