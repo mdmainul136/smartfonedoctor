@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import CustomPage from "@/components/site/CustomPage";
 import { getCmsPage } from "@/actions/cmsPages";
 import { compilePageCss } from "@/puck/style/compilePage";
@@ -10,6 +11,17 @@ type PageProps = {
 
 /** Look up page via standard PostgreSQL query with seed fallback */
 async function resolvePage(slug: string[]) {
+  // Never handle internal Next.js, API, or static asset extensions in the catch-all
+  if (
+    !slug ||
+    slug.length === 0 ||
+    slug[0] === "_next" ||
+    slug[0] === "api" ||
+    slug.some((s) => s.includes("."))
+  ) {
+    return { page: null, path: "" };
+  }
+
   const path = `/${slug.join("/")}`;
   const page = await getCmsPage(path);
   return { page, path };
@@ -89,9 +101,13 @@ export default async function CustomPageRoute({ params }: PageProps) {
   const { slug } = await params;
   const { page, path } = await resolvePage(slug);
 
+  if (!page) {
+    notFound();
+  }
+
   const css =
-    page?.compiledCss ||
-    (page?.puckData && (page.puckData as { content?: unknown[] }).content
+    page.compiledCss ||
+    (page.puckData && (page.puckData as { content?: unknown[] }).content
       ? compilePageCss((page.puckData as { content: unknown[] }).content)
       : "");
 
@@ -99,7 +115,7 @@ export default async function CustomPageRoute({ params }: PageProps) {
     <>
       {css ? (
         <style
-          id={`pb-css-${page?.slug}`}
+          id={`pb-css-${page.slug}`}
           dangerouslySetInnerHTML={{ __html: css }}
         />
       ) : null}
