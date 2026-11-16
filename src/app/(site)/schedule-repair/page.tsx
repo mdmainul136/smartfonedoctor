@@ -1,7 +1,6 @@
 import React, { Suspense } from "react";
 import type { Metadata } from "next";
 import Footer from "@/components/layout/Footer";
-import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
 import ScheduleRepairWizard, { WizardStore } from "@/components/booking/ScheduleRepairWizard";
 import { getStoreBranchesAction } from "@/actions/settings";
 
@@ -27,12 +26,10 @@ export default async function ScheduleRepairPage() {
       : undefined;
 
   return (
-    <main>
-      <CMSSectionRenderer slug="schedule-repair">
-        <Suspense fallback={<div className="p-10 text-center text-neutral-500 text-sm">Loading repair request...</div>}>
-          <ScheduleRepairWizard initialStores={initialStores} />
-        </Suspense>
-      </CMSSectionRenderer>
+    <main className="bg-[#f7f8fa] min-h-screen">
+      <Suspense fallback={<div className="p-10 text-center text-neutral-500 text-sm">Loading repair request...</div>}>
+        <ScheduleRepairWizard initialStores={initialStores} />
+      </Suspense>
       <Footer />
     </main>
   );
