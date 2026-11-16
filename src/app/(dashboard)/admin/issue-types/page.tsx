@@ -294,7 +294,8 @@ export default function IssueTypesCRUDPage() {
       fd.append("alt", formData.title || "Issue repair diagram");
       const res = await fetch("/api/admin/media", { method: "POST", body: fd });
       if (res.ok) {
-        const data = await res.json();
+        const text = await res.text();
+        const data = text ? JSON.parse(text) : {};
         if (data.success && data.item?.url) {
           setFormData((prev) => ({ ...prev, image: data.item.url }));
           showToast("Image uploaded successfully!");

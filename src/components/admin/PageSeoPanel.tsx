@@ -218,7 +218,8 @@ export default function PageSeoPanel({
       fd.append("alt", page.title || "SmartFoneDoctor Philadelphia");
       const res = await fetch("/api/admin/media", { method: "POST", body: fd });
       if (res.ok) {
-        const data = await res.json();
+        const text = await res.text();
+        const data = text ? JSON.parse(text) : {};
         if (data.success && data.item?.url) {
           onChangeField("featuredImage", data.item.url);
         }

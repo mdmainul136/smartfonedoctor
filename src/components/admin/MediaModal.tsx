@@ -79,7 +79,8 @@ export default function MediaModal({
     try {
       const res = await fetch("/api/admin/media");
       if (res.ok) {
-        const data = await res.json();
+        const text = await res.text();
+        const data = text ? JSON.parse(text) : {};
         if (data.items && Array.isArray(data.items)) {
           setItems(data.items);
           saveClientMediaLibrary(data.items);
@@ -145,7 +146,8 @@ export default function MediaModal({
       });
 
       if (res.ok) {
-        const data = await res.json();
+        const text = await res.text();
+        const data = text ? JSON.parse(text) : {};
         if (data.item) {
           const updated = [data.item, ...items];
           setItems(updated);

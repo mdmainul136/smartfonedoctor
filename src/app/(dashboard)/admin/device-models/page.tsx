@@ -169,7 +169,8 @@ export default function DeviceModelsCRUDPage() {
       fd.append("alt", formData.name || "Device model photo");
       const res = await fetch("/api/admin/media", { method: "POST", body: fd });
       if (res.ok) {
-        const data = await res.json();
+        const text = await res.text();
+        const data = text ? JSON.parse(text) : {};
         if (data.success && data.item?.url) {
           setFormData((prev) => ({ ...prev, image: data.item.url }));
           showToast("Device picture uploaded successfully!");

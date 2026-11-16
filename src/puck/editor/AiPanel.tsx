@@ -43,7 +43,11 @@ export default function PuckAiPanel({
     setProvider(saved.defaultProvider);
 
     fetch(getBuilderHost().aiEndpoint)
-      .then((r) => r.json())
+      .then(async (r) => {
+        if (!r.ok) return { hasServerKey: false };
+        const text = await r.text();
+        return text ? JSON.parse(text) : { hasServerKey: false };
+      })
       .then((info: { hasServerKey?: boolean; providers?: { gemini?: boolean; openai?: boolean } }) => {
         const serverReady = Boolean(info.hasServerKey);
         setHasServerKey(serverReady);
