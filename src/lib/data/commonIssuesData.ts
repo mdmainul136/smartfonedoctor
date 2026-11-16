@@ -380,6 +380,112 @@ export const COMMON_ISSUES_CMS: CommonIssueDetail[] = [
       ],
     },
   },
+
+  // 8. BROKEN TABLET SCREEN / DIGITIZER (Tablet)
+  {
+    slug: "broken-tablet-screen",
+    category: "tablet",
+    categoryName: "Tablet",
+    title: "Broken Tablet Screen & Cracked Digitizer Repair",
+    leadText:
+      "A shattered glass digitizer, unresponsive touch grid, or distorted retina display on your iPad, Samsung Galaxy Tab, or Amazon Fire can be quickly restored to factory condition.",
+    image:
+      "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=900&auto=format&fit=crop&q=80",
+    sections: [
+      {
+        heading: "Glass Digitizer vs Full Display Assembly",
+        paragraphs: [
+          "Tablets generally fall into two construction types: fused laminated displays (such as iPad Pro, iPad Air, and Galaxy Tab S series) where the outer glass and OLED/Retina panel are bonded together, and non-laminated models (such as standard entry-level iPads) where the touch glass digitizer is separate from the LCD panel underneath.",
+          "If your tablet display still lights up normally without colorful vertical lines or dark ink blotches, you may only need the glass digitizer replaced. In fused displays, a complete precision display assembly is installed to preserve True Tone, Apple Pencil pressure sensitivity, and 120Hz ProMotion response.",
+        ],
+      },
+      {
+        heading: "Common Signs of Tablet Screen Failure",
+        paragraphs: [
+          "Spiderweb cracks spreading across the front face, loose glass splinters that pose a safety hazard, dead zones where touch inputs fail to register, or ghost touches where apps open erratically without being clicked.",
+          "If the underlying LCD is damaged, you will observe black liquid ink spots, bright flickering horizontal lines, or a completely black screen while device sounds and notifications continue to function.",
+        ],
+      },
+      {
+        heading: "Same-Day Tablet Screen Repair at SmartFoneDoctor",
+        paragraphs: [
+          "Our certified repair technicians in Philadelphia use professional heating plates, laser separation jigs, and OEM-grade glass digitizers to guarantee flawless touch responsiveness, seamless edge fitment, and zero dust trapped beneath the display.",
+          "Walk in to our 33 S 52nd St flagship lab or our Lancaster Ave branches for a free 10-minute diagnostic and fast same-day turnaround backed by our warranty.",
+        ],
+      },
+    ],
+    relatedSlugs: [
+      "cracked-glass-replacement",
+      "battery-replacement",
+      "charging-port-replacement",
+      "water-damaged-phone-repair",
+    ],
+    seo: {
+      title: "Broken Tablet Screen & Digitizer Repair | SmartFoneDoctor",
+      description:
+        "Same-day iPad and tablet screen repair in Philadelphia. Fix cracked glass, unresponsive touch digitizers, and broken Retina LCDs with warranty.",
+      keywords: [
+        "Broken Tablet Screen",
+        "iPad Screen Repair Philadelphia",
+        "Tablet Digitizer Replacement",
+        "Fix Cracked iPad",
+        "Galaxy Tab Screen Replacement",
+      ],
+    },
+  },
+
+  // 9. BATTERY DEPLETING QUICKLY (Smartphone)
+  {
+    slug: "battery-depleting-quickly",
+    category: "smartphone",
+    categoryName: "Smartphone",
+    title: "Phone Battery Depleting Quickly & Rapid Drain Fix",
+    leadText:
+      "Is your phone battery draining in just a few hours, dropping from 50% to 10% suddenly, or shutting down during phone calls? Learn how we diagnose and resolve rapid battery depletion.",
+    image:
+      "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=900&auto=format&fit=crop&q=80",
+    sections: [
+      {
+        heading: "Why Do Smartphone Batteries Deplete Fast?",
+        paragraphs: [
+          "Lithium-ion batteries chemically age with every charge cycle. After 400 to 500 charge cycles (typically 1.5 to 2 years of daily use), maximum storage capacity drops below 80%, causing accelerated voltage drop and aggressive thermal throttling by the operating system.",
+          "Background app refresh, rogue location services, corrupted system cache, or hardware parasitic drain from a damaged power management IC (PMIC) can also pull continuous current even when the screen is turned off.",
+        ],
+      },
+      {
+        heading: "Troubleshooting Steps Before Replacement",
+        paragraphs: [
+          "Check Battery Health in Settings: On iOS go to Settings > Battery > Battery Health; on Android check Battery Diagnostics. If Maximum Capacity is under 80% or says 'Service Recommended', software tweaks cannot restore lost chemistry.",
+          "Audit Battery Usage by App: Look for apps showing unusually high background activity or 30%+ consumption in the last 24 hours.",
+          "Calibrate the Gauge: Fully charge the device to 100%, keep it connected for 30 extra minutes, then use it until it turns off automatically at 0%, and recharge without interruption.",
+        ],
+      },
+      {
+        heading: "Fast 25-Minute OEM Battery Replacement",
+        paragraphs: [
+          "When battery chemistry has degraded, installing a brand-new zero-cycle OEM battery is the most cost-effective way to restore all-day battery life and peak device processing speed.",
+          "SmartFoneDoctor replaces iPhone, Samsung Galaxy, and Google Pixel batteries in under 30 minutes at all 3 Philadelphia stores with battery health calibration and full warranty.",
+        ],
+      },
+    ],
+    relatedSlugs: [
+      "battery-replacement",
+      "charging-port-replacement",
+      "cracked-glass-replacement",
+      "water-damaged-phone-repair",
+    ],
+    seo: {
+      title: "Phone Battery Depleting Quickly Fix | SmartFoneDoctor",
+      description:
+        "Fix rapid phone battery drain and sudden shutdowns. Fast 25-minute OEM battery replacement and power diagnostics in Philadelphia.",
+      keywords: [
+        "Battery Depleting Quickly",
+        "Phone Battery Draining Fast",
+        "iPhone Battery Replacement Philadelphia",
+        "Fix Fast Draining Battery",
+      ],
+    },
+  },
 ];
 
 export function getAllCommonIssuesCMS(): CommonIssueDetail[] {
@@ -390,16 +496,57 @@ export function getCommonIssueBySlug(
   slug: string,
   category?: string
 ): CommonIssueDetail | undefined {
-  if (category) {
-    return COMMON_ISSUES_CMS.find(
+  const normalizedSlug = slug.toLowerCase().trim();
+  const normalizedCat = category?.toLowerCase().trim();
+
+  // 1. Direct match with category
+  if (normalizedCat) {
+    const directMatch = COMMON_ISSUES_CMS.find(
       (item) =>
-        item.slug.toLowerCase() === slug.toLowerCase() &&
-        item.category.toLowerCase() === category.toLowerCase()
+        item.slug.toLowerCase() === normalizedSlug &&
+        item.category.toLowerCase() === normalizedCat
     );
+    if (directMatch) return directMatch;
   }
-  return COMMON_ISSUES_CMS.find(
-    (item) => item.slug.toLowerCase() === slug.toLowerCase()
+
+  // 2. Slug-only direct match (category agnostic)
+  const slugOnlyMatch = COMMON_ISSUES_CMS.find(
+    (item) => item.slug.toLowerCase() === normalizedSlug
   );
+  if (slugOnlyMatch) return slugOnlyMatch;
+
+  // 3. Known Aliases mapping
+  const aliasMap: Record<string, string> = {
+    "cracked-screen-repair": "cracked-glass-replacement",
+    "cracked-digitizer-glass": "broken-tablet-screen",
+    "tablet-screen-repair": "broken-tablet-screen",
+    "tablet-screen": "broken-tablet-screen",
+    "screen-repair": "cracked-glass-replacement",
+    "battery-drain": "battery-depleting-quickly",
+    "battery-depleting": "battery-depleting-quickly",
+    "phone-battery": "battery-replacement",
+    "charging-port": "charging-port-replacement",
+    "water-damage": "water-damaged-phone-repair",
+  };
+
+  const targetSlug = aliasMap[normalizedSlug];
+  if (targetSlug) {
+    const aliasMatch = COMMON_ISSUES_CMS.find((item) => item.slug === targetSlug);
+    if (aliasMatch) return aliasMatch;
+  }
+
+  // 4. Fallback search by keyword/contains
+  const keywordMatch = COMMON_ISSUES_CMS.find((item) => {
+    if (normalizedCat && item.category !== normalizedCat) return false;
+    return (
+      item.slug.includes(normalizedSlug) ||
+      normalizedSlug.includes(item.slug) ||
+      item.title.toLowerCase().includes(normalizedSlug.replace(/-/g, " "))
+    );
+  });
+  if (keywordMatch) return keywordMatch;
+
+  return undefined;
 }
 
 export function getRelatedIssues(currentSlug: string): CommonIssueDetail[] {
