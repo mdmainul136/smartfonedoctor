@@ -12,7 +12,6 @@ import {
   buildBreadcrumbSchema,
   buildMultiStoreSchema,
 } from "@/lib/schema";
-import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
 
 export const metadata: Metadata = {
   title: "Book a Repair | SmartFoneDoctor Store Locator",
@@ -57,16 +56,14 @@ export default async function BookRepairPage() {
       <JsonLd data={breadcrumbSchema} />
       <JsonLd data={multiStoreSchema} />
 
-      <CMSSectionRenderer slug="locations">
-        {/* 1. Store Locator with Search & Map (Dynamic PostgreSQL Stores) */}
-        <StoreLocator initialStores={mapStores} />
+      {/* 1. Store Locator with Search & Map (Dynamic PostgreSQL Stores) */}
+      <StoreLocator initialStores={mapStores} />
 
-        {/* 2. The SmartFoneDoctor Difference - WISE Certified Technicians */}
-        <WiseCertification />
+      {/* 2. The SmartFoneDoctor Difference - WISE Certified Technicians */}
+      <WiseCertification />
 
-        {/* 3. Frequently Asked Questions */}
-        <FaqSection />
-      </CMSSectionRenderer>
+      {/* 3. Frequently Asked Questions */}
+      <FaqSection />
 
       {/* 4. Footer */}
       <Footer />
