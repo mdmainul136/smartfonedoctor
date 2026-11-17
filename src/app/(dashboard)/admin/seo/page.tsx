@@ -34,7 +34,9 @@ import {
   CheckCheck,
   Building2,
   ChevronRight,
+  Image as ImageIcon,
 } from "lucide-react";
+import MediaModal, { type SelectedMediaPayload } from "@/components/admin/MediaModal";
 import {
   getSiteSeoSettingsAction,
   updateSiteSeoSettingsAction,
@@ -73,6 +75,9 @@ export default function SeoManagerPage() {
   const [editingStore, setEditingStore] = useState<StoreLocation | null>(null);
   const [editFormData, setEditFormData] = useState<Partial<StoreLocation>>({});
   const [isSavingStore, setIsSavingStore] = useState<boolean>(false);
+  const [mediaFieldTarget, setMediaFieldTarget] = useState<
+    "logoUrl" | "logoDarkUrl" | "faviconUrl" | "appleTouchIcon" | "defaultOgImage" | null
+  >(null);
 
   // Settings state
   const [settings, setSettings] = useState<SiteSeoSettingsInput>({
@@ -681,13 +686,30 @@ export default function SeoManagerPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-gray-100">
               <div>
                 <label className="text-xs font-bold text-gray-700 block mb-1">Default Social Share Image (OG Image)</label>
-                <input
-                  type="text"
-                  value={settings.defaultOgImage || ""}
-                  onChange={(e) => setSettings({ ...settings, defaultOgImage: e.target.value })}
-                  placeholder="/logo-png.jpg"
-                  className="w-full h-9 px-3 rounded-lg border border-gray-300 text-xs font-semibold focus:outline-none focus:border-[#009691]"
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={settings.defaultOgImage || ""}
+                    onChange={(e) => setSettings({ ...settings, defaultOgImage: e.target.value })}
+                    placeholder="/logo-png.jpg"
+                    className="flex-1 h-9 px-3 rounded-lg border border-gray-300 text-xs font-semibold focus:outline-none focus:border-[#009691]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setMediaFieldTarget("defaultOgImage")}
+                    className="h-9 px-2.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer shrink-0"
+                    title="Choose from Media Library"
+                  >
+                    <ImageIcon className="w-3.5 h-3.5 text-[#009691]" />
+                    <span className="hidden sm:inline">Media Library</span>
+                  </button>
+                  {settings.defaultOgImage && (
+                    <div className="w-9 h-9 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={settings.defaultOgImage} alt="OG Preview" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -722,6 +744,15 @@ export default function SeoManagerPage() {
                       placeholder="/logo-png.jpg"
                       className="flex-1 h-9 px-3 rounded-lg border border-gray-300 text-xs font-semibold focus:outline-none focus:border-[#009691]"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setMediaFieldTarget("logoUrl")}
+                      className="h-9 px-2.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer shrink-0"
+                      title="Choose from Media Library"
+                    >
+                      <ImageIcon className="w-3.5 h-3.5 text-[#009691]" />
+                      <span className="hidden sm:inline">Media Library</span>
+                    </button>
                     {settings.logoUrl && (
                       <div className="w-9 h-9 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -741,6 +772,15 @@ export default function SeoManagerPage() {
                       placeholder="/logo-transparent.png"
                       className="flex-1 h-9 px-3 rounded-lg border border-gray-300 text-xs font-semibold focus:outline-none focus:border-[#009691]"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setMediaFieldTarget("logoDarkUrl")}
+                      className="h-9 px-2.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer shrink-0"
+                      title="Choose from Media Library"
+                    >
+                      <ImageIcon className="w-3.5 h-3.5 text-[#009691]" />
+                      <span className="hidden sm:inline">Media Library</span>
+                    </button>
                     {settings.logoDarkUrl && (
                       <div className="w-9 h-9 rounded-lg border border-gray-700 bg-gray-900 flex items-center justify-center overflow-hidden shrink-0">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -760,6 +800,15 @@ export default function SeoManagerPage() {
                       placeholder="/favicon.ico"
                       className="flex-1 h-9 px-3 rounded-lg border border-gray-300 text-xs font-semibold focus:outline-none focus:border-[#009691]"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setMediaFieldTarget("faviconUrl")}
+                      className="h-9 px-2.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer shrink-0"
+                      title="Choose from Media Library"
+                    >
+                      <ImageIcon className="w-3.5 h-3.5 text-[#009691]" />
+                      <span className="hidden sm:inline">Media Library</span>
+                    </button>
                     {settings.faviconUrl && (
                       <div className="w-9 h-9 rounded-lg border border-gray-200 bg-white flex items-center justify-center shrink-0">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -779,6 +828,15 @@ export default function SeoManagerPage() {
                       placeholder="/logo-png.jpg"
                       className="flex-1 h-9 px-3 rounded-lg border border-gray-300 text-xs font-semibold focus:outline-none focus:border-[#009691]"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setMediaFieldTarget("appleTouchIcon")}
+                      className="h-9 px-2.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer shrink-0"
+                      title="Choose from Media Library"
+                    >
+                      <ImageIcon className="w-3.5 h-3.5 text-[#009691]" />
+                      <span className="hidden sm:inline">Media Library</span>
+                    </button>
                     {settings.appleTouchIcon && (
                       <div className="w-9 h-9 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1603,6 +1661,31 @@ export default function SeoManagerPage() {
           )}
         </div>
       )}
+
+      {/* Media Management Library Picker Modal */}
+      <MediaModal
+        isOpen={mediaFieldTarget !== null}
+        onClose={() => setMediaFieldTarget(null)}
+        onSelect={(payload: SelectedMediaPayload) => {
+          if (mediaFieldTarget) {
+            setSettings((prev) => ({ ...prev, [mediaFieldTarget]: payload.url }));
+          }
+          setMediaFieldTarget(null);
+        }}
+        title={`Select ${
+          mediaFieldTarget === "logoUrl"
+            ? "Primary Website Logo"
+            : mediaFieldTarget === "logoDarkUrl"
+            ? "Dark Logo Asset"
+            : mediaFieldTarget === "faviconUrl"
+            ? "Browser Favicon (.ico / .png)"
+            : mediaFieldTarget === "appleTouchIcon"
+            ? "Apple Touch Icon"
+            : "Social Share (OG) Image"
+        }`}
+        selectButtonText="Use This Image"
+        initialSelectedUrl={mediaFieldTarget ? (settings[mediaFieldTarget] as string) || "" : ""}
+      />
     </div>
   );
 }

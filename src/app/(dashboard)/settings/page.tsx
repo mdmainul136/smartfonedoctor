@@ -31,7 +31,9 @@ import {
   ExternalLink,
   Store,
   ChevronRight,
+  Image as ImageIcon,
 } from "lucide-react";
+import MediaModal, { type SelectedMediaPayload } from "@/components/admin/MediaModal";
 
 const EMPTY_STORE: Omit<StoreLocation, "id"> = {
   name: "",
@@ -69,6 +71,7 @@ export default function SettingsPage() {
   const [newStore, setNewStore] = useState<Omit<StoreLocation, "id">>(EMPTY_STORE);
 
   // App & AI Settings State
+  const [mediaFieldTarget, setMediaFieldTarget] = useState<"logoUrl" | "faviconUrl" | null>(null);
   const [systemSettings, setSystemSettings] = useState<AppSystemSettingsData>({
     id: "global_config",
     siteName: "SmartFone Doctor",
@@ -848,6 +851,15 @@ export default function SettingsPage() {
                     placeholder="/logo-png.jpg"
                     className="flex-1 h-10 rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-xs sm:text-sm text-slate-900 focus:bg-white focus:border-[#009691] focus:ring-2 focus:ring-teal-100 outline-none transition-all"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setMediaFieldTarget("logoUrl")}
+                    className="h-10 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer shrink-0"
+                    title="Choose from Media Library"
+                  >
+                    <ImageIcon className="w-4 h-4 text-[#009691]" />
+                    <span className="hidden sm:inline">Media Library</span>
+                  </button>
                   {systemSettings.logoUrl && (
                     <div className="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center overflow-hidden shrink-0">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -869,6 +881,15 @@ export default function SettingsPage() {
                     placeholder="/favicon.ico"
                     className="flex-1 h-10 rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-xs sm:text-sm text-slate-900 focus:bg-white focus:border-[#009691] focus:ring-2 focus:ring-teal-100 outline-none transition-all"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setMediaFieldTarget("faviconUrl")}
+                    className="h-10 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer shrink-0"
+                    title="Choose from Media Library"
+                  >
+                    <ImageIcon className="w-4 h-4 text-[#009691]" />
+                    <span className="hidden sm:inline">Media Library</span>
+                  </button>
                   {systemSettings.faviconUrl && (
                     <div className="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center overflow-hidden shrink-0">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -929,6 +950,21 @@ export default function SettingsPage() {
           </form>
         </div>
       )}
+
+      {/* Media Management Library Modal */}
+      <MediaModal
+        isOpen={mediaFieldTarget !== null}
+        onClose={() => setMediaFieldTarget(null)}
+        onSelect={(payload: SelectedMediaPayload) => {
+          if (mediaFieldTarget) {
+            setSystemSettings((prev) => ({ ...prev, [mediaFieldTarget]: payload.url }));
+          }
+          setMediaFieldTarget(null);
+        }}
+        title={`Select ${mediaFieldTarget === "logoUrl" ? "Brand Logo Asset" : "Browser Favicon Asset"}`}
+        selectButtonText="Use This Asset"
+        initialSelectedUrl={mediaFieldTarget ? systemSettings[mediaFieldTarget] || "" : ""}
+      />
     </div>
   );
 }
