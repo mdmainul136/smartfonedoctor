@@ -176,6 +176,7 @@ export default function ServiceDetailClient({ service }: Props) {
               fill
               className="object-cover object-center opacity-40 brightness-75"
               priority
+              fetchPriority="high"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/80 to-transparent"></div>
           </div>
@@ -324,7 +325,7 @@ export default function ServiceDetailClient({ service }: Props) {
                       </p>
                     )}
                     <div className="flex items-center justify-between mt-3 pt-2 border-t border-neutral-100">
-                      <span className="text-[11px] text-neutral-400">{item.turnaround}</span>
+                      <span className="text-[11px] text-neutral-500">{item.turnaround}</span>
                       <span className="text-xs font-semibold text-[#c8102e] group-hover:underline">
                         View repairs &gt;
                       </span>
@@ -358,7 +359,7 @@ export default function ServiceDetailClient({ service }: Props) {
                       {item.description}
                     </p>
                     <div className="flex items-center justify-between mt-2">
-                      <span className="text-[10px] text-neutral-400">{item.turnaround}</span>
+                      <span className="text-[10px] text-neutral-500">{item.turnaround}</span>
                       <span className="text-xs font-semibold text-[#c8102e] group-hover:underline">
                         Pricing &amp; Fix &gt;
                       </span>
@@ -392,7 +393,7 @@ export default function ServiceDetailClient({ service }: Props) {
                   </div>
                   <Link
                     href="/schedule-repair"
-                    className="mt-4 text-xs font-bold text-sfd-teal hover:underline inline-flex items-center gap-1"
+                    className="mt-4 text-xs font-bold text-[#00736E] hover:underline inline-flex items-center gap-1"
                   >
                     {card.linkText}
                   </Link>
@@ -440,7 +441,7 @@ export default function ServiceDetailClient({ service }: Props) {
           {/* Apple Banner */}
           <div className="rounded-3xl p-8 sm:p-10 bg-[#121316] text-white flex flex-col justify-between relative overflow-hidden shadow-md">
             <div className="max-w-md z-10">
-              <span className="inline-block px-2.5 py-1 rounded bg-[#009691] text-white text-[10px] font-bold uppercase tracking-wider mb-4">
+              <span className="inline-block px-2.5 py-1 rounded bg-[#00736E] text-white text-[10px] font-bold uppercase tracking-wider mb-4">
                 {service.partnerBanners.apple.badge}
               </span>
               <h3 className="text-xl sm:text-2xl font-bold tracking-tight">
@@ -460,7 +461,7 @@ export default function ServiceDetailClient({ service }: Props) {
             <div className="mt-6 pt-4 border-t border-neutral-800 z-10">
               <Link
                 href="/schedule-repair"
-                className="text-xs font-bold text-sfd-teal hover:underline inline-flex items-center gap-1"
+                className="text-xs font-bold text-[#00736E] hover:underline inline-flex items-center gap-1"
               >
                 Schedule Certified Service &gt;
               </Link>
@@ -474,7 +475,7 @@ export default function ServiceDetailClient({ service }: Props) {
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <BookOpen className="w-4 h-4 text-sfd-teal" />
-                <span className="text-xs font-bold uppercase tracking-wider text-sfd-teal">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#00736E]">
                   Technical Knowledge Base
                 </span>
               </div>
@@ -484,7 +485,7 @@ export default function ServiceDetailClient({ service }: Props) {
             </div>
             <Link
               href="/blog"
-              className="text-xs font-bold text-sfd-teal hover:underline inline-flex items-center gap-1 self-start sm:self-auto"
+              className="text-xs font-bold text-[#00736E] hover:underline inline-flex items-center gap-1 self-start sm:self-auto"
             >
               <span>Explore All Guides &amp; Articles</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -499,7 +500,7 @@ export default function ServiceDetailClient({ service }: Props) {
                 className="p-5 rounded-2xl border border-neutral-200/80 bg-neutral-50/50 hover:bg-white hover:border-sfd-teal hover:shadow-xs transition-all group flex flex-col justify-between"
               >
                 <div className="space-y-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-sfd-teal bg-sfd-teal/10 px-2 py-0.5 rounded-full inline-block">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#00736E] bg-sfd-teal/10 px-2 py-0.5 rounded-full inline-block">
                     {guide.category}
                   </span>
                   <h4 className="text-xs sm:text-sm font-bold text-neutral-900 group-hover:text-sfd-teal transition-colors leading-snug line-clamp-2">
@@ -511,7 +512,7 @@ export default function ServiceDetailClient({ service }: Props) {
                     <Clock className="w-3 h-3 text-sfd-teal" />
                     {guide.readTime}
                   </span>
-                  <span className="text-xs font-bold text-sfd-teal group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-0.5">
+                  <span className="text-xs font-bold text-[#00736E] group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-0.5">
                     <span>Read</span>
                     <ArrowRight className="w-3 h-3" />
                   </span>

@@ -926,7 +926,7 @@ export default function IssueTypesCRUDPage() {
 
               {/* Schema.org Live Validation Snippet */}
               <div className="p-2.5 rounded-lg bg-gray-900 text-emerald-400 font-mono text-[10px] leading-relaxed border border-gray-800">
-                <span className="text-gray-400 block mb-0.5">// Schema.org JSON-LD Service Object:</span>
+                <span className="text-gray-400 block mb-0.5">{"// Schema.org JSON-LD Service Object:"}</span>
                 <div>{`"@type": "Service", "serviceType": "${formData.title || "Repair Service"}",`}</div>
                 <div>{`"image": "${formData.image || "https://smartfonedoctor.com/logo-png.jpg"}",`}</div>
                 <div>{`"offers": { "@type": "Offer", "price": "${formData.startingPrice || 69}", "priceCurrency": "USD" }`}</div>

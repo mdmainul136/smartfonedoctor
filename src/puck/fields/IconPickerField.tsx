@@ -11,7 +11,7 @@ export function createIconPickerField(label = "Icon"): CustomField<PuckIconName>
   return {
     type: "custom",
     label,
-    render: ({ field, value, onChange, readOnly }) => {
+    render: function IconPickerRenderer({ field, value, onChange, readOnly }) {
       const current = value || "None";
       const [pickerMode, setPickerMode] = useState<"preset" | "custom">("preset");
       const [searchQuery, setSearchQuery] = useState("");

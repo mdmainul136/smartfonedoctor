@@ -795,7 +795,7 @@ export default function DeviceModelsCRUDPage() {
 
               {/* Schema.org Live Validation Snippet */}
               <div className="p-2.5 rounded-lg bg-gray-900 text-emerald-400 font-mono text-[10px] leading-relaxed border border-gray-800">
-                <span className="text-gray-400 block mb-0.5">// Schema.org JSON-LD Product Object:</span>
+                <span className="text-gray-400 block mb-0.5">{"// Schema.org JSON-LD Product Object:"}</span>
                 <div>{`"@type": "Product", "name": "${formData.name || "Device Model"}",`}</div>
                 <div>{`"image": "${formData.image || "https://smartfonedoctor.com/logo-png.jpg"}",`}</div>
                 <div>{`"brand": { "@type": "Brand", "name": "${formData.brandSlug || "apple"}" }`}</div>
