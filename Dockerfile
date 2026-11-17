@@ -15,11 +15,16 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generate Prisma Client
-RUN npx prisma generate
-
+# Build-time environment variables for Next.js and Prisma static generation
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+ENV DATABASE_URL="postgresql://postgres:postgres@db:5432/smartfonedoctor"
+ENV POSTGRES_URL="postgresql://postgres:postgres@db:5432/smartfonedoctor"
+ENV DATABASE_URI="postgresql://postgres:postgres@db:5432/smartfonedoctor"
+ENV PAYLOAD_SECRET="smartfonedoctor-philadelphia-payload-secret-key-32chars"
+
+# Generate Prisma Client
+RUN npx prisma generate
 
 RUN npm run build
 
@@ -31,21 +36,25 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+ENV DATABASE_URL="postgresql://postgres:postgres@db:5432/smartfonedoctor"
+ENV POSTGRES_URL="postgresql://postgres:postgres@db:5432/smartfonedoctor"
+ENV DATABASE_URI="postgresql://postgres:postgres@db:5432/smartfonedoctor"
+ENV PAYLOAD_SECRET="smartfonedoctor-philadelphia-payload-secret-key-32chars"
 
 RUN apk add --no-cache openssl libc6-compat curl bash
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/scripts ./scripts
-COPY --from=builder /app/next.config.mjs ./next.config.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
+COPY --from=builder --chown=nextjs:nodejs /app/next.config.mjs ./next.config.mjs
 
-COPY docker-entrypoint.sh ./docker-entrypoint.sh
+COPY --chown=nextjs:nodejs docker-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod +x ./docker-entrypoint.sh
 
 USER nextjs
