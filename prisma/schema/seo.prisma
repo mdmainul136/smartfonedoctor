@@ -91,6 +91,27 @@ model SiteSeoSettings {
   defaultMetaTitle       String   @default("SmartFoneDoctor | Fast & Reliable Phone & Electronics Repair in Philadelphia")
   defaultMetaDescription String   @default("Expert cell phone, iPhone, iPad, MacBook, computer, and gaming console repair in Philadelphia, PA. Fast 30-minute screen and battery replacement with warranty.") @db.Text
   defaultOgImage         String?  @default("/logo-png.jpg")
+
+  // 🎨 Branding Assets (Logo, Favicon, Dark Logo, Apple Icon)
+  logoUrl                String?  @default("/logo-png.jpg")
+  logoDarkUrl            String?  @default("/logo-transparent.png")
+  faviconUrl             String?  @default("/favicon.ico")
+  appleTouchIcon         String?  @default("/logo-png.jpg")
+
+  // 📞 Organization & Contact Details
+  contactPhone           String?  @default("+1 (215) 598-2090")
+  contactEmail           String?  @default("contact@smartfonedoctor.com")
+  streetAddress          String?  @default("33 S 52nd St")
+  cityStateZip           String?  @default("Philadelphia, PA 19139")
+  businessHours          String?  @default("Mon–Sat: 10:00 AM – 7:30 PM | Sun: 11:00 AM – 5:00 PM")
+
+  // 🌐 Social Media & Profiles
+  facebookUrl            String?  @default("https://facebook.com/smartfonedoctor")
+  instagramUrl           String?  @default("https://instagram.com/smartfonedoctor")
+  youtubeUrl             String?
+  linkedinUrl            String?
+  gmbUrl                 String?  @default("https://share.google/gTlyWLewR88ToAdJQ")
+
   googleSiteVerification String?
   bingSiteVerification   String?
   pinterestVerification  String?

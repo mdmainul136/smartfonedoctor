@@ -31,6 +31,11 @@ model AppSystemSettings {
   currency           String   @default("USD")
   timezone           String   @default("America/New_York")
   
+  // Branding Assets
+  logoUrl            String?  @default("/logo-png.jpg")
+  logoDarkUrl        String?  @default("/logo-transparent.png")
+  faviconUrl         String?  @default("/favicon.ico")
+
   // AI Page Builder Settings
   defaultAiProvider  String   @default("gemini") // "gemini" | "openai"
   geminiApiKey       String?

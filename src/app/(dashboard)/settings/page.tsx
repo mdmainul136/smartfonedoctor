@@ -835,6 +835,50 @@ export default function SettingsPage() {
               />
             </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-slate-700">Brand Logo URL</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={systemSettings.logoUrl || ""}
+                    onChange={(e) =>
+                      setSystemSettings((prev) => ({ ...prev, logoUrl: e.target.value }))
+                    }
+                    placeholder="/logo-png.jpg"
+                    className="flex-1 h-10 rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-xs sm:text-sm text-slate-900 focus:bg-white focus:border-[#009691] focus:ring-2 focus:ring-teal-100 outline-none transition-all"
+                  />
+                  {systemSettings.logoUrl && (
+                    <div className="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center overflow-hidden shrink-0">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={systemSettings.logoUrl} alt="Logo Preview" className="w-full h-full object-contain" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-slate-700">Browser Favicon URL</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={systemSettings.faviconUrl || ""}
+                    onChange={(e) =>
+                      setSystemSettings((prev) => ({ ...prev, faviconUrl: e.target.value }))
+                    }
+                    placeholder="/favicon.ico"
+                    className="flex-1 h-10 rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-xs sm:text-sm text-slate-900 focus:bg-white focus:border-[#009691] focus:ring-2 focus:ring-teal-100 outline-none transition-all"
+                  />
+                  {systemSettings.faviconUrl && (
+                    <div className="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center overflow-hidden shrink-0">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={systemSettings.faviconUrl} alt="Favicon Preview" className="w-5 h-5 object-contain" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
             <div className="pt-4 border-t border-slate-100 flex flex-col gap-2.5">
               <span className="text-xs font-bold text-slate-900">Notification Channels</span>
               <label className="flex items-center gap-2.5 cursor-pointer select-none">

@@ -26,6 +26,9 @@ export interface AppSystemSettingsData {
   headquarters: string;
   currency: string;
   timezone: string;
+  logoUrl?: string | null;
+  logoDarkUrl?: string | null;
+  faviconUrl?: string | null;
   defaultAiProvider: string;
   geminiApiKey: string | null;
   openaiApiKey: string | null;
@@ -250,6 +253,9 @@ export async function updateAppSystemSettingsAction(
         headquarters: data.headquarters || "33 S 52nd St, Philadelphia, PA 19139",
         currency: data.currency || "USD",
         timezone: data.timezone || "America/New_York",
+        logoUrl: data.logoUrl || "/logo-png.jpg",
+        logoDarkUrl: data.logoDarkUrl || "/logo-transparent.png",
+        faviconUrl: data.faviconUrl || "/favicon.ico",
         defaultAiProvider: data.defaultAiProvider || "gemini",
         geminiApiKey: data.geminiApiKey || null,
         openaiApiKey: data.openaiApiKey || null,
@@ -263,6 +269,9 @@ export async function updateAppSystemSettingsAction(
         ...(data.headquarters ? { headquarters: data.headquarters.trim() } : {}),
         ...(data.currency ? { currency: data.currency.trim() } : {}),
         ...(data.timezone ? { timezone: data.timezone.trim() } : {}),
+        ...(data.logoUrl !== undefined ? { logoUrl: data.logoUrl?.trim() || null } : {}),
+        ...(data.logoDarkUrl !== undefined ? { logoDarkUrl: data.logoDarkUrl?.trim() || null } : {}),
+        ...(data.faviconUrl !== undefined ? { faviconUrl: data.faviconUrl?.trim() || null } : {}),
         ...(data.defaultAiProvider ? { defaultAiProvider: data.defaultAiProvider } : {}),
         ...(data.geminiApiKey !== undefined ? { geminiApiKey: data.geminiApiKey?.trim() || null } : {}),
         ...(data.openaiApiKey !== undefined ? { openaiApiKey: data.openaiApiKey?.trim() || null } : {}),

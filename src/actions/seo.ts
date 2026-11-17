@@ -9,6 +9,20 @@ export interface SiteSeoSettingsInput {
   defaultMetaTitle: string;
   defaultMetaDescription: string;
   defaultOgImage?: string;
+  logoUrl?: string;
+  logoDarkUrl?: string;
+  faviconUrl?: string;
+  appleTouchIcon?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  streetAddress?: string;
+  cityStateZip?: string;
+  businessHours?: string;
+  facebookUrl?: string;
+  instagramUrl?: string;
+  youtubeUrl?: string;
+  linkedinUrl?: string;
+  gmbUrl?: string;
   googleSiteVerification?: string;
   bingSiteVerification?: string;
   pinterestVerification?: string;
@@ -77,6 +91,20 @@ export async function updateSiteSeoSettingsAction(input: SiteSeoSettingsInput) {
         defaultMetaTitle: input.defaultMetaTitle,
         defaultMetaDescription: input.defaultMetaDescription,
         defaultOgImage: input.defaultOgImage || "/logo-png.jpg",
+        logoUrl: input.logoUrl || "/logo-png.jpg",
+        logoDarkUrl: input.logoDarkUrl || "/logo-transparent.png",
+        faviconUrl: input.faviconUrl || "/favicon.ico",
+        appleTouchIcon: input.appleTouchIcon || "/logo-png.jpg",
+        contactPhone: input.contactPhone || "+1 (215) 598-2090",
+        contactEmail: input.contactEmail || "contact@smartfonedoctor.com",
+        streetAddress: input.streetAddress || "33 S 52nd St",
+        cityStateZip: input.cityStateZip || "Philadelphia, PA 19139",
+        businessHours: input.businessHours || "Mon–Sat: 10:00 AM – 7:30 PM | Sun: 11:00 AM – 5:00 PM",
+        facebookUrl: input.facebookUrl || "https://facebook.com/smartfonedoctor",
+        instagramUrl: input.instagramUrl || "https://instagram.com/smartfonedoctor",
+        youtubeUrl: input.youtubeUrl || null,
+        linkedinUrl: input.linkedinUrl || null,
+        gmbUrl: input.gmbUrl || "https://share.google/gTlyWLewR88ToAdJQ",
         googleSiteVerification: input.googleSiteVerification || null,
         bingSiteVerification: input.bingSiteVerification || null,
         pinterestVerification: input.pinterestVerification || null,
@@ -94,6 +122,20 @@ export async function updateSiteSeoSettingsAction(input: SiteSeoSettingsInput) {
         defaultMetaTitle: input.defaultMetaTitle,
         defaultMetaDescription: input.defaultMetaDescription,
         defaultOgImage: input.defaultOgImage || "/logo-png.jpg",
+        logoUrl: input.logoUrl || "/logo-png.jpg",
+        logoDarkUrl: input.logoDarkUrl || "/logo-transparent.png",
+        faviconUrl: input.faviconUrl || "/favicon.ico",
+        appleTouchIcon: input.appleTouchIcon || "/logo-png.jpg",
+        contactPhone: input.contactPhone || "+1 (215) 598-2090",
+        contactEmail: input.contactEmail || "contact@smartfonedoctor.com",
+        streetAddress: input.streetAddress || "33 S 52nd St",
+        cityStateZip: input.cityStateZip || "Philadelphia, PA 19139",
+        businessHours: input.businessHours || "Mon–Sat: 10:00 AM – 7:30 PM | Sun: 11:00 AM – 5:00 PM",
+        facebookUrl: input.facebookUrl || "https://facebook.com/smartfonedoctor",
+        instagramUrl: input.instagramUrl || "https://instagram.com/smartfonedoctor",
+        youtubeUrl: input.youtubeUrl || null,
+        linkedinUrl: input.linkedinUrl || null,
+        gmbUrl: input.gmbUrl || "https://share.google/gTlyWLewR88ToAdJQ",
         googleSiteVerification: input.googleSiteVerification || null,
         bingSiteVerification: input.bingSiteVerification || null,
         pinterestVerification: input.pinterestVerification || null,

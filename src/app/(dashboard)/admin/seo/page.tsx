@@ -82,6 +82,20 @@ export default function SeoManagerPage() {
     defaultMetaDescription:
       "Expert cell phone, iPhone, iPad, MacBook, computer, and gaming console repair in Philadelphia, PA. Fast 30-minute screen and battery replacement with warranty.",
     defaultOgImage: "/logo-png.jpg",
+    logoUrl: "/logo-png.jpg",
+    logoDarkUrl: "/logo-transparent.png",
+    faviconUrl: "/favicon.ico",
+    appleTouchIcon: "/logo-png.jpg",
+    contactPhone: "+1 (215) 598-2090",
+    contactEmail: "contact@smartfonedoctor.com",
+    streetAddress: "33 S 52nd St",
+    cityStateZip: "Philadelphia, PA 19139",
+    businessHours: "Mon–Sat: 10:00 AM – 7:30 PM | Sun: 11:00 AM – 5:00 PM",
+    facebookUrl: "https://facebook.com/smartfonedoctor",
+    instagramUrl: "https://instagram.com/smartfonedoctor",
+    youtubeUrl: "",
+    linkedinUrl: "",
+    gmbUrl: "https://share.google/gTlyWLewR88ToAdJQ",
     googleSiteVerification: "",
     bingSiteVerification: "",
     pinterestVerification: "",
@@ -129,6 +143,20 @@ export default function SeoManagerPage() {
           defaultMetaTitle: settingsRes.settings.defaultMetaTitle,
           defaultMetaDescription: settingsRes.settings.defaultMetaDescription,
           defaultOgImage: settingsRes.settings.defaultOgImage || "/logo-png.jpg",
+          logoUrl: settingsRes.settings.logoUrl || "/logo-png.jpg",
+          logoDarkUrl: settingsRes.settings.logoDarkUrl || "/logo-transparent.png",
+          faviconUrl: settingsRes.settings.faviconUrl || "/favicon.ico",
+          appleTouchIcon: settingsRes.settings.appleTouchIcon || "/logo-png.jpg",
+          contactPhone: settingsRes.settings.contactPhone || "+1 (215) 598-2090",
+          contactEmail: settingsRes.settings.contactEmail || "contact@smartfonedoctor.com",
+          streetAddress: settingsRes.settings.streetAddress || "33 S 52nd St",
+          cityStateZip: settingsRes.settings.cityStateZip || "Philadelphia, PA 19139",
+          businessHours: settingsRes.settings.businessHours || "Mon–Sat: 10:00 AM – 7:30 PM | Sun: 11:00 AM – 5:00 PM",
+          facebookUrl: settingsRes.settings.facebookUrl || "https://facebook.com/smartfonedoctor",
+          instagramUrl: settingsRes.settings.instagramUrl || "https://instagram.com/smartfonedoctor",
+          youtubeUrl: settingsRes.settings.youtubeUrl || "",
+          linkedinUrl: settingsRes.settings.linkedinUrl || "",
+          gmbUrl: settingsRes.settings.gmbUrl || "https://share.google/gTlyWLewR88ToAdJQ",
           googleSiteVerification: settingsRes.settings.googleSiteVerification || "",
           bingSiteVerification: settingsRes.settings.bingSiteVerification || "",
           pinterestVerification: settingsRes.settings.pinterestVerification || "",
@@ -673,6 +701,217 @@ export default function SeoManagerPage() {
                 />
               </div>
             </div>
+
+            {/* BRAND ASSETS & IDENTITY (LOGO, FAVICON, TOUCH ICONS) */}
+            <div className="pt-4 border-t border-gray-100 space-y-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-[#009691]" />
+                <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+                  Brand Identity &amp; Media Assets
+                </h4>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-gray-700 block mb-1">Primary Website Logo URL</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={settings.logoUrl || ""}
+                      onChange={(e) => setSettings({ ...settings, logoUrl: e.target.value })}
+                      placeholder="/logo-png.jpg"
+                      className="flex-1 h-9 px-3 rounded-lg border border-gray-300 text-xs font-semibold focus:outline-none focus:border-[#009691]"
+                    />
+                    {settings.logoUrl && (
+                      <div className="w-9 h-9 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={settings.logoUrl} alt="Logo Preview" className="w-full h-full object-contain" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-gray-700 block mb-1">Dark / Transparent Logo URL</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={settings.logoDarkUrl || ""}
+                      onChange={(e) => setSettings({ ...settings, logoDarkUrl: e.target.value })}
+                      placeholder="/logo-transparent.png"
+                      className="flex-1 h-9 px-3 rounded-lg border border-gray-300 text-xs font-semibold focus:outline-none focus:border-[#009691]"
+                    />
+                    {settings.logoDarkUrl && (
+                      <div className="w-9 h-9 rounded-lg border border-gray-700 bg-gray-900 flex items-center justify-center overflow-hidden shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={settings.logoDarkUrl} alt="Dark Logo Preview" className="w-full h-full object-contain" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-gray-700 block mb-1">Browser Favicon URL (.ico / .png)</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={settings.faviconUrl || ""}
+                      onChange={(e) => setSettings({ ...settings, faviconUrl: e.target.value })}
+                      placeholder="/favicon.ico"
+                      className="flex-1 h-9 px-3 rounded-lg border border-gray-300 text-xs font-semibold focus:outline-none focus:border-[#009691]"
+                    />
+                    {settings.faviconUrl && (
+                      <div className="w-9 h-9 rounded-lg border border-gray-200 bg-white flex items-center justify-center shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={settings.faviconUrl} alt="Favicon" className="w-5 h-5 object-contain" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-gray-700 block mb-1">Apple Touch Icon URL</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={settings.appleTouchIcon || ""}
+                      onChange={(e) => setSettings({ ...settings, appleTouchIcon: e.target.value })}
+                      placeholder="/logo-png.jpg"
+                      className="flex-1 h-9 px-3 rounded-lg border border-gray-300 text-xs font-semibold focus:outline-none focus:border-[#009691]"
+                    />
+                    {settings.appleTouchIcon && (
+                      <div className="w-9 h-9 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={settings.appleTouchIcon} alt="Touch Icon" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* BUSINESS CONTACT & HEADQUARTERS */}
+            <div className="pt-4 border-t border-gray-100 space-y-3">
+              <div className="flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-[#009691]" />
+                <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+                  Contact &amp; Headquarters Details
+                </h4>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-gray-700 block mb-1">Central Support Phone</label>
+                  <input
+                    type="tel"
+                    value={settings.contactPhone || ""}
+                    onChange={(e) => setSettings({ ...settings, contactPhone: e.target.value })}
+                    placeholder="+1 (215) 598-2090"
+                    className="w-full h-9 px-3 rounded-lg border border-gray-300 text-xs font-semibold focus:outline-none focus:border-[#009691]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-gray-700 block mb-1">Primary Contact Email</label>
+                  <input
+                    type="email"
+                    value={settings.contactEmail || ""}
+                    onChange={(e) => setSettings({ ...settings, contactEmail: e.target.value })}
+                    placeholder="contact@smartfonedoctor.com"
+                    className="w-full h-9 px-3 rounded-lg border border-gray-300 text-xs font-semibold focus:outline-none focus:border-[#009691]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-gray-700 block mb-1">Street Address</label>
+                  <input
+                    type="text"
+                    value={settings.streetAddress || ""}
+                    onChange={(e) => setSettings({ ...settings, streetAddress: e.target.value })}
+                    placeholder="33 S 52nd St"
+                    className="w-full h-9 px-3 rounded-lg border border-gray-300 text-xs font-semibold focus:outline-none focus:border-[#009691]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-gray-700 block mb-1">City, State, ZIP</label>
+                  <input
+                    type="text"
+                    value={settings.cityStateZip || ""}
+                    onChange={(e) => setSettings({ ...settings, cityStateZip: e.target.value })}
+                    placeholder="Philadelphia, PA 19139"
+                    className="w-full h-9 px-3 rounded-lg border border-gray-300 text-xs font-semibold focus:outline-none focus:border-[#009691]"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="text-xs font-bold text-gray-700 block mb-1">Business Hours</label>
+                  <input
+                    type="text"
+                    value={settings.businessHours || ""}
+                    onChange={(e) => setSettings({ ...settings, businessHours: e.target.value })}
+                    placeholder="Mon–Sat: 10:00 AM – 7:30 PM | Sun: 11:00 AM – 5:00 PM"
+                    className="w-full h-9 px-3 rounded-lg border border-gray-300 text-xs font-semibold focus:outline-none focus:border-[#009691]"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* SOCIAL MEDIA & DIRECTORY PROFILES */}
+            <div className="pt-4 border-t border-gray-100 space-y-3">
+              <div className="flex items-center gap-2">
+                <Share2 className="w-4 h-4 text-[#009691]" />
+                <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+                  Social Profiles &amp; Maps Links
+                </h4>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-gray-700 block mb-1">Facebook Page URL</label>
+                  <input
+                    type="url"
+                    value={settings.facebookUrl || ""}
+                    onChange={(e) => setSettings({ ...settings, facebookUrl: e.target.value })}
+                    placeholder="https://facebook.com/smartfonedoctor"
+                    className="w-full h-9 px-3 rounded-lg border border-gray-300 text-xs font-semibold focus:outline-none focus:border-[#009691]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-gray-700 block mb-1">Instagram Profile URL</label>
+                  <input
+                    type="url"
+                    value={settings.instagramUrl || ""}
+                    onChange={(e) => setSettings({ ...settings, instagramUrl: e.target.value })}
+                    placeholder="https://instagram.com/smartfonedoctor"
+                    className="w-full h-9 px-3 rounded-lg border border-gray-300 text-xs font-semibold focus:outline-none focus:border-[#009691]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-gray-700 block mb-1">YouTube Channel URL</label>
+                  <input
+                    type="url"
+                    value={settings.youtubeUrl || ""}
+                    onChange={(e) => setSettings({ ...settings, youtubeUrl: e.target.value })}
+                    placeholder="https://youtube.com/@smartfonedoctor"
+                    className="w-full h-9 px-3 rounded-lg border border-gray-300 text-xs font-semibold focus:outline-none focus:border-[#009691]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-gray-700 block mb-1">Google Maps / GMB URL</label>
+                  <input
+                    type="url"
+                    value={settings.gmbUrl || ""}
+                    onChange={(e) => setSettings({ ...settings, gmbUrl: e.target.value })}
+                    placeholder="https://share.google/gTlyWLewR88ToAdJQ"
+                    className="w-full h-9 px-3 rounded-lg border border-gray-300 text-xs font-semibold focus:outline-none focus:border-[#009691]"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* PREVIEW CARD */}
@@ -692,6 +931,35 @@ export default function SeoManagerPage() {
             </div>
             <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800 leading-snug">
               💡 These settings apply as global fallbacks whenever an individual page or blog post has empty SEO fields.
+            </div>
+
+            {/* LIVE BRAND ASSET PREVIEW */}
+            <div className="pt-3 border-t border-gray-100 space-y-2.5">
+              <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wider">Live Brand Assets Preview</h3>
+              
+              {/* Browser Tab Simulation */}
+              <div className="rounded-xl border border-gray-200 bg-gray-100 p-2 text-xs">
+                <span className="text-[10px] text-gray-400 block mb-1 font-medium">Browser Tab Preview:</span>
+                <div className="inline-flex items-center gap-2 bg-white rounded-t-lg px-3 py-1.5 border-t border-x border-gray-200 shadow-2xs max-w-full">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={settings.faviconUrl || "/favicon.ico"} alt="Favicon" className="w-3.5 h-3.5 object-contain shrink-0" />
+                  <span className="text-[11px] font-semibold text-gray-800 truncate max-w-[180px]">
+                    {settings.siteName} · {settings.defaultMetaTitle.split("|")[0].trim()}
+                  </span>
+                </div>
+              </div>
+
+              {/* Logo Card Preview */}
+              <div className="rounded-xl border border-gray-200 p-3 bg-white flex items-center justify-between gap-3">
+                <div>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Header Logo</span>
+                  <span className="text-xs font-semibold text-gray-900">{settings.siteName}</span>
+                </div>
+                <div className="h-10 px-3 rounded-lg border border-gray-100 bg-gray-50 flex items-center justify-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={settings.logoUrl || "/logo-png.jpg"} alt="Logo Preview" className="max-h-8 max-w-[110px] object-contain" />
+                </div>
+              </div>
             </div>
           </div>
         </div>
