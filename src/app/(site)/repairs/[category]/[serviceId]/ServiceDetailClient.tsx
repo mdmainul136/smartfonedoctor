@@ -25,6 +25,11 @@ import {
 } from "lucide-react";
 import Footer from "@/components/layout/Footer";
 import type { ServiceCMSData } from "@/data/servicesData";
+import PSeoRichSection, {
+  SpecificationRow,
+  FaqItem,
+  KeyFeatureItem,
+} from "@/components/seo/PSeoRichSection";
 import {
   JsonLd,
   buildBreadcrumbSchema,
@@ -521,6 +526,88 @@ export default function ServiceDetailClient({ service }: Props) {
             ))}
           </div>
         </section>
+
+        {/* 5.5. Automated Technical Specifications & pSEO Bench Overview */}
+        <div className="mb-16">
+          <PSeoRichSection
+            title={`${service.serviceName} Technical Bench Specifications & Overview`}
+            subtitle={`Certified laboratory standards and hardware repair benchmarks for ${service.serviceName} in Philadelphia, PA. All repairs handled on-site with 90-day warranty.`}
+            badge="Philadelphia Laboratory Spec"
+            specifications={[
+              { label: "Service Name", value: `${service.serviceName} Repair & Diagnostics` },
+              { label: "Hardware Category", value: service.categoryName },
+              {
+                label: "Models Supported",
+                value:
+                  service.models.length > 0
+                    ? service.models.slice(0, 4).map((m) => m.title).join(", ") + " & all models"
+                    : "All Generations & Variants Supported",
+              },
+              { label: "Average Turnaround", value: "20 – 45 Minutes (Same-Day Express Bench)" },
+              { label: "Diagnostic Fee", value: "$0.00 (100% Free Upfront Assessment)" },
+              { label: "Parts Quality", value: "OEM Original & Premium Grade-A+ Certified Assemblies" },
+              { label: "Warranty Guarantee", value: "90-Day Comprehensive Parts & Labor Warranty" },
+              { label: "Data Safety Policy", value: "Zero Data Wipe Guarantee (Photos, apps & credentials kept intact)" },
+              { label: "Technician Standard", value: "WISE Certified Level 2 & ESD-Safe Bench Master Techs" },
+              { label: "Flagship Bench Location", value: "33 S 52nd St, Philadelphia, PA 19139" },
+              { label: "Walk-in Policy", value: "Walk-ins Welcome Daily – No Appointment Required" },
+            ]}
+            keyFeatures={[
+              {
+                title: "Express 30-Minute Turnaround",
+                desc: `Most ${service.serviceName} screen, battery, and charging port replacements are completed within 30 to 45 minutes while you wait in our comfortable lounge.`,
+              },
+              {
+                title: "Factory TrueTone & Biometric Calibration",
+                desc: "We transfer EEPROM serial numbers and calibrate ambient sensors to maintain factory biometric security, auto-brightness, and touch sensitivity.",
+              },
+              {
+                title: "Zero Data Loss Guarantee",
+                desc: "Unlike manufacturer mail-in service centers that wipe your storage clean, your personal photos, files, and apps remain 100% safe and untouched.",
+              },
+              {
+                title: "Component-Level Micro-Soldering",
+                desc: "In-house soldering station for HDMI ports, USB-C charging ports, audio ICs, and liquid-damaged motherboard restoration.",
+              },
+              {
+                title: "Transparent Upfront Pricing",
+                desc: "You receive an exact written quote before any technician starts work. Zero hidden bench fees or surprise charges.",
+              },
+              {
+                title: "90-Day Peace of Mind Warranty",
+                desc: "Every installed component is backed by our comprehensive 90-day warranty against manufacturer defects and touch unresponsiveness.",
+              },
+            ]}
+            faqs={[
+              {
+                question: `How much does ${service.serviceName} repair cost in Philadelphia?`,
+                answer: `Diagnostic testing for your ${service.serviceName} is always 100% free at SmartFoneDoctor. Basic battery and port repairs start from $69, and screen replacements start from $89 depending on your exact model and component grade (Premium Aftermarket vs Factory OEM).`,
+              },
+              {
+                question: `How long does ${service.serviceName} repair take?`,
+                answer: `Most screen and battery replacements for ${service.serviceName} take between 20 and 45 minutes. More extensive micro-soldering or liquid-damage decontamination is typically ready for pickup same-day or within 24 hours.`,
+              },
+              {
+                question: `Do I need to make an appointment or can I walk in?`,
+                answer: `Walk-ins are always welcome at all 3 of our Philadelphia stores! Booking online simply reserves your replacement part and secures priority bench placement.`,
+              },
+              {
+                question: `Will my photos and personal data be wiped during the repair?`,
+                answer: `No. Our certified technicians repair the hardware directly without resetting the device. Your photos, contacts, and personal data remain 100% untouched.`,
+              },
+              {
+                question: `Where are your Philadelphia repair stores located?`,
+                answer: `Our flagship store is at 33 S 52nd St, Philadelphia, PA 19139 (right by the 52nd St Market-Frankford Line station). We also have locations at 4016 Lancaster Ave and 4060 Lancaster Ave in West Philadelphia / University City.`,
+              },
+              {
+                question: `What does the 90-day warranty cover?`,
+                answer: `Our 90-day warranty covers any defect in the replacement part (touch responsiveness, screen flickering, battery cycle health) and technician craftsmanship. Physical damage or water exposure after pickup is excluded.`,
+              },
+            ]}
+            bookingUrl={`/schedule-repair?device=${encodeURIComponent(service.serviceId)}`}
+            bookingCtaText={`Book ${service.serviceName} Online`}
+          />
+        </div>
 
         {/* 6. Bottom Call to Action Banner */}
         <section className="w-full rounded-2xl sm:rounded-3xl bg-[#1d1c1a] text-white p-6 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-md mb-8">

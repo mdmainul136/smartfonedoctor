@@ -199,6 +199,95 @@ export default function DeviceIssueClient({ data }: Props) {
           {/* Main Column (8 cols) */}
           <div className="lg:col-span-8 space-y-12">
 
+            {/* A0. Technical Specification Table (E-Commerce Style pSEO) */}
+            <section className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
+              <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <div>
+                  <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                    <Wrench className="w-4 h-4 text-[#00897b]" />
+                    <span>{device.name} {issue.shortName} Technical Specifications</span>
+                  </h2>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Philadelphia laboratory standards and bench intake guidelines
+                  </p>
+                </div>
+                <span className="text-[11px] font-bold text-[#00897b] uppercase tracking-wider bg-white px-2.5 py-1 rounded-md border border-gray-200">
+                  Verified Spec
+                </span>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <tbody>
+                    <tr className="bg-white">
+                      <th scope="row" className="py-3 px-6 text-xs font-bold text-gray-700 w-1/3 sm:w-1/4 border-b border-gray-100">
+                        Service Name
+                      </th>
+                      <td className="py-3 px-6 text-xs sm:text-sm text-gray-900 border-b border-gray-100 font-medium">
+                        {device.name} {issue.name}
+                      </td>
+                    </tr>
+                    <tr className="bg-gray-50/60">
+                      <th scope="row" className="py-3 px-6 text-xs font-bold text-gray-700 border-b border-gray-100">
+                        Device &amp; Brand
+                      </th>
+                      <td className="py-3 px-6 text-xs sm:text-sm text-gray-900 border-b border-gray-100 font-medium">
+                        {device.brand} · {device.name} ({device.specs})
+                      </td>
+                    </tr>
+                    <tr className="bg-white">
+                      <th scope="row" className="py-3 px-6 text-xs font-bold text-gray-700 border-b border-gray-100">
+                        Average Turnaround
+                      </th>
+                      <td className="py-3 px-6 text-xs sm:text-sm text-gray-900 border-b border-gray-100 font-medium">
+                        {pricing.turnaround} (Same-day express walk-in)
+                      </td>
+                    </tr>
+                    <tr className="bg-gray-50/60">
+                      <th scope="row" className="py-3 px-6 text-xs font-bold text-gray-700 border-b border-gray-100">
+                        Diagnostic Fee
+                      </th>
+                      <td className="py-3 px-6 text-xs sm:text-sm text-emerald-700 border-b border-gray-100 font-bold">
+                        $0.00 (100% Free Upfront Assessment)
+                      </td>
+                    </tr>
+                    <tr className="bg-white">
+                      <th scope="row" className="py-3 px-6 text-xs font-bold text-gray-700 border-b border-gray-100">
+                        Pricing Tiers
+                      </th>
+                      <td className="py-3 px-6 text-xs sm:text-sm text-gray-900 border-b border-gray-100 font-medium">
+                        Standard Grade: ${pricing.aftermarket} | OEM Original: ${pricing.oem}
+                      </td>
+                    </tr>
+                    <tr className="bg-gray-50/60">
+                      <th scope="row" className="py-3 px-6 text-xs font-bold text-gray-700 border-b border-gray-100">
+                        Warranty Guarantee
+                      </th>
+                      <td className="py-3 px-6 text-xs sm:text-sm text-gray-900 border-b border-gray-100 font-medium">
+                        90-Day Comprehensive Parts &amp; Labor Warranty
+                      </td>
+                    </tr>
+                    <tr className="bg-white">
+                      <th scope="row" className="py-3 px-6 text-xs font-bold text-gray-700 border-b border-gray-100">
+                        Data Safety Policy
+                      </th>
+                      <td className="py-3 px-6 text-xs sm:text-sm text-gray-900 border-b border-gray-100 font-medium">
+                        Zero Data Wipe Guarantee (Photos, files &amp; apps remain 100% intact)
+                      </td>
+                    </tr>
+                    <tr className="bg-gray-50/60">
+                      <th scope="row" className="py-3 px-6 text-xs font-bold text-gray-700">
+                        Bench Location
+                      </th>
+                      <td className="py-3 px-6 text-xs sm:text-sm text-gray-900 font-medium">
+                        33 S 52nd St, Philadelphia, PA 19139 (Walk-ins Welcome Daily)
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
             {/* A. Symptoms Checklist */}
             <section className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-xs">
               <div className="flex items-center gap-2 mb-2">
@@ -370,6 +459,33 @@ export default function DeviceIssueClient({ data }: Props) {
                       🔧 {tool}
                     </span>
                   ))}
+                </div>
+              </div>
+            </section>
+
+            {/* C2. Why Choose SmartFoneDoctor in Philadelphia */}
+            <section className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-xs space-y-4">
+              <span className="text-[11px] font-bold uppercase tracking-widest text-[#00897b] block mb-1">
+                Philadelphia&apos;s Independent Repair Bench
+              </span>
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+                Why Choose SmartFoneDoctor for Your {device.name} {issue.shortName}?
+              </h2>
+              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+                Located in West Philadelphia at 33 S 52nd St, SmartFoneDoctor has completed over 5,000+ certified repairs for University City students, local hospital staff, and neighborhood families. We maintain dedicated ESD workstations, laser separators, and EEPROM calibration equipment to repair your device same-day with 100% data preservation and an industry-backed 90-day warranty.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 text-center">
+                  <div className="text-xl font-black text-gray-900">5,000+</div>
+                  <div className="text-[11px] text-gray-500 font-medium mt-0.5">Local Repairs</div>
+                </div>
+                <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 text-center">
+                  <div className="text-xl font-black text-gray-900">4.9 ★</div>
+                  <div className="text-[11px] text-gray-500 font-medium mt-0.5">Google Rating</div>
+                </div>
+                <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 text-center">
+                  <div className="text-xl font-black text-gray-900">3 Stores</div>
+                  <div className="text-[11px] text-gray-500 font-medium mt-0.5">Walk-In Locations</div>
                 </div>
               </div>
             </section>
