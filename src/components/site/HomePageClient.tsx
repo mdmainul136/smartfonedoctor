@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { X, BookOpen, Clock, ArrowRight } from "lucide-react";
+import { BookOpen, Clock, ArrowRight } from "lucide-react";
 import HeroSection from "@/components/home/HeroSection";
 import Footer from "@/components/layout/Footer";
 import { Benefits } from "@/components/home/Benefits";
@@ -23,8 +23,6 @@ export interface HomePageClientProps {
 }
 
 export default function HomePageClient({ initialPage }: HomePageClientProps) {
-  const [showBanner, setShowBanner] = useState(true);
-
   const webSiteSchema = buildWebSiteSchema();
   const faqSchema = buildFaqSchema(HOMEPAGE_FAQS);
   const featuredArticles = INITIAL_BLOG_ARTICLES.slice(0, 3);
@@ -142,57 +140,7 @@ export default function HomePageClient({ initialPage }: HomePageClientProps) {
 
       </CMSSectionRenderer>
 
-      {/* Blue Lead/Subscribe Strip */}
-      {showBanner && (
-        <div className="bg-[#1a4ea0] text-white py-3 px-4 shadow-sm">
-          <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
-            <div className="font-bold text-sm tracking-wide uppercase whitespace-nowrap">
-              Subscribe for Email Updates
-            </div>
-
-            <form
-              onSubmit={(e) => e.preventDefault()}
-              className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-center"
-            >
-              <input
-                type="text"
-                placeholder="Type your name"
-                aria-label="Your full name"
-                className="bg-white text-neutral-800 text-xs px-3 py-1.5 rounded-xs border border-transparent focus:outline-none w-36 sm:w-44"
-              />
-              <input
-                type="email"
-                placeholder="Type your email"
-                aria-label="Your email address"
-                className="bg-white text-neutral-800 text-xs px-3 py-1.5 rounded-xs border border-transparent focus:outline-none w-36 sm:w-44"
-              />
-              <input
-                type="tel"
-                placeholder="Type your phone number"
-                aria-label="Your phone number"
-                className="bg-white text-neutral-800 text-xs px-3 py-1.5 rounded-xs border border-transparent focus:outline-none w-36 sm:w-44"
-              />
-              <button
-                type="submit"
-                className="bg-[#2d3748] hover:bg-[#1a202c] text-white text-xs font-semibold px-4 py-1.5 rounded-xs uppercase tracking-wider transition cursor-pointer"
-              >
-                Submit
-              </button>
-            </form>
-
-            <button
-              onClick={() => setShowBanner(false)}
-              className="text-white hover:text-neutral-300 transition p-1 cursor-pointer"
-              aria-label="Close newsletter banner"
-              title="Close"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 7. Footer */}
+      {/* Footer */}
       <Footer />
     </main>
   );
