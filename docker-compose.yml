@@ -9,29 +9,15 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@db:5432/smartfonedoctor}
-      - POSTGRES_URL=${POSTGRES_URL:-postgresql://postgres:postgres@db:5432/smartfonedoctor}
-      - DATABASE_URI=${DATABASE_URI:-postgresql://postgres:postgres@db:5432/smartfonedoctor}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://smartfone:ndui8vLNFPy0MylzixT8@smartfone-doctor-smartfone-doctor-ovfvrh:5432/smartfone}
+      - POSTGRES_URL=${POSTGRES_URL:-postgresql://smartfone:ndui8vLNFPy0MylzixT8@smartfone-doctor-smartfone-doctor-ovfvrh:5432/smartfone}
+      - DATABASE_URI=${DATABASE_URI:-postgresql://smartfone:ndui8vLNFPy0MylzixT8@smartfone-doctor-smartfone-doctor-ovfvrh:5432/smartfone}
       - PAYLOAD_SECRET=${PAYLOAD_SECRET:-smartfonedoctor-philadelphia-payload-secret-key-32chars}
       - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL:-https://smartfonedoctor.com}
-    depends_on:
-      db:
-        condition: service_healthy
+    networks:
+      - default
+      - dokploy-network
 
-  db:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-smartfonedoctor}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-smartfonedoctor}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-volumes:
-  postgres_data:
+networks:
+  dokploy-network:
+    external: true

@@ -18,9 +18,9 @@ COPY . .
 # Build-time environment variables for Next.js and Prisma static generation
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
-ENV DATABASE_URL="postgresql://postgres:postgres@db:5432/smartfonedoctor"
-ENV POSTGRES_URL="postgresql://postgres:postgres@db:5432/smartfonedoctor"
-ENV DATABASE_URI="postgresql://postgres:postgres@db:5432/smartfonedoctor"
+ENV DATABASE_URL="postgresql://smartfone:ndui8vLNFPy0MylzixT8@smartfone-doctor-smartfone-doctor-ovfvrh:5432/smartfone"
+ENV POSTGRES_URL="postgresql://smartfone:ndui8vLNFPy0MylzixT8@smartfone-doctor-smartfone-doctor-ovfvrh:5432/smartfone"
+ENV DATABASE_URI="postgresql://smartfone:ndui8vLNFPy0MylzixT8@smartfone-doctor-smartfone-doctor-ovfvrh:5432/smartfone"
 ENV PAYLOAD_SECRET="smartfonedoctor-philadelphia-payload-secret-key-32chars"
 
 # Generate Prisma Client
@@ -36,9 +36,9 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
-ENV DATABASE_URL="postgresql://postgres:postgres@db:5432/smartfonedoctor"
-ENV POSTGRES_URL="postgresql://postgres:postgres@db:5432/smartfonedoctor"
-ENV DATABASE_URI="postgresql://postgres:postgres@db:5432/smartfonedoctor"
+ENV DATABASE_URL="postgresql://smartfone:ndui8vLNFPy0MylzixT8@smartfone-doctor-smartfone-doctor-ovfvrh:5432/smartfone"
+ENV POSTGRES_URL="postgresql://smartfone:ndui8vLNFPy0MylzixT8@smartfone-doctor-smartfone-doctor-ovfvrh:5432/smartfone"
+ENV DATABASE_URI="postgresql://smartfone:ndui8vLNFPy0MylzixT8@smartfone-doctor-smartfone-doctor-ovfvrh:5432/smartfone"
 ENV PAYLOAD_SECRET="smartfonedoctor-philadelphia-payload-secret-key-32chars"
 
 RUN apk add --no-cache openssl libc6-compat curl bash
