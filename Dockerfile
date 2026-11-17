@@ -54,12 +54,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
 COPY --from=builder --chown=nextjs:nodejs /app/next.config.mjs ./next.config.mjs
 
-COPY --chown=nextjs:nodejs docker-entrypoint.sh ./docker-entrypoint.sh
-RUN chmod +x ./docker-entrypoint.sh
-
 USER nextjs
 
 EXPOSE 3000
 
-ENTRYPOINT ["./docker-entrypoint.sh"]
-CMD ["npm", "start"]
+CMD ["sh", "-c", "npx prisma db push --skip-generate && npx tsx prisma/seed.ts && npm start"]
