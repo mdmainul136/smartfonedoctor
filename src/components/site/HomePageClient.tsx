@@ -10,6 +10,8 @@ import { Benefits } from "@/components/home/Benefits";
 import { CommonIssues } from "@/components/home/CommonIssues";
 import { StoreLocator } from "@/components/locator/StoreLocator";
 import { WiseCertification } from "@/components/home/WiseCertification";
+import { ReviewsSection } from "@/components/home/ReviewsSection";
+import { GuaranteesBento } from "@/components/home/GuaranteesBento";
 import { FaqSection, HOMEPAGE_FAQS } from "@/components/home/FaqSection";
 import { JsonLd, buildWebSiteSchema, buildFaqSchema } from "@/lib/schema";
 import { INITIAL_BLOG_ARTICLES } from "@/lib/blogData";
@@ -44,7 +46,10 @@ export default function HomePageClient({ initialPage }: HomePageClientProps) {
         {/* 3. Common Issues Grid */}
         <CommonIssues />
 
-        {/* 4. Book a Repair & Store Locator with Map */}
+        {/* 4. See Why Customers Trust Us (Authentic Google Reviews) */}
+        <ReviewsSection />
+
+        {/* 5. Book a Repair & Store Locator with Map */}
         <div id="locations">
           <StoreLocator
             isHomePage={true}
@@ -54,10 +59,16 @@ export default function HomePageClient({ initialPage }: HomePageClientProps) {
           />
         </div>
 
-        {/* 5. The SmartFoneDoctor Difference - WISE Certified Technicians */}
+        {/* 6. Guarantees & Genuine Parts Bento */}
+        <GuaranteesBento />
+
+        {/* 7. The SmartFoneDoctor Difference - WISE Certified Technicians */}
         <WiseCertification />
 
-        {/* 6. Latest Repair Guides & Bench Diagnostics Section */}
+        {/* 8. Frequently Asked Questions (Accordion) */}
+        <FaqSection />
+
+        {/* 9. Latest Repair Guides & Bench Diagnostics Section */}
         <section className="bg-[#fcfcfc] py-14 px-4 sm:px-6 lg:px-8 border-t border-neutral-200/70">
           <div className="max-w-[1100px] mx-auto">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
@@ -129,8 +140,6 @@ export default function HomePageClient({ initialPage }: HomePageClientProps) {
           </div>
         </section>
 
-        {/* 7. Frequently Asked Questions (Accordion) */}
-        <FaqSection />
       </CMSSectionRenderer>
 
       {/* Blue Lead/Subscribe Strip */}

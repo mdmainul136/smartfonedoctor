@@ -249,6 +249,9 @@ export default function CMSSectionRenderer({
   // If this page has Puck data, render directly with the shared Puck config
   const puckContent = (cmsPage?.puckData as { content?: unknown[] } | undefined)?.content;
   if (cmsPage?.puckData && Array.isArray(puckContent) && puckContent.length > 0) {
+    if ((slug === "home" || slug === "/") && !cmsPage.custom) {
+      return <>{fallbackContent}</>;
+    }
     return (
       <div className="sfd-cms-rendered-page w-full">
         <Render config={withStyleEngine(puckConfig)} data={cmsPage.puckData as unknown as PuckPageData} />
