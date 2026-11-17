@@ -21,13 +21,25 @@ export function middleware(request: NextRequest) {
   // 1. Unauthenticated users trying to access protected admin pages
   if (isProtectedRoute && !sessionToken) {
     const from = encodeURIComponent(`${pathname}${search}`);
-    const redirectUrl = new URL(`/sign-in?from=${from}`, request.url);
+    const forwardedHost = request.headers.get("x-forwarded-host");
+    const forwardedProto = request.headers.get("x-forwarded-proto") || "https";
+
+    let base: string;
+    if (forwardedHost && !forwardedHost.includes("localhost") && !forwardedHost.includes("127.0.0.1")) {
+      base = `${forwardedProto}://${forwardedHost}`;
+    } else if (process.env.NEXT_PUBLIC_SITE_URL && !process.env.NEXT_PUBLIC_SITE_URL.includes("localhost")) {
+      base = process.env.NEXT_PUBLIC_SITE_URL;
+    } else if (process.env.NODE_ENV === "production") {
+      base = "https://smartfonedoctor.com";
+    } else {
+      base = request.url;
+    }
+
+    const redirectUrl = new URL(`/sign-in?from=${from}`, base);
     return NextResponse.redirect(redirectUrl);
   }
 
   // Auto-login redirect disabled: Users visiting /sign-in or /login always see the sign-in page
-  return NextResponse.next();
-
   return NextResponse.next();
 }
 
