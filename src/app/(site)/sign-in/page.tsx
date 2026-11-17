@@ -4,16 +4,10 @@ import { useState, useTransition, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
-  Lock,
-  Mail,
   Eye,
   EyeOff,
-  ShieldCheck,
   AlertCircle,
   Loader2,
-  ArrowRight,
-  User,
-  Wrench,
 } from "lucide-react";
 import { loginAdminAction } from "@/actions/auth";
 
@@ -51,11 +45,6 @@ function SignInForm() {
     });
   };
 
-  const handleQuickFill = (demoEmail: string, demoPass: string) => {
-    setEmail(demoEmail);
-    setPassword(demoPass);
-    setError(null);
-  };
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#fafafa] px-4 py-12 antialiased">
@@ -167,7 +156,7 @@ function SignInForm() {
               </div>
             </div>
 
-            {/* Remember Me & Security Notice */}
+            {/* Remember Me */}
             <div className="flex items-center justify-between pt-0.5">
               <label className="flex items-center gap-2 cursor-pointer select-none">
                 <input
@@ -178,10 +167,6 @@ function SignInForm() {
                 />
                 <span className="text-xs text-zinc-600">Remember for 30 days</span>
               </label>
-              <span className="text-[11px] text-zinc-400 inline-flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-zinc-500" />
-                <span>NIST scrypt</span>
-              </span>
             </div>
 
             {/* Primary Submit Button */}
@@ -200,37 +185,7 @@ function SignInForm() {
               )}
             </button>
           </form>
-
-          {/* Quick Demo Access Badges */}
-          <div className="mt-6 pt-5 border-t border-zinc-100 flex flex-col gap-2.5">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-400 text-center">
-              Quick Test Accounts
-            </span>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickFill("admin@smartfonedoctor.com", "admin123456")}
-                className="h-8 rounded-md border border-zinc-200 bg-zinc-50/60 px-2.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors inline-flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                <span>Super Admin</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickFill("tech@smartfonedoctor.com", "tech123456")}
-                className="h-8 rounded-md border border-zinc-200 bg-zinc-50/60 px-2.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors inline-flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                <span>Technician</span>
-              </button>
-            </div>
-          </div>
         </div>
-
-        {/* Footer info */}
-        <p className="text-center text-xs text-zinc-400">
-          Authorized personnel only · SmartFoneDoctor Flagship Operating System
-        </p>
       </div>
     </div>
   );
