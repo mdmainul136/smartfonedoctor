@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useStoreContext } from "@/lib/storeContext";
 import { StoreLocation } from "@/lib/stores";
 import {
-  Globe,
   Save,
   ExternalLink,
   Copy,
@@ -185,6 +184,23 @@ export default function SeoManagerPage() {
 
     loadData();
   }, []);
+
+  // Dynamically synchronize the actual browser tab favicon in real time
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const faviconHref = settings.faviconUrl || "/favicon.ico";
+    const existingIcons = document.querySelectorAll<HTMLLinkElement>("link[rel*='icon']");
+    if (existingIcons.length > 0) {
+      existingIcons.forEach((el) => {
+        el.href = faviconHref;
+      });
+    } else {
+      const link = document.createElement("link");
+      link.rel = "shortcut icon";
+      link.href = faviconHref;
+      document.head.appendChild(link);
+    }
+  }, [settings.faviconUrl]);
 
   const handleSaveSettings = async () => {
     setIsSaving(true);
@@ -975,12 +991,24 @@ export default function SeoManagerPage() {
           {/* PREVIEW CARD */}
           <div className="lg:col-span-4 bg-white border border-gray-200 rounded-xl p-5 shadow-2xs space-y-3">
             <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wider">Google Snippet Preview</h3>
-            <div className="p-3.5 rounded-xl border border-gray-200 bg-gray-50/70 space-y-1">
-              <div className="flex items-center gap-1.5 text-[11px] text-gray-600">
-                <Globe className="w-3.5 h-3.5 text-[#009691]" />
-                <span className="text-emerald-700 font-semibold truncate">https://smartfonedoctor.com</span>
+            <div className="p-3.5 rounded-xl border border-gray-200 bg-gray-50/70 space-y-1.5">
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded-full bg-white border border-gray-200 shadow-2xs flex items-center justify-center overflow-hidden shrink-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={settings.faviconUrl || "/logo-png.jpg"}
+                    alt="Favicon"
+                    className="w-3.5 h-3.5 object-contain"
+                  />
+                </div>
+                <div className="flex flex-col min-w-0 leading-tight">
+                  <span className="text-[12px] font-bold text-gray-900 truncate">
+                    {settings.siteName || "SmartFoneDoctor"}
+                  </span>
+                  <span className="text-[11px] text-gray-500 truncate">https://smartfonedoctor.com</span>
+                </div>
               </div>
-              <h4 className="text-sm font-bold text-[#1a0dab] line-clamp-1 hover:underline cursor-pointer">
+              <h4 className="text-sm font-bold text-[#1a0dab] line-clamp-1 hover:underline cursor-pointer pt-0.5">
                 {settings.defaultMetaTitle}
               </h4>
               <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">
@@ -999,8 +1027,10 @@ export default function SeoManagerPage() {
               <div className="rounded-xl border border-gray-200 bg-gray-100 p-2 text-xs">
                 <span className="text-[10px] text-gray-400 block mb-1 font-medium">Browser Tab Preview:</span>
                 <div className="inline-flex items-center gap-2 bg-white rounded-t-lg px-3 py-1.5 border-t border-x border-gray-200 shadow-2xs max-w-full">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={settings.faviconUrl || "/favicon.ico"} alt="Favicon" className="w-3.5 h-3.5 object-contain shrink-0" />
+                  <div className="w-3.5 h-3.5 rounded-xs flex items-center justify-center overflow-hidden shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={settings.faviconUrl || "/logo-png.jpg"} alt="Favicon" className="w-full h-full object-contain" />
+                  </div>
                   <span className="text-[11px] font-semibold text-gray-800 truncate max-w-[180px]">
                     {settings.siteName} · {settings.defaultMetaTitle.split("|")[0].trim()}
                   </span>
