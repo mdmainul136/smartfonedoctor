@@ -44,9 +44,9 @@ import {
   deleteUrlRedirectAction,
   toggleUrlRedirectAction,
   getSeoOverviewStatsAction,
-  cleanVerificationToken,
   type SiteSeoSettingsInput,
 } from "@/actions/seo";
+import { cleanVerificationToken } from "@/lib/seoSanitize";
 
 type SeoTab = "general" | "redirects" | "verification" | "crawlers" | "schema";
 

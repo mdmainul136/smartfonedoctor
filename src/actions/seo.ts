@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { cleanVerificationToken } from "@/lib/seoSanitize";
 
 export interface SiteSeoSettingsInput {
   siteName: string;
@@ -43,32 +44,7 @@ export interface UrlRedirectInput {
   isActive?: boolean;
 }
 
-/**
- * Clean user-entered verification tokens by removing HTML wrappers and prefixes.
- * Also discards legacy dummy / placeholder tokens so they never leak into production.
- */
-export function cleanVerificationToken(val?: string | null): string | null {
-  if (!val) return null;
-  let token = val.trim();
-  if (!token) return null;
 
-  // Discard mock seed tokens
-  if (token.includes("sfd-philly") || token.includes("search-console-token") || token.includes("webmaster-sfd")) {
-    return null;
-  }
-
-  // Extract content attribute if user pasted full <meta ... content="..." />
-  const contentMatch = token.match(/content=["']([^"']+)["']/i);
-  if (contentMatch) {
-    token = contentMatch[1].trim();
-  }
-
-  // Strip common prefixes
-  token = token.replace(/^(google-site-verification|msvalidate\.01|p:domain_verify)=/i, "").trim();
-  token = token.replace(/^["']|["']$/g, "").trim();
-
-  return token || null;
-}
 
 /**
  * Fetch global site SEO configuration

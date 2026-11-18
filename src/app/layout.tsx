@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import prisma from "@/lib/prisma";
-import { cleanVerificationToken } from "@/actions/seo";
+import { cleanVerificationToken } from "@/lib/seoSanitize";
 import "./globals.css";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://smartfonedoctor.com";
