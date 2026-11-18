@@ -77,13 +77,13 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     icons: {
       icon: [
-        { url: faviconUrl, sizes: "any" },
-        { url: "/favicon.png", type: "image/png", sizes: "32x32" },
-        { url: "/favicon-16x16.png", type: "image/png", sizes: "16x16" },
+        { url: faviconUrl },
+        { url: faviconUrl, sizes: "32x32" },
+        { url: faviconUrl, sizes: "16x16" },
         { url: ogImage, type: "image/jpeg" },
       ],
       shortcut: faviconUrl,
-      apple: appleTouchIcon,
+      apple: appleTouchIcon || faviconUrl,
     },
     verification: {
       google: googleVerification,

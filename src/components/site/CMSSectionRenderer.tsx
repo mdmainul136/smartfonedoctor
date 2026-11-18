@@ -683,7 +683,23 @@ export default function CMSSectionRenderer({
 
               {/* TEMPLATE 4: CTA BANNER */}
               {sec.type === "cta_banner" && (
-                <div className="mt-6 flex justify-center">
+                <div className="mt-6 flex flex-col items-center text-center">
+                  {sec.heading && (
+                    <h2
+                      className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2"
+                      style={{ color: st.textColor || "#ffffff" }}
+                    >
+                      {sec.heading}
+                    </h2>
+                  )}
+                  {sec.subheading && (
+                    <p
+                      className="text-sm opacity-80 mb-6 max-w-2xl leading-relaxed"
+                      style={{ color: st.textColor || "#ffffff" }}
+                    >
+                      {sec.subheading}
+                    </p>
+                  )}
                   <Link
                     href={sec.ctaLink || "/schedule-repair"}
                     style={{

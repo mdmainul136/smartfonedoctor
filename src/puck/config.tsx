@@ -1331,7 +1331,10 @@ export const puckConfig: Config<PuckComponents> = {
           >
             <div className="max-w-7xl mx-auto px-4 sm:px-6">
               {finalHeading && (
-                <h2 className={`text-2xl sm:text-3xl font-extrabold tracking-tight mb-2 ${isCenter ? "text-center" : "text-left"}`}>
+                <h2
+                  className={`text-2xl sm:text-3xl font-extrabold tracking-tight mb-2 ${isCenter ? "text-center" : "text-left"}`}
+                  style={{ color: textColor || "#ffffff" }}
+                >
                   {finalHeading}
                 </h2>
               )}
@@ -1339,6 +1342,7 @@ export const puckConfig: Config<PuckComponents> = {
                 <p
                   className={`text-sm opacity-80 mb-6 max-w-2xl leading-relaxed ${isCenter ? "mx-auto text-center" : "text-left"}`}
                   style={{
+                    color: textColor || "#ffffff",
                     marginLeft: isCenter ? "auto" : undefined,
                     marginRight: isCenter ? "auto" : undefined,
                   }}
