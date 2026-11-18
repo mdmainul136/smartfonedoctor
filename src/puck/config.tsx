@@ -1170,10 +1170,12 @@ export const puckConfig: Config<PuckComponents> = {
         responsive,
         items,
       }) => {
+        const isCenter = align === "center";
         const containerStyle = buildContainerLayoutStyle({
           displayLayout,
           gridColumns,
           gap,
+          justifyContent: isCenter ? "center" : undefined,
         });
         const isFlex = displayLayout === "flex";
 
@@ -1188,39 +1190,51 @@ export const puckConfig: Config<PuckComponents> = {
             responsive={responsive}
             responsiveGridCols={gridColumns}
           >
-            {heading && (
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">
-                {heading}
-              </h2>
-            )}
-            {subheading && (
-              <p
-                className="text-sm opacity-75 mb-8 max-w-2xl leading-relaxed"
+            <div className="max-w-7xl mx-auto px-4 sm:px-6">
+              {heading && (
+                <h2
+                  className={`text-2xl sm:text-3xl font-extrabold tracking-tight mb-2 ${
+                    isCenter ? "text-center" : "text-left"
+                  }`}
+                >
+                  {heading}
+                </h2>
+              )}
+              {subheading && (
+                <p
+                  className={`text-sm opacity-75 mb-8 max-w-2xl leading-relaxed ${
+                    isCenter ? "mx-auto text-center" : "text-left"
+                  }`}
+                  style={{
+                    marginLeft: isCenter ? "auto" : undefined,
+                    marginRight: isCenter ? "auto" : undefined,
+                  }}
+                >
+                  {subheading}
+                </p>
+              )}
+              <div
                 style={{
-                  marginLeft: align === "center" ? "auto" : undefined,
-                  marginRight: align === "center" ? "auto" : undefined,
+                  ...containerStyle,
+                  marginLeft: isCenter ? "auto" : undefined,
+                  marginRight: isCenter ? "auto" : undefined,
                 }}
+                className={`w-full max-w-3xl text-left ${
+                  isCenter ? "mx-auto" : ""
+                } ${isFlex ? "sfd-dynamic-flex" : "sfd-dynamic-grid"}`}
               >
-                {subheading}
-              </p>
-            )}
-            <div
-              style={containerStyle}
-              className={`w-full max-w-3xl text-left ${
-                isFlex ? "sfd-dynamic-flex" : "sfd-dynamic-grid"
-              }`}
-            >
-              {(items || []).map((faq, idx) => (
-                <FaqAccordionCard
-                  key={idx}
-                  item={faq}
-                  displayLayout={displayLayout}
-                  cardBgColor={cardBgColor}
-                  cardBorderColor={cardBorderColor}
-                  borderRadius={borderRadius}
-                  accentColor={accentColor}
-                />
-              ))}
+                {(items || []).map((faq, idx) => (
+                  <FaqAccordionCard
+                    key={idx}
+                    item={faq}
+                    displayLayout={displayLayout}
+                    cardBgColor={cardBgColor}
+                    cardBorderColor={cardBorderColor}
+                    borderRadius={borderRadius}
+                    accentColor={accentColor}
+                  />
+                ))}
+              </div>
             </div>
           </SectionWrapper>
         );
@@ -1308,31 +1322,33 @@ export const puckConfig: Config<PuckComponents> = {
           customCss={customCss}
           responsive={responsive}
         >
-          {heading && (
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">
-              {heading}
-            </h2>
-          )}
-          {subheading && (
-            <p
-              className="text-sm opacity-80 mb-6 max-w-2xl leading-relaxed"
-              style={{
-                marginLeft: align === "center" ? "auto" : undefined,
-                marginRight: align === "center" ? "auto" : undefined,
-              }}
-            >
-              {subheading}
-            </p>
-          )}
-          <div className={`mt-4 flex ${align === "center" ? "justify-center" : "justify-start"}`}>
-            <Link
-              href={ctaLink || "/schedule-repair"}
-              style={{ backgroundColor: accentColor || "#009691" }}
-              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg text-white text-sm font-bold shadow-md hover:brightness-110 transition active:scale-95"
-            >
-              <span>{ctaText || "Schedule Repair Now"}</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            {heading && (
+              <h2 className={`text-2xl sm:text-3xl font-extrabold tracking-tight mb-2 ${align === "center" ? "text-center" : "text-left"}`}>
+                {heading}
+              </h2>
+            )}
+            {subheading && (
+              <p
+                className={`text-sm opacity-80 mb-6 max-w-2xl leading-relaxed ${align === "center" ? "mx-auto text-center" : "text-left"}`}
+                style={{
+                  marginLeft: align === "center" ? "auto" : undefined,
+                  marginRight: align === "center" ? "auto" : undefined,
+                }}
+              >
+                {subheading}
+              </p>
+            )}
+            <div className={`mt-4 flex ${align === "center" ? "justify-center" : "justify-start"}`}>
+              <Link
+                href={ctaLink || "/schedule-repair"}
+                style={{ backgroundColor: accentColor || "#009691" }}
+                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg text-white text-sm font-bold shadow-md hover:brightness-110 transition active:scale-95"
+              >
+                <span>{ctaText || "Schedule Repair Now"}</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
           </div>
         </SectionWrapper>
       ),
@@ -3396,26 +3412,34 @@ export const puckConfig: Config<PuckComponents> = {
           customCss={customCss}
           responsive={responsive}
         >
-          {heading && (
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">
-              {heading}
-            </h2>
-          )}
-          {subheading && (
-            <p className="text-sm opacity-75 mb-6 max-w-2xl leading-relaxed">
-              {subheading}
-            </p>
-          )}
-          {typeof bodyHtml === "string" ? (
-            <div
-              dangerouslySetInnerHTML={{ __html: bodyHtml }}
-              className="sfd-content prose max-w-none text-sm leading-relaxed"
-            />
-          ) : (
-            <div className="sfd-content prose max-w-none text-sm leading-relaxed">
-              {bodyHtml}
-            </div>
-          )}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            {heading && (
+              <h2 className={`text-2xl sm:text-3xl font-extrabold tracking-tight mb-2 ${align === "center" ? "text-center" : "text-left"}`}>
+                {heading}
+              </h2>
+            )}
+            {subheading && (
+              <p
+                className={`text-sm opacity-75 mb-6 max-w-2xl leading-relaxed ${align === "center" ? "mx-auto text-center" : "text-left"}`}
+                style={{
+                  marginLeft: align === "center" ? "auto" : undefined,
+                  marginRight: align === "center" ? "auto" : undefined,
+                }}
+              >
+                {subheading}
+              </p>
+            )}
+            {typeof bodyHtml === "string" ? (
+              <div
+                dangerouslySetInnerHTML={{ __html: bodyHtml }}
+                className={`sfd-content prose max-w-none text-sm leading-relaxed ${align === "center" ? "text-center" : "text-left"}`}
+              />
+            ) : (
+              <div className={`sfd-content prose max-w-none text-sm leading-relaxed ${align === "center" ? "text-center" : "text-left"}`}>
+                {bodyHtml}
+              </div>
+            )}
+          </div>
         </SectionWrapper>
       ),
     },
