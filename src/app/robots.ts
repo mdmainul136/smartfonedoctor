@@ -6,48 +6,76 @@ export const revalidate = 3600; // 1 hour dynamic revalidation
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://smartfonedoctor.com";
 
 export default async function robots(): Promise<MetadataRoute.Robots> {
+  let enableRobotsTxt = true;
   let enableAiBots = true;
+  let enableSitemap = true;
 
   try {
     const settings = await prisma.siteSeoSettings.findUnique({
       where: { id: "global_seo_settings" },
-      select: { enableAiBots: true, enableRobotsTxt: true },
+      select: {
+        enableRobotsTxt: true,
+        enableAiBots: true,
+        enableSitemap: true,
+      },
     });
 
-    if (settings && settings.enableAiBots !== undefined) {
-      enableAiBots = settings.enableAiBots;
+    if (settings) {
+      if (settings.enableRobotsTxt !== undefined) enableRobotsTxt = settings.enableRobotsTxt;
+      if (settings.enableAiBots !== undefined) enableAiBots = settings.enableAiBots;
+      if (settings.enableSitemap !== undefined) enableSitemap = settings.enableSitemap;
     }
   } catch (error) {
     console.error("Failed to fetch robots SEO settings:", error);
   }
 
+  // If search engine crawling is globally disabled by admin
+  if (!enableRobotsTxt) {
+    return {
+      rules: [
+        {
+          userAgent: "*",
+          disallow: "/",
+        },
+      ],
+      ...(enableSitemap ? { sitemap: `${BASE_URL}/sitemap.xml` } : {}),
+      host: BASE_URL,
+    };
+  }
+
+  const aiBots = [
+    "GPTBot",
+    "ChatGPT-User",
+    "PerplexityBot",
+    "ClaudeBot",
+    "Claude-Web",
+    "Google-Extended",
+    "Applebot-Extended",
+    "Amazonbot",
+    "CCBot",
+    "anthropic-ai",
+  ];
+
   const aiRules: MetadataRoute.Robots["rules"] = enableAiBots
     ? [
         {
-          userAgent: [
-            "GPTBot",
-            "ChatGPT-User",
-            "PerplexityBot",
-            "ClaudeBot",
-            "Claude-Web",
-            "Google-Extended",
-            "Applebot-Extended",
+          userAgent: aiBots,
+          allow: [
+            "/",
+            "/blog",
+            "/repairs",
+            "/locations",
+            "/schedule-repair",
+            "/repair-status",
+            "/faq",
+            "/about",
           ],
-          allow: ["/", "/blog", "/repairs", "/locations"],
-          disallow: ["/admin/", "/api/admin/", "/list/"],
+          disallow: ["/admin/", "/api/admin/", "/list/", "/profile/"],
         },
       ]
     : [
         {
-          userAgent: [
-            "GPTBot",
-            "ChatGPT-User",
-            "PerplexityBot",
-            "ClaudeBot",
-            "Claude-Web",
-            "Google-Extended",
-            "Applebot-Extended",
-          ],
+          userAgent: aiBots,
           disallow: ["/"],
         },
       ];
@@ -57,11 +85,11 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/admin/", "/api/admin/", "/list/"],
+        disallow: ["/admin/", "/api/admin/", "/list/", "/profile/"],
       },
       ...aiRules,
     ],
-    sitemap: `${BASE_URL}/sitemap.xml`,
+    ...(enableSitemap ? { sitemap: `${BASE_URL}/sitemap.xml` } : {}),
     host: BASE_URL,
   };
 }

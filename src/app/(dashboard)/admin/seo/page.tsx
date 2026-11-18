@@ -571,9 +571,17 @@ export default function SeoManagerPage() {
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <span className="text-xs font-medium text-gray-500 block">Sitemap &amp; Crawlers</span>
           <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-2xl font-bold text-[#009691]">Active</span>
+            <span
+              className={`text-2xl font-bold ${
+                settings.enableSitemap && settings.enableRobotsTxt ? "text-[#009691]" : "text-amber-600"
+              }`}
+            >
+              {settings.enableSitemap && settings.enableRobotsTxt ? "Active" : "Configured"}
+            </span>
           </div>
-          <span className="text-xs text-gray-500 mt-1 block">/sitemap.xml enabled</span>
+          <span className="text-xs text-gray-500 mt-1 block">
+            {settings.enableSitemap ? "/sitemap.xml enabled" : "Sitemap paused"}
+          </span>
         </div>
       </div>
 
@@ -1292,54 +1300,191 @@ export default function SeoManagerPage() {
 
       {/* TAB 4: ROBOTS & SITEMAP */}
       {activeTab === "crawlers" && (
-        <div className="bg-white border border-gray-200 rounded-lg p-5 space-y-4">
-          <div className="border-b border-gray-100 pb-3">
-            <h3 className="text-sm font-semibold text-gray-900">Robots.txt &amp; Sitemap Settings</h3>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Control search engine crawl permissions and dynamic XML sitemap generation.
-            </p>
+        <div className="bg-white border border-gray-200 rounded-lg p-5 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900">Robots.txt, Sitemap &amp; AI Crawler Controls</h3>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Configure search engine crawl permissions, dynamic XML sitemaps, and LLM/AI Answer Engine discoverability.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/robots.txt"
+                target="_blank"
+                className="h-8 px-3 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-xs font-medium text-gray-700 inline-flex items-center gap-1.5 transition-colors"
+              >
+                <span>Live robots.txt</span>
+                <ExternalLink className="w-3 h-3 text-gray-400" />
+              </Link>
+              <Link
+                href="/sitemap.xml"
+                target="_blank"
+                className="h-8 px-3 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-xs font-medium text-gray-700 inline-flex items-center gap-1.5 transition-colors"
+              >
+                <span>Live sitemap.xml</span>
+                <ExternalLink className="w-3 h-3 text-gray-400" />
+              </Link>
+            </div>
           </div>
 
+          {/* 4 Feature Toggles aligned with Prisma SiteSeoSettings */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-xs font-semibold text-gray-900">Search Engine Web Crawlers</h4>
-                  <p className="text-xs text-gray-500">Allow standard crawlers (Googlebot, Bingbot, web crawlers)</p>
+            {/* 1. Standard Search Engine Web Crawlers */}
+            <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/70 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5">
+                    <Search className="w-4 h-4 text-[#009691]" />
+                    <h4 className="text-xs font-bold text-gray-900">Standard Search Crawlers</h4>
+                  </div>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    Allow Googlebot, Bingbot, and search crawlers to index your public repair pages and blogs.
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={settings.enableRobotsTxt}
+                  onChange={(e) => setSettings({ ...settings, enableRobotsTxt: e.target.checked })}
+                  className="w-4 h-4 text-[#009691] rounded accent-[#009691] mt-0.5 cursor-pointer"
+                />
+              </div>
+              <div className="text-[11px] text-gray-600 bg-white p-2.5 rounded-lg border border-gray-200 font-mono">
+                {settings.enableRobotsTxt ? "User-agent: *\nAllow: /\nDisallow: /admin/" : "User-agent: *\nDisallow: / (ALL CRAWLERS BLOCKED)"}
+              </div>
+            </div>
+
+            {/* 2. AI & LLM Search Crawlers */}
+            <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/70 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5">
+                    <Bot className="w-4 h-4 text-purple-600" />
+                    <h4 className="text-xs font-bold text-gray-900">AI Search &amp; LLM Bots</h4>
+                  </div>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    Allow GPTBot, ClaudeBot, PerplexityBot, and Applebot to index content for AI Overviews and chat citations.
+                  </p>
                 </div>
                 <input
                   type="checkbox"
                   checked={settings.enableAiBots}
                   onChange={(e) => setSettings({ ...settings, enableAiBots: e.target.checked })}
-                  className="w-4 h-4 text-[#009691] rounded accent-[#009691]"
+                  className="w-4 h-4 text-[#009691] rounded accent-[#009691] mt-0.5 cursor-pointer"
                 />
               </div>
-              <div className="text-[11px] text-gray-600 bg-white p-2.5 rounded border border-gray-200 font-mono">
-                User-agent: *<br />Allow: /<br /><br />Disallow: /admin/
+              <div className="text-[11px] text-gray-600 bg-white p-2.5 rounded-lg border border-gray-200 font-mono">
+                {settings.enableAiBots ? "User-agent: GPTBot, ClaudeBot, PerplexityBot...\nAllow: / (AI search citations active)" : "User-agent: GPTBot, ClaudeBot, PerplexityBot...\nDisallow: / (AI crawlers blocked)"}
               </div>
             </div>
 
-            <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-xs font-semibold text-gray-900">Dynamic XML Sitemap</h4>
-                  <p className="text-xs text-gray-500">Auto-generated XML sitemap featuring all core pages and blog posts</p>
+            {/* 3. Dynamic XML Sitemap */}
+            <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/70 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5">
+                    <FileCode className="w-4 h-4 text-emerald-600" />
+                    <h4 className="text-xs font-bold text-gray-900">Dynamic XML Sitemap</h4>
+                  </div>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    Automatically generates dynamic sitemap containing all published CMS pages, blogs, and core services.
+                  </p>
                 </div>
                 <input
                   type="checkbox"
                   checked={settings.enableSitemap}
                   onChange={(e) => setSettings({ ...settings, enableSitemap: e.target.checked })}
-                  className="w-4 h-4 text-[#009691] rounded accent-[#009691]"
+                  className="w-4 h-4 text-[#009691] rounded accent-[#009691] mt-0.5 cursor-pointer"
                 />
               </div>
-              <div className="flex items-center justify-between text-xs text-emerald-800 bg-emerald-50 p-2.5 rounded border border-emerald-200">
-                <span>URL: /sitemap.xml</span>
+              <div className="flex items-center justify-between text-xs text-emerald-800 bg-emerald-50 p-2.5 rounded-lg border border-emerald-200">
+                <span className="font-mono text-[11px]">URL: /sitemap.xml</span>
                 <Link href="/sitemap.xml" target="_blank" className="font-semibold underline flex items-center gap-1">
-                  <span>View Sitemap</span>
+                  <span>Open Sitemap</span>
                   <ExternalLink className="w-3 h-3" />
                 </Link>
               </div>
             </div>
+
+            {/* 4. LLMs.txt & Agent Knowledge Graph */}
+            <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/70 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-amber-600" />
+                    <h4 className="text-xs font-bold text-gray-900">LLMs.txt &amp; Agent Knowledge</h4>
+                  </div>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    Provides clean, low-token Markdown knowledge files for Answer Engines and autonomous AI agent lookup.
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={settings.enableLlmsTxt}
+                  onChange={(e) => setSettings({ ...settings, enableLlmsTxt: e.target.checked })}
+                  className="w-4 h-4 text-[#009691] rounded accent-[#009691] mt-0.5 cursor-pointer"
+                />
+              </div>
+              <div className="flex items-center justify-between text-xs text-amber-800 bg-amber-50 p-2.5 rounded-lg border border-amber-200">
+                <span className="font-mono text-[11px]">URL: /llms.txt &amp; /llms-full.txt</span>
+                <Link href="/llms.txt" target="_blank" className="font-semibold underline flex items-center gap-1">
+                  <span>Open llms.txt</span>
+                  <ExternalLink className="w-3 h-3" />
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Live Robots.txt Code Preview */}
+          <div className="space-y-2 pt-2 border-t border-gray-100">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                Live Robots.txt Simulator Preview
+              </span>
+              <span className="text-[11px] text-gray-400">
+                Auto-updated based on your configuration above
+              </span>
+            </div>
+            <pre className="bg-gray-900 text-gray-100 p-4 rounded-xl text-xs font-mono leading-relaxed overflow-x-auto whitespace-pre border border-gray-800">
+{settings.enableRobotsTxt
+  ? `User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/admin/
+Disallow: /list/
+Disallow: /profile/
+
+${settings.enableAiBots
+    ? `# AI Search Crawlers (Allowed for Citations)
+User-agent: GPTBot
+User-agent: ChatGPT-User
+User-agent: PerplexityBot
+User-agent: ClaudeBot
+User-agent: Claude-Web
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /admin/`
+    : `# AI Search Crawlers (Blocked)
+User-agent: GPTBot
+User-agent: ChatGPT-User
+User-agent: PerplexityBot
+User-agent: ClaudeBot
+User-agent: Claude-Web
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+Disallow: /`
+  }
+
+${settings.enableSitemap ? `Sitemap: https://smartfonedoctor.com/sitemap.xml` : `# Sitemap disabled in settings`}
+Host: https://smartfonedoctor.com`
+  : `# Standard Crawlers Disabled
+User-agent: *
+Disallow: /
+
+${settings.enableSitemap ? `Sitemap: https://smartfonedoctor.com/sitemap.xml` : ""}
+Host: https://smartfonedoctor.com`}
+            </pre>
           </div>
         </div>
       )}

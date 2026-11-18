@@ -29,6 +29,10 @@ export async function GET() {
 
     const siteName = settings?.siteName || "SmartFoneDoctor";
 
+    if (settings && settings.enableLlmsTxt === false) {
+      return new NextResponse("LLMs.txt is disabled in SEO settings", { status: 404 });
+    }
+
     // 1. H1 (Only required section)
     let md = `# ${siteName}\n\n`;
 

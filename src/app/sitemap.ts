@@ -10,6 +10,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const addedUrls = new Set<string>();
 
   try {
+    // Check if sitemap is enabled globally in SEO settings
+    const seoSettings = await prisma.siteSeoSettings.findUnique({
+      where: { id: "global_seo_settings" },
+      select: { enableSitemap: true },
+    });
+
+    if (seoSettings && seoSettings.enableSitemap === false) {
+      return [];
+    }
+
     // 1. Fetch CMS Pages from PostgreSQL with attached SEO Metadata
     const pages = await prisma.cmsPage.findMany({
       where: { status: "Published" },
@@ -34,7 +44,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         ? 1.0
         : 0.8;
 
-      const changeFrequency = (page.seo?.changeFrequency as MetadataRoute.Sitemap[number]["changeFrequency"]) || (page.path === "/" ? "daily" : "weekly");
+      const changeFrequency =
+        (page.seo?.changeFrequency as MetadataRoute.Sitemap[number]["changeFrequency"]) ||
+        (page.path === "/" ? "daily" : "weekly");
 
       entries.push({
         url,
@@ -62,14 +74,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       entries.push({
         url,
         lastModified: post.updatedAt,
-        changeFrequency: (post.seo?.changeFrequency as MetadataRoute.Sitemap[number]["changeFrequency"]) || "monthly",
+        changeFrequency:
+          (post.seo?.changeFrequency as MetadataRoute.Sitemap[number]["changeFrequency"]) ||
+          "monthly",
         priority: post.seo?.sitemapPriority ? Number(post.seo.sitemapPriority) : 0.7,
       });
     }
 
-    // 3. Ensure Core Hub & Flow Pages are present
+    // 3. Ensure Core Hub, Category, and Customer Flow Pages are present
     const CORE_ROUTES = [
+      { path: "/", priority: 1.0, freq: "daily" as const },
       { path: "/repairs", priority: 0.9, freq: "weekly" as const },
+      { path: "/repairs/smartphone", priority: 0.9, freq: "weekly" as const },
+      { path: "/repairs/tablet", priority: 0.8, freq: "weekly" as const },
+      { path: "/repairs/computer", priority: 0.8, freq: "weekly" as const },
+      { path: "/repairs/console", priority: 0.8, freq: "weekly" as const },
       { path: "/locations", priority: 0.9, freq: "weekly" as const },
       { path: "/schedule-repair", priority: 0.9, freq: "weekly" as const },
       { path: "/repair-status", priority: 0.8, freq: "daily" as const },
@@ -80,7 +99,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ];
 
     for (const route of CORE_ROUTES) {
-      const url = `${BASE_URL}${route.path}`;
+      const pathSuffix = route.path === "/" ? "" : route.path;
+      const url = `${BASE_URL}${pathSuffix}`;
       if (!addedUrls.has(url)) {
         addedUrls.add(url);
         entries.push({

@@ -43,6 +43,10 @@ export async function GET() {
 
     const siteName = settings?.siteName || "SmartFoneDoctor";
 
+    if (settings && settings.enableLlmsTxt === false) {
+      return new NextResponse("LLMs-full.txt is disabled in SEO settings", { status: 404 });
+    }
+
     let md = `# ${siteName} - Complete Documentation & Knowledge Base (llms-full.txt)\n\n`;
     md += `> Comprehensive full-text aggregate of all services, repair procedures, store locations, and technical diagnostics.\n`;
     md += `> Generated dynamically from SmartFoneDoctor PostgreSQL database.\n\n`;

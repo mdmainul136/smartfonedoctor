@@ -172,6 +172,8 @@ export async function updateSiteSeoSettingsAction(input: SiteSeoSettingsInput) {
     revalidatePath("/", "layout");
     revalidatePath("/sitemap.xml");
     revalidatePath("/robots.txt");
+    revalidatePath("/llms.txt");
+    revalidatePath("/llms-full.txt");
 
     return { success: true, settings: updated };
   } catch (err: unknown) {
