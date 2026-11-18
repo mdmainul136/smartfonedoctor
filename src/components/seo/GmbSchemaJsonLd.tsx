@@ -16,7 +16,7 @@ export default async function GmbSchemaJsonLd() {
       const zip = zipMatch ? zipMatch[0] : "19139";
 
       return {
-        "@type": "MobilePhoneRepairShop",
+        "@type": ["LocalBusiness", "ElectronicsStore"],
         "@id": `${siteUrl}/locations#${loc.store_code.replace(/_/g, "-")}`,
         name: loc.name,
         url: `${siteUrl}/locations`,
@@ -58,7 +58,7 @@ export default async function GmbSchemaJsonLd() {
       "@context": "https://schema.org",
       "@graph": [
         {
-          "@type": ["ElectronicsRepairShop", "MobilePhoneRepairShop"],
+          "@type": ["LocalBusiness", "ElectronicsStore"],
           "@id": `${siteUrl}/#organization`,
           name: siteName,
           legalName: entity?.legalName || "SmartFoneDoctor LLC",

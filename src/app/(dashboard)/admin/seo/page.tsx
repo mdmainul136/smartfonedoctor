@@ -70,7 +70,7 @@ export default function SeoManagerPage() {
 
   // Schema Tab Interactive State (Switch, Edit, Improve)
   const [schemaScope, setSchemaScope] = useState<"all" | number>("all");
-  const [schemaType, setSchemaType] = useState<string>("ElectronicsRepairShop");
+  const [schemaType, setSchemaType] = useState<string>("LocalBusiness");
   const [isEnhanced, setIsEnhanced] = useState<boolean>(true);
   const [editingStore, setEditingStore] = useState<StoreLocation | null>(null);
   const [editFormData, setEditFormData] = useState<Partial<StoreLocation>>({});
@@ -1580,8 +1580,8 @@ Host: https://smartfonedoctor.com`}
                     onChange={(e) => setSchemaType(e.target.value)}
                     className="w-full h-8 px-2.5 rounded-lg border border-gray-300 bg-white text-xs font-medium text-gray-800 focus:outline-none focus:border-[#009691]"
                   >
-                    <option value="ElectronicsRepairShop">ElectronicsRepairShop (Recommended)</option>
-                    <option value="MobilePhoneRepairShop">MobilePhoneRepairShop</option>
+                    <option value="LocalBusiness">LocalBusiness (Store & Repair - Recommended)</option>
+                    <option value="ElectronicsStore">ElectronicsStore</option>
                     <option value="LocalBusiness">LocalBusiness</option>
                     <option value="FAQPage">FAQPage (Q&amp;A Rich Snippets)</option>
                     <option value="Service">Service (Repair Offer Catalog)</option>

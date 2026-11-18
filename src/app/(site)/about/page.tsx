@@ -177,7 +177,7 @@ export default async function AboutPage() {
           url: featuredImgUrl,
         },
         mainEntity: {
-          "@type": ["ElectronicsRepairShop", "LocalBusiness"],
+          "@type": ["LocalBusiness", "ElectronicsStore"],
           "@id": "https://smartfonedoctor.com/#organization",
           name: "SmartFoneDoctor",
           alternateName: ["Smart Fone Doctor", "SmartFone Doctor Philadelphia"],

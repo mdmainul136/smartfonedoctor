@@ -733,7 +733,7 @@ export default function AiVisibilityPage() {
     return JSON.stringify(
       {
         "@context": "https://schema.org",
-        "@type": "MobilePhoneRepairShop",
+        "@type": ["LocalBusiness", "ElectronicsStore"],
         "@id": `https://smartfonedoctor.com/#store-${selectedStore.id}`,
         name: "Smart Fone Doctor",
         branchCode: `PHL-0${selectedStore.id}`,
@@ -1902,7 +1902,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
                   <h3 className="text-sm font-bold text-slate-900">
-                    MobilePhoneRepairShop JSON-LD ({storeShortName})
+                    LocalBusiness / ElectronicsStore JSON-LD ({storeShortName})
                   </h3>
                   <p className="text-xs text-slate-500 font-medium">
                     Embeds verified Google, Yelp, Bing, and Trustpilot URLs into a single sameAs knowledge graph
