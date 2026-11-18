@@ -2197,11 +2197,12 @@ export const INITIAL_CMS_PAGES: CMSPage[] = [
           type: "CtaBannerBlock",
           props: {
             id: "CtaBannerBlock-track-help",
-            headline: "Have questions about your repair or warranty?",
+            heading: "Ready to Fix Your Device Today?",
             subheading:
               "Call our bench technicians directly or check store hours across Philadelphia.",
-            buttonText: "Call Repair Dispatch (215) 598-2090",
-            buttonLink: "tel:2155982090",
+            ctaText: "Schedule Repair Now",
+            ctaLink: "/schedule-repair",
+            align: "center",
             bgColor: "#0f172a",
             textColor: "#ffffff",
             accentColor: "#009691",

@@ -1309,49 +1309,57 @@ export const puckConfig: Config<PuckComponents> = {
         textColor,
         accentColor,
         padding,
-        align,
+        align = "center",
         customCss,
         responsive,
-      }) => (
-        <SectionWrapper
-          id={id}
-          bgColor={bgColor}
-          textColor={textColor}
-          padding={padding}
-          align={align}
-          customCss={customCss}
-          responsive={responsive}
-        >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6">
-            {heading && (
-              <h2 className={`text-2xl sm:text-3xl font-extrabold tracking-tight mb-2 ${align === "center" ? "text-center" : "text-left"}`}>
-                {heading}
-              </h2>
-            )}
-            {subheading && (
-              <p
-                className={`text-sm opacity-80 mb-6 max-w-2xl leading-relaxed ${align === "center" ? "mx-auto text-center" : "text-left"}`}
-                style={{
-                  marginLeft: align === "center" ? "auto" : undefined,
-                  marginRight: align === "center" ? "auto" : undefined,
-                }}
-              >
-                {subheading}
-              </p>
-            )}
-            <div className={`mt-4 flex ${align === "center" ? "justify-center" : "justify-start"}`}>
-              <Link
-                href={ctaLink || "/schedule-repair"}
-                style={{ backgroundColor: accentColor || "#009691" }}
-                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg text-white text-sm font-bold shadow-md hover:brightness-110 transition active:scale-95"
-              >
-                <span>{ctaText || "Schedule Repair Now"}</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+        ...rest
+      }: any) => {
+        const finalHeading = heading || rest?.headline || "Ready to Fix Your Device Today?";
+        const finalCtaText = ctaText || rest?.buttonText || "Schedule Repair Now";
+        const finalCtaLink = ctaLink || rest?.buttonLink || "/schedule-repair";
+        const isCenter = (align || "center") === "center";
+
+        return (
+          <SectionWrapper
+            id={id}
+            bgColor={bgColor}
+            textColor={textColor}
+            padding={padding}
+            align={align || "center"}
+            customCss={customCss}
+            responsive={responsive}
+          >
+            <div className="max-w-7xl mx-auto px-4 sm:px-6">
+              {finalHeading && (
+                <h2 className={`text-2xl sm:text-3xl font-extrabold tracking-tight mb-2 ${isCenter ? "text-center" : "text-left"}`}>
+                  {finalHeading}
+                </h2>
+              )}
+              {subheading && (
+                <p
+                  className={`text-sm opacity-80 mb-6 max-w-2xl leading-relaxed ${isCenter ? "mx-auto text-center" : "text-left"}`}
+                  style={{
+                    marginLeft: isCenter ? "auto" : undefined,
+                    marginRight: isCenter ? "auto" : undefined,
+                  }}
+                >
+                  {subheading}
+                </p>
+              )}
+              <div className={`mt-4 flex ${isCenter ? "justify-center" : "justify-start"}`}>
+                <Link
+                  href={finalCtaLink}
+                  style={{ backgroundColor: accentColor || "#009691" }}
+                  className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg text-white text-sm font-bold shadow-md hover:brightness-110 transition active:scale-95"
+                >
+                  <span>{finalCtaText}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
             </div>
-          </div>
-        </SectionWrapper>
-      ),
+          </SectionWrapper>
+        );
+      },
     },
 
     RepairTrackerBlock: {
