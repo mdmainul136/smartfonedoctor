@@ -44,6 +44,33 @@ export interface UrlRedirectInput {
 }
 
 /**
+ * Clean user-entered verification tokens by removing HTML wrappers and prefixes.
+ * Also discards legacy dummy / placeholder tokens so they never leak into production.
+ */
+export function cleanVerificationToken(val?: string | null): string | null {
+  if (!val) return null;
+  let token = val.trim();
+  if (!token) return null;
+
+  // Discard mock seed tokens
+  if (token.includes("sfd-philly") || token.includes("search-console-token") || token.includes("webmaster-sfd")) {
+    return null;
+  }
+
+  // Extract content attribute if user pasted full <meta ... content="..." />
+  const contentMatch = token.match(/content=["']([^"']+)["']/i);
+  if (contentMatch) {
+    token = contentMatch[1].trim();
+  }
+
+  // Strip common prefixes
+  token = token.replace(/^(google-site-verification|msvalidate\.01|p:domain_verify)=/i, "").trim();
+  token = token.replace(/^["']|["']$/g, "").trim();
+
+  return token || null;
+}
+
+/**
  * Fetch global site SEO configuration
  */
 export async function getSiteSeoSettingsAction() {
@@ -69,6 +96,19 @@ export async function getSiteSeoSettingsAction() {
           enableAiBots: true,
         },
       });
+    } else {
+      // Auto-purge any stale mock/dummy tokens from the database
+      const isMockGoogle = settings.googleSiteVerification?.includes("sfd-philly") || settings.googleSiteVerification?.includes("search-console-token");
+      const isMockBing = settings.bingSiteVerification?.includes("sfd-philly") || settings.bingSiteVerification?.includes("webmaster-sfd");
+      if (isMockGoogle || isMockBing) {
+        settings = await prisma.siteSeoSettings.update({
+          where: { id: "global_seo_settings" },
+          data: {
+            googleSiteVerification: isMockGoogle ? null : settings.googleSiteVerification,
+            bingSiteVerification: isMockBing ? null : settings.bingSiteVerification,
+          },
+        });
+      }
     }
 
     return { success: true, settings };
@@ -83,6 +123,11 @@ export async function getSiteSeoSettingsAction() {
  */
 export async function updateSiteSeoSettingsAction(input: SiteSeoSettingsInput) {
   try {
+    const cleanedGoogle = cleanVerificationToken(input.googleSiteVerification);
+    const cleanedBing = cleanVerificationToken(input.bingSiteVerification);
+    const cleanedPinterest = cleanVerificationToken(input.pinterestVerification);
+    const cleanedFacebook = cleanVerificationToken(input.facebookAppId);
+
     const updated = await prisma.siteSeoSettings.upsert({
       where: { id: "global_seo_settings" },
       update: {
@@ -105,10 +150,10 @@ export async function updateSiteSeoSettingsAction(input: SiteSeoSettingsInput) {
         youtubeUrl: input.youtubeUrl || null,
         linkedinUrl: input.linkedinUrl || null,
         gmbUrl: input.gmbUrl || "https://share.google/gTlyWLewR88ToAdJQ",
-        googleSiteVerification: input.googleSiteVerification || null,
-        bingSiteVerification: input.bingSiteVerification || null,
-        pinterestVerification: input.pinterestVerification || null,
-        facebookAppId: input.facebookAppId || null,
+        googleSiteVerification: cleanedGoogle,
+        bingSiteVerification: cleanedBing,
+        pinterestVerification: cleanedPinterest,
+        facebookAppId: cleanedFacebook,
         twitterHandle: input.twitterHandle || "@smartfonedoctor",
         enableSitemap: input.enableSitemap,
         enableRobotsTxt: input.enableRobotsTxt,
@@ -136,10 +181,10 @@ export async function updateSiteSeoSettingsAction(input: SiteSeoSettingsInput) {
         youtubeUrl: input.youtubeUrl || null,
         linkedinUrl: input.linkedinUrl || null,
         gmbUrl: input.gmbUrl || "https://share.google/gTlyWLewR88ToAdJQ",
-        googleSiteVerification: input.googleSiteVerification || null,
-        bingSiteVerification: input.bingSiteVerification || null,
-        pinterestVerification: input.pinterestVerification || null,
-        facebookAppId: input.facebookAppId || null,
+        googleSiteVerification: cleanedGoogle,
+        bingSiteVerification: cleanedBing,
+        pinterestVerification: cleanedPinterest,
+        facebookAppId: cleanedFacebook,
         twitterHandle: input.twitterHandle || "@smartfonedoctor",
         enableSitemap: input.enableSitemap,
         enableRobotsTxt: input.enableRobotsTxt,

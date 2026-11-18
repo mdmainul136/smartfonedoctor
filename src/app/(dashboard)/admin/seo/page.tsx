@@ -44,6 +44,7 @@ import {
   deleteUrlRedirectAction,
   toggleUrlRedirectAction,
   getSeoOverviewStatsAction,
+  cleanVerificationToken,
   type SiteSeoSettingsInput,
 } from "@/actions/seo";
 
@@ -161,10 +162,10 @@ export default function SeoManagerPage() {
           youtubeUrl: settingsRes.settings.youtubeUrl || "",
           linkedinUrl: settingsRes.settings.linkedinUrl || "",
           gmbUrl: settingsRes.settings.gmbUrl || "https://share.google/gTlyWLewR88ToAdJQ",
-          googleSiteVerification: settingsRes.settings.googleSiteVerification || "",
-          bingSiteVerification: settingsRes.settings.bingSiteVerification || "",
-          pinterestVerification: settingsRes.settings.pinterestVerification || "",
-          facebookAppId: settingsRes.settings.facebookAppId || "",
+          googleSiteVerification: cleanVerificationToken(settingsRes.settings.googleSiteVerification) || "",
+          bingSiteVerification: cleanVerificationToken(settingsRes.settings.bingSiteVerification) || "",
+          pinterestVerification: cleanVerificationToken(settingsRes.settings.pinterestVerification) || "",
+          facebookAppId: cleanVerificationToken(settingsRes.settings.facebookAppId) || "",
           twitterHandle: settingsRes.settings.twitterHandle || "@smartfonedoctor",
           enableSitemap: settingsRes.settings.enableSitemap,
           enableRobotsTxt: settingsRes.settings.enableRobotsTxt,
@@ -208,7 +209,9 @@ export default function SeoManagerPage() {
     setIsSaving(false);
     if (res.success) {
       setSavedToast("Global SEO settings saved and cached layouts invalidated!");
-      setTimeout(() => setSavedToast(null), 3000);
+      setTimeout(() => setSavedToast(null), 4000);
+    } else {
+      alert("Error saving settings: " + (res.error || "Please check server logs"));
     }
   };
 

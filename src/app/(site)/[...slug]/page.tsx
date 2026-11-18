@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect, RedirectType } from "next/navigation";
 import CustomPage from "@/components/site/CustomPage";
 import { getCmsPage } from "@/actions/cmsPages";
 import { compilePageCss } from "@/puck/style/compilePage";
+import prisma from "@/lib/prisma";
 
 type PageProps = {
   params: Promise<{ slug: string[] }>;
@@ -102,6 +103,25 @@ export default async function CustomPageRoute({ params }: PageProps) {
   const { page, path } = await resolvePage(slug);
 
   if (!page) {
+    if (path) {
+      const redirectRule = await prisma.urlRedirect.findFirst({
+        where: {
+          sourceUrl: path,
+          isActive: true,
+        },
+      });
+
+      if (redirectRule) {
+        await prisma.urlRedirect
+          .update({
+            where: { id: redirectRule.id },
+            data: { hitCount: { increment: 1 } },
+          })
+          .catch(() => {});
+        redirect(redirectRule.targetUrl, redirectRule.statusCode === 302 ? RedirectType.replace : RedirectType.replace);
+      }
+    }
+
     notFound();
   }
 
