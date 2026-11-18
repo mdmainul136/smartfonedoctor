@@ -11,6 +11,8 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
+export const revalidate = 0; // Ensure live database SEO settings & verification tokens are never stuck on stale build cache
+
 async function getSeoSettings() {
   try {
     return await prisma.siteSeoSettings.findUnique({
