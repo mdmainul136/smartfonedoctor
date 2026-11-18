@@ -117,6 +117,7 @@ export const puckConfig: Config<PuckComponents> = {
         "SplitBannerBlock",
         "FaqBlock",
         "ServicesGridBlock",
+        "PopularRepairsBlock",
         "CtaBannerBlock",
         "FeatureCard",
         "RichTextBlock",
@@ -634,6 +635,230 @@ export const puckConfig: Config<PuckComponents> = {
                   </div>
                 );
               })}
+            </div>
+          </SectionWrapper>
+        );
+      },
+    },
+
+    PopularRepairsBlock: {
+      label: "Popular / Hardware Repairs Grid",
+      defaultProps: {
+        heading: "Check More Philadelphia Hardware Repairs",
+        subheading: "All device models and hardware issues supported with express walk-in service in Philadelphia:",
+        viewAllText: "View All Repairs",
+        viewAllUrl: "/repairs",
+        columns: 4,
+        containerMode: "borderless",
+        bgColor: "transparent",
+        textColor: "#111827",
+        accentColor: "#009691",
+        cardBgColor: "#ffffff",
+        cardBorderColor: "#e5e7eb",
+        padding: "32px 0px",
+        borderRadius: "8px",
+        customCss: "",
+        items: [
+          { name: "iPhone 16 Pro Screen Repair", price: "From $119", url: "/repairs/smartphone/iphone-16-pro/screen-repair", actionText: "View →" },
+          { name: "iPhone Battery Replacement", price: "From $69", url: "/repairs/smartphone/iphone-16-pro/battery-replacement", actionText: "View →" },
+          { name: 'iPad Pro 12.9" Glass Fix', price: "From $149", url: "/repairs/tablet/ipad-pro-12-9/screen-repair", actionText: "View →" },
+          { name: "Samsung Galaxy S25 Screen", price: "From $139", url: "/repairs/smartphone/galaxy-s25/screen-repair", actionText: "View →" },
+          { name: "MacBook Pro Retina & Battery", price: "From $169", url: "/repairs/computer/macbook-pro", actionText: "View →" },
+          { name: "PS5 HDMI Port Micro-Solder", price: "From $119", url: "/repairs/console/playstation-5/hdmi-port-replacement", actionText: "View →" },
+          { name: "Water Damage Ultrasonic Bath", price: "Free Diagnostic", url: "/blog/what-to-do-water-damaged-phone", actionText: "View →" },
+          { name: "Charging Port Replacement", price: "From $69", url: "/common-issues/smartphone/charging-port-replacement", actionText: "View →" },
+        ],
+      },
+      fields: {
+        heading: { type: "text", label: "Heading" },
+        subheading: { type: "textarea", label: "Subheading / Description" },
+        viewAllText: { type: "text", label: "View All Button Text" },
+        viewAllUrl: { type: "text", label: "View All Link URL" },
+        columns: {
+          type: "number",
+          label: "Columns (2-4)",
+          min: 2,
+          max: 4,
+        },
+        containerMode: {
+          type: "radio",
+          label: "Container Mode",
+          options: [
+            { label: "Borderless / Open (Top Border)", value: "borderless" as const },
+            { label: "Clean Bordered Box", value: "clean" as const },
+            { label: "White Card Box", value: "card" as const },
+          ],
+        },
+        bgColor: createColorField("Section Background"),
+        textColor: createColorField("Text Color"),
+        accentColor: createColorField("Accent / Link Color"),
+        cardBgColor: createColorField("Item Card Background"),
+        cardBorderColor: createColorField("Item Card Border"),
+        padding: createSpacingField("Section Padding"),
+        borderRadius: { type: "text", label: "Card Border Radius (e.g. 8px)" },
+        customCss: createCustomCssField(),
+        responsive: createResponsiveField({ includeLayout: true }),
+        visibility: createVisibilityField(),
+        locked: LOCK_FIELD,
+        items: {
+          type: "array",
+          label: "Repair Items",
+          getItemSummary: (item) => item.name || "Repair Item",
+          arrayFields: {
+            name: { type: "text", label: "Device / Repair Name" },
+            price: { type: "text", label: "Price (e.g. From $119)" },
+            url: { type: "text", label: "Target URL" },
+            actionText: { type: "text", label: "Action Text (e.g. View →)" },
+          },
+        },
+      },
+      resolvePermissions: resolveLockPermissions,
+      renderFields: ({ fields }) => (
+        <>
+          <FieldTab label="Content">
+            {fields.heading}
+            {fields.subheading}
+            {fields.viewAllText}
+            {fields.viewAllUrl}
+            {fields.items}
+          </FieldTab>
+          <FieldTab label="Style">
+            <FieldGroup label="Layout & Container" defaultExpanded={true}>
+              {fields.containerMode}
+              {fields.columns}
+              {fields.padding}
+              {fields.borderRadius}
+            </FieldGroup>
+            <FieldGroup label="Colors">
+              {fields.bgColor}
+              {fields.textColor}
+              {fields.accentColor}
+              {fields.cardBgColor}
+              {fields.cardBorderColor}
+            </FieldGroup>
+          </FieldTab>
+          <FieldTab label="Advanced">
+            {fields.locked}
+            {fields.responsive}
+            {fields.customCss}
+          </FieldTab>
+        </>
+      ),
+      render: ({
+        id,
+        heading = "Check More Philadelphia Hardware Repairs",
+        subheading = "All device models and hardware issues supported with express walk-in service in Philadelphia:",
+        viewAllText = "View All Repairs",
+        viewAllUrl = "/repairs",
+        columns = 4,
+        containerMode = "borderless",
+        bgColor = "transparent",
+        textColor = "#111827",
+        accentColor = "#009691",
+        cardBgColor = "#ffffff",
+        cardBorderColor = "#e5e7eb",
+        padding = "32px 0px",
+        borderRadius = "8px",
+        customCss,
+        responsive,
+        visibility,
+        items = [],
+      }) => {
+        const cleanSectionId = sanitizeSectionId(id, "popular-repairs");
+        const responsiveCss = buildResponsiveMediaCss(cleanSectionId, responsive);
+        const visibilityCss = buildVisibilityCss(cleanSectionId, visibility);
+        const scopedCustomCss = scopeCustomCss(customCss, cleanSectionId);
+
+        const colClass =
+          Number(columns) === 2
+            ? "grid-cols-1 sm:grid-cols-2"
+            : Number(columns) === 3
+            ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+            : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4";
+
+        const containerClasses =
+          containerMode === "clean"
+            ? "rounded-xl border border-neutral-200/90 bg-neutral-50/50 p-6 sm:p-7"
+            : containerMode === "card"
+            ? "rounded-xl border border-neutral-200 bg-white shadow-xs p-6 sm:p-7"
+            : "pt-8 border-t border-neutral-200";
+
+        return (
+          <SectionWrapper
+            id={cleanSectionId}
+            bgColor={bgColor !== "transparent" ? bgColor : undefined}
+            textColor={textColor}
+            padding={padding}
+            align="left"
+            customCss={customCss}
+            responsive={responsive}
+            visibility={visibility}
+          >
+            <div className="max-w-7xl mx-auto px-4 sm:px-6">
+              <div className={containerClasses}>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+                  <div>
+                    {heading && (
+                      <h3
+                        className="text-base sm:text-lg font-bold tracking-tight"
+                        style={{ color: textColor }}
+                      >
+                        {heading}
+                      </h3>
+                    )}
+                    {subheading && (
+                      <p className="text-xs sm:text-sm text-neutral-500 mt-1">
+                        {subheading}
+                      </p>
+                    )}
+                  </div>
+                  {viewAllText && viewAllUrl && (
+                    <Link
+                      href={viewAllUrl}
+                      className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold hover:underline shrink-0"
+                      style={{ color: accentColor }}
+                    >
+                      <span>{viewAllText}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  )}
+                </div>
+
+                {items && items.length > 0 && (
+                  <div className={`grid ${colClass} gap-3 mt-5`}>
+                    {items.map((item, idx) => (
+                      <Link
+                        key={`${item.name}-${idx}`}
+                        href={item.url || "/repairs"}
+                        className="group block p-3.5 rounded-lg border transition-all shadow-2xs hover:shadow-xs"
+                        style={{
+                          backgroundColor: cardBgColor,
+                          borderColor: cardBorderColor,
+                          borderRadius: normalizeCssUnit(borderRadius, "8px"),
+                        }}
+                      >
+                        <span
+                          className="text-xs sm:text-sm font-semibold block truncate group-hover:opacity-80 transition-opacity"
+                          style={{ color: textColor }}
+                        >
+                          {item.name}
+                        </span>
+                        <div className="flex items-center justify-between mt-2 pt-1 text-xs">
+                          <span className="font-semibold text-neutral-600">
+                            {item.price || "Available"}
+                          </span>
+                          <span
+                            className="font-medium transition-colors flex items-center gap-0.5"
+                            style={{ color: accentColor }}
+                          >
+                            {item.actionText || "View →"}
+                          </span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </SectionWrapper>
         );

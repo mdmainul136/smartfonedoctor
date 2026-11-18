@@ -33,6 +33,7 @@ import {
   Square,
   Star,
   Store,
+  Wrench,
   TrendingUp,
   Video,
 } from "lucide-react";
@@ -63,6 +64,7 @@ const DEFAULT_WIDGET_ICONS: Record<string, IconType> = {
   CounterBlock: Hash,
   BreadcrumbBlock: ChevronRight,
   HeroBlock: LayoutTemplate,
+  PopularRepairsBlock: Wrench,
   RepairTrackerBlock: Activity,
   StatsCounterRowBlock: TrendingUp,
   StepProcessBlock: ListOrdered,

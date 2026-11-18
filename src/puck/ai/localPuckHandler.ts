@@ -164,6 +164,7 @@ Rules:
 const ALLOWED_TYPES = new Set([
   "HeroBlock",
   "ServicesGridBlock",
+  "PopularRepairsBlock",
   "SplitBannerBlock",
   "FaqBlock",
   "CtaBannerBlock",

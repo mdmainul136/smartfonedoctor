@@ -9,7 +9,6 @@ import {
   Check,
   Award,
   ChevronDown,
-  Sparkles,
   ArrowRight,
   Cpu,
 } from "lucide-react";
@@ -385,41 +384,40 @@ export default function PSeoRichSection({
 
           {/* ── 5. CHECK MORE POPULAR REPAIRS (INTERNAL LINKING FOR PSEO) ── */}
           {popularLinks && popularLinks.length > 0 && (
-            <div className="bg-neutral-50 rounded-2xl border border-neutral-200 p-6 sm:p-8">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-[#009691]" />
-                  <h3 className="text-base sm:text-lg font-bold text-neutral-900">
+            <div className="mt-12 pt-8 border-t border-neutral-200">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+                <div>
+                  <h3 className="text-base sm:text-lg font-bold text-neutral-900 tracking-tight">
                     {popularLinksTitle}
                   </h3>
+                  <p className="text-xs sm:text-sm text-neutral-500 mt-1">
+                    All device models and hardware issues supported with express walk-in service in Philadelphia:
+                  </p>
                 </div>
                 <Link
                   href="/repairs"
-                  className="text-xs font-bold text-[#009691] hover:underline flex items-center gap-1"
+                  className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-[#009691] hover:text-[#007b77] hover:underline shrink-0"
                 >
                   <span>View All Repairs</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
-              <p className="text-xs text-neutral-500 mb-6">
-                All device models and hardware issues supported with express walk-in service in Philadelphia:
-              </p>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
                 {popularLinks.map((item) => (
                   <Link
                     key={item.name}
                     href={item.url}
-                    className="bg-white p-4 rounded-xl border border-neutral-200 hover:border-[#009691] hover:shadow-2xs transition-all group"
+                    className="group block p-3.5 rounded-lg border border-neutral-200 bg-white hover:border-[#009691] hover:bg-neutral-50/70 transition-all shadow-2xs hover:shadow-xs"
                   >
-                    <span className="text-xs font-bold text-neutral-900 group-hover:text-[#009691] transition-colors block truncate">
+                    <span className="text-xs sm:text-sm font-semibold text-neutral-900 group-hover:text-[#009691] transition-colors block truncate">
                       {item.name}
                     </span>
-                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-neutral-100">
-                      <span className="text-[11px] font-semibold text-emerald-700">
+                    <div className="flex items-center justify-between mt-2 pt-1 text-xs">
+                      <span className="font-semibold text-neutral-600">
                         {item.price || "Available"}
                       </span>
-                      <span className="text-[10px] text-neutral-400 group-hover:text-[#009691] transition-colors font-medium">
+                      <span className="text-neutral-400 group-hover:text-[#009691] font-medium transition-colors">
                         View &rarr;
                       </span>
                     </div>

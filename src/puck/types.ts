@@ -742,6 +742,34 @@ export type LogoStripBlockProps = {
   visibility?: BlockVisibility;
 };
 
+export type PopularRepairItem = {
+  name: string;
+  price?: string;
+  url: string;
+  actionText?: string;
+};
+
+export type PopularRepairsBlockProps = {
+  heading: string;
+  subheading: string;
+  viewAllText: string;
+  viewAllUrl: string;
+  columns: number;
+  containerMode: "clean" | "borderless" | "card";
+  bgColor: string;
+  textColor: string;
+  accentColor: string;
+  cardBgColor: string;
+  cardBorderColor: string;
+  padding: string;
+  borderRadius: string;
+  customCss: string;
+  responsive?: ResponsiveOverrides;
+  locked?: boolean;
+  visibility?: BlockVisibility;
+  items: PopularRepairItem[];
+};
+
 export type BreadcrumbItem = {
   label: string;
   url: string;
@@ -761,6 +789,7 @@ export type BreadcrumbBlockProps = {
 
 export type PuckComponents = {
   HeroBlock: HeroBlockProps;
+  PopularRepairsBlock: PopularRepairsBlockProps;
   ServicesGridBlock: ServicesGridBlockProps;
   SplitBannerBlock: SplitBannerBlockProps;
   FaqBlock: FaqBlockProps;
