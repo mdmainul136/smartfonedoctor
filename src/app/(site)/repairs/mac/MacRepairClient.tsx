@@ -118,7 +118,7 @@ const COMMON_MAC_ISSUES: CommonIssueItem[] = [
     id: "thermal",
     title: "Overheating, Fan Noise & Thermal Paste",
     description: "Deep clean dust clogged heatsinks and apply premium Arctic thermal compound to eliminate thermal throttling and loud fan noise.",
-    image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&auto=format&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=400&auto=format&fit=crop&q=80",
     turnaround: "Same-Day • 30 Mins",
   },
 ];
@@ -195,7 +195,7 @@ export default function MacRepairClient() {
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <Link
                 href="/schedule-repair"
-                className="px-6 py-3 rounded-full bg-[#c8102e] hover:bg-[#a00c24] text-white font-bold text-xs sm:text-sm tracking-wide uppercase transition shadow-md active:scale-95"
+                className="px-6 py-3 rounded-full bg-sfd-teal hover:bg-sfd-tealDark text-white font-bold text-xs sm:text-sm tracking-wide uppercase transition shadow-md active:scale-95"
               >
                 Book Repair
               </Link>
@@ -286,7 +286,7 @@ export default function MacRepairClient() {
                     </p>
                     <div className="flex items-center justify-between mt-3 pt-2 border-t border-neutral-100">
                       <span className="text-[11px] text-neutral-400">{item.turnaround}</span>
-                      <span className="text-xs font-semibold text-[#c8102e] group-hover:underline">
+                      <span className="text-xs font-semibold text-sfd-teal group-hover:underline">
                         Learn more &gt;
                       </span>
                     </div>
@@ -320,7 +320,7 @@ export default function MacRepairClient() {
                     </p>
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-[10px] text-neutral-400">{item.turnaround}</span>
-                      <span className="text-xs font-semibold text-[#c8102e] group-hover:underline">
+                      <span className="text-xs font-semibold text-sfd-teal group-hover:underline">
                         Book repair &gt;
                       </span>
                     </div>
@@ -368,7 +368,7 @@ export default function MacRepairClient() {
           {/* Apple Genuine Parts Banner */}
           <div className="rounded-3xl p-8 sm:p-10 bg-[#121316] text-white flex flex-col justify-between relative overflow-hidden shadow-md">
             <div className="max-w-md z-10">
-              <span className="inline-block px-2.5 py-1 rounded bg-[#009691] text-white text-[10px] font-bold uppercase tracking-wider mb-4">
+              <span className="inline-block px-2.5 py-1 rounded bg-sfd-teal text-white text-[10px] font-bold uppercase tracking-wider mb-4">
                 Available at SFD
               </span>
               <h3 className="text-xl sm:text-2xl font-bold tracking-tight">
@@ -408,7 +408,7 @@ export default function MacRepairClient() {
           <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
             <Link
               href="/schedule-repair"
-              className="w-full sm:w-auto text-center px-6 py-3 rounded-xl bg-[#c8102e] hover:bg-[#a00c24] text-white font-bold text-xs sm:text-sm uppercase tracking-wide transition shadow-xs active:scale-95"
+              className="w-full sm:w-auto text-center px-6 py-3 rounded-xl bg-sfd-teal hover:bg-sfd-tealDark text-white font-bold text-xs sm:text-sm uppercase tracking-wide transition shadow-xs active:scale-95"
             >
               Book Repair Now
             </Link>

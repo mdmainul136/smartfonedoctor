@@ -1,11 +1,12 @@
 import React from "react";
+import { brandTitle } from "@/lib/seoTitle";
 import type { Metadata } from "next";
 import Link from "next/link";
 import Footer from "@/components/layout/Footer";
 import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
 
 export const metadata: Metadata = {
-  title: "Accessibility Statement | SmartFoneDoctor",
+  title: brandTitle("Accessibility Statement | SmartFoneDoctor"),
   description:
     "SmartFoneDoctor is committed to digital accessibility and providing a website that is usable for all people, including those with disabilities.",
   keywords: ["Accessibility Statement", "SmartFoneDoctor Accessibility", "WCAG 2.1 AAA"],

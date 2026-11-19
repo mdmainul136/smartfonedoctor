@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { brandTitle } from "@/lib/seoTitle";
 import { notFound, redirect, RedirectType } from "next/navigation";
 import CustomPage from "@/components/site/CustomPage";
 import { getCmsPage } from "@/actions/cmsPages";
@@ -38,7 +39,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!page) {
     return {
-      title: "Page Not Found | SmartFone Doctor",
+      title: brandTitle("Page Not Found | SmartFone Doctor"),
       description: "The requested page could not be found.",
       robots: { index: false, follow: false },
     };
@@ -53,7 +54,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const ogImage = page.featuredImage || "/images/og-default.jpg";
 
   return {
-    title,
+    title: brandTitle(title),
     description,
     keywords: page.keywords?.length
       ? page.keywords

@@ -49,7 +49,7 @@ export function WiseCertification() {
             <div className="flex-1 max-w-[620px] relative">
 
               {/* Decorative Red Cross Icon in Corner */}
-              <div className="absolute -top-3 right-0 text-[#c8102e] font-black text-xl select-none">
+              <div className="absolute -top-3 right-0 text-sfd-teal font-black text-xl select-none">
                 +
               </div>
 
@@ -74,7 +74,7 @@ export function WiseCertification() {
               <div>
                 <Link
                   href="#locations"
-                  className="inline-block py-2.5 px-6 rounded-full bg-[#c8102e] hover:bg-[#b31924] text-white text-[13px] font-bold tracking-tight shadow-xs transition-colors"
+                  className="inline-block py-2.5 px-6 rounded-full bg-sfd-teal hover:bg-sfd-tealDark text-white text-[13px] font-bold tracking-tight shadow-xs transition-colors"
                 >
                   Choose Store
                 </Link>

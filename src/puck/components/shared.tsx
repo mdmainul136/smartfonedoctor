@@ -551,7 +551,7 @@ export function FaqAccordionCard({
           {item.title}
         </h3>
         <ChevronDown
-          style={{ color: isOpen ? accentColor || "#009691" : undefined }}
+          style={{ color: isOpen ? accentColor || "#00807A" : undefined }}
           className={`w-4 h-4 shrink-0 transition-transform duration-200 ${
             isOpen ? "rotate-180" : "text-gray-400"
           }`}

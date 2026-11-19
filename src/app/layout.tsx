@@ -212,13 +212,6 @@ export default async function RootLayout({
         closes: "19:00",
       },
     ],
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.9",
-      reviewCount: "1524",
-      bestRating: "5",
-      worstRating: "1",
-    },
     sameAs,
   };
 

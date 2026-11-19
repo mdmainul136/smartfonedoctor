@@ -44,13 +44,6 @@ export default async function GmbSchemaJsonLd() {
             closes: "19:30",
           },
         ],
-        aggregateRating: {
-          "@type": "AggregateRating",
-          ratingValue: loc.google_rating ? Number(loc.google_rating).toFixed(1) : "4.9",
-          reviewCount: loc.total_reviews ? String(loc.total_reviews) : "1520",
-          bestRating: "5",
-          worstRating: "1",
-        },
       };
     });
 
@@ -87,13 +80,6 @@ export default async function GmbSchemaJsonLd() {
             "https://www.wikidata.org/wiki/Q115862892",
           ],
           hasMap: "https://maps.google.com/?cid=15243892090",
-          aggregateRating: {
-            "@type": "AggregateRating",
-            ratingValue: "4.9",
-            reviewCount: "1524",
-            bestRating: "5",
-            worstRating: "1",
-          },
           department: departments,
           hasOfferCatalog: {
             "@type": "OfferCatalog",

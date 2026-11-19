@@ -399,19 +399,12 @@ export default function SeoManagerPage() {
           "https://www.yelp.com/biz/smart-fone-doctor-philadelphia",
           "https://www.facebook.com/SmartFoneDoctorPhilly",
         ],
-        aggregateRating: {
-          "@type": "AggregateRating",
-          ratingValue: "4.9",
-          reviewCount: activeStoreObj.id === 1 ? "612" : activeStoreObj.id === 2 ? "340" : "265",
-          bestRating: "5",
-          worstRating: "1",
-        },
         ...(isEnhanced
           ? {
-              currenciesAccepted: "USD",
-              paymentAccepted: "Cash, Credit Card, Apple Pay, Google Pay",
-              areaServed: ["Philadelphia", "West Philadelphia", "University City"],
-            }
+            currenciesAccepted: "USD",
+            paymentAccepted: "Cash, Credit Card, Apple Pay, Google Pay",
+            areaServed: ["Philadelphia", "West Philadelphia", "University City"],
+          }
           : {}),
       };
     }
@@ -462,19 +455,12 @@ export default function SeoManagerPage() {
         "https://www.yelp.com/biz/smart-fone-doctor-philadelphia",
         "https://www.facebook.com/SmartFoneDoctorPhilly",
       ],
-      aggregateRating: {
-        "@type": "AggregateRating",
-        ratingValue: "4.9",
-        reviewCount: "1524",
-        bestRating: "5",
-        worstRating: "1",
-      },
       ...(isEnhanced
         ? {
-            currenciesAccepted: "USD",
-            paymentAccepted: "Cash, Credit Card, Apple Pay, Google Pay",
-            areaServed: ["Philadelphia", "West Philadelphia", "University City"],
-          }
+          currenciesAccepted: "USD",
+          paymentAccepted: "Cash, Credit Card, Apple Pay, Google Pay",
+          areaServed: ["Philadelphia", "West Philadelphia", "University City"],
+        }
         : {}),
     };
   };
@@ -572,9 +558,8 @@ export default function SeoManagerPage() {
           <span className="text-xs font-medium text-gray-500 block">Sitemap &amp; Crawlers</span>
           <div className="flex items-baseline gap-1 mt-1">
             <span
-              className={`text-2xl font-bold ${
-                settings.enableSitemap && settings.enableRobotsTxt ? "text-[#009691]" : "text-amber-600"
-              }`}
+              className={`text-2xl font-bold ${settings.enableSitemap && settings.enableRobotsTxt ? "text-[#009691]" : "text-amber-600"
+                }`}
             >
               {settings.enableSitemap && settings.enableRobotsTxt ? "Active" : "Configured"}
             </span>
@@ -590,11 +575,10 @@ export default function SeoManagerPage() {
         <button
           type="button"
           onClick={() => setActiveTab("general")}
-          className={`py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap cursor-pointer ${
-            activeTab === "general"
+          className={`py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap cursor-pointer ${activeTab === "general"
               ? "border-[#009691] text-[#009691]"
               : "border-transparent text-gray-500 hover:text-gray-900"
-          }`}
+            }`}
         >
           General Defaults
         </button>
@@ -602,11 +586,10 @@ export default function SeoManagerPage() {
         <button
           type="button"
           onClick={() => setActiveTab("redirects")}
-          className={`py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap cursor-pointer ${
-            activeTab === "redirects"
+          className={`py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap cursor-pointer ${activeTab === "redirects"
               ? "border-[#009691] text-[#009691]"
               : "border-transparent text-gray-500 hover:text-gray-900"
-          }`}
+            }`}
         >
           Redirects ({redirects.length})
         </button>
@@ -614,11 +597,10 @@ export default function SeoManagerPage() {
         <button
           type="button"
           onClick={() => setActiveTab("verification")}
-          className={`py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap cursor-pointer ${
-            activeTab === "verification"
+          className={`py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap cursor-pointer ${activeTab === "verification"
               ? "border-[#009691] text-[#009691]"
               : "border-transparent text-gray-500 hover:text-gray-900"
-          }`}
+            }`}
         >
           Webmaster Verification
         </button>
@@ -626,11 +608,10 @@ export default function SeoManagerPage() {
         <button
           type="button"
           onClick={() => setActiveTab("crawlers")}
-          className={`py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap cursor-pointer ${
-            activeTab === "crawlers"
+          className={`py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap cursor-pointer ${activeTab === "crawlers"
               ? "border-[#009691] text-[#009691]"
               : "border-transparent text-gray-500 hover:text-gray-900"
-          }`}
+            }`}
         >
           Robots &amp; Sitemap
         </button>
@@ -638,11 +619,10 @@ export default function SeoManagerPage() {
         <button
           type="button"
           onClick={() => setActiveTab("schema")}
-          className={`py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap cursor-pointer ${
-            activeTab === "schema"
+          className={`py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap cursor-pointer ${activeTab === "schema"
               ? "border-[#009691] text-[#009691]"
               : "border-transparent text-gray-500 hover:text-gray-900"
-          }`}
+            }`}
         >
           Schema.org JSON-LD
         </button>
@@ -1033,7 +1013,7 @@ export default function SeoManagerPage() {
             {/* LIVE BRAND ASSET PREVIEW */}
             <div className="pt-3 border-t border-gray-100 space-y-2.5">
               <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wider">Live Brand Assets Preview</h3>
-              
+
               {/* Browser Tab Simulation */}
               <div className="rounded-xl border border-gray-200 bg-gray-100 p-2 text-xs">
                 <span className="text-[10px] text-gray-400 block mb-1 font-medium">Browser Tab Preview:</span>
@@ -1196,9 +1176,8 @@ export default function SeoManagerPage() {
                       <button
                         type="button"
                         onClick={() => handleToggleRedirect(r.id, r.isActive)}
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold cursor-pointer ${
-                          r.isActive ? "bg-emerald-100 text-emerald-800" : "bg-gray-200 text-gray-600"
-                        }`}
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold cursor-pointer ${r.isActive ? "bg-emerald-100 text-emerald-800" : "bg-gray-200 text-gray-600"
+                          }`}
                       >
                         {r.isActive ? "Active" : "Disabled"}
                       </button>
@@ -1446,8 +1425,8 @@ export default function SeoManagerPage() {
               </span>
             </div>
             <pre className="bg-gray-900 text-gray-100 p-4 rounded-xl text-xs font-mono leading-relaxed overflow-x-auto whitespace-pre border border-gray-800">
-{settings.enableRobotsTxt
-  ? `User-agent: *
+              {settings.enableRobotsTxt
+                ? `User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /api/admin/
@@ -1455,7 +1434,7 @@ Disallow: /list/
 Disallow: /profile/
 
 ${settings.enableAiBots
-    ? `# AI Search Crawlers (Allowed for Citations)
+                  ? `# AI Search Crawlers (Allowed for Citations)
 User-agent: GPTBot
 User-agent: ChatGPT-User
 User-agent: PerplexityBot
@@ -1465,7 +1444,7 @@ User-agent: Google-Extended
 User-agent: Applebot-Extended
 Allow: /
 Disallow: /admin/`
-    : `# AI Search Crawlers (Blocked)
+                  : `# AI Search Crawlers (Blocked)
 User-agent: GPTBot
 User-agent: ChatGPT-User
 User-agent: PerplexityBot
@@ -1474,11 +1453,11 @@ User-agent: Claude-Web
 User-agent: Google-Extended
 User-agent: Applebot-Extended
 Disallow: /`
-  }
+                }
 
 ${settings.enableSitemap ? `Sitemap: https://smartfonedoctor.com/sitemap.xml` : `# Sitemap disabled in settings`}
 Host: https://smartfonedoctor.com`
-  : `# Standard Crawlers Disabled
+                : `# Standard Crawlers Disabled
 User-agent: *
 Disallow: /
 
@@ -1545,11 +1524,10 @@ Host: https://smartfonedoctor.com`}
                   <button
                     type="button"
                     onClick={() => setSchemaScope("all")}
-                    className={`py-1.5 px-2 rounded-md font-medium text-center transition-all cursor-pointer ${
-                      schemaScope === "all"
+                    className={`py-1.5 px-2 rounded-md font-medium text-center transition-all cursor-pointer ${schemaScope === "all"
                         ? "bg-white text-[#009691] shadow-2xs font-semibold"
                         : "text-gray-600 hover:text-gray-900"
-                    }`}
+                      }`}
                   >
                     All Locations
                   </button>
@@ -1558,11 +1536,10 @@ Host: https://smartfonedoctor.com`}
                       key={s.id}
                       type="button"
                       onClick={() => setSchemaScope(s.id)}
-                      className={`py-1.5 px-2 rounded-md font-medium text-center transition-all cursor-pointer ${
-                        schemaScope === s.id
+                      className={`py-1.5 px-2 rounded-md font-medium text-center transition-all cursor-pointer ${schemaScope === s.id
                           ? "bg-white text-[#009691] shadow-2xs font-semibold"
                           : "text-gray-600 hover:text-gray-900"
-                      }`}
+                        }`}
                     >
                       Store #{s.id}
                     </button>
@@ -1850,17 +1827,16 @@ Host: https://smartfonedoctor.com`}
           }
           setMediaFieldTarget(null);
         }}
-        title={`Select ${
-          mediaFieldTarget === "logoUrl"
+        title={`Select ${mediaFieldTarget === "logoUrl"
             ? "Primary Website Logo"
             : mediaFieldTarget === "logoDarkUrl"
-            ? "Dark Logo Asset"
-            : mediaFieldTarget === "faviconUrl"
-            ? "Browser Favicon (.ico / .png)"
-            : mediaFieldTarget === "appleTouchIcon"
-            ? "Apple Touch Icon"
-            : "Social Share (OG) Image"
-        }`}
+              ? "Dark Logo Asset"
+              : mediaFieldTarget === "faviconUrl"
+                ? "Browser Favicon (.ico / .png)"
+                : mediaFieldTarget === "appleTouchIcon"
+                  ? "Apple Touch Icon"
+                  : "Social Share (OG) Image"
+          }`}
         selectButtonText="Use This Image"
         initialSelectedUrl={mediaFieldTarget ? (settings[mediaFieldTarget] as string) || "" : ""}
       />

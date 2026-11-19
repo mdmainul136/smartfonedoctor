@@ -27,7 +27,7 @@ const socials = [
 ];
 
 const linkClass =
-  "inline-block py-1 text-[14px] text-neutral-300 hover:text-[#009691] transition-colors";
+  "inline-block py-1 text-[14px] text-neutral-300 hover:text-sfd-teal transition-colors";
 const headingClass =
   "text-[15px] font-bold text-white mb-3 sm:mb-4 tracking-tight";
 
@@ -53,7 +53,7 @@ export default function Footer() {
                     className="h-10 sm:h-12 w-auto object-contain rounded-md"
                   />
                   <div className="flex flex-col">
-                    <span className="text-[15px] font-bold tracking-tight text-white group-hover:text-[#009691] transition-colors">
+                    <span className="text-[15px] font-bold tracking-tight text-white group-hover:text-sfd-teal transition-colors">
                       SMARTFONE DOCTOR
                     </span>
                     <span className="text-[11px] text-neutral-400 tracking-wider uppercase font-medium">
@@ -70,19 +70,19 @@ export default function Footer() {
               {/* Quick Contact Block */}
               <div className="space-y-2 text-[13px] text-neutral-300 pt-3 border-t border-neutral-800/80">
                 <div className="flex items-start gap-2.5">
-                  <MapPin className="w-4 h-4 text-[#009691] shrink-0 mt-0.5" />
-                  <Link href="/locations" className="hover:text-[#009691] transition-colors">
+                  <MapPin className="w-4 h-4 text-sfd-teal shrink-0 mt-0.5" />
+                  <Link href="/locations" className="hover:text-sfd-teal transition-colors">
                     33 S 52nd St, Philadelphia, PA 19139
                   </Link>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <Phone className="w-4 h-4 text-[#009691] shrink-0" />
-                  <a href="tel:2155982090" className="hover:text-[#009691] transition-colors font-medium">
+                  <Phone className="w-4 h-4 text-sfd-teal shrink-0" />
+                  <a href="tel:2155982090" className="hover:text-sfd-teal transition-colors font-medium">
                     (215) 598-2090
                   </a>
                 </div>
                 <div className="flex items-center gap-2.5 text-neutral-400">
-                  <Clock className="w-4 h-4 text-[#009691] shrink-0" />
+                  <Clock className="w-4 h-4 text-sfd-teal shrink-0" />
                   <span>Mon–Sat: 10:00 AM – 7:00 PM</span>
                 </div>
               </div>
@@ -130,7 +130,7 @@ export default function Footer() {
               <div className="pt-2">
                 <Link
                   href="/locations"
-                  className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-[#009691] hover:bg-[#007e7a] text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-all cursor-pointer group active:scale-[0.99]"
+                  className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-sfd-teal hover:bg-[#007e7a] text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-all cursor-pointer group active:scale-[0.99]"
                 >
                   <span>Get Free Estimate</span>
                   <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
@@ -155,7 +155,7 @@ export default function Footer() {
                   target="_blank"
                   rel="noreferrer"
                   aria-label={s.name}
-                  className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-white hover:bg-[#009691] hover:text-white border border-neutral-200/90 shadow-2xs transition-all text-neutral-700"
+                  className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-white hover:bg-sfd-teal hover:text-white border border-neutral-200/90 shadow-2xs transition-all text-neutral-700"
                 >
                   <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24" aria-hidden="true">
                     <path d={s.path} />
@@ -166,10 +166,10 @@ export default function Footer() {
 
             {/* Policy links */}
             <div className="flex flex-wrap items-center justify-center md:justify-end gap-x-5 sm:gap-x-6 gap-y-1.5 text-xs sm:text-[13px] font-medium text-neutral-700">
-              <Link href="/privacy" className="hover:text-[#009691] transition-colors py-0.5">Privacy Policy</Link>
-              <Link href="/terms" className="hover:text-[#009691] transition-colors py-0.5">Terms of Use</Link>
-              <Link href="/supply-chain" className="hover:text-[#009691] transition-colors py-0.5">California Supply Chain Act</Link>
-              <Link href="/accessibility" className="hover:text-[#009691] transition-colors py-0.5">Accessibility Statement</Link>
+              <Link href="/privacy" className="hover:text-sfd-teal transition-colors py-0.5">Privacy Policy</Link>
+              <Link href="/terms" className="hover:text-sfd-teal transition-colors py-0.5">Terms of Use</Link>
+              <Link href="/supply-chain" className="hover:text-sfd-teal transition-colors py-0.5">California Supply Chain Act</Link>
+              <Link href="/accessibility" className="hover:text-sfd-teal transition-colors py-0.5">Accessibility Statement</Link>
             </div>
           </div>
 

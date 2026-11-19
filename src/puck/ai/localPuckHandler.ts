@@ -23,7 +23,7 @@ const DEFAULT_BUSINESS_CONTEXT = `
 Business: SmartFone Doctor (Philadelphia, PA)
 Services: Smartphone (iPhone, Samsung), Tablet (iPad), Laptop (MacBook), and Game Console (PS5, Xbox, Switch) repair & micro-soldering.
 Key Selling Points: 30-minute express screen & battery service, OEM-grade parts, 90-day warranty, walk-in or online booking (/schedule-repair).
-Brand Palette: Primary Teal #009691, Dark Slate #0f172a, Light Surface #f8fafc, White #ffffff.
+Brand Palette: Primary Teal #00807A, Dark Slate #0f172a, Light Surface #f8fafc, White #ffffff.
 `.trim();
 
 const PUCK_SCHEMA_PROMPT = `
@@ -48,7 +48,7 @@ Allowed block "type" values and their exact "props" schemas:
      "ctaLink": string,
      "bgColor": hex string (default "#0f172a"),
      "textColor": hex string (default "#ffffff"),
-     "accentColor": hex string (default "#009691"),
+     "accentColor": hex string (default "#00807A"),
      "badgeBg": string (default "rgba(0, 150, 145, 0.18)"),
      "badgeColor": hex string (default "#5eead4"),
      "padding": string (default "56px 36px"),
@@ -72,7 +72,7 @@ Allowed block "type" values and their exact "props" schemas:
      "textColor": hex string,
      "cardBgColor": hex string,
      "cardBorderColor": hex string,
-     "accentColor": hex string (default "#009691"),
+     "accentColor": hex string (default "#00807A"),
      "padding": string (default "48px 32px"),
      "align": "left" | "center",
      "borderRadius": string (default "10px"),

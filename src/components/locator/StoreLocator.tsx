@@ -308,7 +308,7 @@ export function StoreLocator({
                     <Link
                       href={`/schedule-repair?store=${store.id}`}
                       onClick={(e) => e.stopPropagation()}
-                      className="w-full py-2.5 px-4 rounded-full bg-[#c8102e] hover:bg-[#b31924] text-white text-[12.5px] font-bold tracking-tight shadow-xs transition-colors flex items-center justify-center gap-1.5"
+                      className="w-full py-2.5 px-4 rounded-full bg-sfd-teal hover:bg-sfd-tealDark text-white text-[12.5px] font-bold tracking-tight shadow-xs transition-colors flex items-center justify-center gap-1.5"
                     >
                       <Calendar className="w-3.5 h-3.5" />
                       Book Repair

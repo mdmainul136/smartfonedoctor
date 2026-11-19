@@ -1,4 +1,5 @@
 import React from "react";
+import { brandTitle } from "@/lib/seoTitle";
 import type { Metadata } from "next";
 import { StoreLocator } from "@/components/locator/StoreLocator";
 import { WiseCertification } from "@/components/home/WiseCertification";
@@ -14,7 +15,7 @@ import {
 } from "@/lib/schema";
 
 export const metadata: Metadata = {
-  title: "Book a Repair | SmartFoneDoctor Store Locator",
+  title: brandTitle("Book a Repair | SmartFoneDoctor Store Locator"),
   description:
     "Find your nearest SmartFoneDoctor store and book a fast, certified repair for your iPhone, smartphone, tablet, laptop, or gaming console.",
 };

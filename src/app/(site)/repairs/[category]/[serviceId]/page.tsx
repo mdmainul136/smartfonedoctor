@@ -1,4 +1,5 @@
 import React from "react";
+import { brandTitle } from "@/lib/seoTitle";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getAllServicesCMS, getServiceCMS } from "@/data/servicesData";
@@ -34,12 +35,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!service) {
     return {
-      title: "Service Not Found | SmartFoneDoctor",
+      title: brandTitle("Service Not Found | SmartFoneDoctor"),
     };
   }
 
   return {
-    title: service.seo.title,
+    title: brandTitle(service.seo.title),
     description: service.seo.description,
     keywords: service.seo.keywords,
     openGraph: {

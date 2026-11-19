@@ -1,4 +1,5 @@
 import React from "react";
+import { brandTitle } from "@/lib/seoTitle";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import {
@@ -45,12 +46,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!data) {
     return {
-      title: "Repair Service Not Found | SmartFoneDoctor",
+      title: brandTitle("Repair Service Not Found | SmartFoneDoctor"),
     };
   }
 
   return {
-    title: data.seo.title,
+    title: brandTitle(data.seo.title),
     description: data.seo.metaDescription,
     keywords: data.seo.focusKeywords,
     alternates: {

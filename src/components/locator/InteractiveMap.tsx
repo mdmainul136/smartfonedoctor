@@ -53,7 +53,7 @@ export function InteractiveMap({
           </clipPath>
         </defs>
         <!-- Teardrop Body -->
-        <path d="M${cx} 2 C${cx - 18} 2 ${cx - 20} 14 ${cx - 20} ${cy} C${cx - 20} ${cy + 12} ${cx - 3} ${h - 4} ${cx} ${h - 1} C${cx + 3} ${h - 4} ${cx + 20} ${cy + 12} ${cx + 20} ${cy} C${cx + 20} 14 ${cx + 18} 2 ${cx} 2 Z" fill="#c8102e" stroke="#ffffff" stroke-width="2.5" />
+        <path d="M${cx} 2 C${cx - 18} 2 ${cx - 20} 14 ${cx - 20} ${cy} C${cx - 20} ${cy + 12} ${cx - 3} ${h - 4} ${cx} ${h - 1} C${cx + 3} ${h - 4} ${cx + 20} ${cy + 12} ${cx + 20} ${cy} C${cx + 20} 14 ${cx + 18} 2 ${cx} 2 Z" fill="#00807A" stroke="#ffffff" stroke-width="2.5" />
         
         <!-- White Disc for Logo -->
         <circle cx="${cx}" cy="${cy}" r="${radius + 1}" fill="#ffffff" />
@@ -451,7 +451,7 @@ export function InteractiveMap({
           <button
             type="button"
             onClick={handleResetBounds}
-            className="w-8 h-8 flex items-center justify-center hover:bg-neutral-100 transition-colors text-[#009691]"
+            className="w-8 h-8 flex items-center justify-center hover:bg-neutral-100 transition-colors text-sfd-teal"
             title="Reset view to Philadelphia"
             aria-label="Reset view"
           >

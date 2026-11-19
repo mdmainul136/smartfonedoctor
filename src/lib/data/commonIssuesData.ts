@@ -31,7 +31,7 @@ export const COMMON_ISSUES_CMS: CommonIssueDetail[] = [
     leadText:
       "If your smartphone or tablet's charging port is malfunctioning, continue reading for assistance troubleshooting the issue.",
     image:
-      "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=900&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=900&auto=format&fit=crop&q=80",
     sections: [
       {
         heading: "Charging Port Problems",

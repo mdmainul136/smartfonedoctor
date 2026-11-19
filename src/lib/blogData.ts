@@ -138,7 +138,7 @@ export const INITIAL_BLOG_ARTICLES: BlogArticle[] = [
     categoryId: "cat-emergency",
     categoryName: "Emergency Device First Aid",
     tags: ["Water Damage", "Emergency", "Motherboard", "Data Recovery"],
-    featuredImage: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=1200&auto=format&fit=crop&q=80",
+    featuredImage: "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=1200&auto=format&fit=crop&q=80",
     author: {
       name: "Marcus Vance",
       role: "Micro-Soldering Specialist",

@@ -720,13 +720,6 @@ export function buildPSeoPageData(
         closes: "19:00",
       },
     ],
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.9",
-      reviewCount: "420",
-      bestRating: "5",
-      worstRating: "1",
-    },
   };
 
   const faqSchema = {
@@ -919,6 +912,13 @@ export function buildPSeoPageData(
 // 5. DYNAMIC DEVICE MODEL CMS BUILDER
 // Converts any device slug into a full ServiceCMSData object for /repairs/[category]/[serviceId]
 // ─────────────────────────────────────────────────────────────────────────────
+const CATEGORY_NOUN: Record<string, string> = {
+  smartphone: "Phones",
+  tablet: "Tablets",
+  computer: "Computers",
+  console: "Consoles",
+};
+
 export function buildDeviceModelCMS(category: string, deviceSlug: string): ServiceCMSData | null {
   const device = resolveDevice(deviceSlug);
   if (!device) return null;
@@ -936,8 +936,11 @@ export function buildDeviceModelCMS(category: string, deviceSlug: string): Servi
     heroTitle: `${device.name} Repair Services in Philadelphia`,
     heroSubtitle: `Expert same-day repair for ${device.name} (${device.specs}). From genuine OLED displays and battery calibration to precision charging port fixes with a 90-day warranty.`,
     heroImage: device.image,
-    modelsLabel: `Available ${device.brand} Models`,
-    models: PSEO_DEVICES.filter((d) => d.brand === device.brand).map((d) => ({
+    modelsLabel: `Other ${device.brand} ${CATEGORY_NOUN[device.category] ?? "Models"}`,
+    // Same brand AND same device type (an iPhone page shouldn't list iPads or MacBooks)
+    models: PSEO_DEVICES.filter(
+      (d) => d.brand === device.brand && d.category === device.category
+    ).map((d) => ({
       id: d.slug,
       title: d.name,
       specs: d.specs,

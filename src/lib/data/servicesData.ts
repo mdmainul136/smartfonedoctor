@@ -137,7 +137,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         id: "chrg",
         title: "USB-C & Lightning Port Replacement",
         description: "Fix loose cables, lint buildup, or burnt connector pins preventing your iPhone from charging.",
-        image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&auto=format&fit=crop&q=80",
+        image: "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 45 Mins",
       },
       {
@@ -265,7 +265,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         id: "charging",
         title: "USB-C & Lightning Port Repair",
         description: "Fix loose cables, slow charging, or burnt pins with precision micro-soldered replacement ports.",
-        image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&auto=format&fit=crop&q=80",
+        image: "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 45 Mins",
       },
       {
@@ -453,7 +453,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         id: "keyboard",
         title: "Keyboard & Trackpad Repair",
         description: "Fix unresponsive keys, sticky spills, or broken haptic trackpad feedback.",
-        image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&auto=format&fit=crop&q=80",
+        image: "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 60 Mins",
       },
     ],
@@ -519,7 +519,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         id: "overheat",
         title: "Overheating & Liquid Metal Re-application",
         description: "Deep clean dust clogs and re-spread liquid metal thermal interface to prevent abrupt overheating shutdowns.",
-        image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&auto=format&fit=crop&q=80",
+        image: "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 45 Mins",
       },
       {

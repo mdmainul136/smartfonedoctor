@@ -207,11 +207,11 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
             <ChevronRight className="w-3.5 h-3.5 text-gray-400 shrink-0" />
             <Link href="/blog" className="hover:text-black">Blog & Guides</Link>
             <ChevronRight className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-            <span className="text-[#00897b] font-medium truncate">{article.categoryName}</span>
+            <span className="text-sfd-teal font-medium truncate">{article.categoryName}</span>
           </nav>
 
           {/* Category Tag */}
-          <span className="bg-[#00897b]/10 text-[#00897b] border border-[#00897b]/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider inline-block">
+          <span className="bg-sfd-teal/10 text-sfd-teal border border-sfd-teal/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider inline-block">
             {article.categoryName}
           </span>
 
@@ -243,7 +243,7 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
               </span>
               <span>•</span>
               <span className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-[#00897b]" />
+                <Clock className="w-3.5 h-3.5 text-sfd-teal" />
                 {article.readTime}
               </span>
               <span>•</span>
@@ -253,7 +253,7 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
                 className="h-[30px] px-2.5 rounded-md border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
               >
                 {copied ? (
-                  <><Check className="w-3.5 h-3.5 text-[#00897b]" /><span className="text-[#00897b]">Copied!</span></>
+                  <><Check className="w-3.5 h-3.5 text-sfd-teal" /><span className="text-sfd-teal">Copied!</span></>
                 ) : (
                   <><Share2 className="w-3.5 h-3.5" /><span>Share</span></>
                 )}
@@ -281,14 +281,14 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
             <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
               <div>
                 <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                  <Wrench className="w-4 h-4 text-[#00897b]" />
+                  <Wrench className="w-4 h-4 text-sfd-teal" />
                   <span>Technical Diagnostics &amp; Repair Specification</span>
                 </h3>
                 <p className="text-xs text-gray-500 mt-0.5">
                   Laboratory benchmark guidelines for this hardware repair
                 </p>
               </div>
-              <span className="text-[11px] font-bold text-[#00897b] uppercase tracking-wider bg-white px-2.5 py-1 rounded-md border border-gray-200">
+              <span className="text-[11px] font-bold text-sfd-teal uppercase tracking-wider bg-white px-2.5 py-1 rounded-md border border-gray-200">
                 Verified Lab Spec
               </span>
             </div>
@@ -320,8 +320,8 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
           {/* Related Repair Services — Juicy Internal Linking Widget */}
           <section className="rounded-2xl bg-gradient-to-br from-teal-50 to-cyan-50 border border-teal-200/60 p-5 sm:p-6">
             <div className="flex items-center gap-2 mb-4">
-              <Wrench className="w-4 h-4 text-[#00897b]" />
-              <span className="text-xs font-bold uppercase tracking-widest text-[#00897b]">
+              <Wrench className="w-4 h-4 text-sfd-teal" />
+              <span className="text-xs font-bold uppercase tracking-widest text-sfd-teal">
                 Related Repair Services
               </span>
             </div>
@@ -333,14 +333,14 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
                 <Link
                   key={link.url + link.label}
                   href={link.url}
-                  className="flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-white border border-teal-200 hover:border-[#00897b] hover:shadow-md transition-all group text-sm font-semibold text-gray-900"
+                  className="flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-white border border-teal-200 hover:border-sfd-teal hover:shadow-md transition-all group text-sm font-semibold text-gray-900"
                 >
                   <span className="flex items-center gap-2">
-                    <ChevronRight className="w-4 h-4 text-[#00897b] group-hover:translate-x-0.5 transition-transform" />
+                    <ChevronRight className="w-4 h-4 text-sfd-teal group-hover:translate-x-0.5 transition-transform" />
                     {link.label}
                   </span>
                   {link.badge && (
-                    <span className="text-[10px] font-bold bg-[#00897b]/10 text-[#00897b] px-2 py-0.5 rounded-full border border-[#00897b]/20">
+                    <span className="text-[10px] font-bold bg-sfd-teal/10 text-sfd-teal px-2 py-0.5 rounded-full border border-sfd-teal/20">
                       {link.badge}
                     </span>
                   )}
@@ -350,7 +350,7 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
             <div className="mt-4 flex items-center gap-2 flex-wrap">
               <Link
                 href="/repairs"
-                className="text-xs text-[#00897b] font-bold hover:underline flex items-center gap-1"
+                className="text-xs text-sfd-teal font-bold hover:underline flex items-center gap-1"
               >
                 <ExternalLink className="w-3 h-3" /> View all repair services
               </Link>
@@ -402,7 +402,7 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
           {article.connectedService && (
             <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-r from-[#1d1c1a] to-[#2e2a25] text-white shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-6">
               <div className="space-y-2">
-                <span className="text-xs uppercase font-bold text-[#4dd0e1] tracking-wider block">
+                <span className="text-xs uppercase font-bold text-teal-200 tracking-wider block">
                   Professional Philadelphia Service
                 </span>
                 <h3 className="text-xl sm:text-2xl font-bold">{article.connectedService.title}</h3>
@@ -411,12 +411,12 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
                 </p>
               </div>
               <div className="text-left sm:text-right shrink-0 space-y-2">
-                <span className="text-2xl font-black text-[#4dd0e1] block">
+                <span className="text-2xl font-black text-teal-200 block">
                   {article.connectedService.price}
                 </span>
                 <Link
                   href={article.connectedService.bookingUrl}
-                  className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-[#00897b] hover:bg-[#00796b] text-white text-xs font-bold uppercase tracking-wider shadow-md transition-all active:scale-95"
+                  className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-sfd-teal hover:bg-sfd-tealDark text-white text-xs font-bold uppercase tracking-wider shadow-md transition-all active:scale-95"
                 >
                   Book This Repair <ChevronRight className="w-4 h-4 ml-1" />
                 </Link>
@@ -426,7 +426,7 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
 
           {/* Why Choose SmartFoneDoctor in Philadelphia */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-xs">
-            <span className="text-[11px] font-bold uppercase tracking-widest text-[#00897b] block mb-1">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-sfd-teal block mb-1">
               Philadelphia&apos;s Independent Repair Authority
             </span>
             <h3 className="text-xl sm:text-2xl font-extrabold text-neutral-900 tracking-tight mb-3">
@@ -457,7 +457,7 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
           <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-xs">
             <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-widest text-[#00897b] block mb-1">
+                <span className="text-[11px] font-bold uppercase tracking-widest text-sfd-teal block mb-1">
                   Got Questions?
                 </span>
                 <h3 className="text-lg sm:text-xl font-bold text-gray-900">
@@ -515,13 +515,13 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
           {/* Neighborhood Geo Tags — local SEO */}
           <div className="rounded-xl bg-gray-50 border border-gray-200 px-5 py-4">
             <div className="flex items-center gap-2 mb-2">
-              <MapPin className="w-3.5 h-3.5 text-[#00897b]" />
+              <MapPin className="w-3.5 h-3.5 text-sfd-teal" />
               <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Serving Philadelphia Neighborhoods</span>
             </div>
             <p className="text-xs text-gray-500 leading-relaxed">
               SmartFoneDoctor provides same-day device repair to customers from{" "}
               {PHILLY_NEIGHBORHOODS.join(", ")} and surrounding areas.{" "}
-              <Link href="/locations" className="text-[#00897b] font-semibold hover:underline">
+              <Link href="/locations" className="text-sfd-teal font-semibold hover:underline">
                 Find our locations →
               </Link>
             </p>
@@ -529,13 +529,13 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
 
           {/* Author Bio */}
           <div className="p-6 rounded-xl bg-white border border-gray-200 shadow-xs flex items-start gap-4">
-            <span className="w-12 h-12 rounded-full bg-[#00897b] text-white text-base font-bold flex items-center justify-center shrink-0">
+            <span className="w-12 h-12 rounded-full bg-sfd-teal text-white text-base font-bold flex items-center justify-center shrink-0">
               {article.author.avatar || article.author.name.slice(0, 2)}
             </span>
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="font-bold text-sm text-gray-900">Written by {article.author.name}</span>
-                <ShieldCheck className="w-4 h-4 text-[#00897b]" />
+                <ShieldCheck className="w-4 h-4 text-sfd-teal" />
               </div>
               <p className="text-xs text-gray-500 leading-relaxed">
                 {article.author.role} at SmartFoneDoctor Philadelphia. Specializing in component-level PCB
@@ -554,7 +554,7 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
           {relatedArticles.length > 0 && (
             <section className="pt-6 border-t border-gray-200 space-y-4">
               <div className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-[#00897b]" />
+                <BookOpen className="w-4 h-4 text-sfd-teal" />
                 <h2 className="text-base font-bold text-gray-900">Related Guides</h2>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -562,7 +562,7 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
                   <Link
                     key={rel.id}
                     href={`/blog/${rel.slug}`}
-                    className="group rounded-xl overflow-hidden border border-gray-200 hover:border-[#00897b]/40 hover:shadow-md transition-all bg-white"
+                    className="group rounded-xl overflow-hidden border border-gray-200 hover:border-sfd-teal/40 hover:shadow-md transition-all bg-white"
                   >
                     <div className="aspect-video overflow-hidden bg-gray-100">
                       <img
@@ -572,7 +572,7 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
                       />
                     </div>
                     <div className="p-3 space-y-1">
-                      <span className="text-[10px] font-bold text-[#00897b] uppercase tracking-wider">
+                      <span className="text-[10px] font-bold text-sfd-teal uppercase tracking-wider">
                         {rel.categoryName}
                       </span>
                       <p className="text-xs font-semibold text-gray-900 leading-snug line-clamp-2">
@@ -590,7 +590,7 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
 
           {/* Back to Blog */}
           <div className="pt-6 text-center">
-            <Link href="/blog" className="inline-flex items-center gap-2 text-sm font-bold text-[#00897b] hover:underline">
+            <Link href="/blog" className="inline-flex items-center gap-2 text-sm font-bold text-sfd-teal hover:underline">
               ← Back to All Guides &amp; Insights
             </Link>
           </div>
@@ -619,7 +619,7 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
                       item.level === 3 ? "ml-3" : ""
                     } ${
                       activeId === item.id
-                        ? "border-[#00897b] text-[#00897b] font-semibold"
+                        ? "border-sfd-teal text-sfd-teal font-semibold"
                         : "border-gray-200 text-gray-500 hover:text-gray-900 hover:border-gray-400"
                     }`}
                   >
@@ -661,7 +661,7 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
             <div className="space-y-2 pt-2">
               <Link
                 href="/schedule-repair"
-                className="block w-full text-center py-2.5 rounded-xl bg-[#00897b] hover:bg-[#00796b] text-white text-xs font-bold uppercase tracking-wider transition shadow-xs"
+                className="block w-full text-center py-2.5 rounded-xl bg-sfd-teal hover:bg-sfd-tealDark text-white text-xs font-bold uppercase tracking-wider transition shadow-xs"
               >
                 Schedule Appointment
               </Link>

@@ -270,8 +270,8 @@ export default function RepairStatusPage() {
               
               {/* Brand Red/Teal Plus Symbol */}
               <div className="flex items-center justify-center gap-1 mb-3 select-none">
-                <span className="text-[#c8102e] text-2xl font-bold leading-none">+</span>
-                <span className="text-[#009691] text-lg font-bold leading-none -mt-2">+</span>
+                <span className="text-sfd-teal text-2xl font-bold leading-none">+</span>
+                <span className="text-sfd-teal text-lg font-bold leading-none -mt-2">+</span>
               </div>
 
               {/* Title */}
@@ -328,7 +328,7 @@ export default function RepairStatusPage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full sm:w-auto px-10 py-3 rounded-full bg-[#c8102e] hover:bg-[#a60d26] text-white font-semibold text-[14px] tracking-wide transition-all duration-200 shadow-md hover:shadow-lg active:scale-98 cursor-pointer disabled:opacity-60"
+                    className="w-full sm:w-auto px-10 py-3 rounded-full bg-sfd-teal hover:bg-sfd-tealDark text-white font-semibold text-[14px] tracking-wide transition-all duration-200 shadow-md hover:shadow-lg active:scale-98 cursor-pointer disabled:opacity-60"
                   >
                     {loading ? "Searching Repair Ticket..." : "Check Repair Status"}
                   </button>
@@ -723,7 +723,7 @@ export default function RepairStatusPage() {
             </Link>
             <Link
               href="/schedule-repair"
-              className="px-5 py-2.5 rounded-full bg-[#c8102e] hover:bg-[#a00c24] text-white font-bold text-xs uppercase tracking-wider transition"
+              className="px-5 py-2.5 rounded-full bg-sfd-teal hover:bg-sfd-tealDark text-white font-bold text-xs uppercase tracking-wider transition"
             >
               New Appointment
             </Link>

@@ -64,7 +64,7 @@ export default function RepairTrackerWidget({
   subtitle = "Checking the live status of your repair is quick and easy at SmartFoneDoctor. Simply enter your Ticket ID and Last Name below.",
   demoTicketId = "SFD-84920",
   demoLastName = "Smith",
-  accentColor = "#c8102e",
+  accentColor = "#00807A",
   secondaryColor = "#009691",
   showStoreCard = true,
   showPickupChecklist = true,
@@ -211,7 +211,7 @@ export default function RepairTrackerWidget({
                   value={ticketId}
                   onChange={(e) => setTicketId(e.target.value)}
                   placeholder={`e.g. ${demoTicketId || "SFD-84920"}`}
-                  className="w-full px-4 py-3 rounded-xl bg-white border border-neutral-300 text-sm text-[#1d1c1a] placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#009691]/20 transition shadow-xs"
+                  className="w-full px-4 py-3 rounded-xl bg-white border border-neutral-300 text-sm text-[#1d1c1a] placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-sfd-teal/20 transition shadow-xs"
                 />
               </div>
 
@@ -225,7 +225,7 @@ export default function RepairTrackerWidget({
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   placeholder={`e.g. ${demoLastName || "Smith"}`}
-                  className="w-full px-4 py-3 rounded-xl bg-white border border-neutral-300 text-sm text-[#1d1c1a] placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#009691]/20 transition shadow-xs"
+                  className="w-full px-4 py-3 rounded-xl bg-white border border-neutral-300 text-sm text-[#1d1c1a] placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-sfd-teal/20 transition shadow-xs"
                 />
               </div>
 
@@ -359,7 +359,7 @@ export default function RepairTrackerWidget({
             <div className={showStoreCard ? "lg:col-span-8 space-y-4" : "lg:col-span-12 space-y-4"}>
               <div className="bg-white rounded-[24px] border border-neutral-200/90 shadow-sm p-6 sm:p-8 space-y-6">
                 <h4 className="text-base font-bold text-[#1d1c1a] border-b border-neutral-100 pb-3 flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-[#009691]" />
+                  <Clock className="w-4 h-4 text-sfd-teal" />
                   <span>Bench Inspection & Service Timeline</span>
                 </h4>
 
@@ -407,7 +407,7 @@ export default function RepairTrackerWidget({
                       />
                     </div>
                     <div>
-                      <span className="text-[10px] font-bold text-[#009691] uppercase tracking-wide">
+                      <span className="text-[10px] font-bold text-sfd-teal uppercase tracking-wide">
                         {result.store.badge}
                       </span>
                       <h4 className="text-[14px] font-bold text-neutral-900 leading-snug">
@@ -424,7 +424,7 @@ export default function RepairTrackerWidget({
 
                     <div className="flex items-center gap-2.5">
                       <Phone className="w-4 h-4 text-neutral-400 shrink-0" />
-                      <a href="tel:+12155982090" className="text-[#009691] font-bold hover:underline">
+                      <a href="tel:+12155982090" className="text-sfd-teal font-bold hover:underline">
                         {result.store.phone}
                       </a>
                     </div>
@@ -453,8 +453,8 @@ export default function RepairTrackerWidget({
                 </div>
 
                 {showPickupChecklist && (
-                  <div className="bg-[#f5fbfb] rounded-[24px] border border-[#009691]/20 p-5 text-xs text-neutral-700 space-y-2">
-                    <div className="flex items-center gap-2 text-[#009691] font-bold">
+                  <div className="bg-[#f5fbfb] rounded-[24px] border border-sfd-teal/20 p-5 text-xs text-neutral-700 space-y-2">
+                    <div className="flex items-center gap-2 text-sfd-teal font-bold">
                       <ShieldCheck className="w-4 h-4" />
                       <span>Pickup Checklist</span>
                     </div>

@@ -85,7 +85,7 @@ export default function WebInstallerPage() {
   if (loading) {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#fafafa]">
-        <Loader2 className="w-8 h-8 text-[#009691] animate-spin mb-3" />
+        <Loader2 className="w-8 h-8 text-sfd-teal animate-spin mb-3" />
         <span className="text-xs font-semibold text-gray-500">Checking system installation status...</span>
       </div>
     );
@@ -123,7 +123,7 @@ export default function WebInstallerPage() {
           <div className="pt-2">
             <Link
               href="/sign-in"
-              className="w-full h-10 rounded-xl bg-[#009691] hover:bg-[#007e7a] text-white text-xs font-bold inline-flex items-center justify-center gap-2 shadow-xs transition-colors"
+              className="w-full h-10 rounded-xl bg-sfd-teal hover:bg-[#007e7a] text-white text-xs font-bold inline-flex items-center justify-center gap-2 shadow-xs transition-colors"
             >
               <span>Go to Admin Sign-In</span>
               <ArrowRight className="w-4 h-4" />
@@ -165,7 +165,7 @@ export default function WebInstallerPage() {
           <div className="pt-2 flex flex-col gap-2">
             <Link
               href="/sign-in"
-              className="w-full h-10 rounded-xl bg-[#009691] hover:bg-[#007e7a] text-white text-xs font-bold inline-flex items-center justify-center gap-2 shadow-xs transition-colors"
+              className="w-full h-10 rounded-xl bg-sfd-teal hover:bg-[#007e7a] text-white text-xs font-bold inline-flex items-center justify-center gap-2 shadow-xs transition-colors"
             >
               <span>Proceed to Sign-In</span>
               <ArrowRight className="w-4 h-4" />
@@ -189,7 +189,7 @@ export default function WebInstallerPage() {
         
         {/* Brand Header */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-50 border border-teal-200/80 text-[#009691] text-xs font-semibold">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-50 border border-teal-200/80 text-sfd-teal text-xs font-semibold">
             <Wrench className="w-3.5 h-3.5" />
             <span>SmartFone Doctor OS</span>
           </div>
@@ -236,7 +236,7 @@ export default function WebInstallerPage() {
                 value={adminName}
                 onChange={(e) => setAdminName(e.target.value)}
                 placeholder="Dr. Mike"
-                className="w-full h-9 px-3 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-[#009691] focus:ring-1 focus:ring-[#009691]"
+                className="w-full h-9 px-3 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-sfd-teal focus:ring-1 focus:ring-sfd-teal"
               />
             </div>
 
@@ -250,7 +250,7 @@ export default function WebInstallerPage() {
                 value={adminEmail}
                 onChange={(e) => setAdminEmail(e.target.value)}
                 placeholder="admin@smartfonedoctor.com"
-                className="w-full h-9 px-3 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-[#009691] focus:ring-1 focus:ring-[#009691]"
+                className="w-full h-9 px-3 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-sfd-teal focus:ring-1 focus:ring-sfd-teal"
               />
             </div>
 
@@ -265,7 +265,7 @@ export default function WebInstallerPage() {
                   value={adminPassword}
                   onChange={(e) => setAdminPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full h-9 px-3 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-[#009691] focus:ring-1 focus:ring-[#009691]"
+                  className="w-full h-9 px-3 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-sfd-teal focus:ring-1 focus:ring-sfd-teal"
                 />
               </div>
 
@@ -279,7 +279,7 @@ export default function WebInstallerPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full h-9 px-3 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-[#009691] focus:ring-1 focus:ring-[#009691]"
+                  className="w-full h-9 px-3 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-sfd-teal focus:ring-1 focus:ring-sfd-teal"
                 />
               </div>
             </div>
@@ -304,7 +304,7 @@ export default function WebInstallerPage() {
               <button
                 type="submit"
                 disabled={isPending}
-                className="w-full h-10 rounded-xl bg-[#009691] hover:bg-[#007e7a] text-white text-xs font-bold inline-flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                className="w-full h-10 rounded-xl bg-sfd-teal hover:bg-[#007e7a] text-white text-xs font-bold inline-flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer disabled:opacity-50"
               >
                 {isPending ? (
                   <>

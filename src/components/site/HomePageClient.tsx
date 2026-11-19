@@ -95,7 +95,7 @@ export default function HomePageClient({ initialPage }: HomePageClientProps) {
                   className="bg-white rounded-2xl border border-neutral-200/90 overflow-hidden shadow-2xs hover:shadow-md hover:border-sfd-teal transition-all group flex flex-col justify-between"
                 >
                   <div>
-                    <div className="relative aspect-16/10 w-full overflow-hidden bg-neutral-900">
+                    <div className="relative aspect-[16/10] w-full overflow-hidden bg-neutral-900">
                       <Image
                         src={article.featuredImage}
                         alt={article.title}

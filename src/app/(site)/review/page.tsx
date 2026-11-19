@@ -1,4 +1,5 @@
 import React from "react";
+import { brandTitle } from "@/lib/seoTitle";
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
@@ -25,7 +26,7 @@ import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
 import { getStoreBranchesAction } from "@/actions/settings";
 
 export const metadata: Metadata = {
-  title: "Customer Reviews & Store Ratings | SmartFoneDoctor Philadelphia",
+  title: brandTitle("Customer Reviews & Store Ratings | SmartFoneDoctor Philadelphia"),
   description:
     "Read 420+ verified 5-star customer reviews across our 3 Philadelphia repair centers (52nd St Flagship, 4016 Lancaster Ave, and 4060 Lancaster Express). Rate your technician or book a repair.",
 };
@@ -166,7 +167,7 @@ export default async function ReviewHubPage() {
           <div className="absolute inset-0 bg-gradient-to-r from-neutral-950 via-neutral-900/90 to-neutral-800/60 z-0" />
 
           <div className="relative z-10 max-w-2xl p-6 sm:p-10 lg:p-14 space-y-4">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-sfd-teal/20 border border-sfd-teal/40 text-[#4dd0e1] text-xs font-semibold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-sfd-teal/20 border border-sfd-teal/40 text-teal-200 text-xs font-semibold uppercase tracking-wider">
               <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
               <span>Verified Customer Satisfaction</span>
             </div>
@@ -408,7 +409,7 @@ export default async function ReviewHubPage() {
         {/* 5. Conversion Banner */}
         <section className="rounded-[24px] bg-[#1d1c1a] text-white p-8 sm:p-12 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-md">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4dd0e1]">
+            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-200">
               <Sparkles className="w-4 h-4" />
               <span>Free Diagnostic Inspection • Zero Risk</span>
             </div>
@@ -424,7 +425,7 @@ export default async function ReviewHubPage() {
           <div className="flex flex-wrap items-center gap-3 shrink-0 w-full sm:w-auto">
             <Link
               href="/schedule-repair"
-              className="w-full sm:w-auto text-center px-6 py-3.5 rounded-full bg-[#c8102e] hover:bg-[#a00c24] text-white font-bold text-xs uppercase tracking-wider transition shadow-sm active:scale-95"
+              className="w-full sm:w-auto text-center px-6 py-3.5 rounded-full bg-sfd-teal hover:bg-sfd-tealDark text-white font-bold text-xs uppercase tracking-wider transition shadow-sm active:scale-95"
             >
               Book Repair Online
             </Link>

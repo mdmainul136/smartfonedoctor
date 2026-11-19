@@ -1,11 +1,12 @@
 import React from "react";
+import { brandTitle } from "@/lib/seoTitle";
 import type { Metadata } from "next";
 import Link from "next/link";
 import Footer from "@/components/layout/Footer";
 import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
 
 export const metadata: Metadata = {
-  title: "Terms of Use | SmartFoneDoctor",
+  title: brandTitle("Terms of Use | SmartFoneDoctor"),
   description:
     "Review the Terms of Use governing your access to and use of SmartFoneDoctor's website, diagnostic estimates, and device repair services.",
   keywords: [

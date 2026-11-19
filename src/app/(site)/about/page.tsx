@@ -51,15 +51,15 @@ export async function generateMetadata(): Promise<Metadata> {
       page?.keywords && page.keywords.length > 0
         ? page.keywords
         : [
-            "About SmartFoneDoctor",
-            "Phone repair Philadelphia",
-            "Cell phone repair West Philadelphia",
-            "Computer and MacBook repair Philly",
-            "PS5 HDMI port repair Philadelphia",
-            "WISE certified device technicians",
-            "Electronics repair 19139",
-            "Same day phone repair University City",
-          ],
+          "About SmartFoneDoctor",
+          "Phone repair Philadelphia",
+          "Cell phone repair West Philadelphia",
+          "Computer and MacBook repair Philly",
+          "PS5 HDMI port repair Philadelphia",
+          "WISE certified device technicians",
+          "Electronics repair 19139",
+          "Same day phone repair University City",
+        ],
     alternates: {
       canonical: canonicalUrl,
     },
@@ -110,24 +110,24 @@ export default async function AboutPage() {
   const mappedStores: StorePoint[] | undefined =
     branches.length > 0
       ? branches.map((b, idx) => ({
-          id: typeof b.id === "number" ? b.id : idx + 1,
-          name: b.name,
-          badge: idx === 0 ? "Flagship HQ" : undefined,
-          address: b.address,
-          cityStateZip: b.cityStateZip || "Philadelphia, PA 19139",
-          phone: b.phone,
-          rating: 4.9,
-          reviewsCount: idx === 0 ? 1524 : idx === 1 ? 880 : 940,
-          category: "Cell phone store · Phone repair service",
-          hours: b.businessHours || "Mon - Sat: 10:00 AM - 7:00 PM",
-          lat: idx === 0 ? 39.9575 : idx === 1 ? 39.9628 : 39.9635,
-          lng: idx === 0 ? -75.2263 : idx === 1 ? -75.2045 : -75.2062,
-          gmbUrl:
-            b.gmbUrl ||
-            `https://maps.google.com/?q=${encodeURIComponent(
-              b.address + ", " + (b.cityStateZip || "Philadelphia, PA")
-            )}`,
-        }))
+        id: typeof b.id === "number" ? b.id : idx + 1,
+        name: b.name,
+        badge: idx === 0 ? "Flagship HQ" : undefined,
+        address: b.address,
+        cityStateZip: b.cityStateZip || "Philadelphia, PA 19139",
+        phone: b.phone,
+        rating: 4.9,
+        reviewsCount: idx === 0 ? 1524 : idx === 1 ? 880 : 940,
+        category: "Cell phone store · Phone repair service",
+        hours: b.businessHours || "Mon - Sat: 10:00 AM - 7:00 PM",
+        lat: idx === 0 ? 39.9575 : idx === 1 ? 39.9628 : 39.9635,
+        lng: idx === 0 ? -75.2263 : idx === 1 ? -75.2045 : -75.2062,
+        gmbUrl:
+          b.gmbUrl ||
+          `https://maps.google.com/?q=${encodeURIComponent(
+            b.address + ", " + (b.cityStateZip || "Philadelphia, PA")
+          )}`,
+      }))
       : undefined;
 
   // Compile pre-rendered CSS if Page Builder blocks are present
@@ -205,12 +205,6 @@ export default async function AboutPage() {
             { "@type": "AdministrativeArea", name: "University City" },
             { "@type": "AdministrativeArea", name: "Center City Philadelphia" },
           ],
-          aggregateRating: {
-            "@type": "AggregateRating",
-            ratingValue: "4.9",
-            reviewCount: "1520",
-            bestRating: "5",
-          },
           knowsAbout: [
             "iPhone Screen and OLED Replacement",
             "Samsung Galaxy AMOLED Repair",

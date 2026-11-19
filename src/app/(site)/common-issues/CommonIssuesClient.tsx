@@ -80,7 +80,7 @@ const ISSUE_ARTICLES: CommonArticle[] = [
     title: "Charging Port Repair",
     description:
       "Device won't take charge, needs wiggling or cable disconnects? Port cleaning or micro-soldered replacement fixes slow and failed charging fast.",
-    image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=500&auto=format&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=500&auto=format&fit=crop&q=80",
     targetLink: "/common-issues/smartphone/charging-port-replacement",
   },
   {
@@ -144,7 +144,7 @@ const ISSUE_ARTICLES: CommonArticle[] = [
     title: "Console Overheating & Fan Noise",
     description:
       "PS5 or Xbox warning that the console is too hot? Deep dust decontamination and liquid metal thermal repasting prevent irreversible APU damage.",
-    image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=500&auto=format&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=500&auto=format&fit=crop&q=80",
     targetLink: "/repairs/console/playstation-repair",
   },
   {
@@ -251,7 +251,7 @@ export default function CommonIssuesClient() {
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <Link
                 href="/locations/i/book-repair"
-                className="px-6 py-3 rounded-full bg-[#c8102e] hover:bg-[#a00c24] text-white font-bold text-xs sm:text-sm tracking-wide uppercase transition shadow-md active:scale-95"
+                className="px-6 py-3 rounded-full bg-sfd-teal hover:bg-sfd-tealDark text-white font-bold text-xs sm:text-sm tracking-wide uppercase transition shadow-md active:scale-95"
               >
                 Find a Store Near Me
               </Link>
@@ -273,8 +273,8 @@ export default function CommonIssuesClient() {
               Most Common General Issues
             </h2>
             <div className="flex items-center gap-0.5">
-              <span className="text-[#c8102e] text-lg font-bold">+</span>
-              <span className="text-[#009691] text-sm font-bold -mt-1">+</span>
+              <span className="text-sfd-teal text-lg font-bold">+</span>
+              <span className="text-sfd-teal text-sm font-bold -mt-1">+</span>
             </div>
           </div>
           <p className="text-xs sm:text-[13px] text-neutral-600 max-w-2xl mx-auto mb-10 leading-relaxed">
@@ -466,7 +466,7 @@ export default function CommonIssuesClient() {
                 <div className="p-5 pt-0">
                   <Link
                     href={art.targetLink}
-                    className="inline-flex items-center text-xs font-bold text-[#c8102e] hover:underline"
+                    className="inline-flex items-center text-xs font-bold text-sfd-teal hover:underline"
                   >
                     Read Full Article &gt;
                   </Link>
@@ -486,7 +486,7 @@ export default function CommonIssuesClient() {
                     onClick={() => setCurrentPage(pageNum)}
                     className={`w-8 h-8 rounded-full text-xs font-bold flex items-center justify-center transition cursor-pointer ${
                       currentPage === pageNum
-                        ? "bg-[#c8102e] text-white shadow-xs"
+                        ? "bg-sfd-teal text-white shadow-xs"
                         : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
                     }`}
                   >
@@ -541,7 +541,7 @@ export default function CommonIssuesClient() {
             <div className="flex flex-wrap items-center gap-3 mt-6">
               <Link
                 href="/repairs/console/playstation-repair"
-                className="px-5 py-2.5 rounded-full bg-[#c8102e] hover:bg-[#a00c24] text-white text-xs font-bold uppercase tracking-wide transition shadow-xs"
+                className="px-5 py-2.5 rounded-full bg-sfd-teal hover:bg-sfd-tealDark text-white text-xs font-bold uppercase tracking-wide transition shadow-xs"
               >
                 See All Console Issues
               </Link>
@@ -568,16 +568,16 @@ export default function CommonIssuesClient() {
         {/* 6. Thin Trust Bar */}
         <section className="w-full rounded-2xl bg-[#1d1c1a] text-white py-3 px-4 mb-16 text-center text-[11px] sm:text-xs font-medium tracking-wide flex flex-wrap items-center justify-around gap-2 shadow-xs">
           <div className="flex items-center gap-1.5 text-neutral-200">
-            <span className="text-[#009691] font-bold">✓</span> Most Repairs Same Day
+            <span className="text-sfd-teal font-bold">✓</span> Most Repairs Same Day
           </div>
           <div className="flex items-center gap-1.5 text-neutral-200">
-            <span className="text-[#009691] font-bold">✓</span> Free Diagnostics &amp; Estimates
+            <span className="text-sfd-teal font-bold">✓</span> Free Diagnostics &amp; Estimates
           </div>
           <div className="flex items-center gap-1.5 text-neutral-200">
-            <span className="text-[#009691] font-bold">✓</span> Limited Lifetime Warranty
+            <span className="text-sfd-teal font-bold">✓</span> Limited Lifetime Warranty
           </div>
           <div className="flex items-center gap-1.5 text-neutral-200">
-            <span className="text-[#009691] font-bold">✓</span> 3 Philadelphia Locations
+            <span className="text-sfd-teal font-bold">✓</span> 3 Philadelphia Locations
           </div>
         </section>
 
@@ -613,7 +613,7 @@ export default function CommonIssuesClient() {
             <div className="flex items-center gap-3 mt-8">
               <Link
                 href="/locations/i/book-repair"
-                className="px-6 py-3 rounded-full bg-[#c8102e] hover:bg-[#a00c24] text-white text-xs font-bold uppercase tracking-wide transition shadow-xs"
+                className="px-6 py-3 rounded-full bg-sfd-teal hover:bg-sfd-tealDark text-white text-xs font-bold uppercase tracking-wide transition shadow-xs"
               >
                 Find a Store
               </Link>

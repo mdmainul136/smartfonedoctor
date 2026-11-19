@@ -1,4 +1,5 @@
 import React, { Suspense } from "react";
+import { brandTitle } from "@/lib/seoTitle";
 import type { Metadata } from "next";
 import Footer from "@/components/layout/Footer";
 import ScheduleRepairWizard, { WizardStore } from "@/components/booking/ScheduleRepairWizard";
@@ -27,7 +28,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 
   if (deviceName) {
     return {
-      title: `${deviceName} Repair in Philadelphia | Schedule Online | SmartFoneDoctor`,
+      title: brandTitle(`${deviceName} Repair in Philadelphia | Schedule Online | SmartFoneDoctor`),
       description: `Fast same-day ${deviceName} repair in Philadelphia, PA. Free upfront diagnostics, 90-day warranty, OEM-grade parts, and zero data loss. Walk-ins welcome at 33 S 52nd St.`,
       alternates: {
         canonical: `https://smartfonedoctor.com/schedule-repair?device=${encodeURIComponent(query)}`,
@@ -36,7 +37,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   }
 
   return {
-    title: "Schedule a Repair | SmartFoneDoctor Philadelphia",
+    title: brandTitle("Schedule a Repair | SmartFoneDoctor Philadelphia"),
     description:
       "Schedule your phone, tablet, computer, or gaming console repair online. Instant quote, certified technicians, and reserved bench time at our Philadelphia locations.",
     alternates: {

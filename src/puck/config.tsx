@@ -136,7 +136,7 @@ export const puckConfig: Config<PuckComponents> = {
         ctaLink: "/schedule-repair",
         bgColor: "#0f172a",
         textColor: "#ffffff",
-        accentColor: "#009691",
+        accentColor: "#00807A",
         badgeBg: "rgba(0, 150, 145, 0.18)",
         badgeColor: "#5eead4",
         padding: "56px 36px",
@@ -267,7 +267,7 @@ export const puckConfig: Config<PuckComponents> = {
                 <div>
                   <Link
                     href={ctaLink || "/schedule-repair"}
-                    style={{ backgroundColor: accentColor || "#009691" }}
+                    style={{ backgroundColor: accentColor || "#00807A" }}
                     className="inline-flex items-center gap-2 px-6 py-3.5 rounded-lg text-white font-bold text-sm shadow-lg hover:brightness-110 transition active:scale-95"
                   >
                     <span>{ctaText}</span>
@@ -298,7 +298,7 @@ export const puckConfig: Config<PuckComponents> = {
         textColor: "#111827",
         cardBgColor: "#f9fafb",
         cardBorderColor: "#e5e7eb",
-        accentColor: "#009691",
+        accentColor: "#00807A",
         padding: "48px 32px",
         align: "left",
         borderRadius: "10px",
@@ -580,7 +580,7 @@ export const puckConfig: Config<PuckComponents> = {
                     key={idx}
                     style={cardStyle}
                     className={`p-5 border relative transition-all duration-200 hover:shadow-md ${
-                      item.highlight ? "ring-2 ring-[#009691] shadow-md" : ""
+                      item.highlight ? "ring-2 ring-[#00807A] shadow-md" : ""
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2 mb-3">
@@ -588,8 +588,8 @@ export const puckConfig: Config<PuckComponents> = {
                         {item.icon && item.icon !== "None" && (
                           <div
                             style={{
-                              backgroundColor: `${accentColor || "#009691"}15`,
-                              color: accentColor || "#009691",
+                              backgroundColor: `${accentColor || "#00807A"}15`,
+                              color: accentColor || "#00807A",
                             }}
                             className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
                           >
@@ -599,8 +599,8 @@ export const puckConfig: Config<PuckComponents> = {
                         {item.badge && (
                           <span
                             style={{
-                              backgroundColor: `${accentColor || "#009691"}15`,
-                              color: accentColor || "#009691",
+                              backgroundColor: `${accentColor || "#00807A"}15`,
+                              color: accentColor || "#00807A",
                             }}
                             className="text-[11px] font-bold px-2.5 py-0.5 rounded-full"
                           >
@@ -624,7 +624,7 @@ export const puckConfig: Config<PuckComponents> = {
                       <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
                         <Link
                           href={item.link || "/schedule-repair"}
-                          style={{ color: accentColor || "#009691" }}
+                          style={{ color: accentColor || "#00807A" }}
                           className="text-xs font-bold hover:underline inline-flex items-center gap-1 group"
                         >
                           <span>{item.linkText || "Learn More"}</span>
@@ -652,7 +652,7 @@ export const puckConfig: Config<PuckComponents> = {
         containerMode: "borderless",
         bgColor: "transparent",
         textColor: "#111827",
-        accentColor: "#009691",
+        accentColor: "#00807A",
         cardBgColor: "#ffffff",
         cardBorderColor: "#e5e7eb",
         padding: "32px 0px",
@@ -754,7 +754,7 @@ export const puckConfig: Config<PuckComponents> = {
         containerMode = "borderless",
         bgColor = "transparent",
         textColor = "#111827",
-        accentColor = "#009691",
+        accentColor = "#00807A",
         cardBgColor = "#ffffff",
         cardBorderColor = "#e5e7eb",
         padding = "32px 0px",
@@ -877,7 +877,7 @@ export const puckConfig: Config<PuckComponents> = {
         textColor: "#111827",
         cardBgColor: "#f8fafc",
         cardBorderColor: "#e2e8f0",
-        accentColor: "#009691",
+        accentColor: "#00807A",
         padding: "48px 32px",
         borderRadius: "12px",
         customCss: "",
@@ -996,7 +996,7 @@ export const puckConfig: Config<PuckComponents> = {
                 <div>
                   <Link
                     href={ctaLink || "/schedule-repair"}
-                    style={{ backgroundColor: accentColor || "#009691" }}
+                    style={{ backgroundColor: accentColor || "#00807A" }}
                     className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-white text-xs sm:text-sm font-bold shadow hover:brightness-110 transition active:scale-95"
                   >
                     <span>{ctaText}</span>
@@ -1018,13 +1018,13 @@ export const puckConfig: Config<PuckComponents> = {
                 >
                   <div className="flex items-center gap-2 mb-1.5">
                     {item.icon && item.icon !== "None" && (
-                      <div style={{ color: accentColor || "#009691" }} className="shrink-0">
+                      <div style={{ color: accentColor || "#00807A" }} className="shrink-0">
                         <RenderItemIcon name={item.icon} className="w-4 h-4" />
                       </div>
                     )}
                     {item.badge && (
                       <span
-                        style={{ color: accentColor || "#009691" }}
+                        style={{ color: accentColor || "#00807A" }}
                         className="text-[10px] font-bold uppercase tracking-wider block"
                       >
                         {item.badge}
@@ -1055,7 +1055,7 @@ export const puckConfig: Config<PuckComponents> = {
         textColor: "#111827",
         cardBgColor: "#ffffff",
         cardBorderColor: "#e5e7eb",
-        accentColor: "#009691",
+        accentColor: "#00807A",
         padding: "48px 32px",
         align: "left",
         borderRadius: "10px",
@@ -1250,7 +1250,7 @@ export const puckConfig: Config<PuckComponents> = {
         ctaLink: "/schedule-repair",
         bgColor: "#0f172a",
         textColor: "#ffffff",
-        accentColor: "#009691",
+        accentColor: "#00807A",
         padding: "56px 32px",
         align: "center",
         customCss: "",
@@ -1353,7 +1353,7 @@ export const puckConfig: Config<PuckComponents> = {
               <div className={`mt-4 flex ${isCenter ? "justify-center" : "justify-start"}`}>
                 <Link
                   href={finalCtaLink}
-                  style={{ backgroundColor: accentColor || "#009691" }}
+                  style={{ backgroundColor: accentColor || "#00807A" }}
                   className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg text-white text-sm font-bold shadow-md hover:brightness-110 transition active:scale-95"
                 >
                   <span>{finalCtaText}</span>
@@ -1374,8 +1374,8 @@ export const puckConfig: Config<PuckComponents> = {
           "Checking the live status of your repair is quick and easy at SmartFoneDoctor. Simply enter your Ticket ID and Last Name below.",
         demoTicketId: "SFD-84920",
         demoLastName: "Smith",
-        accentColor: "#c8102e",
-        secondaryColor: "#009691",
+        accentColor: "#00807A",
+        secondaryColor: "#00807A",
         showStoreCard: true,
         showPickupChecklist: true,
         customCss: "",
@@ -1491,7 +1491,7 @@ export const puckConfig: Config<PuckComponents> = {
         ],
         bgColor: "#0f172a",
         textColor: "#ffffff",
-        accentColor: "#009691",
+        accentColor: "#00807A",
         padding: "48px 24px",
         customCss: "",
       },
@@ -1531,7 +1531,7 @@ export const puckConfig: Config<PuckComponents> = {
         items = [],
         bgColor = "#0f172a",
         textColor = "#ffffff",
-        accentColor = "#009691",
+        accentColor = "#00807A",
         padding = "48px 24px",
         customCss,
         visibility,
@@ -1614,7 +1614,7 @@ export const puckConfig: Config<PuckComponents> = {
         ],
         bgColor: "#f8fafc",
         textColor: "#0f172a",
-        accentColor: "#009691",
+        accentColor: "#00807A",
         padding: "56px 24px",
         customCss: "",
       },
@@ -1656,7 +1656,7 @@ export const puckConfig: Config<PuckComponents> = {
         steps = [],
         bgColor = "#f8fafc",
         textColor = "#0f172a",
-        accentColor = "#009691",
+        accentColor = "#00807A",
         padding = "56px 24px",
         customCss,
         visibility,
@@ -1794,7 +1794,7 @@ export const puckConfig: Config<PuckComponents> = {
         bgColor: "#ffffff",
         textColor: "#0f172a",
         cardBgColor: "#f8fafc",
-        accentColor: "#009691",
+        accentColor: "#00807A",
         padding: "56px 24px",
         customCss: "",
       },
@@ -1846,7 +1846,7 @@ export const puckConfig: Config<PuckComponents> = {
         bgColor = "#ffffff",
         textColor = "#0f172a",
         cardBgColor = "#f8fafc",
-        accentColor = "#009691",
+        accentColor = "#00807A",
         padding = "56px 24px",
         customCss,
         visibility,
@@ -1990,7 +1990,7 @@ export const puckConfig: Config<PuckComponents> = {
         bgColor: "#f8fafc",
         textColor: "#0f172a",
         cardBgColor: "#ffffff",
-        accentColor: "#009691",
+        accentColor: "#00807A",
         padding: "56px 24px",
         customCss: "",
       },
@@ -2037,7 +2037,7 @@ export const puckConfig: Config<PuckComponents> = {
         bgColor = "#f8fafc",
         textColor = "#0f172a",
         cardBgColor = "#ffffff",
-        accentColor = "#009691",
+        accentColor = "#00807A",
         padding = "56px 24px",
         customCss,
         visibility,
@@ -2080,7 +2080,7 @@ export const puckConfig: Config<PuckComponents> = {
                     style={{ backgroundColor: cardBgColor }}
                     className={`relative p-6 rounded-2xl flex flex-col justify-between transition ${
                       it.popular
-                        ? "border-2 border-[#009691] shadow-lg scale-[1.02]"
+                        ? "border-2 border-[#00807A] shadow-lg scale-[1.02]"
                         : "border border-gray-200/80 shadow-xs hover:shadow-md"
                     }`}
                   >
@@ -2154,7 +2154,7 @@ export const puckConfig: Config<PuckComponents> = {
         hoursText: "Mon–Sat: 10:00 AM – 7:30 PM | Sun: 11:00 AM – 5:00 PM",
         gmbUrl: "https://share.google/gTlyWLewR88ToAdJQ",
         appointmentUrl: "/schedule-repair",
-        accentColor: "#009691",
+        accentColor: "#00807A",
         bgColor: "#ffffff",
         textColor: "#0f172a",
         padding: "32px 24px",
@@ -2185,7 +2185,7 @@ export const puckConfig: Config<PuckComponents> = {
         hoursText,
         gmbUrl = "https://share.google/gTlyWLewR88ToAdJQ",
         appointmentUrl = "/schedule-repair",
-        accentColor = "#009691",
+        accentColor = "#00807A",
         bgColor = "#ffffff",
         textColor = "#0f172a",
         padding = "32px 24px",
@@ -2273,7 +2273,7 @@ export const puckConfig: Config<PuckComponents> = {
         badge: "Priority Bench Check-In",
         buttonText: "Schedule Repair Now",
         redirectUrl: "/schedule-repair",
-        accentColor: "#009691",
+        accentColor: "#00807A",
         bgColor: "#ffffff",
         textColor: "#0f172a",
         cardBgColor: "#1e293b",
@@ -2311,7 +2311,7 @@ export const puckConfig: Config<PuckComponents> = {
         badge = "Priority Bench Check-In",
         buttonText = "Schedule Repair Now",
         redirectUrl = "/schedule-repair",
-        accentColor = "#009691",
+        accentColor = "#00807A",
         bgColor = "#ffffff",
         textColor = "#0f172a",
         cardBgColor = "#1e293b",
@@ -2513,7 +2513,7 @@ export const puckConfig: Config<PuckComponents> = {
           },
         ],
         cardBgColor: "#ffffff",
-        accentColor: "#009691",
+        accentColor: "#00807A",
         bgColor: "#f8fafc",
         textColor: "#0f172a",
         padding: "56px 24px",
@@ -2558,7 +2558,7 @@ export const puckConfig: Config<PuckComponents> = {
         columns = 3,
         items = [],
         cardBgColor = "#ffffff",
-        accentColor = "#009691",
+        accentColor = "#00807A",
         bgColor = "#f8fafc",
         textColor = "#0f172a",
         padding = "56px 24px",
@@ -2716,7 +2716,7 @@ export const puckConfig: Config<PuckComponents> = {
             ctaLink: "/repairs/computer",
           },
         ],
-        accentColor: "#009691",
+        accentColor: "#00807A",
         bgColor: "#ffffff",
         textColor: "#0f172a",
         cardBgColor: "#f8fafc",
@@ -2756,7 +2756,7 @@ export const puckConfig: Config<PuckComponents> = {
         heading = "Specialized Repair Categories",
         subheading,
         items = [],
-        accentColor = "#009691",
+        accentColor = "#00807A",
         bgColor = "#ffffff",
         textColor = "#0f172a",
         cardBgColor = "#f8fafc",
@@ -2912,7 +2912,7 @@ export const puckConfig: Config<PuckComponents> = {
               "Most smartphone screen and battery replacements are completed within 30 to 45 minutes while you wait in our comfortable reception lounge.",
           },
         ],
-        accentColor: "#009691",
+        accentColor: "#00807A",
         bgColor: "#ffffff",
         textColor: "#0f172a",
         cardBgColor: "#f8fafc",
@@ -2946,7 +2946,7 @@ export const puckConfig: Config<PuckComponents> = {
         heading = "Frequently Asked Questions & Policies",
         subheading,
         items = [],
-        accentColor = "#009691",
+        accentColor = "#00807A",
         bgColor = "#ffffff",
         textColor = "#0f172a",
         cardBgColor = "#f8fafc",
@@ -3067,7 +3067,7 @@ export const puckConfig: Config<PuckComponents> = {
             badge: "Ready for Pickup",
           },
         ],
-        accentColor: "#009691",
+        accentColor: "#00807A",
         bgColor: "#0f172a",
         textColor: "#ffffff",
         cardBgColor: "rgba(255, 255, 255, 0.05)",
@@ -3103,7 +3103,7 @@ export const puckConfig: Config<PuckComponents> = {
         heading = "Our 4-Step Express Repair Journey",
         subheading,
         items = [],
-        accentColor = "#009691",
+        accentColor = "#00807A",
         bgColor = "#0f172a",
         textColor = "#ffffff",
         cardBgColor = "rgba(255, 255, 255, 0.05)",
@@ -3231,7 +3231,7 @@ export const puckConfig: Config<PuckComponents> = {
             link: "https://www.samsung.com",
           },
         ],
-        accentColor: "#009691",
+        accentColor: "#00807A",
         bgColor: "#f8fafc",
         textColor: "#0f172a",
         padding: "48px 24px",
@@ -3264,7 +3264,7 @@ export const puckConfig: Config<PuckComponents> = {
         heading = "Certified by the Industry's Highest Standards",
         subheading,
         items = [],
-        accentColor = "#009691",
+        accentColor = "#00807A",
         bgColor = "#f8fafc",
         textColor = "#0f172a",
         padding = "48px 24px",
@@ -3632,7 +3632,7 @@ export const puckConfig: Config<PuckComponents> = {
         title: "90-Day Warranty",
         description:
           "Every screen, battery, and board-level repair is backed by our hassle-free warranty.",
-        accentColor: "#009691",
+        accentColor: "#00807A",
       },
       fields: {
         title: { type: "text", label: "Title" },
@@ -3642,7 +3642,7 @@ export const puckConfig: Config<PuckComponents> = {
       render: ({ title, description, accentColor }) => (
         <div
           className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
-          style={{ borderTop: `4px solid ${accentColor || "#009691"}` }}
+          style={{ borderTop: `4px solid ${accentColor || "#00807A"}` }}
         >
           <h3 className="text-lg font-bold text-slate-900">{title}</h3>
           <p className="mt-2 text-sm leading-relaxed text-slate-600">{description}</p>
@@ -4473,7 +4473,7 @@ export const puckConfig: Config<PuckComponents> = {
         text: "Schedule Repair",
         href: "/schedule-repair",
         variant: "primary",
-        accentColor: "#009691",
+        accentColor: "#00807A",
         textColor: "#ffffff",
         align: "left",
         borderRadius: "8px",
@@ -4513,8 +4513,8 @@ export const puckConfig: Config<PuckComponents> = {
         const style: React.CSSProperties =
           variant === "outline"
             ? {
-                border: `2px solid ${accentColor || "#009691"}`,
-                color: accentColor || "#009691",
+                border: `2px solid ${accentColor || "#00807A"}`,
+                color: accentColor || "#00807A",
                 backgroundColor: "transparent",
                 borderRadius: borderRadius || "8px",
               }
@@ -4525,7 +4525,7 @@ export const puckConfig: Config<PuckComponents> = {
                 borderRadius: borderRadius || "8px",
               }
             : {
-                backgroundColor: accentColor || "#009691",
+                backgroundColor: accentColor || "#00807A",
                 color: textColor || "#ffffff",
                 borderRadius: borderRadius || "8px",
               };
@@ -4970,7 +4970,7 @@ export const puckConfig: Config<PuckComponents> = {
       defaultProps: {
         icon: "Sparkles",
         size: 32,
-        color: "#009691",
+        color: "#00807A",
         bgColor: "rgba(0, 150, 145, 0.12)",
         shape: "circle",
         borderStyle: "none",
@@ -5103,9 +5103,9 @@ export const puckConfig: Config<PuckComponents> = {
           borderStyle === "subtle"
             ? "1px solid rgba(0, 0, 0, 0.08)"
             : borderStyle === "brand"
-            ? `2px solid ${color || "#009691"}`
+            ? `2px solid ${color || "#00807A"}`
             : borderStyle === "dashed"
-            ? `2px dashed ${color || "#009691"}`
+            ? `2px dashed ${color || "#00807A"}`
             : undefined;
 
         const shadowCss =
@@ -5134,7 +5134,7 @@ export const puckConfig: Config<PuckComponents> = {
               width: shape === "none" ? undefined : `${totalSize}px`,
               height: shape === "none" ? undefined : `${totalSize}px`,
               backgroundColor: shape === "none" ? "transparent" : bgColor || "transparent",
-              color: color || "#009691",
+              color: color || "#00807A",
               borderRadius: radius,
               border: borderCss,
               boxShadow: shadowCss,
@@ -5181,7 +5181,7 @@ export const puckConfig: Config<PuckComponents> = {
         prefix: "",
         suffix: "+",
         title: "Devices Repaired & Running",
-        color: "#009691",
+        color: "#00807A",
         titleColor: "#475569",
         fontSize: "44px",
         align: "center",
@@ -5266,7 +5266,7 @@ export const puckConfig: Config<PuckComponents> = {
             <div
               style={{
                 fontSize: normalizeCssUnit(fontSize, "44px"),
-                color: color || "#009691",
+                color: color || "#00807A",
                 fontWeight: 800,
                 lineHeight: 1.1,
                 letterSpacing: "-0.03em",
@@ -5300,7 +5300,7 @@ export const puckConfig: Config<PuckComponents> = {
           { label: "iPhone Repair", url: "/repairs/iphone" },
         ],
         separator: "/",
-        accentColor: "#009691",
+        accentColor: "#00807A",
         bgColor: "#ffffff",
         textColor: "#64748b",
         padding: "16px 24px",
@@ -5337,7 +5337,7 @@ export const puckConfig: Config<PuckComponents> = {
         id,
         items = [],
         separator = "/",
-        accentColor = "#009691",
+        accentColor = "#00807A",
         bgColor = "#ffffff",
         textColor = "#64748b",
         padding = "16px 24px",

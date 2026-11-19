@@ -94,7 +94,7 @@ export default function PublicBlogHubPage() {
       {/* 1. HERO HEADER */}
       <section className="bg-gradient-to-b from-[#1d1c1a] to-[#2b2926] text-white py-14 sm:py-20 px-4 sm:px-6 lg:px-8 border-b border-neutral-800">
         <div className="max-w-[1250px] mx-auto text-center space-y-4">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#00897b]/20 border border-[#00897b]/40 text-[#4dd0e1] text-xs font-semibold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-sfd-teal/20 border border-sfd-teal/40 text-teal-200 text-xs font-semibold uppercase tracking-wider">
             <BookOpen className="w-3.5 h-3.5" />
             <span>Repair Bench Knowledge Base &amp; Guides</span>
           </div>
@@ -131,7 +131,7 @@ export default function PublicBlogHubPage() {
             onClick={() => setSelectedCategory("all")}
             className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               selectedCategory === "all"
-                ? "bg-[#00897b] text-white shadow-xs"
+                ? "bg-sfd-teal text-white shadow-xs"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
@@ -150,7 +150,7 @@ export default function PublicBlogHubPage() {
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                   isSelected
-                    ? "bg-[#00897b] text-white shadow-xs"
+                    ? "bg-sfd-teal text-white shadow-xs"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
@@ -193,14 +193,14 @@ export default function PublicBlogHubPage() {
                   <div className="space-y-2">
                     <div className="flex items-center gap-3 text-xs text-gray-400">
                       <span className="flex items-center gap-1 font-medium text-gray-600">
-                        <Clock className="w-3.5 h-3.5 text-[#00897b]" />
+                        <Clock className="w-3.5 h-3.5 text-sfd-teal" />
                         {article.readTime}
                       </span>
                       <span>•</span>
                       <span>{article.publishedAt}</span>
                     </div>
 
-                    <h2 className="text-lg font-bold text-[#1d1c1a] group-hover:text-[#00897b] transition-colors line-clamp-2 leading-snug">
+                    <h2 className="text-lg font-bold text-[#1d1c1a] group-hover:text-sfd-teal transition-colors line-clamp-2 leading-snug">
                       <Link href={`/blog/${article.slug}`}>{article.title}</Link>
                     </h2>
 
@@ -212,7 +212,7 @@ export default function PublicBlogHubPage() {
                   {/* Author & Read More Bar */}
                   <div className="pt-4 border-t border-gray-100 flex items-center justify-between mt-auto">
                     <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-teal-50 border border-teal-200 text-[#00897b] text-[10px] font-bold flex items-center justify-center">
+                      <span className="w-6 h-6 rounded-full bg-teal-50 border border-teal-200 text-sfd-teal text-[10px] font-bold flex items-center justify-center">
                         {article.author.avatar || article.author.name.slice(0, 2)}
                       </span>
                       <span className="text-xs font-semibold text-gray-700">
@@ -222,7 +222,7 @@ export default function PublicBlogHubPage() {
 
                     <Link
                       href={`/blog/${article.slug}`}
-                      className="text-xs font-bold text-[#00897b] group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-1"
+                      className="text-xs font-bold text-sfd-teal group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-1"
                     >
                       <span>Read Guide</span>
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -247,7 +247,7 @@ export default function PublicBlogHubPage() {
                 setSearch("");
                 setSelectedCategory("all");
               }}
-              className="mt-2 text-xs font-semibold text-[#00897b] underline"
+              className="mt-2 text-xs font-semibold text-sfd-teal underline"
             >
               Reset filters
             </button>
@@ -257,7 +257,7 @@ export default function PublicBlogHubPage() {
         {/* 4. Conversion & Service Hub Linking Banner */}
         <div className="mt-16 rounded-[24px] bg-[#1d1c1a] text-white p-8 sm:p-12 shadow-md flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4dd0e1]">
+            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-200">
               <Wrench className="w-4 h-4 text-sfd-teal" />
               <span>Certified Repair Bench Services</span>
             </div>
@@ -272,7 +272,7 @@ export default function PublicBlogHubPage() {
           <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full sm:w-auto">
             <Link
               href="/schedule-repair"
-              className="w-full sm:w-auto text-center px-6 py-3.5 rounded-full bg-[#c8102e] hover:bg-[#a00c24] text-white font-bold text-xs uppercase tracking-wider transition shadow-sm active:scale-95 flex items-center justify-center gap-2"
+              className="w-full sm:w-auto text-center px-6 py-3.5 rounded-full bg-sfd-teal hover:bg-sfd-tealDark text-white font-bold text-xs uppercase tracking-wider transition shadow-sm active:scale-95 flex items-center justify-center gap-2"
             >
               <Calendar className="w-3.5 h-3.5" />
               <span>Book Repair Online</span>

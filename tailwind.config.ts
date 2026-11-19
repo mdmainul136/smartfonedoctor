@@ -24,7 +24,9 @@ const config: Config = {
           cardLight: "#1E293B",   // Elevated component background
           border: "#1E293B",      // Subtle card borders
           borderLight: "#334155", // Hover borders
-          teal: "#009691",        // Brand teal
+          teal: "#00807A",        // Brand teal (primary CTA, AA with white text)
+          tealDark: "#00655F",    // Primary hover / pressed
+          tealSoft: "#E6F3F2",    // Tinted backgrounds
           tealLight: "#14B8A6",   // Vibrant active teal
           tealGlow: "rgba(20, 184, 166, 0.15)",
           red: "#b31924",         // Brand red

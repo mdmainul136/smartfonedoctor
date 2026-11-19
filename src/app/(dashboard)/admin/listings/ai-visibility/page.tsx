@@ -467,7 +467,7 @@ export default function AiVisibilityPage() {
     const googleAi = Math.min(
       100,
       Math.round(gmb * 0.5 + yp * 0.2 + ezlocal * 0.15 + trustpilot * 0.15) +
-        bioBonus
+      bioBonus
     );
 
     const perplexity = Math.min(
@@ -557,7 +557,7 @@ export default function AiVisibilityPage() {
         impactBadge: "+24 pts active",
         status: "Completed",
         actionLabel: "Synced",
-        onExecute: () => {},
+        onExecute: () => { },
       });
     }
 
@@ -591,7 +591,7 @@ export default function AiVisibilityPage() {
         impactBadge: "+28 pts active",
         status: "Completed",
         actionLabel: "Synced",
-        onExecute: () => {},
+        onExecute: () => { },
       });
     }
 
@@ -748,11 +748,6 @@ export default function AiVisibilityPage() {
         telephone: selectedStore.phone,
         openingHours: "Mo-Sa 10:00-19:00",
         priceRange: "$$",
-        aggregateRating: {
-          "@type": "AggregateRating",
-          ratingValue: "4.8",
-          reviewCount: "50",
-        },
         sameAs: sameAsUrls,
       },
       null,
@@ -766,13 +761,12 @@ export default function AiVisibilityPage() {
 
 ## Verified Store Locations
 ${stores
-  .map(
-    (s) =>
-      `- **${s.name.replace("SmartFoneDoctor - ", "")}**: ${s.address}, ${
-        s.cityStateZip
-      } | Phone: ${s.phone} | Hours: ${s.businessHours}`
-  )
-  .join("\n")}
+        .map(
+          (s) =>
+            `- **${s.name.replace("SmartFoneDoctor - ", "")}**: ${s.address}, ${s.cityStateZip
+            } | Phone: ${s.phone} | Hours: ${s.businessHours}`
+        )
+        .join("\n")}
 
 ## Core Turnaround & Warranty
 - iPhone & Samsung screen replacement: 25–30 minutes (walk-in, no appointment required)
@@ -890,20 +884,18 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
               key={tab.key}
               type="button"
               onClick={() => setActiveTab(tab.key)}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-[13px] font-semibold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-                isActive
+              className={`px-4 py-2 rounded-xl text-xs sm:text-[13px] font-semibold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${isActive
                   ? "bg-white text-[#009691] shadow-xs"
                   : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
-              }`}
+                }`}
             >
               <span>{tab.label}</span>
               {tab.count !== undefined && tab.count > 0 && (
                 <span
-                  className={`text-[11px] font-mono px-2 py-0.5 rounded-full ${
-                    isActive
+                  className={`text-[11px] font-mono px-2 py-0.5 rounded-full ${isActive
                       ? "bg-teal-50 text-[#009691] border border-teal-200/60 font-semibold"
                       : "bg-slate-200 text-slate-700"
-                  }`}
+                    }`}
                 >
                   {tab.count}
                 </span>
@@ -1036,9 +1028,8 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
 
                       <div className="min-w-0 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2.5">
                         <span
-                          className={`text-sm font-medium truncate ${
-                            isDone ? "text-slate-600" : "text-slate-900 font-semibold"
-                          }`}
+                          className={`text-sm font-medium truncate ${isDone ? "text-slate-600" : "text-slate-900 font-semibold"
+                            }`}
                         >
                           {act.title}
                         </span>
@@ -1057,18 +1048,17 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                       </span>
 
                       <span
-                        className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold tabular-nums ${
-                          isDone
+                        className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold tabular-nums ${isDone
                             ? "bg-teal-50 text-[#009691] border border-teal-200/60"
                             : "bg-amber-50 text-amber-800 border border-amber-200"
-                        }`}
+                          }`}
                       >
                         {act.impactBadge}
                       </span>
 
                       {isDone &&
-                      act.id !== "deploy-schema-llms" &&
-                      act.id !== "sync-entity-bio" ? (
+                        act.id !== "deploy-schema-llms" &&
+                        act.id !== "sync-entity-bio" ? (
                         <span className="h-7 px-3 rounded-lg text-[#009691] text-xs font-semibold inline-flex items-center gap-1">
                           <Check className="w-3.5 h-3.5" aria-hidden="true" />
                           <span>Done</span>
@@ -1077,11 +1067,10 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                         <button
                           type="button"
                           onClick={act.onExecute}
-                          className={`h-7 px-3.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition-all cursor-pointer ${
-                            isDone
+                          className={`h-7 px-3.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition-all cursor-pointer ${isDone
                               ? "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                               : "bg-[#009691] hover:bg-[#00827d] text-white shadow-xs shadow-[#009691]/20"
-                          }`}
+                            }`}
                         >
                           <span>{act.actionLabel}</span>
                         </button>
@@ -1123,9 +1112,8 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                 <div className="p-5 flex flex-col gap-4">
                   {[
                     {
-                      shop: `Smart Fone Doctor (${
-                        isAllStores ? "3 Philly stores" : storeShortName
-                      })`,
+                      shop: `Smart Fone Doctor (${isAllStores ? "3 Philly stores" : storeShortName
+                        })`,
                       tag: "Your shop",
                       pct: scores.overall,
                       isSelf: true,
@@ -1159,30 +1147,27 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                       <div className="flex items-center justify-between gap-2 text-xs sm:text-[13px]">
                         <div className="flex items-center gap-2 min-w-0">
                           <span
-                            className={`truncate ${
-                              item.isSelf
+                            className={`truncate ${item.isSelf
                                 ? "font-bold text-slate-900"
                                 : "font-medium text-slate-700"
-                            }`}
+                              }`}
                           >
                             {item.shop}
                           </span>
                           <span
-                            className={`px-2 py-0.5 rounded-full text-[11px] shrink-0 font-medium ${
-                              item.isSelf
+                            className={`px-2 py-0.5 rounded-full text-[11px] shrink-0 font-medium ${item.isSelf
                                 ? "bg-teal-50 text-[#009691] border border-teal-200/60 font-semibold"
                                 : "bg-slate-100 text-slate-500"
-                            }`}
+                              }`}
                           >
                             {item.tag}
                           </span>
                         </div>
                         <span
-                          className={`text-xs sm:text-[13px] tabular-nums shrink-0 ${
-                            item.isSelf
+                          className={`text-xs sm:text-[13px] tabular-nums shrink-0 ${item.isSelf
                               ? "font-bold text-[#009691]"
                               : "text-slate-500 font-medium"
-                          }`}
+                            }`}
                         >
                           {item.pct}%
                         </span>
@@ -1190,11 +1175,10 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
 
                       <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
                         <div
-                          className={`h-full rounded-full transition-all duration-300 ${
-                            item.isSelf
+                          className={`h-full rounded-full transition-all duration-300 ${item.isSelf
                               ? "bg-gradient-to-r from-[#009691] to-teal-400"
                               : "bg-slate-300"
-                          }`}
+                            }`}
                           style={{ width: `${item.pct}%` }}
                         />
                       </div>
@@ -1288,13 +1272,12 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                             ))}
                           </div>
                           <span
-                            className={`text-xs font-bold tabular-nums shrink-0 ${
-                              score >= 95
+                            className={`text-xs font-bold tabular-nums shrink-0 ${score >= 95
                                 ? "text-[#009691]"
                                 : score >= 70
-                                ? "text-amber-700"
-                                : "text-rose-700"
-                            }`}
+                                  ? "text-amber-700"
+                                  : "text-rose-700"
+                              }`}
                           >
                             {score}% synced
                           </span>
@@ -1302,13 +1285,12 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
 
                         <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
                           <div
-                            className={`h-full rounded-full transition-all duration-300 ${
-                              score >= 95
+                            className={`h-full rounded-full transition-all duration-300 ${score >= 95
                                 ? "bg-[#009691]"
                                 : score >= 70
-                                ? "bg-amber-500"
-                                : "bg-rose-500"
-                            }`}
+                                  ? "bg-amber-500"
+                                  : "bg-rose-500"
+                              }`}
                             style={{ width: `${Math.max(score, 8)}%` }}
                           />
                         </div>
@@ -1653,11 +1635,10 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                     <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-xs">
                       <div className="flex flex-wrap items-center gap-1.5">
                         <span
-                          className={`px-2 py-0.5 rounded-md font-semibold text-[11px] ${
-                            stBing
+                          className={`px-2 py-0.5 rounded-md font-semibold text-[11px] ${stBing
                               ? "bg-teal-50 text-[#009691] border border-teal-200/60"
                               : "bg-rose-50 text-rose-700 border border-rose-200/60"
-                          }`}
+                            }`}
                         >
                           ChatGPT: {stBing ? "#1" : "Unranked"}
                         </span>
@@ -1665,11 +1646,10 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                           Gemini: #1
                         </span>
                         <span
-                          className={`px-2 py-0.5 rounded-md font-semibold text-[11px] ${
-                            stApple
+                          className={`px-2 py-0.5 rounded-md font-semibold text-[11px] ${stApple
                               ? "bg-teal-50 text-[#009691] border border-teal-200/60"
                               : "bg-amber-50 text-amber-800 border border-amber-200/60"
-                          }`}
+                            }`}
                         >
                           Siri: {stApple ? "#1" : "#2"}
                         </span>
@@ -1870,11 +1850,10 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                   key={item.id}
                   type="button"
                   onClick={() => setActiveArtifact(item.id)}
-                  className={`h-8 px-3.5 rounded-xl text-xs font-semibold cursor-pointer transition-all ${
-                    activeArtifact === item.id
+                  className={`h-8 px-3.5 rounded-xl text-xs font-semibold cursor-pointer transition-all ${activeArtifact === item.id
                       ? "bg-[#009691] text-white shadow-xs shadow-[#009691]/20"
                       : "bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
-                  }`}
+                    }`}
                 >
                   {item.label}
                 </button>

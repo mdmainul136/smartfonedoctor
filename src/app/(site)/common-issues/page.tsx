@@ -1,9 +1,10 @@
 import React from "react";
+import { brandTitle } from "@/lib/seoTitle";
 import type { Metadata } from "next";
 import CommonIssuesClient from "./CommonIssuesClient";
 
 export const metadata: Metadata = {
-  title: "Common Repair Issues & Troubleshooting | SmartFoneDoctor Philadelphia",
+  title: brandTitle("Common Repair Issues & Troubleshooting | SmartFoneDoctor Philadelphia"),
   description:
     "Diagnose cracked screens, dead batteries, charging port faults, HDMI issues, water damage, and console problems for phones, tablets, laptops, and game consoles.",
   keywords: [

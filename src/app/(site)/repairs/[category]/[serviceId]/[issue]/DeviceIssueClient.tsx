@@ -48,19 +48,19 @@ export default function DeviceIssueClient({ data }: Props) {
           <nav aria-label="Breadcrumb" className="text-xs text-gray-500 font-normal">
             <ol className="flex items-center gap-1.5 flex-wrap">
               <li>
-                <Link href="/" className="hover:text-[#00897b] transition-colors">
+                <Link href="/" className="hover:text-sfd-teal transition-colors">
                   Home
                 </Link>
               </li>
               <li className="text-gray-400">&gt;</li>
               <li>
-                <Link href={`/repairs/${device.category}`} className="hover:text-[#00897b] transition-colors">
+                <Link href={`/repairs/${device.category}`} className="hover:text-sfd-teal transition-colors">
                   {device.categoryName}
                 </Link>
               </li>
               <li className="text-gray-400">&gt;</li>
               <li>
-                <Link href={`/repairs/${device.category}/${device.slug}`} className="hover:text-[#00897b] transition-colors">
+                <Link href={`/repairs/${device.category}/${device.slug}`} className="hover:text-sfd-teal transition-colors">
                   {device.name}
                 </Link>
               </li>
@@ -81,11 +81,11 @@ export default function DeviceIssueClient({ data }: Props) {
             {/* Left Content */}
             <div className="lg:col-span-7 space-y-5">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="bg-[#00897b]/10 text-[#00897b] border border-[#00897b]/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                <span className="bg-sfd-teal/10 text-sfd-teal border border-sfd-teal/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
                   {device.brand} Specialist Service
                 </span>
                 <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-medium border border-gray-200 flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-[#00897b]" />
+                  <Clock className="w-3.5 h-3.5 text-sfd-teal" />
                   {pricing.turnaround}
                 </span>
                 <span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-xs font-medium border border-emerald-200 flex items-center gap-1">
@@ -95,7 +95,7 @@ export default function DeviceIssueClient({ data }: Props) {
               </div>
 
               <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-[#1d1c1a] tracking-tight leading-tight">
-                {device.name} <span className="text-[#00897b]">{issue.shortName}</span> in Philadelphia
+                {device.name} <span className="text-sfd-teal">{issue.shortName}</span> in Philadelphia
               </h1>
 
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed max-w-2xl">
@@ -123,7 +123,7 @@ export default function DeviceIssueClient({ data }: Props) {
                     Turnaround Time
                   </span>
                   <span className="text-sm sm:text-base font-bold text-gray-900 flex items-center gap-1.5 mt-0.5">
-                    <Clock className="w-4 h-4 text-[#00897b]" />
+                    <Clock className="w-4 h-4 text-sfd-teal" />
                     {pricing.turnaround}
                   </span>
                 </div>
@@ -147,7 +147,7 @@ export default function DeviceIssueClient({ data }: Props) {
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 <Link
                   href={`/schedule-repair?device=${device.category}&make=${encodeURIComponent(device.brand)}&model=${encodeURIComponent(device.name)}&issue=${encodeURIComponent(issue.slug)}`}
-                  className="px-7 py-3.5 rounded-full bg-[#00897b] hover:bg-[#00796b] text-white font-bold text-xs sm:text-sm tracking-wide uppercase transition shadow-md active:scale-95 flex items-center gap-2"
+                  className="px-7 py-3.5 rounded-full bg-sfd-teal hover:bg-sfd-tealDark text-white font-bold text-xs sm:text-sm tracking-wide uppercase transition shadow-md active:scale-95 flex items-center gap-2"
                 >
                   <Calendar className="w-4 h-4" />
                   <span>Book This Repair Online</span>
@@ -157,20 +157,20 @@ export default function DeviceIssueClient({ data }: Props) {
                   href="tel:+12153871700"
                   className="px-6 py-3.5 rounded-full bg-white hover:bg-gray-50 text-gray-800 font-bold text-xs sm:text-sm tracking-wide transition border border-gray-300 shadow-2xs flex items-center gap-2"
                 >
-                  <Phone className="w-4 h-4 text-[#00897b]" />
+                  <Phone className="w-4 h-4 text-sfd-teal" />
                   <span>Call (215) 387-1700</span>
                 </a>
               </div>
 
               <p className="text-xs text-gray-400 flex items-center gap-1.5 pt-1">
-                <MapPin className="w-3.5 h-3.5 text-[#00897b]" />
+                <MapPin className="w-3.5 h-3.5 text-sfd-teal" />
                 Walk-ins welcome daily at 33 S 52nd St, Philadelphia, PA 19139
               </p>
             </div>
 
             {/* Right Hero Image */}
             <div className="lg:col-span-5">
-              <div className="relative aspect-4/3 rounded-3xl overflow-hidden shadow-xl border border-gray-200 bg-gray-900 group">
+              <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-xl border border-gray-200 bg-gray-900 group">
                 <Image
                   src={device.image}
                   alt={`${device.name} ${issue.name}`}
@@ -180,7 +180,7 @@ export default function DeviceIssueClient({ data }: Props) {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                 <div className="absolute bottom-5 left-5 right-5 text-white">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#4dd0e1] block mb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-teal-200 block mb-1">
                     Bench Certified Spec
                   </span>
                   <p className="text-sm font-semibold text-white/90">{device.specs}</p>
@@ -204,14 +204,14 @@ export default function DeviceIssueClient({ data }: Props) {
               <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                 <div>
                   <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                    <Wrench className="w-4 h-4 text-[#00897b]" />
+                    <Wrench className="w-4 h-4 text-sfd-teal" />
                     <span>{device.name} {issue.shortName} Technical Specifications</span>
                   </h2>
                   <p className="text-xs text-gray-500 mt-0.5">
                     Philadelphia laboratory standards and bench intake guidelines
                   </p>
                 </div>
-                <span className="text-[11px] font-bold text-[#00897b] uppercase tracking-wider bg-white px-2.5 py-1 rounded-md border border-gray-200">
+                <span className="text-[11px] font-bold text-sfd-teal uppercase tracking-wider bg-white px-2.5 py-1 rounded-md border border-gray-200">
                   Verified Spec
                 </span>
               </div>
@@ -305,7 +305,7 @@ export default function DeviceIssueClient({ data }: Props) {
                     key={i}
                     className="flex items-start gap-3 p-3.5 rounded-xl bg-gray-50 border border-gray-200 text-xs sm:text-sm text-gray-800 leading-snug"
                   >
-                    <CheckCircle2 className="w-4 h-4 text-[#00897b] shrink-0 mt-0.5" />
+                    <CheckCircle2 className="w-4 h-4 text-sfd-teal shrink-0 mt-0.5" />
                     <span>{symptom}</span>
                   </div>
                 ))}
@@ -315,7 +315,7 @@ export default function DeviceIssueClient({ data }: Props) {
             {/* B. Transparent Dual-Tier Pricing Comparison */}
             <section className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-xs space-y-6">
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-widest text-[#00897b] block mb-1">
+                <span className="text-[11px] font-bold uppercase tracking-widest text-sfd-teal block mb-1">
                   Fair &amp; Transparent Upfront Pricing
                 </span>
                 <h2 className="text-lg sm:text-xl font-bold text-gray-900">
@@ -330,7 +330,7 @@ export default function DeviceIssueClient({ data }: Props) {
                   onClick={() => setSelectedTier("aftermarket")}
                   className={`p-5 rounded-2xl border-2 transition-all cursor-pointer relative ${
                     selectedTier === "aftermarket"
-                      ? "border-[#00897b] bg-[#00897b]/5 shadow-sm"
+                      ? "border-sfd-teal bg-sfd-teal/5 shadow-sm"
                       : "border-gray-200 hover:border-gray-300 bg-white"
                   }`}
                 >
@@ -350,15 +350,15 @@ export default function DeviceIssueClient({ data }: Props) {
                   </p>
                   <ul className="text-xs space-y-2 text-gray-700">
                     <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-[#00897b]" />
+                      <CheckCircle2 className="w-3.5 h-3.5 text-sfd-teal" />
                       Full touchscreen response &amp; clarity
                     </li>
                     <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-[#00897b]" />
+                      <CheckCircle2 className="w-3.5 h-3.5 text-sfd-teal" />
                       90-Day Parts &amp; Labor Warranty
                     </li>
                     <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-[#00897b]" />
+                      <CheckCircle2 className="w-3.5 h-3.5 text-sfd-teal" />
                       Same-day 30-min turnaround
                     </li>
                   </ul>
@@ -369,11 +369,11 @@ export default function DeviceIssueClient({ data }: Props) {
                   onClick={() => setSelectedTier("oem")}
                   className={`p-5 rounded-2xl border-2 transition-all cursor-pointer relative ${
                     selectedTier === "oem"
-                      ? "border-[#00897b] bg-[#00897b]/5 shadow-sm"
+                      ? "border-sfd-teal bg-sfd-teal/5 shadow-sm"
                       : "border-gray-200 hover:border-gray-300 bg-white"
                   }`}
                 >
-                  <div className="absolute -top-2.5 right-4 bg-[#00897b] text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-xs">
+                  <div className="absolute -top-2.5 right-4 bg-sfd-teal text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-xs">
                     Original Spec
                   </div>
                   <div className="flex justify-between items-start mb-2">
@@ -392,15 +392,15 @@ export default function DeviceIssueClient({ data }: Props) {
                   </p>
                   <ul className="text-xs space-y-2 text-gray-700">
                     <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-[#00897b]" />
+                      <CheckCircle2 className="w-3.5 h-3.5 text-sfd-teal" />
                       Factory original brightness &amp; refresh rate
                     </li>
                     <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-[#00897b]" />
+                      <CheckCircle2 className="w-3.5 h-3.5 text-sfd-teal" />
                       90-Day Extended Guarantee
                     </li>
                     <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-[#00897b]" />
+                      <CheckCircle2 className="w-3.5 h-3.5 text-sfd-teal" />
                       TrueTone &amp; Face ID Calibration
                     </li>
                   </ul>
@@ -422,7 +422,7 @@ export default function DeviceIssueClient({ data }: Props) {
             {/* C. Step-by-Step Bench Repair Process */}
             <section className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-xs space-y-6">
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-widest text-[#00897b] block mb-1">
+                <span className="text-[11px] font-bold uppercase tracking-widest text-sfd-teal block mb-1">
                   Certified Bench Procedure
                 </span>
                 <h2 className="text-lg sm:text-xl font-bold text-gray-900">
@@ -436,7 +436,7 @@ export default function DeviceIssueClient({ data }: Props) {
                     key={idx}
                     className="flex items-start gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200"
                   >
-                    <span className="w-7 h-7 rounded-full bg-[#00897b] text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                    <span className="w-7 h-7 rounded-full bg-sfd-teal text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
                       {idx + 1}
                     </span>
                     <div>
@@ -465,7 +465,7 @@ export default function DeviceIssueClient({ data }: Props) {
 
             {/* C2. Why Choose SmartFoneDoctor in Philadelphia */}
             <section className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-xs space-y-4">
-              <span className="text-[11px] font-bold uppercase tracking-widest text-[#00897b] block mb-1">
+              <span className="text-[11px] font-bold uppercase tracking-widest text-sfd-teal block mb-1">
                 Philadelphia&apos;s Independent Repair Bench
               </span>
               <h2 className="text-lg sm:text-xl font-bold text-gray-900">
@@ -522,7 +522,7 @@ export default function DeviceIssueClient({ data }: Props) {
             {/* E. Juicy Linking: Sibling Repairs on This Device */}
             <section className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-xs space-y-4">
               <div className="flex items-center gap-2">
-                <Wrench className="w-4 h-4 text-[#00897b]" />
+                <Wrench className="w-4 h-4 text-sfd-teal" />
                 <h2 className="text-base sm:text-lg font-bold text-gray-900">
                   Other Popular Repairs for {device.name}
                 </h2>
@@ -535,10 +535,10 @@ export default function DeviceIssueClient({ data }: Props) {
                   <Link
                     key={rep.url}
                     href={rep.url}
-                    className="flex items-center justify-between p-3.5 rounded-xl border border-gray-200 hover:border-[#00897b] hover:shadow-xs transition-all group bg-gray-50/40"
+                    className="flex items-center justify-between p-3.5 rounded-xl border border-gray-200 hover:border-sfd-teal hover:shadow-xs transition-all group bg-gray-50/40"
                   >
                     <div>
-                      <span className="text-xs font-bold text-gray-900 group-hover:text-[#00897b] transition-colors block">
+                      <span className="text-xs font-bold text-gray-900 group-hover:text-sfd-teal transition-colors block">
                         {rep.name}
                       </span>
                       <span className="text-[11px] text-gray-400">{rep.turnaround}</span>
@@ -554,7 +554,7 @@ export default function DeviceIssueClient({ data }: Props) {
             {/* F. Juicy Linking: Other Devices with this same issue */}
             <section className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-xs space-y-4">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-[#00897b]" />
+                <Sparkles className="w-4 h-4 text-sfd-teal" />
                 <h2 className="text-base sm:text-lg font-bold text-gray-900">
                   {issue.shortName} for Other Popular Devices
                 </h2>
@@ -564,12 +564,12 @@ export default function DeviceIssueClient({ data }: Props) {
                   <Link
                     key={dev.url}
                     href={dev.url}
-                    className="p-3 rounded-xl border border-gray-200 hover:border-[#00897b] hover:shadow-xs transition-all text-center group bg-white"
+                    className="p-3 rounded-xl border border-gray-200 hover:border-sfd-teal hover:shadow-xs transition-all text-center group bg-white"
                   >
                     <div className="relative aspect-square w-full rounded-lg overflow-hidden mb-2 bg-gray-100">
                       <Image src={dev.image} alt={dev.name} fill className="object-cover group-hover:scale-105 transition-transform" />
                     </div>
-                    <span className="text-xs font-bold text-gray-800 group-hover:text-[#00897b] transition-colors line-clamp-1">
+                    <span className="text-xs font-bold text-gray-800 group-hover:text-sfd-teal transition-colors line-clamp-1">
                       {dev.name}
                     </span>
                     <span className="text-[10px] text-gray-400 block mt-0.5">{issue.shortName}</span>
@@ -581,7 +581,7 @@ export default function DeviceIssueClient({ data }: Props) {
             {/* G. Juicy Linking: Related Blog Troubleshooting Guides */}
             <section className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-xs space-y-4">
               <div className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-[#00897b]" />
+                <BookOpen className="w-4 h-4 text-sfd-teal" />
                 <h2 className="text-base sm:text-lg font-bold text-gray-900">
                   Related Hardware Guides &amp; Troubleshooting
                 </h2>
@@ -591,13 +591,13 @@ export default function DeviceIssueClient({ data }: Props) {
                   <Link
                     key={guide.url}
                     href={guide.url}
-                    className="p-4 rounded-xl border border-gray-200 hover:border-[#00897b] hover:shadow-xs transition-all group bg-gray-50/50 flex flex-col justify-between"
+                    className="p-4 rounded-xl border border-gray-200 hover:border-sfd-teal hover:shadow-xs transition-all group bg-gray-50/50 flex flex-col justify-between"
                   >
-                    <span className="text-xs font-bold text-gray-900 group-hover:text-[#00897b] transition-colors line-clamp-2 mb-2">
+                    <span className="text-xs font-bold text-gray-900 group-hover:text-sfd-teal transition-colors line-clamp-2 mb-2">
                       {guide.title}
                     </span>
                     <span className="text-[11px] text-gray-400 flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-[#00897b]" />
+                      <Clock className="w-3 h-3 text-sfd-teal" />
                       {guide.readTime}
                     </span>
                   </Link>
@@ -613,7 +613,7 @@ export default function DeviceIssueClient({ data }: Props) {
             {/* Quick Action Card */}
             <div className="bg-[#1d1c1a] text-white rounded-2xl p-6 shadow-md space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#4dd0e1]">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-teal-200">
                   Express Drop-Off
                 </span>
                 <span className="text-xs font-bold text-emerald-400">Open Today</span>
@@ -646,7 +646,7 @@ export default function DeviceIssueClient({ data }: Props) {
               <div className="space-y-2 pt-1">
                 <Link
                   href={`/schedule-repair?device=${device.category}&make=${encodeURIComponent(device.brand)}&model=${encodeURIComponent(device.name)}&issue=${encodeURIComponent(issue.slug)}`}
-                  className="block w-full text-center px-4 py-3 rounded-xl bg-[#00897b] hover:bg-[#00796b] text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-sm"
+                  className="block w-full text-center px-4 py-3 rounded-xl bg-sfd-teal hover:bg-sfd-tealDark text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-sm"
                 >
                   Schedule Appointment
                 </Link>
@@ -662,7 +662,7 @@ export default function DeviceIssueClient({ data }: Props) {
             {/* Philadelphia Store Info */}
             <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs space-y-3">
               <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-[#00897b]" />
+                <MapPin className="w-4 h-4 text-sfd-teal" />
                 <h4 className="text-xs font-bold uppercase tracking-wider text-gray-900">
                   Philadelphia Bench Location
                 </h4>
@@ -680,7 +680,7 @@ export default function DeviceIssueClient({ data }: Props) {
                 href="https://maps.google.com/?q=33+S+52nd+St+Philadelphia+PA+19139"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs font-bold text-[#00897b] hover:underline flex items-center gap-1 pt-1"
+                className="text-xs font-bold text-sfd-teal hover:underline flex items-center gap-1 pt-1"
               >
                 <span>Get Driving Directions</span>
                 <ExternalLink className="w-3 h-3" />
@@ -696,10 +696,10 @@ export default function DeviceIssueClient({ data }: Props) {
                 <li>
                   <Link
                     href="/track"
-                    className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 hover:text-[#00897b] transition-colors border border-gray-100"
+                    className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 hover:text-sfd-teal transition-colors border border-gray-100"
                   >
                     <span className="flex items-center gap-2">
-                      <Activity className="w-3.5 h-3.5 text-[#00897b]" />
+                      <Activity className="w-3.5 h-3.5 text-sfd-teal" />
                       Track Ongoing Ticket
                     </span>
                     <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
@@ -708,10 +708,10 @@ export default function DeviceIssueClient({ data }: Props) {
                 <li>
                   <Link
                     href="/locations/i/book-repair"
-                    className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 hover:text-[#00897b] transition-colors border border-gray-100"
+                    className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 hover:text-sfd-teal transition-colors border border-gray-100"
                   >
                     <span className="flex items-center gap-2">
-                      <MapPin className="w-3.5 h-3.5 text-[#00897b]" />
+                      <MapPin className="w-3.5 h-3.5 text-sfd-teal" />
                       All 3 Store Locations
                     </span>
                     <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
@@ -720,10 +720,10 @@ export default function DeviceIssueClient({ data }: Props) {
                 <li>
                   <Link
                     href="/review"
-                    className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 hover:text-[#00897b] transition-colors border border-gray-100"
+                    className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 hover:text-sfd-teal transition-colors border border-gray-100"
                   >
                     <span className="flex items-center gap-2">
-                      <MessageSquare className="w-3.5 h-3.5 text-[#00897b]" />
+                      <MessageSquare className="w-3.5 h-3.5 text-sfd-teal" />
                       Customer Reviews (4.9★)
                     </span>
                     <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
@@ -732,10 +732,10 @@ export default function DeviceIssueClient({ data }: Props) {
                 <li>
                   <Link
                     href="/faq"
-                    className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 hover:text-[#00897b] transition-colors border border-gray-100"
+                    className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 hover:text-sfd-teal transition-colors border border-gray-100"
                   >
                     <span className="flex items-center gap-2">
-                      <HelpCircle className="w-3.5 h-3.5 text-[#00897b]" />
+                      <HelpCircle className="w-3.5 h-3.5 text-sfd-teal" />
                       Hardware Repair FAQ
                     </span>
                     <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
@@ -777,7 +777,7 @@ export default function DeviceIssueClient({ data }: Props) {
         </div>
         <Link
           href={`/schedule-repair?device=${device.category}&make=${encodeURIComponent(device.brand)}&model=${encodeURIComponent(device.name)}&issue=${encodeURIComponent(issue.slug)}`}
-          className="px-5 py-2.5 rounded-full bg-[#00897b] text-white text-xs font-bold uppercase tracking-wider active:scale-95 transition-transform"
+          className="px-5 py-2.5 rounded-full bg-sfd-teal text-white text-xs font-bold uppercase tracking-wider active:scale-95 transition-transform"
         >
           Book Now
         </Link>

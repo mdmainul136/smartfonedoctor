@@ -1,4 +1,5 @@
 import React from "react";
+import { brandTitle } from "@/lib/seoTitle";
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
@@ -10,7 +11,7 @@ import { getFaqsAction } from "@/actions/faqs";
 import FaqClient from "@/components/site/FaqClient";
 
 export const metadata: Metadata = {
-  title: "Frequently Asked Questions | SmartFoneDoctor",
+  title: brandTitle("Frequently Asked Questions | SmartFoneDoctor"),
   description:
     "Find answers to common questions about phone, tablet, computer, and game console repairs, warranty policies, pricing, and certified pre-owned devices at SmartFoneDoctor.",
 };
@@ -99,7 +100,7 @@ export default async function FaqPage() {
                 Frequently Asked Questions
               </h2>
               <div className="flex items-center gap-0.5">
-                <span className="text-[#c8102e] font-black text-lg leading-none">+</span>
+                <span className="text-sfd-teal font-black text-lg leading-none">+</span>
                 <span className="text-sfd-teal font-black text-xs leading-none">*</span>
               </div>
             </div>
@@ -111,7 +112,7 @@ export default async function FaqPage() {
           {/* 5. Conversion & Cross-Linking CTA Banner */}
           <div className="max-w-[1000px] mx-auto mt-16 rounded-[24px] bg-[#1d1c1a] text-white p-8 sm:p-10 shadow-md flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="space-y-2 text-center sm:text-left">
-              <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4dd0e1]">
+              <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-200">
                 <Wrench className="w-4 h-4 text-sfd-teal" />
                 <span>Have a Specific Device Issue?</span>
               </div>
@@ -126,7 +127,7 @@ export default async function FaqPage() {
             <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full sm:w-auto">
               <Link
                 href="/schedule-repair"
-                className="w-full sm:w-auto text-center px-6 py-3.5 rounded-full bg-[#c8102e] hover:bg-[#a00c24] text-white font-bold text-xs uppercase tracking-wider transition shadow-sm active:scale-95 flex items-center justify-center gap-2"
+                className="w-full sm:w-auto text-center px-6 py-3.5 rounded-full bg-sfd-teal hover:bg-sfd-tealDark text-white font-bold text-xs uppercase tracking-wider transition shadow-sm active:scale-95 flex items-center justify-center gap-2"
               >
                 <Calendar className="w-3.5 h-3.5" />
                 <span>Schedule Repair</span>

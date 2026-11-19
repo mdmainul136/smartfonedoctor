@@ -1,11 +1,12 @@
 import React from "react";
+import { brandTitle } from "@/lib/seoTitle";
 import type { Metadata } from "next";
 import Link from "next/link";
 import Footer from "@/components/layout/Footer";
 import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | SmartFoneDoctor",
+  title: brandTitle("Privacy Policy | SmartFoneDoctor"),
   description:
     "Learn how SmartFoneDoctor collects, protects, uses, and respects your personal information and device data.",
   keywords: ["Privacy Policy", "SmartFoneDoctor Privacy", "Data Protection Philadelphia"],

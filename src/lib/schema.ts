@@ -186,13 +186,6 @@ export function buildLocalBusinessSchema(
         closes: "19:00",
       },
     ],
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.9",
-      reviewCount: "420",
-      bestRating: "5",
-      worstRating: "1",
-    },
   };
 }
 

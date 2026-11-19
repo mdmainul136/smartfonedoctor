@@ -184,7 +184,7 @@ function CMSFaqAccordionItem({
         </h3>
         <ChevronDown
           className={`w-4 h-4 shrink-0 transition-transform duration-200 ${
-            isOpen ? "rotate-180 text-[#009691]" : "text-gray-400"
+            isOpen ? "rotate-180 text-sfd-teal" : "text-gray-400"
           }`}
         />
       </div>
@@ -291,7 +291,7 @@ export default function CMSSectionRenderer({
   const heroStyle: HeroStyle = cmsPage?.heroStyle || {
     bgColor: "#0f172a",
     textColor: "#ffffff",
-    accentColor: "#009691",
+    accentColor: "#00807A",
     badgeBg: "rgba(0, 150, 145, 0.18)",
     badgeColor: "#5eead4",
     padding: "56px 36px",
@@ -420,7 +420,7 @@ export default function CMSSectionRenderer({
                 <Link
                   href={cmsPage.primaryCtaLink || "/schedule-repair"}
                   style={{
-                    backgroundColor: heroStyle.accentColor || "#009691",
+                    backgroundColor: heroStyle.accentColor || "#00807A",
                   }}
                   className="inline-flex items-center gap-2 px-6 py-3.5 rounded-lg text-white font-bold text-sm shadow-lg hover:brightness-110 transition active:scale-95"
                 >
@@ -532,7 +532,7 @@ export default function CMSSectionRenderer({
                         id={`sfd-item-${item.id}`}
                         style={cardStyle}
                         className={`p-5 border relative transition-all duration-200 hover:shadow-md ${
-                          item.highlight ? "ring-2 ring-[#009691] shadow-md" : ""
+                          item.highlight ? "ring-2 ring-sfd-teal shadow-md" : ""
                         }`}
                       >
                         <div className="flex items-center justify-between gap-2 mb-3">
@@ -540,8 +540,8 @@ export default function CMSSectionRenderer({
                             {item.icon && (
                               <div
                                 style={{
-                                  backgroundColor: `${st.accentColor || "#009691"}15`,
-                                  color: st.accentColor || "#009691",
+                                  backgroundColor: `${st.accentColor || "#00807A"}15`,
+                                  color: st.accentColor || "#00807A",
                                 }}
                                 className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
                               >
@@ -551,8 +551,8 @@ export default function CMSSectionRenderer({
                             {item.badge && (
                               <span
                                 style={{
-                                  backgroundColor: `${st.accentColor || "#009691"}15`,
-                                  color: st.accentColor || "#009691",
+                                  backgroundColor: `${st.accentColor || "#00807A"}15`,
+                                  color: st.accentColor || "#00807A",
                                 }}
                                 className="text-[11px] font-bold px-2.5 py-0.5 rounded-full"
                               >
@@ -578,7 +578,7 @@ export default function CMSSectionRenderer({
                           <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
                             <Link
                               href={item.link || "/schedule-repair"}
-                              style={{ color: st.accentColor || "#009691" }}
+                              style={{ color: st.accentColor || "#00807A" }}
                               className="text-xs font-bold hover:underline inline-flex items-center gap-1 group"
                             >
                               <span>{item.linkText || "Learn More"}</span>
@@ -609,7 +609,7 @@ export default function CMSSectionRenderer({
                         <Link
                           href={sec.ctaLink || "/schedule-repair"}
                           style={{
-                            backgroundColor: st.accentColor || "#009691",
+                            backgroundColor: st.accentColor || "#00807A",
                           }}
                           className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-white text-xs sm:text-sm font-bold shadow hover:brightness-110 transition active:scale-95"
                         >
@@ -635,7 +635,7 @@ export default function CMSSectionRenderer({
                         <div className="flex items-center gap-2 mb-1.5">
                           {item.icon && (
                             <div
-                              style={{ color: st.accentColor || "#009691" }}
+                              style={{ color: st.accentColor || "#00807A" }}
                               className="shrink-0"
                             >
                               <RenderItemIcon name={item.icon} className="w-4 h-4" />
@@ -643,7 +643,7 @@ export default function CMSSectionRenderer({
                           )}
                           {item.badge && (
                             <span
-                              style={{ color: st.accentColor || "#009691" }}
+                              style={{ color: st.accentColor || "#00807A" }}
                               className="text-[10px] font-bold uppercase tracking-wider block"
                             >
                               {item.badge}
@@ -703,7 +703,7 @@ export default function CMSSectionRenderer({
                   <Link
                     href={sec.ctaLink || "/schedule-repair"}
                     style={{
-                      backgroundColor: st.accentColor || "#009691",
+                      backgroundColor: st.accentColor || "#00807A",
                     }}
                     className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg text-white text-sm font-bold shadow-md hover:brightness-110 transition active:scale-95"
                   >

@@ -660,7 +660,7 @@ export function ScheduleRepairWizard({ initialStores }: ScheduleRepairWizardProp
                   <button
                     type="button"
                     onClick={() => setCurrentStep(3)}
-                    className="px-8 py-2.5 rounded-full bg-[#c8102e] hover:bg-[#a60d26] text-white text-[13.5px] font-medium shadow-xs hover:shadow transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                    className="px-8 py-2.5 rounded-full bg-sfd-teal hover:bg-sfd-tealDark text-white text-[13.5px] font-medium shadow-xs hover:shadow transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
                   >
                     <span>Continue</span>
                     <span className="text-sm font-semibold select-none leading-none">↗</span>
@@ -748,7 +748,7 @@ export function ScheduleRepairWizard({ initialStores }: ScheduleRepairWizardProp
                     type="button"
                     disabled={selectedIssues.length === 0}
                     onClick={() => setCurrentStep(4)}
-                    className="px-8 py-2.5 rounded-full bg-[#c8102e] hover:bg-[#a60d26] disabled:opacity-50 text-white text-[13.5px] font-medium shadow-xs hover:shadow transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                    className="px-8 py-2.5 rounded-full bg-sfd-teal hover:bg-sfd-tealDark disabled:opacity-50 text-white text-[13.5px] font-medium shadow-xs hover:shadow transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
                   >
                     <span>Continue</span>
                     <span className="text-sm font-semibold select-none leading-none">↗</span>
@@ -882,7 +882,7 @@ export function ScheduleRepairWizard({ initialStores }: ScheduleRepairWizardProp
                             name="contactPref"
                             checked={contactPref === method}
                             onChange={() => setContactPref(method)}
-                            className="text-[#c8102e] focus:ring-[#c8102e]"
+                            className="text-sfd-teal focus:ring-sfd-teal"
                           />
                           <span>{method}</span>
                         </label>
@@ -897,7 +897,7 @@ export function ScheduleRepairWizard({ initialStores }: ScheduleRepairWizardProp
                         type="checkbox"
                         checked={marketingOptIn}
                         onChange={(e) => setMarketingOptIn(e.target.checked)}
-                        className="mt-0.5 rounded text-[#c8102e] focus:ring-[#c8102e]"
+                        className="mt-0.5 rounded text-sfd-teal focus:ring-sfd-teal"
                       />
                       <span className="text-[12.5px] text-neutral-800 font-medium">
                         Yes, email me coupons and special offers from SmartFoneDoctor.
@@ -925,7 +925,7 @@ export function ScheduleRepairWizard({ initialStores }: ScheduleRepairWizardProp
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="px-8 py-2.5 rounded-full bg-[#c8102e] hover:bg-[#a60d26] disabled:opacity-50 text-white text-[13.5px] font-medium shadow-xs hover:shadow transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                      className="px-8 py-2.5 rounded-full bg-sfd-teal hover:bg-sfd-tealDark disabled:opacity-50 text-white text-[13.5px] font-medium shadow-xs hover:shadow transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
                     >
                       {isSubmitting ? (
                         <>
@@ -951,7 +951,7 @@ export function ScheduleRepairWizard({ initialStores }: ScheduleRepairWizardProp
 
                   {/* Decorative Red & Teal Cross / Star Icon */}
                   <div className="flex items-center justify-center gap-1 mb-4">
-                    <span className="text-[#c8102e] font-black text-xl leading-none">+</span>
+                    <span className="text-sfd-teal font-black text-xl leading-none">+</span>
                     <span className="text-sfd-teal font-black text-xs leading-none">*</span>
                   </div>
 
@@ -1025,7 +1025,7 @@ export function ScheduleRepairWizard({ initialStores }: ScheduleRepairWizardProp
 
                   <Link
                     href="/"
-                    className="px-8 py-3 rounded-full bg-[#009691] hover:bg-[#007f7b] text-white text-[13px] font-bold shadow-md transition-colors"
+                    className="px-8 py-3 rounded-full bg-sfd-teal hover:bg-[#007f7b] text-white text-[13px] font-bold shadow-md transition-colors"
                   >
                     Return to Homepage
                   </Link>

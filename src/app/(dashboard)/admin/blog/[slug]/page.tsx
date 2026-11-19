@@ -328,7 +328,7 @@ export default function BlogPostEditorPage({ params }: EditorPageProps) {
             </div>
 
             {article.featuredImage && (
-              <div className="aspect-21/9 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 max-h-48 relative group">
+              <div className="aspect-[21/9] rounded-lg overflow-hidden bg-gray-100 border border-gray-200 max-h-48 relative group">
                 <img
                   src={article.featuredImage}
                   alt="Featured preview"

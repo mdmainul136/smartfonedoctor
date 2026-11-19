@@ -1,4 +1,5 @@
 import React from "react";
+import { brandTitle } from "@/lib/seoTitle";
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
@@ -30,7 +31,7 @@ import { getStoreBranchesAction } from "@/actions/settings";
 import type { DeviceModelTaxonomy, ServiceIssueTaxonomy } from "@/lib/taxonomy";
 
 export const metadata: Metadata = {
-  title: "Professional Device Repair in Philadelphia | Same-Day Service | SmartFoneDoctor",
+  title: brandTitle("Professional Device Repair in Philadelphia | Same-Day Service | SmartFoneDoctor"),
   description:
     "Expert walk-in repair services for iPhones, Samsung Galaxy, iPads, MacBooks, and Game Consoles in Philadelphia. 30-min screen replacements, battery repairs, and 90-day warranty.",
   keywords: [
@@ -153,7 +154,7 @@ export default async function RepairsHubPage() {
         {/* 1. HERO HEADER */}
         <div className="bg-white border-b border-gray-200">
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 text-center space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00897b]/10 text-[#00897b] border border-[#00897b]/20 text-xs font-bold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sfd-teal/10 text-sfd-teal border border-sfd-teal/20 text-xs font-bold uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5" />
             Philadelphia&apos;s Top-Rated Repair Bench
           </div>
@@ -168,10 +169,10 @@ export default async function RepairsHubPage() {
 
           <div className="flex flex-wrap items-center justify-center gap-6 pt-4 text-xs font-semibold text-gray-700">
             <span className="flex items-center gap-1.5">
-              <Clock className="w-4 h-4 text-[#00897b]" /> Most Repairs in 20–30 Mins
+              <Clock className="w-4 h-4 text-sfd-teal" /> Most Repairs in 20–30 Mins
             </span>
             <span className="flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-[#00897b]" /> 90-Day Comprehensive Warranty
+              <ShieldCheck className="w-4 h-4 text-sfd-teal" /> 90-Day Comprehensive Warranty
             </span>
             <span className="flex items-center gap-1.5">
               <Star className="w-4 h-4 fill-amber-400 text-amber-400" /> 4.9/5 Rating (400+ Reviews)
@@ -202,19 +203,19 @@ export default async function RepairsHubPage() {
                 <Link
                   key={cat.id}
                   href={cat.url}
-                  className="group relative p-6 rounded-2xl bg-white border border-gray-200 hover:border-[#00897b] hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
+                  className="group relative p-6 rounded-2xl bg-white border border-gray-200 hover:border-sfd-teal hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-800 group-hover:bg-[#00897b] group-hover:text-white transition-colors">
+                      <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-800 group-hover:bg-sfd-teal group-hover:text-white transition-colors">
                         <Icon className="w-6 h-6" />
                       </div>
-                      <span className="text-[10px] font-bold bg-[#00897b]/10 text-[#00897b] px-2.5 py-1 rounded-full border border-[#00897b]/20">
+                      <span className="text-[10px] font-bold bg-sfd-teal/10 text-sfd-teal px-2.5 py-1 rounded-full border border-sfd-teal/20">
                         {cat.badge}
                       </span>
                     </div>
 
-                    <h3 className="text-base font-bold text-gray-900 group-hover:text-[#00897b] transition-colors mb-1">
+                    <h3 className="text-base font-bold text-gray-900 group-hover:text-sfd-teal transition-colors mb-1">
                       {cat.name}
                     </h3>
                     <p className="text-xs text-gray-500 leading-relaxed">
@@ -222,7 +223,7 @@ export default async function RepairsHubPage() {
                     </p>
                   </div>
 
-                  <div className="mt-6 pt-3 border-t border-gray-100 flex items-center justify-between text-xs font-semibold text-[#00897b]">
+                  <div className="mt-6 pt-3 border-t border-gray-100 flex items-center justify-between text-xs font-semibold text-sfd-teal">
                     <span>Browse Models &amp; Pricing</span>
                     <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </div>
@@ -248,7 +249,7 @@ export default async function RepairsHubPage() {
               <Link
                 key={dev.slug}
                 href={`/repairs/${dev.category}/${dev.slug}`}
-                className="group p-3.5 rounded-2xl bg-white border border-gray-200 hover:border-[#00897b] hover:shadow-md transition-all text-center flex flex-col justify-between"
+                className="group p-3.5 rounded-2xl bg-white border border-gray-200 hover:border-sfd-teal hover:shadow-md transition-all text-center flex flex-col justify-between"
               >
                 <div className="relative aspect-square w-full rounded-xl overflow-hidden mb-3 bg-gray-50">
                   <Image
@@ -259,12 +260,12 @@ export default async function RepairsHubPage() {
                   />
                 </div>
                 <div>
-                  <span className="text-xs font-bold text-gray-900 group-hover:text-[#00897b] transition-colors block line-clamp-1">
+                  <span className="text-xs font-bold text-gray-900 group-hover:text-sfd-teal transition-colors block line-clamp-1">
                     {dev.name}
                   </span>
                   <span className="text-[11px] text-gray-400 block mt-0.5">{dev.specs.split("·")[0]}</span>
                 </div>
-                <div className="mt-3 pt-2 border-t border-gray-100 text-[11px] font-bold text-[#00897b] flex items-center justify-center gap-1">
+                <div className="mt-3 pt-2 border-t border-gray-100 text-[11px] font-bold text-sfd-teal flex items-center justify-center gap-1">
                   <span>View Services</span>
                   <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                 </div>
@@ -289,18 +290,18 @@ export default async function RepairsHubPage() {
               <Link
                 key={iss.slug}
                 href={`/repairs/${iss.category}/iphone-16-pro/${iss.slug}`}
-                className="p-5 rounded-2xl bg-white border border-gray-200 hover:border-[#00897b] hover:shadow-md transition-all group flex flex-col justify-between"
+                className="p-5 rounded-2xl bg-white border border-gray-200 hover:border-sfd-teal hover:shadow-md transition-all group flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-[#00897b]">
+                    <span className="text-xs font-bold uppercase tracking-wider text-sfd-teal">
                       {iss.turnaroundDisplay}
                     </span>
                     <span className="text-xs font-black text-gray-900 bg-gray-100 px-2.5 py-1 rounded-md">
                       From ${iss.basePrice}
                     </span>
                   </div>
-                  <h3 className="text-sm font-bold text-gray-900 group-hover:text-[#00897b] transition-colors mb-1.5">
+                  <h3 className="text-sm font-bold text-gray-900 group-hover:text-sfd-teal transition-colors mb-1.5">
                     {iss.name}
                   </h3>
                   <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
@@ -309,7 +310,7 @@ export default async function RepairsHubPage() {
                 </div>
                 <div className="mt-4 pt-3 border-t border-gray-100 text-xs font-bold text-gray-800 flex items-center justify-between">
                   <span>See Symptoms &amp; Pricing</span>
-                  <ChevronRight className="w-4 h-4 text-[#00897b] group-hover:translate-x-1 transition-transform" />
+                  <ChevronRight className="w-4 h-4 text-sfd-teal group-hover:translate-x-1 transition-transform" />
                 </div>
               </Link>
             ))}
@@ -319,7 +320,7 @@ export default async function RepairsHubPage() {
         {/* 5. DIAGNOSTIC BLOG GUIDES & ARTICLES */}
         <section className="rounded-3xl bg-gradient-to-br from-gray-900 to-[#1d1c1a] text-white p-8 sm:p-12 space-y-6">
           <div className="max-w-2xl space-y-2">
-            <span className="text-xs font-bold uppercase tracking-widest text-[#4dd0e1] flex items-center gap-1.5">
+            <span className="text-xs font-bold uppercase tracking-widest text-teal-200 flex items-center gap-1.5">
               <BookOpen className="w-4 h-4" />
               Bench Technician Knowledge Base
             </span>
@@ -340,10 +341,10 @@ export default async function RepairsHubPage() {
                   className="p-5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/10 transition-all group flex flex-col justify-between"
                 >
                   <div>
-                    <span className="text-[10px] font-bold text-[#4dd0e1] uppercase tracking-wider block mb-1">
+                    <span className="text-[10px] font-bold text-teal-200 uppercase tracking-wider block mb-1">
                       {guide.categoryName || "Repair Guide"}
                     </span>
-                    <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-[#4dd0e1] transition-colors leading-snug">
+                    <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-teal-200 transition-colors leading-snug">
                       {guide.title}
                     </h3>
                   </div>
@@ -359,10 +360,10 @@ export default async function RepairsHubPage() {
                   className="p-5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/10 transition-all group flex flex-col justify-between"
                 >
                   <div>
-                    <span className="text-[10px] font-bold text-[#4dd0e1] uppercase tracking-wider block mb-1">
+                    <span className="text-[10px] font-bold text-teal-200 uppercase tracking-wider block mb-1">
                       iPhone Repair Guide
                     </span>
-                    <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-[#4dd0e1] transition-colors leading-snug">
+                    <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-teal-200 transition-colors leading-snug">
                       When to Replace Your iPhone Battery: Signs, Cycles &amp; Peak Performance
                     </h3>
                   </div>
@@ -376,10 +377,10 @@ export default async function RepairsHubPage() {
                   className="p-5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/10 transition-all group flex flex-col justify-between"
                 >
                   <div>
-                    <span className="text-[10px] font-bold text-[#4dd0e1] uppercase tracking-wider block mb-1">
+                    <span className="text-[10px] font-bold text-teal-200 uppercase tracking-wider block mb-1">
                       Emergency First Aid
                     </span>
-                    <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-[#4dd0e1] transition-colors leading-snug">
+                    <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-teal-200 transition-colors leading-snug">
                       Dropped Phone in Water? 4 Critical Steps Before Bringing It to the Shop
                     </h3>
                   </div>
@@ -394,7 +395,7 @@ export default async function RepairsHubPage() {
           <div className="pt-2">
             <Link
               href="/blog"
-              className="inline-flex items-center gap-2 text-xs font-bold text-[#4dd0e1] hover:underline"
+              className="inline-flex items-center gap-2 text-xs font-bold text-teal-200 hover:underline"
             >
               <span>Explore all technician repair guides &amp; articles</span>
               <ChevronRight className="w-4 h-4" />
@@ -405,7 +406,7 @@ export default async function RepairsHubPage() {
         {/* 6. NEIGHBORHOODS LOCAL SEO */}
         <section className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 space-y-3">
           <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-[#00897b]" />
+            <MapPin className="w-4 h-4 text-sfd-teal" />
             <h3 className="text-sm font-bold uppercase tracking-wider text-gray-800">
               Serving the Greater Philadelphia Metro Area
             </h3>

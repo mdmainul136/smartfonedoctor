@@ -144,7 +144,7 @@ export default function AboutMap({ initialStores }: { initialStores?: StorePoint
               </clipPath>
             </defs>
             <!-- Teardrop Body -->
-            <path d="M${cx} 2 C${cx - 18} 2 ${cx - 20} 14 ${cx - 20} ${cy} C${cx - 20} ${cy + 12} ${cx - 3} ${h - 4} ${cx} ${h - 1} C${cx + 3} ${h - 4} ${cx + 20} ${cy + 12} ${cx + 20} ${cy} C${cx + 20} 14 ${cx + 18} 2 ${cx} 2 Z" fill="#c8102e" stroke="#ffffff" stroke-width="2.5" />
+            <path d="M${cx} 2 C${cx - 18} 2 ${cx - 20} 14 ${cx - 20} ${cy} C${cx - 20} ${cy + 12} ${cx - 3} ${h - 4} ${cx} ${h - 1} C${cx + 3} ${h - 4} ${cx + 20} ${cy + 12} ${cx + 20} ${cy} C${cx + 20} 14 ${cx + 18} 2 ${cx} 2 Z" fill="#00807A" stroke="#ffffff" stroke-width="2.5" />
             
             <!-- White Disc for Logo -->
             <circle cx="${cx}" cy="${cy}" r="${radius + 1}" fill="#ffffff" />
@@ -461,7 +461,7 @@ export default function AboutMap({ initialStores }: { initialStores?: StorePoint
           type="button"
           onClick={handleResetBounds}
           title="Show All 3 Stores"
-          className="w-8 h-8 rounded-lg bg-white/95 hover:bg-white text-[#009691] flex items-center justify-center font-bold text-xs shadow-xs border border-neutral-200 active:scale-95 transition"
+          className="w-8 h-8 rounded-lg bg-white/95 hover:bg-white text-sfd-teal flex items-center justify-center font-bold text-xs shadow-xs border border-neutral-200 active:scale-95 transition"
         >
           <MapPin className="w-4 h-4" />
         </button>
@@ -482,7 +482,7 @@ export default function AboutMap({ initialStores }: { initialStores?: StorePoint
                 onClick={() => handleSelectStore(store.id)}
                 className={`text-[11px] font-semibold px-2.5 py-1 rounded-full transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
                   isActive
-                    ? "bg-[#c8102e] text-white shadow-xs"
+                    ? "bg-sfd-teal text-white shadow-xs"
                     : "bg-neutral-100 hover:bg-neutral-200 text-neutral-700"
                 }`}
               >

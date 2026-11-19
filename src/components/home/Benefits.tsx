@@ -34,8 +34,8 @@ const BENEFITS_DATA: BenefitCard[] = [
       "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
     badgeBg: "bg-amber-100/70",
     plusColors: [
-      { color: "text-[#b31924]", position: "top-4 right-5", size: "text-lg" },
-      { color: "text-[#009691]", position: "top-10 left-3", size: "text-sm" },
+      { color: "text-sfd-tealDark", position: "top-4 right-5", size: "text-lg" },
+      { color: "text-sfd-teal", position: "top-10 left-3", size: "text-sm" },
       { color: "text-amber-400", position: "bottom-8 left-4", size: "text-xs" },
     ],
   },
@@ -50,8 +50,8 @@ const BENEFITS_DATA: BenefitCard[] = [
       "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?auto=format&fit=crop&w=400&q=80",
     badgeBg: "bg-teal-100/70",
     plusColors: [
-      { color: "text-[#009691]", position: "top-3 right-6", size: "text-xl" },
-      { color: "text-[#b31924]", position: "top-12 left-2", size: "text-lg" },
+      { color: "text-sfd-teal", position: "top-3 right-6", size: "text-xl" },
+      { color: "text-sfd-tealDark", position: "top-12 left-2", size: "text-lg" },
       { color: "text-blue-400", position: "bottom-12 right-2", size: "text-xs" },
     ],
   },
@@ -67,8 +67,8 @@ const BENEFITS_DATA: BenefitCard[] = [
     badgeBg: "bg-blue-100/60",
     plusColors: [
       { color: "text-amber-400", position: "top-5 right-4", size: "text-sm" },
-      { color: "text-[#009691]", position: "top-8 left-3", size: "text-lg" },
-      { color: "text-[#b31924]", position: "bottom-6 left-5", size: "text-xs" },
+      { color: "text-sfd-teal", position: "top-8 left-3", size: "text-lg" },
+      { color: "text-sfd-tealDark", position: "bottom-6 left-5", size: "text-xs" },
     ],
   },
   {
@@ -82,7 +82,7 @@ const BENEFITS_DATA: BenefitCard[] = [
       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
     badgeBg: "bg-rose-100/70",
     plusColors: [
-      { color: "text-[#b31924]", position: "top-4 left-3", size: "text-lg" },
+      { color: "text-sfd-tealDark", position: "top-4 left-3", size: "text-lg" },
       { color: "text-blue-500", position: "top-8 right-5", size: "text-sm" },
       { color: "text-amber-400", position: "bottom-10 right-3", size: "text-xs" },
     ],
@@ -185,4 +185,4 @@ export const Benefits = () => {
       </div>
     </section>
   );
-};
+};

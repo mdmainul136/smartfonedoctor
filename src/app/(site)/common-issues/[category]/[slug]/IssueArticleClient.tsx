@@ -165,7 +165,7 @@ export default function IssueArticleClient({ issue, relatedIssues }: Props) {
 
               <Link
                 href="/schedule-repair"
-                className="px-6 py-3 rounded-full bg-[#c8102e] hover:bg-[#a60d26] text-white text-[13px] font-bold tracking-wide transition shadow-sm whitespace-nowrap active:scale-95 cursor-pointer shrink-0"
+                className="px-6 py-3 rounded-full bg-sfd-teal hover:bg-sfd-tealDark text-white text-[13px] font-bold tracking-wide transition shadow-sm whitespace-nowrap active:scale-95 cursor-pointer shrink-0"
               >
                 Book Free Diagnosis →
               </Link>
@@ -182,7 +182,7 @@ export default function IssueArticleClient({ issue, relatedIssues }: Props) {
                 <h3 className="text-[14px] font-bold text-[#1d1c1a] uppercase tracking-wider">
                   Other Issues
                 </h3>
-                <span className="w-6 h-6 rounded-full bg-neutral-100 flex items-center justify-center text-[#c8102e] font-bold text-sm">
+                <span className="w-6 h-6 rounded-full bg-neutral-100 flex items-center justify-center text-sfd-teal font-bold text-sm">
                   +
                 </span>
               </div>
@@ -208,7 +208,7 @@ export default function IssueArticleClient({ issue, relatedIssues }: Props) {
                       <h4 className="text-[13px] font-bold text-neutral-900 group-hover:text-sfd-teal transition-colors line-clamp-2 leading-snug">
                         {rel.title}
                       </h4>
-                      <span className="inline-flex items-center text-[11.5px] font-bold text-[#c8102e] group-hover:underline mt-1">
+                      <span className="inline-flex items-center text-[11.5px] font-bold text-sfd-teal group-hover:underline mt-1">
                         Read more &gt;
                       </span>
                     </div>
@@ -312,7 +312,7 @@ export default function IssueArticleClient({ issue, relatedIssues }: Props) {
           <div className="shrink-0 w-full md:w-auto">
             <Link
               href="/locations/i/book-repair"
-              className="inline-block w-full md:w-auto text-center px-8 py-3.5 rounded-full bg-[#c8102e] hover:bg-[#a60d26] text-white font-bold text-[13.5px] tracking-wide transition shadow-sm active:scale-95 cursor-pointer"
+              className="inline-block w-full md:w-auto text-center px-8 py-3.5 rounded-full bg-sfd-teal hover:bg-sfd-tealDark text-white font-bold text-[13.5px] tracking-wide transition shadow-sm active:scale-95 cursor-pointer"
             >
               Find a Store
             </Link>

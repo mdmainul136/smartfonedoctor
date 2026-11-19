@@ -170,11 +170,6 @@ export default function ScheduleRepairPSeoContent({
         postalCode: "19139",
         addressCountry: "US",
       },
-      aggregateRating: {
-        "@type": "AggregateRating",
-        ratingValue: "4.9",
-        reviewCount: "284",
-      },
     },
     areaServed: [
       "West Philadelphia",
@@ -214,11 +209,11 @@ export default function ScheduleRepairPSeoContent({
         {/* ── SECTION HEADER & PILL TABS (E-Commerce Style like Reference Image) ── */}
         <div className="mb-8">
           <div className="flex flex-wrap items-center gap-2 mb-3">
-            <span className="bg-[#009691]/10 text-[#009691] border border-[#009691]/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+            <span className="bg-sfd-teal/10 text-sfd-teal border border-sfd-teal/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
               Philadelphia Repair Bench Spec
             </span>
             <span className="bg-neutral-100 text-neutral-700 px-3 py-1 rounded-full text-xs font-medium border border-neutral-200 flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5 text-[#009691]" />
+              <Clock className="w-3.5 h-3.5 text-sfd-teal" />
               Same-Day 20–45 Min Turnaround
             </span>
             <span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-xs font-medium border border-emerald-200 flex items-center gap-1">
@@ -241,7 +236,7 @@ export default function ScheduleRepairPSeoContent({
               onClick={() => setActiveTab("specs")}
               className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer whitespace-nowrap ${
                 activeTab === "specs"
-                  ? "bg-[#009691] text-white shadow-xs"
+                  ? "bg-sfd-teal text-white shadow-xs"
                   : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
               }`}
             >
@@ -251,7 +246,7 @@ export default function ScheduleRepairPSeoContent({
               onClick={() => setActiveTab("features")}
               className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer whitespace-nowrap ${
                 activeTab === "features"
-                  ? "bg-[#009691] text-white shadow-xs"
+                  ? "bg-sfd-teal text-white shadow-xs"
                   : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
               }`}
             >
@@ -261,7 +256,7 @@ export default function ScheduleRepairPSeoContent({
               onClick={() => setActiveTab("why")}
               className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer whitespace-nowrap ${
                 activeTab === "why"
-                  ? "bg-[#009691] text-white shadow-xs"
+                  ? "bg-sfd-teal text-white shadow-xs"
                   : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
               }`}
             >
@@ -271,7 +266,7 @@ export default function ScheduleRepairPSeoContent({
               onClick={() => setActiveTab("faqs")}
               className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer whitespace-nowrap ${
                 activeTab === "faqs"
-                  ? "bg-[#009691] text-white shadow-xs"
+                  ? "bg-sfd-teal text-white shadow-xs"
                   : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
               }`}
             >
@@ -286,14 +281,14 @@ export default function ScheduleRepairPSeoContent({
             <div className="bg-neutral-50 px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
               <div>
                 <h3 className="text-base font-bold text-neutral-900 flex items-center gap-2">
-                  <Wrench className="w-4 h-4 text-[#009691]" />
+                  <Wrench className="w-4 h-4 text-sfd-teal" />
                   <span>Technical Bench Specification</span>
                 </h3>
                 <p className="text-xs text-neutral-500 mt-0.5">
                   Hardware standards and laboratory guidelines for {deviceName}
                 </p>
               </div>
-              <span className="text-[11px] font-bold text-[#009691] uppercase tracking-wider bg-white px-2.5 py-1 rounded-md border border-neutral-200">
+              <span className="text-[11px] font-bold text-sfd-teal uppercase tracking-wider bg-white px-2.5 py-1 rounded-md border border-neutral-200">
                 Verified Bench Spec
               </span>
             </div>
@@ -325,7 +320,7 @@ export default function ScheduleRepairPSeoContent({
           {/* ── TAB 2: KEY FEATURES & BENCH CAPABILITIES ── */}
           <div className="bg-[#fafbfc] rounded-2xl border border-neutral-200 p-6 sm:p-8">
             <div className="flex items-center gap-2 mb-2">
-              <Cpu className="w-5 h-5 text-[#009691]" />
+              <Cpu className="w-5 h-5 text-sfd-teal" />
               <h3 className="text-lg sm:text-xl font-bold text-neutral-900">
                 Key Features &amp; Laboratory Standards for {deviceName}
               </h3>
@@ -342,7 +337,7 @@ export default function ScheduleRepairPSeoContent({
                 >
                   <div>
                     <div className="flex items-center gap-2 mb-2">
-                      <div className="w-6 h-6 rounded-full bg-[#009691]/10 text-[#009691] flex items-center justify-center shrink-0">
+                      <div className="w-6 h-6 rounded-full bg-sfd-teal/10 text-sfd-teal flex items-center justify-center shrink-0">
                         <Check className="w-3.5 h-3.5" />
                       </div>
                       <h4 className="text-sm font-bold text-neutral-900 leading-snug">
@@ -362,7 +357,7 @@ export default function ScheduleRepairPSeoContent({
           <div className="bg-white rounded-2xl border border-neutral-200 p-6 sm:p-8 shadow-xs">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
               <div className="lg:col-span-8 space-y-4">
-                <span className="text-[11px] font-bold uppercase tracking-widest text-[#009691] block">
+                <span className="text-[11px] font-bold uppercase tracking-widest text-sfd-teal block">
                   Philadelphia&apos;s Independent Repair Authority
                 </span>
                 <h3 className="text-xl sm:text-2xl font-extrabold text-neutral-900 tracking-tight">
@@ -408,7 +403,7 @@ export default function ScheduleRepairPSeoContent({
                 </div>
                 <a
                   href="tel:+12155982090"
-                  className="block w-full text-center py-2.5 rounded-xl bg-[#009691] hover:bg-[#007f7b] text-white text-xs font-bold uppercase tracking-wider transition"
+                  className="block w-full text-center py-2.5 rounded-xl bg-sfd-teal hover:bg-[#007f7b] text-white text-xs font-bold uppercase tracking-wider transition"
                 >
                   Call (215) 598-2090
                 </a>
@@ -420,7 +415,7 @@ export default function ScheduleRepairPSeoContent({
           <div className="bg-white rounded-2xl border border-neutral-200 p-6 sm:p-8 shadow-xs">
             <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-widest text-[#009691] block mb-1">
+                <span className="text-[11px] font-bold uppercase tracking-widest text-sfd-teal block mb-1">
                   Got Questions? We Have Answers
                 </span>
                 <h3 className="text-lg sm:text-xl font-bold text-neutral-900">
@@ -476,7 +471,7 @@ export default function ScheduleRepairPSeoContent({
               </div>
               <Link
                 href="/repairs"
-                className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-[#009691] hover:text-[#007b77] hover:underline shrink-0"
+                className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-sfd-teal hover:text-[#007b77] hover:underline shrink-0"
               >
                 <span>View Full Catalog</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -488,16 +483,16 @@ export default function ScheduleRepairPSeoContent({
                 <Link
                   key={item.name}
                   href={`/schedule-repair?device=${item.slug}`}
-                  className="group block p-3.5 rounded-lg border border-neutral-200 bg-white hover:border-[#009691] hover:bg-neutral-50/70 transition-all shadow-2xs hover:shadow-xs"
+                  className="group block p-3.5 rounded-lg border border-neutral-200 bg-white hover:border-sfd-teal hover:bg-neutral-50/70 transition-all shadow-2xs hover:shadow-xs"
                 >
-                  <span className="text-xs sm:text-sm font-semibold text-neutral-900 group-hover:text-[#009691] transition-colors block truncate">
+                  <span className="text-xs sm:text-sm font-semibold text-neutral-900 group-hover:text-sfd-teal transition-colors block truncate">
                     {item.name}
                   </span>
                   <div className="flex items-center justify-between mt-2 pt-1 text-xs">
                     <span className="font-semibold text-neutral-600">
                       {item.price}
                     </span>
-                    <span className="text-neutral-400 group-hover:text-[#009691] font-medium transition-colors">
+                    <span className="text-neutral-400 group-hover:text-sfd-teal font-medium transition-colors">
                       Book &rarr;
                     </span>
                   </div>

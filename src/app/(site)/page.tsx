@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { brandTitle } from "@/lib/seoTitle";
 import { getCmsPage } from "@/actions/cmsPages";
 import { compilePageCss } from "@/puck/style/compilePage";
 import HomePageClient from "@/components/site/HomePageClient";
@@ -21,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const ogImage = page?.featuredImage || "/logo-png.jpg";
 
   return {
-    title,
+    title: brandTitle(title),
     description,
     keywords: page?.keywords?.length
       ? page.keywords
