@@ -10,10 +10,10 @@ interface ConsentState {
 }
 
 export default function AnalyticsScripts() {
-  const gtmId = process.env.NEXT_PUBLIC_GTM_ID || "GTM-SFD9842";
-  const gaId = process.env.NEXT_PUBLIC_GA4_ID || "G-SFDPHILLY1";
-  const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID || "123456789012345";
-  const clarityId = process.env.NEXT_PUBLIC_CLARITY_ID || "sfdclarity01";
+  const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
+  const gaId = process.env.NEXT_PUBLIC_GA4_ID;
+  const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
+  const clarityId = process.env.NEXT_PUBLIC_CLARITY_ID;
 
   const [consent, setConsent] = useState<ConsentState>({
     necessary: true,

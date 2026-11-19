@@ -131,6 +131,7 @@ export function GuaranteesBento() {
                 src="https://images.unsplash.com/photo-1592750475338-74b7b21085ab?auto=format&fit=crop&w=400&q=80"
                 alt="Apple iPhone Repair"
                 fill
+                sizes="(max-width: 640px) 160px, 176px"
                 className="object-cover group-hover:scale-105 transition-transform duration-300"
               />
             </div>

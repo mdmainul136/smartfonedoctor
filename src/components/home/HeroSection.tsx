@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Wrench, ChevronRight } from "lucide-react";
 
 export default function HeroSection() {
@@ -10,13 +11,14 @@ export default function HeroSection() {
       {/* 1. Main Rounded Hero Card (Exact 1265px max-width, 32px rounded corners) */}
       <div className="max-w-[1265px] mx-auto relative rounded-3xl sm:rounded-[32px] overflow-hidden shadow-sm min-h-[560px] lg:min-h-[540px] flex flex-col justify-between">
         
-        {/* Background Image: Modern Tech Repair Shop */}
-        <div
-          className="absolute inset-0 bg-cover bg-center sm:bg-right bg-no-repeat"
-          style={{
-            backgroundImage:
-              "url('https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1920&q=80')",
-          }}
+        {/* Background Image: Optimized LCP Next/Image with priority */}
+        <Image
+          src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1280&q=80"
+          alt="SmartFoneDoctor Philadelphia Repair Bench"
+          fill
+          priority
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1265px"
+          className="object-cover object-center sm:object-right"
         />
 
         {/* Dark Gradient Overlay (Heavier on left side so white text pops) */}

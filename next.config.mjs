@@ -6,6 +6,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       { hostname: "images.pexels.com" },
       { hostname: "images.unsplash.com" },
