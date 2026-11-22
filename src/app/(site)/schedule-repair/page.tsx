@@ -6,6 +6,7 @@ import ScheduleRepairWizard, { WizardStore } from "@/components/booking/Schedule
 import ScheduleRepairPSeoContent from "@/components/booking/ScheduleRepairPSeoContent";
 import { getStoreBranchesAction } from "@/actions/settings";
 import { resolveDevice } from "@/lib/pSeoEngine";
+import { getRepairCatalog } from "@/lib/repairCatalog";
 
 interface PageProps {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -18,7 +19,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const makeQuery = typeof resolvedParams.make === "string" ? resolvedParams.make : "";
 
   const query = deviceQuery || modelQuery || "";
-  const matchedDevice = query ? resolveDevice(query) : undefined;
+  const matchedDevice = query ? resolveDevice(query, await getRepairCatalog()) : undefined;
 
   const deviceName = matchedDevice
     ? matchedDevice.name
@@ -73,6 +74,7 @@ export default async function ScheduleRepairPage({ searchParams }: PageProps) {
         <ScheduleRepairWizard initialStores={initialStores} />
       </Suspense>
       <ScheduleRepairPSeoContent
+        catalog={await getRepairCatalog()}
         deviceParam={deviceParam}
         makeParam={makeParam}
         modelParam={modelParam}

@@ -2,6 +2,12 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { requireAdmin } from "@/lib/adminGuard";
+import {
+  publishGbpLocalPostLive,
+  resolveValidGbpAccessToken,
+} from "@/lib/externalApis";
+import { triggerApiPullAction } from "@/actions/thirdPartyApis";
 
 export interface GmbPostItem {
   id: string;
@@ -230,6 +236,7 @@ export interface CreateGmbPostInput {
  */
 export async function createGmbPostAction(input: CreateGmbPostInput) {
   try {
+    await requireAdmin();
     await ensureGmbSeedData();
 
     const storeCode = STORE_ID_TO_CODE[input.storeId] || "nd_st";
@@ -276,7 +283,39 @@ export async function createGmbPostAction(input: CreateGmbPostInput) {
       clicks: created.clicks,
     };
 
-    return { success: true, post: serialized };
+    let pushedLiveToGoogle = false;
+    const gbpConn = await prisma.apiConnector
+      .findUnique({ where: { id: "google-gbp" } })
+      .catch(() => null);
+    const tokenRes = await resolveValidGbpAccessToken(
+      gbpConn?.apiKeyEncrypted,
+      gbpConn?.apiSecretEncrypted
+    );
+    const locationName = process.env.GOOGLE_GBP_LOCATION_NAME;
+    if (tokenRes.accessToken && locationName) {
+      const pushRes = await publishGbpLocalPostLive({
+        accessToken: tokenRes.accessToken,
+        locationName,
+        title: input.title,
+        body: input.body,
+        ctaUrl: input.ctaUrl,
+        couponCode: input.couponCode,
+        type: input.type,
+        refreshToken: gbpConn?.apiSecretEncrypted,
+      });
+      pushedLiveToGoogle = pushRes.pushedLive;
+      const newestToken = pushRes.rotatedAccessToken || (tokenRes.refreshed ? tokenRes.accessToken : undefined);
+      if (newestToken && gbpConn) {
+        await prisma.apiConnector
+          .update({
+            where: { id: "google-gbp" },
+            data: { apiKeyEncrypted: newestToken, connected: true },
+          })
+          .catch(() => {});
+      }
+    }
+
+    return { success: true, post: serialized, pushedLiveToGoogle };
   } catch (err: unknown) {
     console.error("Failed to create GMB post:", err);
     return { success: false, error: err instanceof Error ? err.message : "Database create failed" };
@@ -288,6 +327,7 @@ export async function createGmbPostAction(input: CreateGmbPostInput) {
  */
 export async function deleteGmbPostAction(id: string) {
   try {
+    await requireAdmin();
     await prisma.gmbPost.delete({ where: { id } });
     revalidatePath("/admin/local-seo/posts");
     revalidatePath("/admin/listings/ai-visibility");
@@ -300,6 +340,8 @@ export async function deleteGmbPostAction(id: string) {
 }
 
 export interface GmbOverviewData {
+  googlePlaceId?: string | null;
+  googleCid?: string | null;
   impressions: number;
   profileViews: number;
   calls: number;
@@ -462,6 +504,8 @@ export async function getGmbOverviewAction(storeId?: number): Promise<{
     return {
       success: true,
       data: {
+        googlePlaceId: profiles[0]?.googlePlaceId ?? null,
+        googleCid: profiles[0]?.googleCid ?? null,
         impressions: totalImpressions,
         profileViews: totalProfileViews,
         calls: totalCalls,
@@ -482,6 +526,123 @@ export async function getGmbOverviewAction(storeId?: number): Promise<{
     return {
       success: false,
       error: err instanceof Error ? err.message : "Database fetch failed",
+    };
+  }
+}
+
+export interface UpdateGmbProfileInput {
+  storeId: number;
+  googlePlaceId?: string;
+  googleCid?: string;
+  rating?: number;
+  reviewsCount?: number;
+  unrepliedReviews?: number;
+  impressions?: number;
+  profileViews?: number;
+  calls?: number;
+  directions?: number;
+  websiteClicks?: number;
+  messages?: number;
+}
+
+/**
+ * Update Google Business Profile metrics & identifiers for a store in PostgreSQL
+ */
+export async function updateGmbProfileAction(input: UpdateGmbProfileInput): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    await requireAdmin();
+    await ensureGmbSeedData();
+
+    const storeCode = STORE_ID_TO_CODE[input.storeId] || "nd_st";
+    await prisma.gmbProfile.update({
+      where: { storeCode },
+      data: {
+        ...(input.googlePlaceId !== undefined
+          ? { googlePlaceId: input.googlePlaceId.trim() || null }
+          : {}),
+        ...(input.googleCid !== undefined
+          ? { googleCid: input.googleCid.trim() || null }
+          : {}),
+        ...(input.rating !== undefined ? { rating: input.rating } : {}),
+        ...(input.reviewsCount !== undefined ? { reviewsCount: input.reviewsCount } : {}),
+        ...(input.unrepliedReviews !== undefined
+          ? { unrepliedReviews: input.unrepliedReviews }
+          : {}),
+        ...(input.impressions !== undefined ? { impressions: input.impressions } : {}),
+        ...(input.profileViews !== undefined ? { profileViews: input.profileViews } : {}),
+        ...(input.calls !== undefined ? { calls: input.calls } : {}),
+        ...(input.directions !== undefined ? { directions: input.directions } : {}),
+        ...(input.websiteClicks !== undefined ? { websiteClicks: input.websiteClicks } : {}),
+        ...(input.messages !== undefined ? { messages: input.messages } : {}),
+      },
+    });
+
+    if (input.rating !== undefined || input.reviewsCount !== undefined) {
+      await prisma.locations
+        .updateMany({
+          where: { store_code: storeCode },
+          data: {
+            ...(input.rating !== undefined ? { google_rating: input.rating } : {}),
+            ...(input.reviewsCount !== undefined ? { total_reviews: input.reviewsCount } : {}),
+          },
+        })
+        .catch(() => {});
+    }
+
+    revalidatePath("/admin/local-seo");
+    revalidatePath("/");
+    return { success: true };
+  } catch (err: unknown) {
+    console.error("Failed to update GMB profile:", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to save GMB metrics",
+    };
+  }
+}
+
+/**
+ * Pull live metrics, Place ID, and reviews from Google Places API into PostgreSQL
+ */
+export async function pullLiveGoogleMetricsAction(storeId?: number): Promise<{
+  success: boolean;
+  data?: GmbOverviewData;
+  warning?: string;
+  error?: string;
+}> {
+  try {
+    await requireAdmin();
+    const gbpConn = await prisma.apiConnector.findUnique({ where: { id: "google-gbp" } });
+    const rawKey =
+      gbpConn?.apiKeyEncrypted ||
+      process.env.GOOGLE_MAPS_API_KEY ||
+      process.env.GOOGLE_PLACES_API_KEY;
+    const apiKey = rawKey && !rawKey.includes("••") ? rawKey : undefined;
+
+    if (!apiKey) {
+      return {
+        success: false,
+        error:
+          "Add your Google Places / GBP API Key in Directory Listings → API & Auto-Sync (or GOOGLE_MAPS_API_KEY in .env) to pull live metrics from Google.",
+      };
+    }
+
+    const pullRes = await triggerApiPullAction("google-gbp");
+    const overview = await getGmbOverviewAction(storeId);
+    return {
+      success: overview.success,
+      data: overview.data,
+      warning: pullRes.warningMessage,
+      error: overview.error,
+    };
+  } catch (err: unknown) {
+    console.error("pullLiveGoogleMetricsAction error:", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to pull live Google metrics",
     };
   }
 }

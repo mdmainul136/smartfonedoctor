@@ -15,7 +15,6 @@ import {
   Trash2,
   Plus,
   RotateCcw,
-  Sparkles,
   Layers,
   MapPin,
   ExternalLink,
@@ -31,12 +30,11 @@ import {
   MegaCategoryData,
   MegaMenuConfig,
   DEFAULT_MEGA_MENU_CONFIG,
-  getStoredMegaMenu,
-  saveStoredMegaMenu,
   getDeviceUrl,
   getIssueUrl,
   getBrandUrl,
 } from "@/lib/megaMenuData";
+import { getMegaMenuAction, saveMegaMenuAction } from "@/actions/navMenu";
 import {
   resolveTaxonomyUrl,
   getAllLinkableEntities,
@@ -50,6 +48,7 @@ export default function MegaMenuBuilderPage() {
   const [activeCategory, setActiveCategory] = useState<CategoryKey>("smartphones");
   const [activeTab, setActiveTab] = useState<"columns" | "cta">("columns");
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [previewExpanded, setPreviewExpanded] = useState(false);
 
   // Form input states for adding items
@@ -58,17 +57,39 @@ export default function MegaMenuBuilderPage() {
   const [newBrandTitle, setNewBrandTitle] = useState("");
   const [newBrandSubtitle, setNewBrandSubtitle] = useState("");
 
-  // Load stored config on mount
+  // The menu visitors see is the one in the database.
   useEffect(() => {
-    const stored = getStoredMegaMenu();
-    setConfig(stored);
+    getMegaMenuAction().then((res) => {
+      setConfig(res.menu);
+      if (!res.success) setSaveError(`Could not load the menu: ${res.error ?? "unknown error"}`);
+      // Before menus were stored in the database, edits stayed in this browser only.
+      // Offer them back once, so they can be published.
+      if (res.success && !res.saved) {
+        try {
+          const raw = window.localStorage.getItem("sfd_mega_menu_config_v2");
+          if (raw && raw !== JSON.stringify(DEFAULT_MEGA_MENU_CONFIG)) {
+            setConfig(JSON.parse(raw) as MegaMenuConfig);
+            setSaveError(
+              "Loaded edits you made earlier in this browser. They were never live: click Save & Publish Menu to publish them, or Reset to drop them."
+            );
+          }
+        } catch {
+          /* ignore unreadable browser data */
+        }
+      }
+    });
   }, []);
 
   const currentCategory = config.categories[activeCategory];
 
   // Save changes
-  const handleSave = () => {
-    saveStoredMegaMenu(config);
+  const handleSave = async () => {
+    setSaveError(null);
+    const res = await saveMegaMenuAction(config);
+    if (!res.success) {
+      setSaveError(`Not saved: ${res.error}`);
+      return;
+    }
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 2500);
   };
@@ -76,10 +97,12 @@ export default function MegaMenuBuilderPage() {
   // Reset to original defaults
   const handleReset = () => {
     if (confirm("Reset mega menu to official default settings?")) {
-      setConfig(DEFAULT_MEGA_MENU_CONFIG);
-      saveStoredMegaMenu(DEFAULT_MEGA_MENU_CONFIG);
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 2000);
+      void saveMegaMenuAction(DEFAULT_MEGA_MENU_CONFIG).then((res) => {
+        if (!res.success) return setSaveError(`Not reset: ${res.error}`);
+        setConfig(DEFAULT_MEGA_MENU_CONFIG);
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 2000);
+      });
     }
   };
 
@@ -229,10 +252,10 @@ export default function MegaMenuBuilderPage() {
                 <span className="text-[11px] text-gray-500 font-medium">Storefront Router</span>
               </div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
-                Mega Menu Builder &amp; URL Router
+                Mega menu
               </h1>
               <p className="text-xs sm:text-[13px] text-gray-500 mt-0.5">
-                Visual editor for customer storefront navigation. Every item automatically attaches to verified taxonomy routes.
+                The large drop-down menus in the site header.
               </p>
             </div>
           </div>
@@ -287,6 +310,11 @@ export default function MegaMenuBuilderPage() {
           </button>
         </div>
       </div>
+      {saveError && (
+        <div role="alert" className="mx-4 sm:mx-6 mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-[13px] font-medium text-red-800">
+          {saveError}
+        </div>
+      )}
 
       {/* 2. LIVE STOREFRONT PREVIEW WINDOW (Clean, pixel-perfect, unclipped) */}
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-xs">
@@ -879,7 +907,7 @@ export default function MegaMenuBuilderPage() {
               </div>
 
               <span className="text-[11px] text-gray-400">
-                ⚡ Any changes made above immediately reflect in the Live Storefront Preview and customer click paths.
+                Changes go live on the site after you click Save & Publish Menu.
               </span>
             </div>
 

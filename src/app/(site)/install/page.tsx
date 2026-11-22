@@ -108,7 +108,7 @@ export default function WebInstallerPage() {
               Application is Locked
             </h1>
             <p className="text-xs text-gray-500 mt-2 leading-relaxed">
-              SmartFone Doctor has already been configured and initialized. For security reasons, the installer cannot be executed again.
+              SmartFoneDoctor has already been configured and initialized. For security reasons, the installer cannot be executed again.
             </p>
           </div>
 
@@ -191,7 +191,7 @@ export default function WebInstallerPage() {
         <div className="text-center space-y-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-50 border border-teal-200/80 text-sfd-teal text-xs font-semibold">
             <Wrench className="w-3.5 h-3.5" />
-            <span>SmartFone Doctor OS</span>
+            <span>SmartFoneDoctor OS</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">
             System Installation Wizard

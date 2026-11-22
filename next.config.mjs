@@ -23,8 +23,9 @@ const nextConfig = {
   async rewrites() {
     return [
       {
-        source: '/:path*.md',
-        destination: '/api/markdown?path=:path*',
+        // "/:path*.md" does not capture the path, so every .md URL served the homepage.
+        source: '/:mdPath(.*)\\.md',
+        destination: '/api/markdown?path=:mdPath',
       },
     ];
   },

@@ -15,7 +15,7 @@ import { InteractiveMap, MapStore } from "./InteractiveMap";
 const STORES: MapStore[] = [
   {
     id: 1,
-    name: "Smart Fone Doctor (Smartphone Doctor)",
+    name: "SmartFoneDoctor - 33 S 52nd St",
     hours: "Open today 10:00 am - 7:00 pm",
     address: "33 S 52nd St",
     cityStateZip: "Philadelphia, PA 19139, United States",
@@ -29,7 +29,7 @@ const STORES: MapStore[] = [
   },
   {
     id: 2,
-    name: "Smart Fone Doctor",
+    name: "SmartFoneDoctor - 4016 Lancaster Ave",
     hours: "Open today 10:00 am - 7:00 pm",
     address: "4016 Lancaster Ave",
     cityStateZip: "Philadelphia, PA 19104, United States",
@@ -43,7 +43,7 @@ const STORES: MapStore[] = [
   },
   {
     id: 3,
-    name: "Smart FoneDoctor",
+    name: "SmartFoneDoctor - 4060 Lancaster Ave",
     hours: "Open today 10:00 am - 7:00 pm",
     address: "4060 Lancaster Ave",
     cityStateZip: "Philadelphia, PA 19104, United States",
@@ -96,6 +96,9 @@ export function StoreLocator({
     }
   };
 
+  // The book-repair page has no other H1; on the home page this sits below the hero H1.
+  const Heading = isHomePage ? "h2" : "h1";
+
   return (
     <section className={`bg-white ${isHomePage ? "pt-12 sm:pt-16 pb-16" : "pt-6 pb-16"} px-4 sm:px-6 lg:px-8`}>
       <div className="max-w-[1280px] mx-auto">
@@ -134,9 +137,9 @@ export function StoreLocator({
             </div>
           )}
 
-          <h2 className="text-[26px] sm:text-[32px] lg:text-[36px] font-bold text-[#1d1c1a] tracking-tight mb-2">
+          <Heading className="text-[26px] sm:text-[32px] lg:text-[36px] font-bold text-[#1d1c1a] tracking-tight mb-2">
             {title || (isHomePage ? "Find Your Nearest SmartFoneDoctor Store" : "Book a Repair at SmartFoneDoctor")}
-          </h2>
+          </Heading>
 
           <p className="text-[13.5px] sm:text-[14.5px] text-neutral-600 font-normal max-w-2xl leading-relaxed">
             {subtitle ||

@@ -14,7 +14,6 @@ import {
   Lightbulb,
   Info,
   ChevronDown,
-  Sparkles,
   Search,
   ExternalLink,
   Tag,
@@ -29,11 +28,11 @@ import {
 import {
   BlogArticle,
   BlogArticleSection,
-  getStoredBlogArticles,
-  saveStoredBlogArticles,
-  getStoredBlogCategories,
+  INITIAL_BLOG_CATEGORIES,
+  type BlogCategoryTaxonomy,
 } from "@/lib/blogData";
-import { getBlogPostBySlugAction, upsertBlogPostAction } from "@/actions/blog";
+import { getTaxonomyAction } from "@/actions/taxonomy";
+import { getBlogPostAdminAction, upsertBlogPostAction } from "@/actions/blog";
 import RichTextEditor from "@/components/admin/RichTextEditor";
 import MediaModal from "@/components/admin/MediaModal";
 import RankMathSeoSuite from "@/components/admin/RankMathSeoSuite";
@@ -92,20 +91,18 @@ export default function BlogPostEditorPage({ params }: EditorPageProps) {
   });
 
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [categories, setCategories] = useState(getStoredBlogCategories());
+  const [categories, setCategories] = useState<BlogCategoryTaxonomy[]>(INITIAL_BLOG_CATEGORIES);
+  // Categories live in the database (Admin > Guides & Blog > Categories).
+  useEffect(() => {
+    getTaxonomyAction<BlogCategoryTaxonomy>("blog-categories")
+      .then((res) => setCategories(res.data))
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
-    const list = getStoredBlogArticles();
-    setCategories(getStoredBlogCategories());
-
     if (!isNew) {
-      const found = list.find((a) => a.slug === resolvedParams.slug);
-      if (found) {
-        setArticle(found);
-      }
-
-      // Also sync latest from PostgreSQL
-      getBlogPostBySlugAction(resolvedParams.slug)
+      // The database is the only copy of the post.
+      getBlogPostAdminAction(resolvedParams.slug)
         .then((res) => {
           if (res.success && res.article) {
             setArticle(res.article);
@@ -117,7 +114,7 @@ export default function BlogPostEditorPage({ params }: EditorPageProps) {
       setArticle((prev) => ({
         ...prev,
         contentHtml:
-          "<h2>1. Overview & Diagnosis</h2><p>Provide clear troubleshooting guidance for customers experiencing this hardware problem...</p><div style=\"background: #f0fdfa; border-left: 4px solid #00897b; color: #134e48; padding: 12px 16px; margin: 16px 0; border-radius: 6px;\"><strong>💡 Technician Tip:</strong> Always back up your data before opening the device casing.</div><h2>2. Recommended Repair Solutions</h2><p>Detail how certified bench technicians resolve this issue with genuine parts and calibration...</p>",
+          "<h2>1. Overview & Diagnosis</h2><p>Provide clear troubleshooting guidance for customers experiencing this hardware problem...</p><div style=\"background: #f0fdfa; border-left: 4px solid #00897b; color: #134e48; padding: 12px 16px; margin: 16px 0; border-radius: 6px;\"><strong>Technician tip:</strong> Always back up your data before opening the device casing.</div><h2>2. Recommended Repair Solutions</h2><p>Detail how certified bench technicians resolve this issue with genuine parts and calibration...</p>",
       }));
     }
   }, [resolvedParams.slug, isNew]);
@@ -157,22 +154,12 @@ export default function BlogPostEditorPage({ params }: EditorPageProps) {
       return;
     }
 
-    const allArticles = getStoredBlogArticles();
-    let updatedList: BlogArticle[];
-
-    if (isNew) {
-      updatedList = [article, ...allArticles];
-    } else {
-      updatedList = allArticles.map((a) =>
-        a.id === article.id || a.slug === resolvedParams.slug ? article : a
-      );
+    const res = await upsertBlogPostAction(article).catch((err: unknown) => ({ success: false, error: String(err) }));
+    if (!res.success) {
+      alert(`Not saved: ${res.error ?? "unknown error"}`);
+      return;
     }
-
-    saveStoredBlogArticles(updatedList);
     setSaveSuccess(true);
-
-    // Persist directly to PostgreSQL
-    await upsertBlogPostAction(article).catch(console.error);
 
     setTimeout(() => {
       setSaveSuccess(false);
@@ -329,6 +316,7 @@ export default function BlogPostEditorPage({ params }: EditorPageProps) {
 
             {article.featuredImage && (
               <div className="aspect-[21/9] rounded-lg overflow-hidden bg-gray-100 border border-gray-200 max-h-48 relative group">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={article.featuredImage}
                   alt="Featured preview"
@@ -357,13 +345,6 @@ export default function BlogPostEditorPage({ params }: EditorPageProps) {
                 <p className="text-[11px] text-gray-400">
                   Write freely with full rich text formatting. Use the <strong className="text-teal-700 font-semibold">+ Add Block</strong> button to insert diagnosis sections, steps, tools &amp; comparison tables.
                 </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] text-teal-700 bg-teal-50 border border-teal-200 px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-[#00897b]" />
-                  <span>Blocks Enabled in Rich Editor</span>
-                </span>
               </div>
             </div>
 

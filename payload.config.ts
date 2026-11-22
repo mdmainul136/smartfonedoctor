@@ -40,6 +40,10 @@ export default buildConfig({
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
   db: postgresAdapter({
+    // Never let Payload change the database. In dev it otherwise "pushes" its
+    // schema on the first /api/* request and offers to DROP every table it does
+    // not know (cms_pages, blog_posts, AdminUser…, all of the app's data).
+    push: false,
     pool: {
       connectionString:
         process.env.POSTGRES_URL ||

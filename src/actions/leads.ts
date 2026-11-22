@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { requireAdmin } from "@/lib/adminGuard";
 import { Prisma, enum_leads_store, enum_leads_status, enum_leads_source } from "@prisma/client";
 
 export interface CreateLeadInput {
@@ -199,6 +200,8 @@ export async function getLeadsAction(): Promise<{
   error?: string;
 }> {
   try {
+    // Leads hold customers' names and phone numbers: admin only.
+    await requireAdmin();
     await ensureSeededLeads();
 
     const records = await prisma.lead.findMany({
@@ -243,6 +246,8 @@ export async function updateLeadAction(
   }
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Leads hold customers' names and phone numbers: admin only.
+    await requireAdmin();
     const data: Prisma.LeadUpdateInput = {};
     if (updates.status) data.status = mapStatusToEnum(updates.status);
     if (updates.estValue !== undefined) data.est_value = new Prisma.Decimal(updates.estValue);
@@ -268,6 +273,8 @@ export async function updateLeadAction(
 /** Server Action: Delete lead from PostgreSQL */
 export async function deleteLeadAction(id: number): Promise<{ success: boolean; error?: string }> {
   try {
+    // Leads hold customers' names and phone numbers: admin only.
+    await requireAdmin();
     await prisma.lead.delete({
       where: { id },
     });

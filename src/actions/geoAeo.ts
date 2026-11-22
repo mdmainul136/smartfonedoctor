@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { requireAdmin } from "@/lib/adminGuard";
 
 export interface GeoNeighborhoodInput {
   id?: string;
@@ -45,6 +46,7 @@ export async function getGeoNeighborhoodsAction(storeId?: number) {
  */
 export async function upsertGeoNeighborhoodAction(input: GeoNeighborhoodInput) {
   try {
+    await requireAdmin();
     if (input.id) {
       const updated = await prisma.geoNeighborhood.update({
         where: { id: input.id },
@@ -88,6 +90,7 @@ export async function upsertGeoNeighborhoodAction(input: GeoNeighborhoodInput) {
  */
 export async function deleteGeoNeighborhoodAction(id: string) {
   try {
+    await requireAdmin();
     await prisma.geoNeighborhood.delete({ where: { id } });
     revalidatePath("/admin/listings/ai-visibility");
     revalidatePath("/llms.txt");
@@ -130,6 +133,7 @@ export async function getAeoBrandGuardrailsAction() {
  */
 export async function upsertAeoBrandGuardrailAction(input: BrandGuardrailInput) {
   try {
+    await requireAdmin();
     if (input.id) {
       const updated = await prisma.aeoBrandGuardrail.update({
         where: { id: input.id },
@@ -169,6 +173,7 @@ export async function upsertAeoBrandGuardrailAction(input: BrandGuardrailInput) 
  */
 export async function deleteAeoBrandGuardrailAction(id: string) {
   try {
+    await requireAdmin();
     await prisma.aeoBrandGuardrail.delete({ where: { id } });
     revalidatePath("/admin/listings/ai-visibility");
     revalidatePath("/llms.txt");
@@ -209,6 +214,7 @@ export interface SimulatedPromptInput {
  */
 export async function upsertAeoSimulatedPromptAction(input: SimulatedPromptInput) {
   try {
+    await requireAdmin();
     if (input.id) {
       const updated = await prisma.aeoSimulatedPrompt.update({
         where: { id: input.id },
@@ -248,6 +254,7 @@ export async function upsertAeoSimulatedPromptAction(input: SimulatedPromptInput
  */
 export async function deleteAeoSimulatedPromptAction(id: string) {
   try {
+    await requireAdmin();
     await prisma.aeoSimulatedPrompt.delete({ where: { id } });
     revalidatePath("/admin/listings/ai-visibility");
     return { success: true };
@@ -285,6 +292,7 @@ export interface KnowledgeGraphInput {
  */
 export async function updateKnowledgeGraphEntityAction(input: KnowledgeGraphInput) {
   try {
+    await requireAdmin();
     const updated = await prisma.knowledgeGraphEntity.upsert({
       where: { id: "sfd_knowledge_entity" },
       update: {
@@ -331,8 +339,9 @@ export interface LiveAiProbeResult {
  */
 export async function probeLiveAiVisibilityAction(promptQuery: string, storeId: number = 1): Promise<LiveAiProbeResult> {
   try {
+    await requireAdmin();
     const [settings, store, rawGuardrails, entity] = await Promise.all([
-      prisma.appSystemSettings.findUnique({ where: { id: "global_settings" } }),
+      prisma.appSystemSettings.findUnique({ where: { id: "global_config" } }),
       prisma.locations.findFirst({ where: { id: storeId } }),
       prisma.aeoBrandGuardrail.findMany({ take: 6 }),
       prisma.knowledgeGraphEntity.findUnique({ where: { id: "sfd_knowledge_entity" } }),

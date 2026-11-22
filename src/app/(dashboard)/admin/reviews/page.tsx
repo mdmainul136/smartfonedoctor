@@ -1,59 +1,49 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useStoreContext } from "@/lib/storeContext";
 import { useQrTracking, TrackingChannelId } from "@/lib/qrTracking";
-import type { CouponCode, TrackedLink } from "@/lib/qrTracking";
+import type { TrackedLink } from "@/lib/qrTracking";
+import {
+  getReviewsHubAction,
+  replyToReviewAction,
+  bulkReplyReviewsAction,
+  toggleReviewFeaturedAction,
+  createReviewAction,
+  deleteReviewAction,
+  markReviewSmsSentAction,
+  syncLiveExternalReviewsAction,
+  sendReviewInviteSmsAction,
+  type AdminReview,
+  type SmsCandidate,
+  type ReviewPlatform,
+} from "@/actions/reviews";
 import {
   RealQrCodeSvg,
   ChannelBrandBadge,
 } from "@/components/Dashboard/QrCodeSvg";
 import {
   Star,
-  Sparkles,
   ExternalLink,
   Copy,
   Check,
   CornerDownRight,
   Send,
-  QrCode,
   ShieldCheck,
   X,
   Globe,
-  Activity,
+  Trash2,
+  Plus,
+  RefreshCw,
 } from "lucide-react";
 
-type Platform = "Google" | "Yelp" | "Trustpilot" | "Facebook";
+type Platform = ReviewPlatform;
 type WorkspaceTab = "inbox" | "campaigns" | "qr-tracking" | "sentiment";
 type InboxFilter = "needs-reply" | "escalations" | "all" | "featured";
 type ReplyTone = "seo-entity" | "manager-recovery" | "warranty-check";
 
-interface Review {
-  id: number;
-  reviewer: string;
-  deviceService: string;
-  topicTag: string;
-  rating: number;
-  date: string;
-  text: string;
-  storeId: number;
-  platform: Platform;
-  featuredOnSite?: boolean;
-  reply?: { text: string; date: string };
-}
-
-interface SmsCandidate {
-  id: string;
-  customer: string;
-  phone: string;
-  device: string;
-  storeId: number;
-  completedAgo: string;
-  recommendedPlatform: Platform;
-  reason: string;
-  sent: boolean;
-}
+type Review = AdminReview;
 
 const REPLYABLE_VIA_API: Record<Platform, boolean> = {
   Google: true,
@@ -68,194 +58,6 @@ const PLATFORM_URL: Record<Platform, string> = {
   Trustpilot: "https://business.trustpilot.com",
   Facebook: "https://business.facebook.com",
 };
-
-const INITIAL_REVIEWS: Review[] = [
-  {
-    id: 1,
-    reviewer: "Marcus Thompson",
-    deviceService: "iPhone 15 Pro Screen",
-    topicTag: "30-min turnaround",
-    rating: 5,
-    date: "2024-11-10",
-    platform: "Google",
-    storeId: 1,
-    featuredOnSite: true,
-    text: "Fixed my iPhone screen in under an hour. Super professional and reasonably priced. Will definitely be back!",
-    reply: {
-      text: "Thanks Marcus! Glad our 33 S 52nd St team could get your iPhone 15 Pro screen replaced fast.",
-      date: "2024-11-10",
-    },
-  },
-  {
-    id: 2,
-    reviewer: "Dalisah Lowe",
-    deviceService: "Samsung S23 Screen",
-    topicTag: "Saturday wait time",
-    rating: 1,
-    date: "2024-11-09",
-    platform: "Google",
-    storeId: 1,
-    text: "Waited over two hours past the quoted time and nobody called to update me. Phone works now but the experience was frustrating.",
-  },
-  {
-    id: 3,
-    reviewer: "Kevin Moore",
-    deviceService: "iPhone 14 Battery",
-    topicTag: "Fair pricing",
-    rating: 4,
-    date: "2024-11-08",
-    platform: "Facebook",
-    storeId: 1,
-    text: "Quick battery replacement, good price. Only complaint was a short wait, but staff was friendly.",
-  },
-  {
-    id: 4,
-    reviewer: "Madison Miller",
-    deviceService: "Tempered Glass & Case",
-    topicTag: "Friendly staff",
-    rating: 5,
-    date: "2024-11-07",
-    platform: "Trustpilot",
-    storeId: 1,
-    featuredOnSite: true,
-    text: "I love going to Smart Fone Doctor whenever I need a screen protector or battery check. The staff is friendly and knowledgeable.",
-  },
-  {
-    id: 5,
-    reviewer: "Shea Hawk",
-    deviceService: "iPhone 15 OLED Screen",
-    topicTag: "30-min turnaround",
-    rating: 5,
-    date: "2024-11-06",
-    platform: "Yelp",
-    storeId: 1,
-    featuredOnSite: true,
-    text: "Love this place, they have everything you are looking for in one spot. iPhone 15 screen done in 30 minutes.",
-  },
-  {
-    id: 6,
-    reviewer: "David Ruiz",
-    deviceService: "iPhone 13 Digitizer",
-    topicTag: "Touch sensitivity",
-    rating: 2,
-    date: "2024-11-03",
-    platform: "Yelp",
-    storeId: 1,
-    text: "Screen replacement looked fine at first but the touch started acting up after a week.",
-  },
-  {
-    id: 7,
-    reviewer: "Jennifer Lin",
-    deviceService: "Samsung Water Damage",
-    topicTag: "Data recovery",
-    rating: 5,
-    date: "2024-11-09",
-    platform: "Google",
-    storeId: 2,
-    featuredOnSite: true,
-    text: "They saved my water-damaged Samsung near Drexel. I thought it was gone for good. Great team!",
-  },
-  {
-    id: 8,
-    reviewer: "Omar Haddad",
-    deviceService: "PS5 HDMI Port",
-    topicTag: "Turnaround quote",
-    rating: 3,
-    date: "2024-11-06",
-    platform: "Facebook",
-    storeId: 2,
-    text: "Decent PS5 HDMI repair but had to wait longer than quoted. Final result works great though.",
-  },
-  {
-    id: 9,
-    reviewer: "Rachel Green",
-    deviceService: "MacBook Air Screen",
-    topicTag: "Fair pricing",
-    rating: 5,
-    date: "2024-11-02",
-    platform: "Google",
-    storeId: 2,
-    text: "Fast, honest and fair pricing for UPenn students.",
-    reply: {
-      text: "Thank you Rachel! Happy to help UPenn and University City students with same-day MacBook and phone repairs.",
-      date: "2024-11-02",
-    },
-  },
-  {
-    id: 10,
-    reviewer: "Aisha Bello",
-    deviceService: "iPhone 15 Cracked Screen",
-    topicTag: "Walk-in speed",
-    rating: 5,
-    date: "2024-11-07",
-    platform: "Google",
-    storeId: 3,
-    featuredOnSite: true,
-    text: "Came in without an appointment for a cracked screen on Lancaster Ave. Ready in 35 minutes. Amazing!",
-  },
-  {
-    id: 11,
-    reviewer: "Tom Becker",
-    deviceService: "iPad USB-C Port",
-    topicTag: "Street parking",
-    rating: 4,
-    date: "2024-11-01",
-    platform: "Yelp",
-    storeId: 3,
-    text: "Good work on my iPad charging port. Street parking on Lancaster Ave is tough though.",
-    reply: {
-      text: "Thanks Tom! Glad the iPad port is working like new.",
-      date: "2024-11-02",
-    },
-  },
-];
-
-const INITIAL_SMS_QUEUE: SmsCandidate[] = [
-  {
-    id: "sms-1",
-    customer: "Marcus Johnson",
-    phone: "(215) 839-4412",
-    device: "iPhone 15 Pro — OEM OLED Screen",
-    storeId: 1,
-    completedAgo: "22 mins ago",
-    recommendedPlatform: "Google",
-    reason: "Boosts West Philly Local Pack rank",
-    sent: false,
-  },
-  {
-    id: "sms-2",
-    customer: "Priya Patel",
-    phone: "(267) 410-9920",
-    device: "Google Pixel 8 — USB-C Port",
-    storeId: 1,
-    completedAgo: "48 mins ago",
-    recommendedPlatform: "Yelp",
-    reason: "Balances Yelp rating for Perplexity AI",
-    sent: false,
-  },
-  {
-    id: "sms-3",
-    customer: "Aliyah Thompson",
-    phone: "(215) 902-3188",
-    device: "Samsung Galaxy S23 — Battery Swap",
-    storeId: 2,
-    completedAgo: "1 hr ago",
-    recommendedPlatform: "Trustpilot",
-    reason: "Builds Trustpilot score for ChatGPT Search",
-    sent: false,
-  },
-  {
-    id: "sms-4",
-    customer: "Maria Garcia",
-    phone: "(267) 551-7804",
-    device: "iPhone 14 — Back Glass Laser",
-    storeId: 3,
-    completedAgo: "2 hrs ago",
-    recommendedPlatform: "Google",
-    reason: "4060 Lancaster Ave needs +4 Google reviews",
-    sent: false,
-  },
-];
 
 function generateContextualReply(
   review: Review,
@@ -316,22 +118,48 @@ export default function ReviewsPage() {
     : selectedStore.name.replace("SmartFoneDoctor - ", "");
 
   const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTab>("inbox");
-  const [reviews, setReviews] = useState<Review[]>(INITIAL_REVIEWS);
-  const [smsQueue, setSmsQueue] = useState<SmsCandidate[]>(INITIAL_SMS_QUEUE);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [smsQueue, setSmsQueue] = useState<SmsCandidate[]>([]);
+  const [loadingHub, setLoadingHub] = useState(true);
   const [inboxFilter, setInboxFilter] = useState<InboxFilter>("needs-reply");
   const [platformFilter, setPlatformFilter] = useState<Platform | "All">("All");
-  const [replyingId, setReplyingId] = useState<number | null>(2);
+  const [replyingId, setReplyingId] = useState<number | null>(null);
   const [replyTone, setReplyTone] = useState<ReplyTone>("seo-entity");
-  const [draft, setDraft] = useState<string>(() =>
-    generateContextualReply(
-      INITIAL_REVIEWS[1],
-      "33 S 52nd St",
-      "manager-recovery"
-    )
-  );
+  const [draft, setDraft] = useState<string>("");
   const [copied, setCopied] = useState(false);
   const [shieldEnabled, setShieldEnabled] = useState(true);
   const [noticeBanner, setNoticeBanner] = useState<string | null>(null);
+
+  const [showAddReviewModal, setShowAddReviewModal] = useState(false);
+  const [newReviewer, setNewReviewer] = useState("");
+  const [newDeviceService, setNewDeviceService] = useState("");
+  const [newPlatform, setNewPlatform] = useState<Platform>("Google");
+  const [newStoreId, setNewStoreId] = useState<number>(selectedStoreId);
+  const [newRating, setNewRating] = useState<number>(5);
+  const [newReviewText, setNewReviewText] = useState("");
+  const [newFeatured, setNewFeatured] = useState<boolean>(true);
+  const [savingReview, setSavingReview] = useState(false);
+  const [syncingApis, setSyncingApis] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    void getReviewsHubAction()
+      .then((res) => {
+        if (!active) return;
+        if (res.success) {
+          setReviews(res.reviews);
+          setSmsQueue(res.smsQueue);
+        } else if (res.error) {
+          setNoticeBanner(res.error);
+        }
+      })
+      .finally(() => {
+        if (active) setLoadingHub(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // ── QR Tab: Coupon form state ──────────────────────────────────────────────
   const [showCouponForm, setShowCouponForm] = useState(false);
@@ -554,14 +382,13 @@ export default function ReviewsPage() {
     );
     setReplyingId(null);
     setDraft("");
-    setNoticeBanner(
-      "Reply published and synced to the review platform."
-    );
+    setNoticeBanner("Reply saved to database.");
+    void replyToReviewAction(id, text);
   };
 
   const handleAutoReplyAllPositive = () => {
     const today = new Date().toISOString().slice(0, 10);
-    let count = 0;
+    const collected: { id: number; text: string }[] = [];
     setReviews((prev) =>
       prev.map((r) => {
         const inScope = isAllStores || r.storeId === selectedStoreId;
@@ -571,15 +398,16 @@ export default function ReviewsPage() {
           r.rating >= 4 &&
           REPLYABLE_VIA_API[r.platform]
         ) {
-          count += 1;
+          const replyText = generateContextualReply(
+            r,
+            storeAddressFor(r.storeId),
+            "seo-entity"
+          );
+          collected.push({ id: r.id, text: replyText });
           return {
             ...r,
             reply: {
-              text: generateContextualReply(
-                r,
-                storeAddressFor(r.storeId),
-                "seo-entity"
-              ),
+              text: replyText,
               date: today,
             },
           };
@@ -587,8 +415,11 @@ export default function ReviewsPage() {
         return r;
       })
     );
+    if (collected.length > 0) {
+      void bulkReplyReviewsAction(collected);
+    }
     setNoticeBanner(
-      `AI Agent auto-replied to ${count} positive (4★–5★) reviews with Philadelphia neighborhood & service keywords.`
+      `Saved ${collected.length} positive (4★–5★) review replies to database.`
     );
   };
 
@@ -598,22 +429,79 @@ export default function ReviewsPage() {
         r.id === id ? { ...r, featuredOnSite: !r.featuredOnSite } : r
       )
     );
+    void toggleReviewFeaturedAction(id);
   };
 
-  const handleSendSms = (id: string) => {
+  const handleDeleteReview = (id: number) => {
+    setReviews((prev) => prev.filter((r) => r.id !== id));
+    if (replyingId === id) {
+      setReplyingId(null);
+      setDraft("");
+    }
+    void deleteReviewAction(id);
+    setNoticeBanner("Review deleted from database.");
+  };
+
+  const handleCreateReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newReviewer.trim() || !newReviewText.trim()) return;
+    setSavingReview(true);
+    const res = await createReviewAction({
+      reviewer: newReviewer.trim(),
+      deviceService: newDeviceService.trim() || "Device Repair",
+      topicTag: "Customer feedback",
+      rating: newRating,
+      date: new Date().toISOString().slice(0, 10),
+      text: newReviewText.trim(),
+      storeId: newStoreId,
+      platform: newPlatform,
+      featuredOnSite: newFeatured,
+    });
+    if (res.success && res.review) {
+      setReviews((prev) => [res.review!, ...prev]);
+      setNewReviewer("");
+      setNewDeviceService("");
+      setNewReviewText("");
+      setNewRating(5);
+      setNewFeatured(true);
+      setShowAddReviewModal(false);
+      setNoticeBanner(`Saved review by ${res.review.reviewer} to database.`);
+    } else if (res.error) {
+      setNoticeBanner(res.error);
+    }
+    setSavingReview(false);
+  };
+
+  const handleSyncLiveApis = async () => {
+    setSyncingApis(true);
+    const res = await syncLiveExternalReviewsAction();
+    if (res.success && res.reviews) {
+      setReviews(res.reviews);
+      if (res.smsQueue) setSmsQueue(res.smsQueue);
+    }
+    setNoticeBanner(res.message);
+    setSyncingApis(false);
+  };
+
+  const handleSendSms = async (id: string) => {
     setSmsQueue((prev) =>
       prev.map((item) => (item.id === id ? { ...item, sent: true } : item))
     );
-    setNoticeBanner(
-      "Review invite SMS sent with Smart Platform Routing and Negative Feedback Shield."
-    );
+    const res = await sendReviewInviteSmsAction(id);
+    setNoticeBanner(res.message);
   };
 
   const handleSendAllSms = () => {
-    setSmsQueue((prev) => prev.map((item) => ({ ...item, sent: true })));
-    setNoticeBanner(
-      "Sent review invites to all recently completed repair customers."
+    const pendingIds = visibleSmsQueue.filter((i) => !i.sent).map((i) => i.id);
+    setSmsQueue((prev) =>
+      prev.map((item) =>
+        pendingIds.includes(item.id) ? { ...item, sent: true } : item
+      )
     );
+    if (pendingIds.length > 0) {
+      void markReviewSmsSentAction(pendingIds);
+    }
+    setNoticeBanner("Marked pending review invites as sent.");
   };
 
   const handleSimulateLiveQrFlow = (channel: TrackingChannelId) => {
@@ -650,7 +538,7 @@ export default function ReviewsPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
             <Link
               href={`/review/phl-0${selectedStore.id}`}
               target="_blank"
@@ -659,6 +547,31 @@ export default function ReviewsPage() {
               <ExternalLink className="w-3.5 h-3.5 text-[#5f6368]" aria-hidden="true" />
               <span>Customer Standee</span>
             </Link>
+
+            <button
+              type="button"
+              onClick={handleSyncLiveApis}
+              disabled={syncingApis}
+              className="h-[30px] px-3 rounded-[6px] border border-[#d1d5db] bg-white hover:bg-[#f9f9f9] text-[12px] font-medium text-[#111111] inline-flex items-center gap-1.5 cursor-pointer transition-colors disabled:opacity-60"
+            >
+              <RefreshCw
+                className={`w-3.5 h-3.5 text-[#5f6368] ${syncingApis ? "animate-spin" : ""}`}
+                aria-hidden="true"
+              />
+              <span>{syncingApis ? "Syncing…" : "Sync Google & Yelp API"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setNewStoreId(isAllStores ? 1 : selectedStoreId);
+                setShowAddReviewModal(true);
+              }}
+              className="h-[30px] px-3 rounded-[6px] border border-[#d1d5db] bg-white hover:bg-[#f9f9f9] text-[12px] font-medium text-[#111111] inline-flex items-center gap-1 cursor-pointer transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5 text-[#5f6368]" aria-hidden="true" />
+              <span>Add review</span>
+            </button>
 
             <button
               type="button"
@@ -878,7 +791,11 @@ export default function ReviewsPage() {
           </div>
 
           {/* Review Rows */}
-          {visibleReviews.length === 0 ? (
+          {loadingHub ? (
+            <div className="p-10 text-center text-[13px] text-[#5f6368]">
+              Loading reviews from database…
+            </div>
+          ) : visibleReviews.length === 0 ? (
             <div className="p-10 text-center">
               <p className="text-[14px] font-medium text-[#111111]">
                 No reviews match this filter
@@ -964,6 +881,15 @@ export default function ReviewsPage() {
                             <span>{r.reply ? "Edit reply" : "Reply"}</span>
                           </button>
                         )}
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteReview(r.id)}
+                          aria-label={`Delete review by ${r.reviewer}`}
+                          className="h-[28px] px-2 rounded-[5px] border border-[#e5e7eb] bg-white hover:bg-[#ffedea] hover:border-[#fca5a5] text-[#6b6b6b] hover:text-[#831c1e] inline-flex items-center justify-center cursor-pointer transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                        </button>
                       </div>
                     </div>
 
@@ -992,7 +918,7 @@ export default function ReviewsPage() {
                             {[
                               {
                                 id: "seo-entity" as ReplyTone,
-                                label: "Local SEO & Entity Boost",
+                                label: "Thank-you reply",
                               },
                               {
                                 id: "manager-recovery" as ReplyTone,
@@ -1169,6 +1095,15 @@ export default function ReviewsPage() {
                           {item.reason}
                         </div>
                       </div>
+
+                      <a
+                        href={`sms:${item.phone.replace(/[^+\d]/g, "")}?&body=${encodeURIComponent(
+                          `Hi ${item.customer.split(" ")[0]}, thank you for choosing SmartFoneDoctor (${branchAddr}) for your repair! Please share a quick review: https://smartfonedoctor.com/review/phl-0${item.storeId}`
+                        )}`}
+                        className="h-[28px] px-2.5 rounded-[5px] border border-[#d1d5db] bg-white hover:bg-[#f9f9f9] text-[12px] font-medium text-[#111111] inline-flex items-center gap-1"
+                      >
+                        <span>Open SMS app ↗</span>
+                      </a>
 
                       {item.sent ? (
                         <span className="h-[28px] px-2.5 rounded-[5px] bg-[#dcfae5] text-[#04250e] text-[12px] font-medium inline-flex items-center gap-1">
@@ -1520,7 +1455,7 @@ export default function ReviewsPage() {
                     Coupon &amp; Promo Code Management
                   </h2>
                   <p className="text-[12px] text-[#5f6368]">
-                    In-store reward codes unlocked upon following or reviewing
+                    Reward codes given in store after a follow or review
                   </p>
                 </div>
                 <button
@@ -1998,6 +1933,150 @@ export default function ReviewsPage() {
               <span className="font-medium text-[#15803d]">#1 Rated</span>
             </div>
           </section>
+        </div>
+      )}
+
+      {showAddReviewModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="add-review-title"
+          className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4"
+        >
+          <div className="bg-white border border-[#e5e7eb] rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.12)] w-full max-w-md overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-[#f2f2f2] flex items-center justify-between">
+              <h2 id="add-review-title" className="text-[15px] font-semibold text-[#111111]">
+                Add customer review
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowAddReviewModal(false)}
+                aria-label="Close dialog"
+                className="p-1 rounded-[5px] text-[#6b6b6b] hover:text-[#111111] hover:bg-[#f2f2f2] cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateReview} className="p-5 flex flex-col gap-3 text-[13px]">
+              <div>
+                <label className="block text-[12px] font-medium text-[#111111] mb-1">
+                  Reviewer name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newReviewer}
+                  onChange={(e) => setNewReviewer(e.target.value)}
+                  placeholder="e.g. Jordan Taylor"
+                  className="w-full h-[34px] px-3 rounded-[6px] border border-[#d1d5db] bg-white focus:outline-none focus:border-[#111111]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="block text-[12px] font-medium text-[#111111] mb-1">
+                    Device / service
+                  </label>
+                  <input
+                    type="text"
+                    value={newDeviceService}
+                    onChange={(e) => setNewDeviceService(e.target.value)}
+                    placeholder="iPhone 15 Screen"
+                    className="w-full h-[34px] px-3 rounded-[6px] border border-[#d1d5db] bg-white focus:outline-none focus:border-[#111111]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[12px] font-medium text-[#111111] mb-1">
+                    Rating
+                  </label>
+                  <select
+                    value={newRating}
+                    onChange={(e) => setNewRating(Number(e.target.value))}
+                    className="w-full h-[34px] px-2.5 rounded-[6px] border border-[#d1d5db] bg-white cursor-pointer"
+                  >
+                    {[5, 4, 3, 2, 1].map((n) => (
+                      <option key={n} value={n}>{n} ★</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="block text-[12px] font-medium text-[#111111] mb-1">
+                    Platform
+                  </label>
+                  <select
+                    value={newPlatform}
+                    onChange={(e) => setNewPlatform(e.target.value as Platform)}
+                    className="w-full h-[34px] px-2.5 rounded-[6px] border border-[#d1d5db] bg-white cursor-pointer"
+                  >
+                    <option value="Google">Google</option>
+                    <option value="Yelp">Yelp</option>
+                    <option value="Trustpilot">Trustpilot</option>
+                    <option value="Facebook">Facebook</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[12px] font-medium text-[#111111] mb-1">
+                    Store location
+                  </label>
+                  <select
+                    value={newStoreId}
+                    onChange={(e) => setNewStoreId(Number(e.target.value))}
+                    className="w-full h-[34px] px-2.5 rounded-[6px] border border-[#d1d5db] bg-white cursor-pointer"
+                  >
+                    {stores.map((st) => (
+                      <option key={st.id} value={st.id}>
+                        {st.name.replace("SmartFoneDoctor - ", "")}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[12px] font-medium text-[#111111] mb-1">
+                  Review text
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  value={newReviewText}
+                  onChange={(e) => setNewReviewText(e.target.value)}
+                  placeholder="Customer feedback..."
+                  className="w-full p-2.5 rounded-[6px] border border-[#d1d5db] bg-white focus:outline-none focus:border-[#111111]"
+                />
+              </div>
+
+              <label className="flex items-center gap-2 text-[12px] text-[#111111] cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={newFeatured}
+                  onChange={(e) => setNewFeatured(e.target.checked)}
+                />
+                <span>Feature on website</span>
+              </label>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-[#f2f2f2]">
+                <button
+                  type="button"
+                  onClick={() => setShowAddReviewModal(false)}
+                  className="h-[32px] px-3 rounded-[6px] border border-[#d1d5db] bg-white text-[12px] font-medium text-[#5f6368] cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingReview}
+                  className="h-[32px] px-3.5 rounded-[6px] bg-[#111111] hover:bg-[#222222] text-white text-[12px] font-medium cursor-pointer disabled:opacity-60"
+                >
+                  {savingReview ? "Saving…" : "Save review"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

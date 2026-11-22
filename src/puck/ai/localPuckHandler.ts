@@ -20,7 +20,7 @@ export interface LocalPuckAiResult {
 }
 
 const DEFAULT_BUSINESS_CONTEXT = `
-Business: SmartFone Doctor (Philadelphia, PA)
+Business: SmartFoneDoctor (Philadelphia, PA)
 Services: Smartphone (iPhone, Samsung), Tablet (iPad), Laptop (MacBook), and Game Console (PS5, Xbox, Switch) repair & micro-soldering.
 Key Selling Points: 30-minute express screen & battery service, OEM-grade parts, 90-day warranty, walk-in or online booking (/schedule-repair).
 Brand Palette: Primary Teal #00807A, Dark Slate #0f172a, Light Surface #f8fafc, White #ffffff.

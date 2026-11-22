@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
+import { requireAdmin } from "@/lib/adminGuard";
 import {
   DEVICE_CATEGORIES,
   BRANDS_TAXONOMY,
@@ -13,8 +14,9 @@ import {
   type ServiceIssueTaxonomy,
   type DeviceModelTaxonomy,
 } from "@/lib/taxonomy";
+import { INITIAL_BLOG_CATEGORIES } from "@/lib/blogData";
 
-export type TaxonomyType = "categories" | "brands" | "issues" | "models";
+export type TaxonomyType = "categories" | "brands" | "issues" | "models" | "blog-categories";
 
 function getDefaultTaxonomy(type: TaxonomyType): unknown[] {
   switch (type) {
@@ -26,6 +28,8 @@ function getDefaultTaxonomy(type: TaxonomyType): unknown[] {
       return SERVICE_ISSUES_TAXONOMY;
     case "models":
       return DEVICE_MODELS_TAXONOMY;
+    case "blog-categories":
+      return INITIAL_BLOG_CATEGORIES;
   }
 }
 
@@ -79,6 +83,7 @@ export async function saveTaxonomyAction<T>(
   items: T[]
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireAdmin();
     await prisma.taxonomyStore.upsert({
       where: { id: type },
       update: {
@@ -94,6 +99,7 @@ export async function saveTaxonomyAction<T>(
     revalidatePath(`/admin/${type}`);
     revalidatePath("/repairs");
     revalidatePath("/common-issues");
+    if (type === "blog-categories") revalidatePath("/blog", "layout");
 
     return { success: true };
   } catch (err) {

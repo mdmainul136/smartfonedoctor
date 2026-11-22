@@ -15,6 +15,7 @@ import {
 import type { CMSPage } from "@/lib/cmsData";
 import type { PuckPageData } from "@/puck/types";
 import RankMathSeoSuite from "@/components/admin/RankMathSeoSuite";
+import LivePageSeoCheck from "@/components/admin/LivePageSeoCheck";
 import MediaModal, { type SelectedMediaPayload } from "@/components/admin/MediaModal";
 
 const PRESET_REPAIR_IMAGES = [
@@ -262,6 +263,16 @@ export default function PageSeoPanel({
 
       {/* RankMath Live SEO Analyzer */}
       <div className={compact ? "order-2" : "lg:col-span-7"}>
+        <div className="mb-3 bg-white border border-[#e8e8e8] rounded-[10px] p-3.5 shadow-2xs flex flex-col gap-2">
+          <h3 className="text-[12px] font-bold text-[#111111] uppercase tracking-wider">Live page check</h3>
+          <LivePageSeoCheck
+            path={page.path}
+            slug={page.slug}
+            isPublished={page.status === "Published"}
+            isTemplate={page.category === "Template"}
+            focusKeyword={page.focusKeyword}
+          />
+        </div>
         <RankMathSeoSuite
           title={page.title}
           slug={page.slug}
@@ -410,6 +421,7 @@ export default function PageSeoPanel({
             <div className="relative rounded-lg border border-gray-300 overflow-hidden bg-gray-900 aspect-[1.91/1] max-h-44 group">
               {page.featuredImage ? (
                 <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={page.featuredImage}
                     alt="Social card preview"
@@ -504,6 +516,7 @@ export default function PageSeoPanel({
                       }`}
                       title="Set as social card thumbnail"
                     >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={imgUrl} alt="Detected" className="w-full h-full object-cover" />
                       {page.featuredImage === imgUrl && (
                         <div className="absolute inset-0 bg-[#009691]/40 flex items-center justify-center">

@@ -10,10 +10,10 @@ import {
   Plus,
   MessageSquare,
   MapPin,
-  PhoneCall,
-  Navigation,
-  Globe,
   Star,
+  Pencil,
+  X,
+  RefreshCw,
 } from "lucide-react";
 import {
   BarChart,
@@ -26,7 +26,12 @@ import {
   LineChart,
   Line,
 } from "recharts";
-import { getGmbOverviewAction, type GmbOverviewData } from "@/actions/localSeo";
+import {
+  getGmbOverviewAction,
+  updateGmbProfileAction,
+  pullLiveGoogleMetricsAction,
+  type GmbOverviewData,
+} from "@/actions/localSeo";
 
 const FALLBACK_GMB_DATA: Record<number, GmbOverviewData> = {
   1: {
@@ -102,6 +107,23 @@ export default function LocalSEOPage() {
   const [data, setData] = useState<GmbOverviewData>(
     FALLBACK_GMB_DATA[selectedStoreId] ?? FALLBACK_GMB_DATA[1]
   );
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [savingMetrics, setSavingMetrics] = useState(false);
+  const [pullingGoogle, setPullingGoogle] = useState(false);
+  const [saveNotice, setSaveNotice] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({
+    googlePlaceId: "",
+    googleCid: "",
+    rating: "4.8",
+    reviewsCount: "50",
+    unrepliedReviews: "3",
+    impressions: "3840",
+    profileViews: "612",
+    calls: "214",
+    directions: "178",
+    websiteClicks: "145",
+    messages: "34",
+  });
 
   const storeShortName = isAllStores
     ? `All ${stores.length} Philadelphia locations`
@@ -120,6 +142,75 @@ export default function LocalSEOPage() {
       isMounted = false;
     };
   }, [selectedStoreId, isAllStores]);
+
+  const openEditModal = async () => {
+    const targetStoreId = isAllStores ? 1 : selectedStoreId;
+    const single = isAllStores
+      ? await getGmbOverviewAction(targetStoreId)
+      : { success: true, data };
+    const src = single.success && single.data ? single.data : data;
+    setEditForm({
+      googlePlaceId: src.googlePlaceId || "",
+      googleCid: src.googleCid || "",
+      rating: String(src.rating ?? 4.8),
+      reviewsCount: String(src.reviews ?? 50),
+      unrepliedReviews: String(src.unrepliedReviews ?? 0),
+      impressions: String(src.impressions ?? 0),
+      profileViews: String(src.profileViews ?? 0),
+      calls: String(src.calls ?? 0),
+      directions: String(src.directions ?? 0),
+      websiteClicks: String(src.websiteClicks ?? 0),
+      messages: String(src.messages ?? 0),
+    });
+    setShowEditModal(true);
+  };
+
+  const handleSaveMetrics = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingMetrics(true);
+    const targetStoreId = isAllStores ? 1 : selectedStoreId;
+    const res = await updateGmbProfileAction({
+      storeId: targetStoreId,
+      googlePlaceId: editForm.googlePlaceId,
+      googleCid: editForm.googleCid,
+      rating: Number(editForm.rating) || 4.8,
+      reviewsCount: Number(editForm.reviewsCount) || 0,
+      unrepliedReviews: Number(editForm.unrepliedReviews) || 0,
+      impressions: Number(editForm.impressions) || 0,
+      profileViews: Number(editForm.profileViews) || 0,
+      calls: Number(editForm.calls) || 0,
+      directions: Number(editForm.directions) || 0,
+      websiteClicks: Number(editForm.websiteClicks) || 0,
+      messages: Number(editForm.messages) || 0,
+    });
+    if (res.success) {
+      const refreshed = await getGmbOverviewAction(isAllStores ? undefined : selectedStoreId);
+      if (refreshed.success && refreshed.data) {
+        setData(refreshed.data);
+      }
+      setShowEditModal(false);
+      setSaveNotice(`Saved Google Business metrics for Store #${targetStoreId} to database.`);
+    } else if (res.error) {
+      setSaveNotice(res.error);
+    }
+    setSavingMetrics(false);
+  };
+
+  const handlePullLiveGoogle = async () => {
+    setPullingGoogle(true);
+    const res = await pullLiveGoogleMetricsAction(isAllStores ? undefined : selectedStoreId);
+    if (res.success && res.data) {
+      setData(res.data);
+      setSaveNotice(
+        res.warning
+          ? `Google API check completed with notice: ${res.warning}`
+          : "Pulled live Google Places rating, review counts, and Place IDs into PostgreSQL."
+      );
+    } else if (res.error) {
+      setSaveNotice(res.error);
+    }
+    setPullingGoogle(false);
+  };
 
   const totalActions = data.calls + data.directions + data.websiteClicks + data.messages;
 
@@ -169,6 +260,25 @@ export default function LocalSEOPage() {
               <span>Reviews ({data.unrepliedReviews})</span>
             </Link>
 
+            <button
+              type="button"
+              onClick={handlePullLiveGoogle}
+              disabled={pullingGoogle}
+              className="h-9 px-3.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-xs font-medium text-gray-700 inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-60"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-[#009691] ${pullingGoogle ? "animate-spin" : ""}`} />
+              <span>{pullingGoogle ? "Pulling Google…" : "Pull Live Google API"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={openEditModal}
+              className="h-9 px-3.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-xs font-medium text-gray-700 inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <Pencil className="w-3.5 h-3.5 text-gray-500" />
+              <span>Edit GMB Metrics</span>
+            </button>
+
             <Link
               href="/admin/local-seo/posts"
               className="h-9 px-4 rounded-lg bg-[#009691] hover:bg-[#007f7b] text-white text-xs font-medium inline-flex items-center gap-1.5 transition-colors"
@@ -178,6 +288,23 @@ export default function LocalSEOPage() {
             </Link>
           </div>
         </div>
+
+        {saveNotice && (
+          <div
+            role="status"
+            className="bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-lg px-4 py-2 text-xs flex items-center justify-between gap-2"
+          >
+            <span>{saveNotice}</span>
+            <button
+              type="button"
+              onClick={() => setSaveNotice(null)}
+              aria-label="Dismiss notice"
+              className="p-0.5 hover:opacity-75 cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
         {/* SUB NAVIGATION */}
         <LocalSeoNav />
@@ -436,6 +563,177 @@ export default function LocalSEOPage() {
           </div>
         </div>
       </div>
+
+      {showEditModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-gmb-metrics-title"
+          className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4"
+        >
+          <div className="bg-white border border-gray-200 rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h2 id="edit-gmb-metrics-title" className="text-base font-semibold text-gray-900">
+                  Edit Google Business Metrics
+                </h2>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Editing Store #{isAllStores ? 1 : selectedStoreId} · Updates PostgreSQL directly
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEditModal(false)}
+                aria-label="Close dialog"
+                className="p-1 rounded-md text-gray-500 hover:bg-gray-100 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveMetrics} className="p-5 flex flex-col gap-3 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-medium text-gray-700 mb-1">Google Place ID</label>
+                  <input
+                    type="text"
+                    value={editForm.googlePlaceId}
+                    onChange={(e) => setEditForm({ ...editForm, googlePlaceId: e.target.value })}
+                    className="w-full h-9 px-3 rounded-lg border border-gray-300 font-mono text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium text-gray-700 mb-1">Google CID</label>
+                  <input
+                    type="text"
+                    value={editForm.googleCid}
+                    onChange={(e) => setEditForm({ ...editForm, googleCid: e.target.value })}
+                    className="w-full h-9 px-3 rounded-lg border border-gray-300 font-mono text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block font-medium text-gray-700 mb-1">Rating</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="1"
+                    max="5"
+                    value={editForm.rating}
+                    onChange={(e) => setEditForm({ ...editForm, rating: e.target.value })}
+                    className="w-full h-9 px-3 rounded-lg border border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium text-gray-700 mb-1">Total Reviews</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editForm.reviewsCount}
+                    onChange={(e) => setEditForm({ ...editForm, reviewsCount: e.target.value })}
+                    className="w-full h-9 px-3 rounded-lg border border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium text-gray-700 mb-1">Unreplied</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editForm.unrepliedReviews}
+                    onChange={(e) => setEditForm({ ...editForm, unrepliedReviews: e.target.value })}
+                    className="w-full h-9 px-3 rounded-lg border border-gray-300"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block font-medium text-gray-700 mb-1">Impressions (30d)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editForm.impressions}
+                    onChange={(e) => setEditForm({ ...editForm, impressions: e.target.value })}
+                    className="w-full h-9 px-3 rounded-lg border border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium text-gray-700 mb-1">Profile Views</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editForm.profileViews}
+                    onChange={(e) => setEditForm({ ...editForm, profileViews: e.target.value })}
+                    className="w-full h-9 px-3 rounded-lg border border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium text-gray-700 mb-1">Calls</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editForm.calls}
+                    onChange={(e) => setEditForm({ ...editForm, calls: e.target.value })}
+                    className="w-full h-9 px-3 rounded-lg border border-gray-300"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block font-medium text-gray-700 mb-1">Directions</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editForm.directions}
+                    onChange={(e) => setEditForm({ ...editForm, directions: e.target.value })}
+                    className="w-full h-9 px-3 rounded-lg border border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium text-gray-700 mb-1">Website Clicks</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editForm.websiteClicks}
+                    onChange={(e) => setEditForm({ ...editForm, websiteClicks: e.target.value })}
+                    className="w-full h-9 px-3 rounded-lg border border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium text-gray-700 mb-1">Messages</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editForm.messages}
+                    onChange={(e) => setEditForm({ ...editForm, messages: e.target.value })}
+                    className="w-full h-9 px-3 rounded-lg border border-gray-300"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="h-9 px-3.5 rounded-lg border border-gray-300 bg-white text-gray-700 font-medium cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingMetrics}
+                  className="h-9 px-4 rounded-lg bg-[#009691] hover:bg-[#007f7b] text-white font-medium cursor-pointer disabled:opacity-60"
+                >
+                  {savingMetrics ? "Saving…" : "Save to Database"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

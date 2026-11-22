@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import Link from "next/link";
 import Footer from "@/components/layout/Footer";
 import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
-import { getStoredCMSPages, type CMSPage } from "@/lib/cmsData";
+import type { CMSPage } from "@/lib/cmsData";
 import { Eye, AlertTriangle } from "lucide-react";
 
 /** Renders a page created in the CMS admin, looked up by its URL path. */
@@ -15,33 +15,9 @@ export default function CustomPage({
   path: string;
   initialPage?: CMSPage | null;
 }) {
-  // undefined = still looking, null = no such page.
-  const [page, setPage] = useState<CMSPage | null | undefined>(
-    initialPage !== undefined ? initialPage : undefined
-  );
-  const [isPreview, setIsPreview] = useState(false);
-
-  useEffect(() => {
-    const checkPreview =
-      typeof window !== "undefined" &&
-      new URLSearchParams(window.location.search).get("preview") === "true";
-    setIsPreview(checkPreview);
-
-    const load = () => {
-      const normalized = path.toLowerCase().replace(/\/$/, "");
-      const found = getStoredCMSPages().find((p) => {
-        const pPath = (p.path || "").toLowerCase().replace(/\/$/, "");
-        const pathMatch = pPath === normalized;
-        const isAllowed = p.status === "Published" || checkPreview;
-        return pathMatch && isAllowed;
-      });
-      setPage(found || null);
-    };
-
-    load();
-    window.addEventListener("sfd-cms-pages-updated", load);
-    return () => window.removeEventListener("sfd-cms-pages-updated", load);
-  }, [path]);
+  // Comes from the server (Prisma). Drafts only reach this component for a signed-in admin.
+  const page = initialPage ?? null;
+  const isPreview = page?.status === "Draft";
 
   useEffect(() => {
     if (page?.title) {
@@ -70,7 +46,7 @@ export default function CustomPage({
               postalCode: "19139",
               addressCountry: "US",
             },
-            telephone: "+1-215-555-0199",
+            telephone: "+1-215-598-2090",
             priceRange: "$$",
           }
         : {
@@ -86,9 +62,7 @@ export default function CustomPage({
     };
   }, [page]);
 
-  if (page === undefined) return <main className="min-h-screen bg-[#fcfcfc]" />;
-
-  if (page === null) {
+  if (!page) {
     return (
       <main className="flex min-h-[60vh] flex-col items-center justify-center gap-3 bg-[#fcfcfc] px-4 text-center">
         <h1 className="text-3xl font-bold text-[#111111]">Page not found</h1>
@@ -114,7 +88,7 @@ export default function CustomPage({
       )}
 
       {/* Draft Preview Bar */}
-      {isPreview && page.status === "Draft" && (
+      {isPreview && (
         <div className="sticky top-0 z-50 flex items-center justify-between border-b border-amber-300 bg-amber-50 px-4 py-2 text-xs font-medium text-amber-900 shadow-xs">
           <div className="flex items-center gap-2">
             <Eye className="h-4 w-4 text-amber-700" />
@@ -123,7 +97,7 @@ export default function CustomPage({
             </span>
           </div>
           <Link
-            href={`/admin/pages`}
+            href={`/admin/pages/${page.slug}`}
             className="flex items-center gap-1 rounded bg-amber-200 px-2 py-0.5 text-[11px] font-semibold text-amber-900 hover:bg-amber-300 transition"
           >
             Edit in CMS
@@ -131,7 +105,8 @@ export default function CustomPage({
         </div>
       )}
 
-      <CMSSectionRenderer slug={page.slug} initialPage={page} />
+      {/* Admins previewing a draft see its layout; visitors never reach here for drafts. */}
+      <CMSSectionRenderer slug={page.slug} initialPage={{ ...page, status: "Published" }} />
       <Footer />
     </main>
   );

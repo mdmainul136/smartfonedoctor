@@ -654,7 +654,7 @@ export default function RepairStatusPage() {
                     When collecting your repaired device, please bring a valid photo ID and this Ticket Number (<strong>#{result.ticketId}</strong>).
                   </p>
                   <p className="text-[11px] text-neutral-500">
-                    All repairs are covered by our Limited Lifetime Parts & Craftsmanship Warranty.
+                    All repairs are covered by our 90-day parts and labor warranty.
                   </p>
                 </div>
 

@@ -492,10 +492,16 @@ export function getAllCommonIssuesCMS(): CommonIssueDetail[] {
   return COMMON_ISSUES_CMS;
 }
 
+/**
+ * The functions below take the list to search: the live list from the database
+ * (src/lib/commonIssuesStore.ts), or the built-in one above by default.
+ */
 export function getCommonIssueBySlug(
   slug: string,
-  category?: string
+  category?: string,
+  list: CommonIssueDetail[] = COMMON_ISSUES_CMS
 ): CommonIssueDetail | undefined {
+  const COMMON_ISSUES_CMS = list;
   const normalizedSlug = slug.toLowerCase().trim();
   const normalizedCat = category?.toLowerCase().trim();
 
@@ -549,14 +555,22 @@ export function getCommonIssueBySlug(
   return undefined;
 }
 
-export function getRelatedIssues(currentSlug: string): CommonIssueDetail[] {
-  const current = getCommonIssueBySlug(currentSlug);
+export function getRelatedIssues(
+  currentSlug: string,
+  list: CommonIssueDetail[] = COMMON_ISSUES_CMS
+): CommonIssueDetail[] {
+  const COMMON_ISSUES_CMS = list;
+  const current = getCommonIssueBySlug(currentSlug, undefined, list);
   if (!current) return COMMON_ISSUES_CMS.slice(0, 4);
 
-  return COMMON_ISSUES_CMS.filter(
-    (item) =>
-      item.slug !== currentSlug &&
-      (current.relatedSlugs.includes(item.slug) || true)
-  ).slice(0, 4);
+  // The article's chosen related articles first (in their order), then others,
+  // up to 4. (It used to ignore the choice: `|| true` made every article match.)
+  const chosen = current.relatedSlugs
+    .map((slug) => COMMON_ISSUES_CMS.find((item) => item.slug === slug))
+    .filter((item): item is CommonIssueDetail => Boolean(item) && item!.slug !== current.slug);
+  const others = COMMON_ISSUES_CMS.filter(
+    (item) => item.slug !== current.slug && !chosen.some((c) => c.slug === item.slug)
+  );
+  return [...chosen, ...others].slice(0, 4);
 }
 

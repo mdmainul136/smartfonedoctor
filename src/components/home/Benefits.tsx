@@ -10,28 +10,16 @@ import {
   Award,
 
 } from "lucide-react";
+import { BENEFITS_DEFAULTS, pickList, pickText, type BenefitsProps } from "./sectionContent";
 
-interface BenefitCard {
-  step: string;
-  stat: string;
-  title: string;
-  description: string;
+/** Card decoration by position (1st, 2nd, ...): icon, arch color, floating plus signs. */
+const CARD_STYLES: {
   icon: React.ReactNode;
-  imageSrc: string;
   badgeBg: string;
   plusColors: { color: string; position: string; size: string }[];
-}
-
-const BENEFITS_DATA: BenefitCard[] = [
+}[] = [
   {
-    step: "01",
-    stat: "100% Covered",
-    title: "Limited Lifetime Warranty",
-    description:
-      "If a part we installed or the repair isn't performing as it should, we'll make it right at no cost.",
     icon: <ShieldCheck className="w-4 h-4 text-amber-500" />,
-    imageSrc:
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
     badgeBg: "bg-amber-100/70",
     plusColors: [
       { color: "text-sfd-tealDark", position: "top-4 right-5", size: "text-lg" },
@@ -40,14 +28,7 @@ const BENEFITS_DATA: BenefitCard[] = [
     ],
   },
   {
-    step: "02",
-    stat: "50,000+",
-    title: "Devices Successfully Fixed",
-    description:
-      "From everyday phones to specialized devices like tablets and computers, we fix it all with care and expertise.",
     icon: <Smartphone className="w-4 h-4 text-sfd-teal" />,
-    imageSrc:
-      "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?auto=format&fit=crop&w=400&q=80",
     badgeBg: "bg-teal-100/70",
     plusColors: [
       { color: "text-sfd-teal", position: "top-3 right-6", size: "text-xl" },
@@ -56,14 +37,7 @@ const BENEFITS_DATA: BenefitCard[] = [
     ],
   },
   {
-    step: "03",
-    stat: "< 45 Mins",
-    title: "Fast Same-Day Repairs",
-    description:
-      "We offer same-day repair solutions for common issues, getting you back to your device faster than anyone.",
     icon: <Zap className="w-4 h-4 text-blue-500" />,
-    imageSrc:
-      "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80",
     badgeBg: "bg-blue-100/60",
     plusColors: [
       { color: "text-amber-400", position: "top-5 right-4", size: "text-sm" },
@@ -72,14 +46,7 @@ const BENEFITS_DATA: BenefitCard[] = [
     ],
   },
   {
-    step: "04",
-    stat: "WISE Certified",
-    title: "Expert Certified Technicians",
-    description:
-      "Our technicians combine proven methods with precision tools, ensuring every repair restores peak performance.",
     icon: <Award className="w-4 h-4 text-rose-500" />,
-    imageSrc:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
     badgeBg: "bg-rose-100/70",
     plusColors: [
       { color: "text-sfd-tealDark", position: "top-4 left-3", size: "text-lg" },
@@ -89,7 +56,16 @@ const BENEFITS_DATA: BenefitCard[] = [
   },
 ];
 
-export const Benefits = () => {
+export const Benefits = (props: BenefitsProps) => {
+  const badge = pickText(props.badge, BENEFITS_DEFAULTS.badge);
+  const heading = pickText(props.heading, BENEFITS_DEFAULTS.heading);
+  const subtitle = pickText(props.subtitle, BENEFITS_DEFAULTS.subtitle);
+  const cards = pickList(props.cards, BENEFITS_DEFAULTS.cards).map((card, i) => ({
+    ...card,
+    step: String(i + 1).padStart(2, "0"),
+    ...CARD_STYLES[i % CARD_STYLES.length],
+  }));
+
   return (
     <section id="benefits" className="bg-[#fcfcfc] py-16 px-4 sm:px-6 relative">
       <div className="max-w-[1265px] mx-auto flex flex-col items-center">
@@ -97,28 +73,28 @@ export const Benefits = () => {
         {/* 1. Top Pill Badge: "Our Benefits" */}
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-neutral-200 bg-white text-neutral-700 text-xs font-semibold shadow-2xs mb-4">
           <Layers className="w-3.5 h-3.5 text-sfd-teal" />
-          <span>Why Choose Us</span>
+          <span>{badge}</span>
         </div>
 
         {/* 2. Section Heading */}
         <div className="text-center max-w-2xl mb-12">
           <h2 className="text-3xl sm:text-4xl md:text-[42px] font-normal tracking-tight text-neutral-900 leading-[1.18] mb-3">
-            Expert Solutions for Your Everyday Tech
+            {heading}
           </h2>
           <p className="text-sm sm:text-base text-neutral-600 font-normal">
-            Trusted smartphone, tablet, laptop & console servicing with high-grade components.
+            {subtitle}
           </p>
         </div>
 
         {/* 3. Modern Unique 4-Card Grid */}
              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full justify-items-center">
-                    {BENEFITS_DATA.map((card) => (
+                    {cards.map((card) => (
                         <div
                         key={card.step}
                         className="group bg-white rounded-2xl p-5 flex flex-col justify-between h-[420px] w-full max-w-[280px] lg:max-w-[275px] border border-neutral-200/70 shadow-sm hover:shadow-xl hover:shadow-neutral-200/60 hover:-translate-y-2 hover:border-sfd-teal/50 transition-all duration-300 select-none overflow-hidden relative"
                         >
                         {/* Subtle Top Teal Accent Line (visible on hover) */}
-                            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-sfd-teal via-teal-400 to-sfd-teal opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                            <div className="absolute top-0 left-0 right-0 h-1 bg-sfd-teal opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                             {/* Card Header Content */}
                                 <div>

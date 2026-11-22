@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, Fragment } from "react";
+import { useState, useMemo, useEffect, useCallback, Fragment } from "react";
 import Link from "next/link";
 import { useStoreContext } from "@/lib/storeContext";
 import { useListings, CATALOG_DIRECTORIES } from "@/lib/listingsContext";
@@ -426,7 +426,7 @@ export default function AiVisibilityPage() {
     setNoticeBanner(`Removed guardrail "${target?.topic ?? "fact"}".`);
   };
 
-  const getDirScore = (dirId: string, storeId?: number) => {
+  const getDirScore = useCallback((dirId: string, storeId?: number) => {
     const dir = directories.find((d) => d.id === dirId);
     if (!dir) return 0;
     if (storeId) {
@@ -434,7 +434,7 @@ export default function AiVisibilityPage() {
     }
     const vals = stores.map((st) => dir.stores[st.id]?.napMatch ?? 0);
     return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
-  };
+  }, [directories, stores]);
 
   const scores = useMemo(() => {
     const scopeStoreId = isAllStores ? undefined : selectedStoreId;
@@ -488,7 +488,7 @@ export default function AiVisibilityPage() {
 
     return { overall, chatgpt, googleAi, perplexity, appleSiri };
   }, [
-    directories,
+    getDirScore,
     stores,
     isAllStores,
     selectedStoreId,
@@ -809,7 +809,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
   return (
     <div className="flex-1 min-w-0 w-full px-4 sm:px-6 py-6 flex flex-col gap-6 overflow-x-hidden antialiased">
       {/* 1. MATERIAL 3 HERO HEADER (SmartFoneDoctor Brand Teal & Elevated Surface) */}
-      <div className="rounded-3xl bg-gradient-to-br from-teal-50/70 via-white to-emerald-50/30 p-5 sm:p-7 border border-teal-100/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+      <div className="rounded-3xl bg-white p-5 sm:p-7 border border-teal-100/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-5">
         <div className="flex items-center gap-3.5">
           <div className="w-11 h-11 rounded-2xl bg-[#009691] text-white flex items-center justify-center shadow-md shadow-[#009691]/25 shrink-0">
             <Sparkles className="w-5 h-5" />
@@ -817,14 +817,14 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 leading-tight">
-                Search &amp; GEO Visibility
+                Search &amp; AI visibility
               </h1>
               <span className="inline-flex items-center gap-1 rounded-full bg-teal-100/80 text-[#009691] text-[11px] font-semibold px-2.5 py-0.5">
                 {isAllStores ? "All 3 Philly stores" : storeShortName}
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-600 font-medium mt-0.5">
-              Multi-engine directory sync, AI crawler indexing, and ground-truth knowledge graph
+              How the business appears in search engines and AI answers.
             </p>
           </div>
         </div>
@@ -1176,7 +1176,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                       <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all duration-300 ${item.isSelf
-                              ? "bg-gradient-to-r from-[#009691] to-teal-400"
+                              ? "bg-[#009691]"
                               : "bg-slate-300"
                             }`}
                           style={{ width: `${item.pct}%` }}
@@ -1211,7 +1211,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                       Directory feeds powering AI
                     </h2>
                     <p className="text-xs text-slate-500 font-medium">
-                      Citation accuracy feeding LLM search indexes
+                      Listing accuracy
                     </p>
                   </div>
                   <Link
@@ -1404,7 +1404,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                         Directory Catalog Citation Coverage
                       </h2>
                       <p className="text-xs text-slate-500 font-medium">
-                        30+ authoritative US citation sources feeding entity trust
+                        Directory listings
                       </p>
                     </div>
                   </div>
@@ -1484,7 +1484,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
             aria-label="Interactive AI Citation Probe"
             className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs"
           >
-            <div className="px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-teal-50/50 via-slate-50/50 to-white">
+            <div className="px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#fafafa]">
               <div>
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-[#009691]" />
@@ -1556,7 +1556,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
 
             {/* Live Probe Result Box (When evaluated) */}
             {probeResult && (
-              <div className="p-5 border-b border-slate-100 bg-gradient-to-br from-teal-50/40 via-white to-emerald-50/20 flex flex-col gap-3">
+              <div className="p-5 border-b border-slate-100 bg-white flex flex-col gap-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#009691] text-white shadow-xs">

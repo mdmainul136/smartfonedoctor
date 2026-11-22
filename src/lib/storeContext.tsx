@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useCallback, useContext, useState, useEffect } from "react";
 import { STORES, StoreLocation } from "./stores";
 import {
   getStoreBranchesAction,
@@ -43,27 +43,28 @@ export function StoreProvider({
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Load live store branches from PostgreSQL on mount
-  const reloadStores = async () => {
+  const reloadStores = useCallback(async () => {
     try {
       setIsLoading(true);
       const res = await getStoreBranchesAction();
       if (res.success && res.data && res.data.length > 0) {
-        setStores(res.data);
+        const fetched = res.data;
+        setStores(fetched);
         // Ensure selectedStoreId is valid
-        if (!res.data.some((s) => s.id === selectedStoreId)) {
-          setSelectedStoreIdState(res.data[0].id);
-        }
+        setSelectedStoreIdState((prev) =>
+          fetched.some((s) => s.id === prev) ? prev : fetched[0].id
+        );
       }
     } catch (err) {
       console.error("Failed to load stores from database:", err);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     reloadStores();
-  }, []);
+  }, [reloadStores]);
 
   const selectedStore =
     stores.find((s) => s.id === selectedStoreId) ?? stores[0] ?? STORES[0];

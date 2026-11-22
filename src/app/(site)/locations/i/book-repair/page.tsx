@@ -5,9 +5,11 @@ import { StoreLocator } from "@/components/locator/StoreLocator";
 import { WiseCertification } from "@/components/home/WiseCertification";
 import { FaqSection } from "@/components/home/FaqSection";
 import Footer from "@/components/layout/Footer";
-import { STORES } from "@/lib/stores";
-import { getStoreBranchesAction } from "@/actions/settings";
-import { MapStore } from "@/components/locator/InteractiveMap";
+import { getCmsPage } from "@/actions/cmsPages";
+import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
+import { RouteDataProvider } from "@/components/site/RouteDataContext";
+import { usableLayout } from "@/lib/pickLayout";
+import { getLocationStores } from "@/lib/locationStores";
 import {
   JsonLd,
   buildBreadcrumbSchema,
@@ -23,33 +25,14 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 
 export default async function BookRepairPage() {
-  const branchesRes = await getStoreBranchesAction();
-  const dbBranches =
-    branchesRes.success && branchesRes.data && branchesRes.data.length > 0
-      ? branchesRes.data
-      : STORES;
+  const cmsPage = await getCmsPage("/locations/i/book-repair");
+  const { branches: dbBranches, mapStores } = await getLocationStores();
 
   const breadcrumbSchema = buildBreadcrumbSchema([
     { name: "Home", url: "/" },
     { name: "Store Locations", url: "/locations/i/book-repair" },
   ]);
-
   const multiStoreSchema = buildMultiStoreSchema(dbBranches);
-
-  const mapStores: MapStore[] = dbBranches.map((b) => ({
-    id: b.id,
-    name: b.name,
-    hours: b.businessHours || "Open today 10:00 am - 7:00 pm",
-    address: b.address,
-    cityStateZip: b.cityStateZip,
-    phone: b.phone,
-    lat: b.id === 1 ? 39.9575 : b.id === 2 ? 39.9628 : 39.9634,
-    lng: b.id === 1 ? -75.2263 : b.id === 2 ? -75.2045 : -75.2058,
-    gmbPlaceId: b.id === 1 ? "ChIJ_sfd_philly_33s52nd" : `ChIJ_sfd_store_${b.id}`,
-    gmbRating: 4.9,
-    gmbReviewsCount: b.id === 1 ? 1524 : b.id === 2 ? 880 : 940,
-    gmbUrl: b.gmbUrl,
-  }));
 
   return (
     <main className="bg-[#fcfcfc] min-h-screen">
@@ -57,6 +40,13 @@ export default async function BookRepairPage() {
       <JsonLd data={breadcrumbSchema} />
       <JsonLd data={multiStoreSchema} />
 
+      {/* Layout from Admin > Pages ("Store Locations", /locations/i/book-repair), else the built-in one. */}
+      {usableLayout(cmsPage) ? (
+        <RouteDataProvider value={{ type: "locations", data: { stores: mapStores } }}>
+          <CMSSectionRenderer slug={cmsPage.slug} initialPage={cmsPage} />
+        </RouteDataProvider>
+      ) : (
+        <>
       {/* 1. Store Locator with Search & Map (Dynamic PostgreSQL Stores) */}
       <StoreLocator initialStores={mapStores} />
 
@@ -65,6 +55,8 @@ export default async function BookRepairPage() {
 
       {/* 3. Frequently Asked Questions */}
       <FaqSection />
+        </>
+      )}
 
       {/* 4. Footer */}
       <Footer />

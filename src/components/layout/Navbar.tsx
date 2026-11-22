@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { DEFAULT_NAV_MENU, NAV_MENU_EVENT, getStoredNavMenu, isNavItemActive, telHref } from '@/lib/navMenuData';
+import React, { useState } from 'react';
+import { DEFAULT_NAV_MENU, isNavItemActive, telHref, type NavMenuConfig } from '@/lib/navMenuData';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -21,36 +21,22 @@ import {
   CategoryKey,
   MegaCategoryData,
   DEFAULT_MEGA_MENU_CONFIG,
-  getStoredMegaMenu,
+  MEGA_CATEGORY_ORDER,
+  type MegaMenuConfig,
   getDeviceUrl,
   getIssueUrl,
   getBrandUrl,
 } from '@/lib/megaMenuData';
 
-export default function Navbar() {
+export default function Navbar({ nav: navFromDb, mega: megaFromDb }: { nav?: NavMenuConfig; mega?: MegaMenuConfig } = {}) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<CategoryKey>('smartphones');
-  const [menuConfig, setMenuConfig] = useState(DEFAULT_MEGA_MENU_CONFIG);
-  // Menu items and the header button come from Admin > Navigation & Menus.
-  const [nav, setNav] = useState(DEFAULT_NAV_MENU);
-
-  useEffect(() => {
-    const load = () => setNav(getStoredNavMenu());
-    load();
-    window.addEventListener(NAV_MENU_EVENT, load);
-    return () => window.removeEventListener(NAV_MENU_EVENT, load);
-  }, []);
-
-  useEffect(() => {
-    setMenuConfig(getStoredMegaMenu());
-    const handleUpdate = () => {
-      setMenuConfig(getStoredMegaMenu());
-    };
-    window.addEventListener('sfd-mega-menu-updated', handleUpdate);
-    return () => window.removeEventListener('sfd-mega-menu-updated', handleUpdate);
-  }, []);
+  // Menus come from Admin > Navigation & Menus and Admin > Mega Menu Builder,
+  // loaded from the database on the server, so every visitor sees the saved menus.
+  const menuConfig = megaFromDb ?? DEFAULT_MEGA_MENU_CONFIG;
+  const nav = navFromDb ?? DEFAULT_NAV_MENU;
 
   const isDashboard =
     pathname?.startsWith('/admin') ||
@@ -100,7 +86,7 @@ export default function Navbar() {
         >
           <Image
             src="/logo-png.jpg"
-            alt="SmartFone Doctor Logo"
+            alt="SmartFoneDoctor Logo"
             width={180}
             height={60}
             priority
@@ -169,8 +155,7 @@ export default function Navbar() {
                   className="px-3.5 py-1.5 rounded-full bg-sfd-teal/10 text-sfd-teal font-semibold hover:bg-sfd-teal hover:text-white transition-all duration-300 flex items-center gap-2 whitespace-nowrap group cursor-pointer"
                 >
                   <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sfd-teal group-hover:bg-white opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-sfd-teal group-hover:bg-white"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-sfd-teal group-hover:bg-white"></span>
                   </span>
                   <span>{item.label}</span>
                 </Link>
@@ -186,7 +171,7 @@ export default function Navbar() {
                   className={`px-3 py-1 rounded-full border border-sfd-teal font-semibold transition-all duration-300 flex items-center whitespace-nowrap ${
                     active
                       ? 'bg-sfd-teal text-white shadow-md'
-                      : 'text-sfd-dark bg-sfd-teal/20 shadow-md shadow-sfd-teal/30 animate-pulse hover:animate-none hover:-translate-y-0.5 hover:scale-105 hover:bg-sfd-teal hover:text-white'
+                      : 'text-sfd-dark bg-sfd-teal/20 hover:bg-sfd-teal hover:text-white'
                   }`}
                 >
                   <span>{item.label}</span>
@@ -263,7 +248,7 @@ export default function Navbar() {
 
             {/* Top Category Selector Row */}
             <div className="flex items-center gap-4 pb-6 border-b border-neutral-200">
-              {(Object.keys(menuConfig.categories) as CategoryKey[]).map((key) => {
+              {MEGA_CATEGORY_ORDER.filter((key) => menuConfig.categories[key]).map((key) => {
                 const item = menuConfig.categories[key];
                 const isActive = activeCategory === key;
                 return (
@@ -442,7 +427,7 @@ export default function Navbar() {
                         : 'font-semibold text-sfd-dark hover:text-sfd-teal'
                   }`}
                 >
-                  {item.style === 'pill' && <span className="w-2 h-2 rounded-full bg-sfd-teal inline-block animate-ping" />}
+                  {item.style === 'pill' && <span className="w-2 h-2 rounded-full bg-sfd-teal inline-block" />}
                   <span>{item.label}</span>
                 </Link>
                 {item.type === 'dropdown' &&

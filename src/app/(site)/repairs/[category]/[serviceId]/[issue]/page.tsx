@@ -4,10 +4,14 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import {
   buildPSeoPageData,
-  PSEO_DEVICES,
-  PSEO_ISSUES,
 } from "@/lib/pSeoEngine";
+import { getRepairCatalog } from "@/lib/repairCatalog";
 import DeviceIssueClient from "./DeviceIssueClient";
+import Footer from "@/components/layout/Footer";
+import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
+import { RouteDataProvider } from "@/components/site/RouteDataContext";
+import { pickLayout } from "@/lib/pickLayout";
+
 
 interface PageProps {
   params: Promise<{
@@ -22,8 +26,9 @@ export async function generateStaticParams() {
   const params: { category: string; serviceId: string; issue: string }[] = [];
 
   // Top devices x issues
-  const topDevices = PSEO_DEVICES.slice(0, 8);
-  const topIssues = PSEO_ISSUES.slice(0, 4);
+  const { devices, issues } = await getRepairCatalog();
+  const topDevices = devices.slice(0, 8);
+  const topIssues = issues.slice(0, 4);
 
   for (const dev of topDevices) {
     for (const iss of topIssues) {
@@ -42,7 +47,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { category, serviceId, issue } = await params;
-  const data = buildPSeoPageData(category, serviceId, issue);
+  const data = buildPSeoPageData(category, serviceId, issue, await getRepairCatalog());
 
   if (!data) {
     return {
@@ -75,11 +80,27 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function DeviceIssueServicePage({ params }: PageProps) {
   const { category, serviceId, issue } = await params;
-  const data = buildPSeoPageData(category, serviceId, issue);
+  const data = buildPSeoPageData(category, serviceId, issue, await getRepairCatalog());
 
   if (!data) {
     notFound();
   }
 
-  return <DeviceIssueClient data={data} />;
+  // Layout from Admin > Pages > Templates > "Template: Repair page" (or this URL's own page).
+  const layout = await pickLayout(`/repairs/${category}/${serviceId}/${issue}`, "repair-issue");
+  return (
+    <>
+      {layout ? (
+        <>
+          <RouteDataProvider value={{ type: "repair-issue", data: { page: data } }}>
+            <CMSSectionRenderer slug={layout.page.slug} initialPage={layout.page} />
+          </RouteDataProvider>
+        </>
+      ) : (
+        <DeviceIssueClient data={data} />
+      )}
+      {/* These pages had no footer before; every page now gets the site footer. */}
+      <Footer />
+    </>
+  );
 }

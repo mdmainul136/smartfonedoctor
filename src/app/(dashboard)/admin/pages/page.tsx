@@ -4,10 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  INITIAL_CMS_PAGES,
   CMSPage,
-  getStoredCMSPages,
-  saveStoredCMSPages,
+  builderLayoutStatus,
   createCustomPage,
   pathFromName,
   validatePagePath,
@@ -17,6 +15,8 @@ import {
   upsertCmsPageAction,
   deleteCmsPageAction,
 } from "@/actions/cmsPages";
+import { getCurrentAdminAction } from "@/actions/auth";
+import { canPublish } from "@/lib/roles";
 import {
   FileText,
   Search,
@@ -46,54 +46,75 @@ type PageForm = {
   title: string;
   category: CMSPage["category"];
   status: CMSPage["status"];
+  /** Local date-time (yyyy-mm-ddThh:mm) for a Scheduled page. */
+  scheduledLocal: string;
   custom: boolean;
 };
 
+/** ISO → value for <input type="datetime-local"> (the admin's own time zone). */
+function toLocalInput(iso?: string): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export default function PagesListPage() {
-  const [pages, setPages] = useState<CMSPage[]>(INITIAL_CMS_PAGES);
+  const [pages, setPages] = useState<CMSPage[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [listError, setListError] = useState<string | null>(null);
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  // Bulk actions: ids of the checked rows.
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  // Editors (non-admin roles) save drafts only; the server enforces this too.
+  const [isPublisher, setIsPublisher] = useState(true);
+  useEffect(() => {
+    getCurrentAdminAction()
+      .then((a) => setIsPublisher(canPublish(a?.role)))
+      .catch(() => undefined);
+  }, []);
 
   const router = useRouter();
   const [form, setForm] = useState<PageForm | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
+  // The database is the only source of truth for the page list.
   useEffect(() => {
-    // 1. Initial immediate render from cache
-    setPages(getStoredCMSPages());
-
-    // 2. Sync live with PostgreSQL via Server Action
-    getCmsPagesAction().then((res) => {
-      if (res.success && res.pages && res.pages.length > 0) {
-        setPages(res.pages);
-        saveStoredCMSPages(res.pages);
-      }
-    }).catch(console.error);
+    getCmsPagesAction()
+      .then((res) => {
+        if (res.success) setPages(res.pages);
+        else setListError(`Could not load pages from the database: ${res.error ?? "unknown error"}`);
+      })
+      .catch((err: unknown) => setListError(err instanceof Error ? err.message : String(err)))
+      .finally(() => setLoading(false));
   }, []);
 
-  /** Saves the list to local cache and synchronizes with PostgreSQL */
-  const persist = (next: CMSPage[], targetPage?: CMSPage, deletedId?: string): boolean => {
-    saveStoredCMSPages(next);
+  /** Writes to the database first; the list only changes when the write succeeded. */
+  const persist = async (next: CMSPage[], targetPage?: CMSPage, deletedId?: string): Promise<boolean> => {
+    setListError(null);
+    try {
+      if (targetPage) {
+        const res = await upsertCmsPageAction(targetPage);
+        if (!res.success) throw new Error(res.error);
+        if (res.page) next = next.map((p) => (p.slug === targetPage.slug ? res.page! : p));
+      }
+      if (deletedId) {
+        const res = await deleteCmsPageAction(deletedId);
+        if (!res.success) throw new Error(res.error);
+      }
+    } catch (err) {
+      setListError(`Not saved: ${err instanceof Error ? err.message : String(err)}`);
+      return false;
+    }
     setPages(next);
-
-    if (targetPage) {
-      upsertCmsPageAction(targetPage).catch((err) => {
-        console.error("Failed to sync page to PostgreSQL:", err);
-      });
-    }
-
-    if (deletedId) {
-      deleteCmsPageAction(deletedId).catch((err) => {
-        console.error("Failed to delete page from PostgreSQL:", err);
-      });
-    }
-
     return true;
   };
 
   const openAdd = () => {
     setFormError(null);
-    setForm({ name: "", path: "/", pathTouched: false, title: "", category: "Core", status: "Draft", custom: true });
+    setForm({ name: "", path: "/", pathTouched: false, title: "", category: "Core", status: "Draft", scheduledLocal: "", custom: true });
   };
 
   const openSettings = (page: CMSPage) => {
@@ -106,15 +127,16 @@ export default function PagesListPage() {
       title: page.title,
       category: page.category,
       status: page.status,
+      scheduledLocal: toLocalInput(page.scheduledAt),
       custom: Boolean(page.custom),
     });
   };
 
-  const submitForm = () => {
+  const submitForm = async () => {
     if (!form) return;
     const name = form.name.trim();
     if (!name) return setFormError("Give the page a name.");
-    const current = getStoredCMSPages();
+    const current = pages;
 
     if (!form.id) {
       const problem = validatePagePath(form.path, current);
@@ -122,7 +144,7 @@ export default function PagesListPage() {
       const page = createCustomPage(name, form.path, form.category);
       if (current.some((p) => p.slug === page.slug)) return setFormError("Another page already uses that address.");
       if (form.title.trim()) page.title = form.title.trim();
-      if (!persist([...current, page], page)) return;
+      if (!(await persist([...current, page], page))) return;
       setForm(null);
       router.push(`/admin/pages/${page.slug}`);
       return;
@@ -141,15 +163,16 @@ export default function PagesListPage() {
       title: form.title.trim() || target.title,
       category: form.category,
       status: form.status,
+      scheduledAt: form.status === "Scheduled" && form.scheduledLocal ? new Date(form.scheduledLocal).toISOString() : undefined,
       ...(form.custom ? { path: form.path } : {}),
       lastEdited: "Just now",
     };
     const next = current.map((p) => (p.id === form.id ? updatedPage : p));
-    if (persist(next, updatedPage)) setForm(null);
+    if (await persist(next, updatedPage)) setForm(null);
   };
 
   const duplicatePage = (page: CMSPage) => {
-    const current = getStoredCMSPages();
+    const current = pages;
     let n = 2;
     let path = `${page.path === "/" ? "/home" : page.path}-copy`;
     while (validatePagePath(path, current) || current.some((p) => p.slug === path.slice(1).replace(/\//g, "-"))) {
@@ -168,13 +191,13 @@ export default function PagesListPage() {
       puckEditedAt: Date.now(),
       custom: true,
     };
-    persist([...current, dupItem], dupItem);
+    void persist([...current, dupItem], dupItem);
   };
 
   const deletePage = (page: CMSPage) => {
     if (!page.custom) return;
     if (!window.confirm(`Delete "${page.name}" (${page.path})? This cannot be undone.`)) return;
-    persist(getStoredCMSPages().filter((p) => p.id !== page.id), undefined, page.id);
+    void persist(pages.filter((p) => p.id !== page.id), undefined, page.id);
   };
 
   const filteredPages = pages.filter((page) => {
@@ -184,7 +207,51 @@ export default function PagesListPage() {
       page.path.toLowerCase().includes(searchQuery.toLowerCase()) ||
       page.title.toLowerCase().includes(searchQuery.toLowerCase());
     return matchCategory && matchSearch;
-  });
+  }).sort((a, b) => Number(a.status === "Archived") - Number(b.status === "Archived"));
+
+  const toggleRow = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const allShownSelected = filteredPages.length > 0 && filteredPages.every((p) => selected.has(p.id));
+  const toggleAllShown = () =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      for (const p of filteredPages) {
+        if (allShownSelected) next.delete(p.id);
+        else next.add(p.id);
+      }
+      return next;
+    });
+
+  /** Sets one status on every checked page, one save at a time (same checks as a single save). */
+  const bulkSetStatus = async (status: "Published" | "Draft") => {
+    const targets = pages.filter((p) => selected.has(p.id) && p.status !== status);
+    if (targets.length === 0) return setSelected(new Set());
+    const verb = status === "Published" ? "Publish" : "Move to draft";
+    if (!window.confirm(`${verb}: ${targets.length} page(s)?`)) return;
+    setBulkBusy(true);
+    setListError(null);
+    let next = pages;
+    const failed: string[] = [];
+    for (const page of targets) {
+      try {
+        const res = await upsertCmsPageAction({ ...page, status, scheduledAt: undefined });
+        if (!res.success) throw new Error(res.error);
+        const saved = res.page ?? { ...page, status };
+        next = next.map((p) => (p.id === page.id ? saved : p));
+      } catch (err) {
+        failed.push(`${page.name}: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+    setPages(next);
+    setBulkBusy(false);
+    setSelected(new Set());
+    if (failed.length) setListError(`Not saved: ${failed.join("; ")}`);
+  };
 
   return (
     <div className="flex-1 min-w-0 w-full px-4 sm:px-6 py-5 flex flex-col gap-5 overflow-x-hidden">
@@ -200,7 +267,7 @@ export default function PagesListPage() {
             </span>
           </div>
           <p className="text-[13px] text-[#5f6368] mt-0.5">
-            Manage, edit content, and optimize SEO for all public customer website pages
+            Every page on the website: edit content, SEO and publishing.
           </p>
         </div>
 
@@ -225,6 +292,12 @@ export default function PagesListPage() {
         </div>
       </div>
 
+      {listError && (
+        <div role="alert" className="rounded-[8px] border border-red-200 bg-red-50 px-4 py-3 text-[13px] font-medium text-red-800">
+          {listError}
+        </div>
+      )}
+
       {/* 2. FILTER & SEARCH CONTROL BAR */}
       <div className="bg-white border border-[#e8e8e8] rounded-[8px] p-3 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
         {/* Category Pills */}
@@ -235,6 +308,8 @@ export default function PagesListPage() {
             { id: "Repairs", label: "Repair Services" },
             { id: "Utility", label: "Utility & Booking" },
             { id: "Legal", label: "Legal" },
+            { id: "Template", label: "Templates" },
+            { id: "Global", label: "Global blocks" },
           ].map((cat) => (
             <button
               key={cat.id}
@@ -263,11 +338,54 @@ export default function PagesListPage() {
         </div>
       </div>
 
+      {selected.size > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-[8px] border border-[#009691]/30 bg-[#009691]/5 px-3 py-2 text-[12px]">
+          <span className="font-semibold text-[#111111]">{selected.size} selected</span>
+          {!isPublisher && <span className="text-gray-600">Only an admin can publish or unpublish pages.</span>}
+          {isPublisher && (<>
+          <button
+            type="button"
+            disabled={bulkBusy}
+            onClick={() => void bulkSetStatus("Published")}
+            className="h-[28px] px-3 rounded-[5px] bg-[#009691] hover:bg-[#007f7b] text-white font-semibold disabled:opacity-50 cursor-pointer"
+          >
+            Publish
+          </button>
+          <button
+            type="button"
+            disabled={bulkBusy}
+            onClick={() => void bulkSetStatus("Draft")}
+            className="h-[28px] px-3 rounded-[5px] border border-[#d1d5db] bg-white hover:bg-gray-50 font-medium disabled:opacity-50 cursor-pointer"
+          >
+            Move to draft
+          </button>
+          </>)}
+          <button
+            type="button"
+            disabled={bulkBusy}
+            onClick={() => setSelected(new Set())}
+            className="h-[28px] px-2 text-gray-600 hover:text-[#111111] cursor-pointer"
+          >
+            Clear
+          </button>
+          {bulkBusy && <span className="text-gray-500">Saving…</span>}
+        </div>
+      )}
+
       {/* 3. SHOPIFY / STRAPI STYLE DATA TABLE */}
       <div className="bg-white border border-[#e8e8e8] rounded-[8px] overflow-hidden shadow-2xs">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-[#fafafa] border-b border-[#e8e8e8] text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+              <th className="py-3 pl-4 pr-0 w-[32px]">
+                <input
+                  type="checkbox"
+                  aria-label="Select all shown pages"
+                  checked={allShownSelected}
+                  onChange={toggleAllShown}
+                  className="accent-[#009691] cursor-pointer"
+                />
+              </th>
               <th className="py-3 px-4">Page Title &amp; Path</th>
               <th className="py-3 px-4 hidden md:table-cell">Category</th>
               <th className="py-3 px-4">Status</th>
@@ -281,6 +399,15 @@ export default function PagesListPage() {
                 key={page.id}
                 className="hover:bg-[#f9fafb] transition-colors group"
               >
+                <td className="py-3 pl-4 pr-0 align-top">
+                  <input
+                    type="checkbox"
+                    aria-label={`Select ${page.name}`}
+                    checked={selected.has(page.id)}
+                    onChange={() => toggleRow(page.id)}
+                    className="accent-[#009691] cursor-pointer mt-0.5"
+                  />
+                </td>
                 {/* Title & Route */}
                 <td className="py-3 px-4">
                   <div className="flex items-start gap-2.5">
@@ -321,11 +448,28 @@ export default function PagesListPage() {
                       <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                       <span>Published</span>
                     </span>
+                  ) : page.status === "Scheduled" ? (
+                    <span
+                      title={builderLayoutStatus(page).note}
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-full border border-sky-200"
+                    >
+                      <Clock className="w-3 h-3 text-sky-600" />
+                      <span>Scheduled</span>
+                    </span>
+                  ) : page.status === "Archived" ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full border border-gray-200">
+                      <span>Archived</span>
+                    </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
                       <Clock className="w-3 h-3 text-amber-600" />
                       <span>Draft</span>
                     </span>
+                  )}
+                  {page.status === "Published" && builderLayoutStatus(page).note && (!builderLayoutStatus(page).live || page.category === "Template") && (
+                    <div className="mt-1 max-w-[190px] text-[10.5px] leading-snug text-gray-500">
+                      {builderLayoutStatus(page).note}
+                    </div>
                   )}
                 </td>
 
@@ -365,7 +509,7 @@ export default function PagesListPage() {
                     >
                       <Copy className="w-3.5 h-3.5" />
                     </button>
-                    {page.custom ? (
+                    {page.custom && isPublisher ? (
                       <button
                         type="button"
                         onClick={() => deletePage(page)}
@@ -375,7 +519,10 @@ export default function PagesListPage() {
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     ) : (
-                      <span className="p-1.5 text-gray-300" title="Built-in page: it cannot be deleted">
+                      <span
+                        className="p-1.5 text-gray-300"
+                        title={page.custom ? "Only an admin can delete pages" : "Built-in page: it cannot be deleted"}
+                      >
                         <Lock className="w-3.5 h-3.5" />
                       </span>
                     )}
@@ -395,7 +542,7 @@ export default function PagesListPage() {
 
         {filteredPages.length === 0 && (
           <div className="py-12 text-center text-gray-500 text-[13px]">
-            No pages match your search or filter.
+            {loading ? "Loading pages from the database…" : "No pages match your search or filter."}
           </div>
         )}
       </div>
@@ -481,7 +628,20 @@ export default function PagesListPage() {
                   >
                     <option value="Published">Published</option>
                     <option value="Draft">Draft</option>
+                    <option value="Scheduled">Scheduled</option>
+                    <option value="Archived">Archived</option>
                   </select>
+                </label>
+              )}
+              {form.id && form.status === "Scheduled" && (
+                <label className="flex flex-1 flex-col gap-1 text-[12px] font-semibold text-gray-700">
+                  Goes live at
+                  <input
+                    type="datetime-local"
+                    value={form.scheduledLocal}
+                    onChange={(e) => setForm({ ...form, scheduledLocal: e.target.value })}
+                    className="h-[34px] rounded-[6px] border border-[#d1d5db] px-2 text-[13px] font-normal focus:outline-none focus:border-[#009691]"
+                  />
                 </label>
               )}
             </div>

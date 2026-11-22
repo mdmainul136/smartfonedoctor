@@ -154,11 +154,11 @@ export default function DeviceIssueClient({ data }: Props) {
                 </Link>
 
                 <a
-                  href="tel:+12153871700"
+                  href="tel:+12155982090"
                   className="px-6 py-3.5 rounded-full bg-white hover:bg-gray-50 text-gray-800 font-bold text-xs sm:text-sm tracking-wide transition border border-gray-300 shadow-2xs flex items-center gap-2"
                 >
                   <Phone className="w-4 h-4 text-sfd-teal" />
-                  <span>Call (215) 387-1700</span>
+                  <span>Call (215) 598-2090</span>
                 </a>
               </div>
 
@@ -205,14 +205,14 @@ export default function DeviceIssueClient({ data }: Props) {
                 <div>
                   <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
                     <Wrench className="w-4 h-4 text-sfd-teal" />
-                    <span>{device.name} {issue.shortName} Technical Specifications</span>
+                    <span>{device.name} {issue.shortName}: repair details</span>
                   </h2>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Philadelphia laboratory standards and bench intake guidelines
+                    Time, price, parts and warranty at our Philadelphia stores
                   </p>
                 </div>
                 <span className="text-[11px] font-bold text-sfd-teal uppercase tracking-wider bg-white px-2.5 py-1 rounded-md border border-gray-200">
-                  Verified Spec
+                  At a glance
                 </span>
               </div>
 
@@ -237,18 +237,18 @@ export default function DeviceIssueClient({ data }: Props) {
                     </tr>
                     <tr className="bg-white">
                       <th scope="row" className="py-3 px-6 text-xs font-bold text-gray-700 border-b border-gray-100">
-                        Average Turnaround
+                        Typical repair time
                       </th>
                       <td className="py-3 px-6 text-xs sm:text-sm text-gray-900 border-b border-gray-100 font-medium">
-                        {pricing.turnaround} (Same-day express walk-in)
+                        {pricing.turnaround} (same day, walk-ins welcome)
                       </td>
                     </tr>
                     <tr className="bg-gray-50/60">
                       <th scope="row" className="py-3 px-6 text-xs font-bold text-gray-700 border-b border-gray-100">
-                        Diagnostic Fee
+                        Diagnosis
                       </th>
                       <td className="py-3 px-6 text-xs sm:text-sm text-emerald-700 border-b border-gray-100 font-bold">
-                        $0.00 (100% Free Upfront Assessment)
+                        Free
                       </td>
                     </tr>
                     <tr className="bg-white">
@@ -261,26 +261,26 @@ export default function DeviceIssueClient({ data }: Props) {
                     </tr>
                     <tr className="bg-gray-50/60">
                       <th scope="row" className="py-3 px-6 text-xs font-bold text-gray-700 border-b border-gray-100">
-                        Warranty Guarantee
+                        Warranty
                       </th>
                       <td className="py-3 px-6 text-xs sm:text-sm text-gray-900 border-b border-gray-100 font-medium">
-                        90-Day Comprehensive Parts &amp; Labor Warranty
+                        90 days on parts and labor
                       </td>
                     </tr>
                     <tr className="bg-white">
                       <th scope="row" className="py-3 px-6 text-xs font-bold text-gray-700 border-b border-gray-100">
-                        Data Safety Policy
+                        Your data
                       </th>
                       <td className="py-3 px-6 text-xs sm:text-sm text-gray-900 border-b border-gray-100 font-medium">
-                        Zero Data Wipe Guarantee (Photos, files &amp; apps remain 100% intact)
+                        We don&apos;t erase your data
                       </td>
                     </tr>
                     <tr className="bg-gray-50/60">
                       <th scope="row" className="py-3 px-6 text-xs font-bold text-gray-700">
-                        Bench Location
+                        Main store
                       </th>
                       <td className="py-3 px-6 text-xs sm:text-sm text-gray-900 font-medium">
-                        33 S 52nd St, Philadelphia, PA 19139 (Walk-ins Welcome Daily)
+                        33 S 52nd St, Philadelphia, PA 19139 (walk-ins welcome)
                       </td>
                     </tr>
                   </tbody>
@@ -472,7 +472,7 @@ export default function DeviceIssueClient({ data }: Props) {
                 Why Choose SmartFoneDoctor for Your {device.name} {issue.shortName}?
               </h2>
               <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
-                Located in West Philadelphia at 33 S 52nd St, SmartFoneDoctor has completed over 5,000+ certified repairs for University City students, local hospital staff, and neighborhood families. We maintain dedicated ESD workstations, laser separators, and EEPROM calibration equipment to repair your device same-day with 100% data preservation and an industry-backed 90-day warranty.
+                Located in West Philadelphia at 33 S 52nd St, SmartFoneDoctor has completed over 5,000+ certified repairs for University City students, local hospital staff, and neighborhood families. We maintain dedicated ESD workstations, laser separators, and EEPROM calibration equipment to repair your device same-day without erasing your data and an industry-backed 90-day warranty.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                 <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 text-center">
@@ -651,10 +651,10 @@ export default function DeviceIssueClient({ data }: Props) {
                   Schedule Appointment
                 </Link>
                 <a
-                  href="tel:+12153871700"
+                  href="tel:+12155982090"
                   className="block w-full text-center px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase tracking-wider transition-colors"
                 >
-                  Call (215) 387-1700
+                  Call (215) 598-2090
                 </a>
               </div>
             </div>

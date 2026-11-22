@@ -89,7 +89,7 @@ const COMMON_MAC_ISSUES: CommonIssueItem[] = [
   {
     id: "ssd",
     title: "High-Speed SSD Upgrade & Data Recovery",
-    description: "Upgrade failing mechanical spinning hard drives or slow Fusion drives to blazing-fast NVMe SSDs with complete file transfer.",
+    description: "Upgrade failing mechanical spinning hard drives or slow Fusion drives to fast NVMe SSDs with complete file transfer.",
     image: "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=400&auto=format&fit=crop&q=80",
     turnaround: "Same-Day • 1–2 Hours",
   },

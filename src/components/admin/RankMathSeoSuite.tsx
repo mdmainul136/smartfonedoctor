@@ -453,7 +453,7 @@ export default function RankMathSeoSuite({
 
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-1.5">
-              <h3 className="text-xs sm:text-sm font-bold text-gray-900">RankMath SEO</h3>
+              <h3 className="text-xs sm:text-sm font-bold text-gray-900">SEO checklist</h3>
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${scoreBadgeColor}`}>
                 {totalScore >= 80 ? "Great" : totalScore >= 50 ? "Fair" : "Poor"}
               </span>
@@ -745,6 +745,7 @@ export default function RankMathSeoSuite({
                       }`}
                       title="Click to set as social thumbnail"
                     >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={imgUrl} alt="Page image" className="w-full h-full object-cover" />
                       {featuredImage === imgUrl && (
                         <div className="absolute inset-0 bg-[#009691]/40 flex items-center justify-center">
@@ -789,11 +790,14 @@ export default function RankMathSeoSuite({
             <div className="max-w-lg mx-auto rounded-xl border border-gray-300 overflow-hidden bg-white shadow-sm">
               <div className="aspect-[1.91/1] bg-gray-900 relative group overflow-hidden">
                 {featuredImage ? (
-                  <img
-                    src={featuredImage}
-                    alt="Social preview"
-                    className="w-full h-full object-cover"
-                  />
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={featuredImage}
+                      alt="Social preview"
+                      className="w-full h-full object-cover"
+                    />
+                  </>
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 text-xs gap-1.5 p-4 text-center">
                     <ImageIcon className="w-8 h-8 opacity-40" />

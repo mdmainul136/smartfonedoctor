@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Plus, Minus, MapPin, ExternalLink, Phone, Navigation } from "lucide-react";
 
 export interface StorePoint {
@@ -22,7 +22,7 @@ export interface StorePoint {
 const DEFAULT_STORES: StorePoint[] = [
   {
     id: 1,
-    name: "Smart Fone Doctor (Smartphone Doctor)",
+    name: "SmartFoneDoctor - 33 S 52nd St",
     badge: "Flagship",
     address: "33 S 52nd St",
     cityStateZip: "Philadelphia, PA 19139",
@@ -37,7 +37,7 @@ const DEFAULT_STORES: StorePoint[] = [
   },
   {
     id: 2,
-    name: "Smart Fone Doctor",
+    name: "SmartFoneDoctor - 4016 Lancaster Ave",
     address: "4016 Lancaster Ave",
     cityStateZip: "Philadelphia, PA 19104",
     phone: "(215) 598-2090",
@@ -51,7 +51,7 @@ const DEFAULT_STORES: StorePoint[] = [
   },
   {
     id: 3,
-    name: "Smart FoneDoctor",
+    name: "SmartFoneDoctor - 4060 Lancaster Ave",
     address: "4060 Lancaster Ave",
     cityStateZip: "Philadelphia, PA 19104",
     phone: "(215) 598-2090",
@@ -66,7 +66,10 @@ const DEFAULT_STORES: StorePoint[] = [
 ];
 
 export default function AboutMap({ initialStores }: { initialStores?: StorePoint[] } = {}) {
-  const STORES = initialStores && initialStores.length > 0 ? initialStores : DEFAULT_STORES;
+  const STORES = useMemo(
+    () => (initialStores && initialStores.length > 0 ? initialStores : DEFAULT_STORES),
+    [initialStores]
+  );
   const containerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<{ [key: number]: any }>({});
@@ -365,7 +368,7 @@ export default function AboutMap({ initialStores }: { initialStores?: StorePoint
         mapInstanceRef.current = null;
       }
     };
-  }, []);
+  }, [STORES]);
 
   const handleZoomIn = () => {
     if (mapInstanceRef.current) mapInstanceRef.current.zoomIn();

@@ -2,6 +2,9 @@ import { resolveTaxonomyUrl } from "./taxonomy";
 
 export type CategoryKey = "smartphones" | "tablet" | "consoles" | "computers";
 
+/** Tab order in the mega menu. Fixed here because the database (jsonb) does not keep key order. */
+export const MEGA_CATEGORY_ORDER: CategoryKey[] = ["smartphones", "tablet", "consoles", "computers"];
+
 export interface BrandItem {
   title: string;
   subtitle: string;
@@ -37,7 +40,7 @@ export const DEFAULT_MEGA_MENU_CONFIG: MegaMenuConfig = {
   ctaCard: {
     title: "Need your device fixed?",
     description:
-      "Find your device, see repair options and book your nearest SmartFone Doctor location.",
+      "Find your device, see repair options and book your nearest SmartFoneDoctor location.",
     primaryBtnText: "Book a Repair",
     primaryBtnHref: "/schedule-repair",
     secondaryBtnText: "Find a Store Near You",
@@ -166,36 +169,6 @@ export const DEFAULT_MEGA_MENU_CONFIG: MegaMenuConfig = {
     },
   },
 };
-
-const STORAGE_KEY = "sfd_mega_menu_config_v2";
-
-export function getStoredMegaMenu(): MegaMenuConfig {
-  if (typeof window === "undefined") {
-    return DEFAULT_MEGA_MENU_CONFIG;
-  }
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed?.categories && parsed?.ctaCard) {
-        return parsed;
-      }
-    }
-  } catch (e) {
-    console.error("Failed to parse mega menu from localStorage", e);
-  }
-  return DEFAULT_MEGA_MENU_CONFIG;
-}
-
-export function saveStoredMegaMenu(config: MegaMenuConfig): void {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-    window.dispatchEvent(new Event("sfd-mega-menu-updated"));
-  } catch (e) {
-    console.error("Failed to save mega menu to localStorage", e);
-  }
-}
 
 /**
  * Connected URL Resolvers

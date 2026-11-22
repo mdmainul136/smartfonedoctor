@@ -1,11 +1,8 @@
-import { createElement, type ComponentType, type ReactNode } from "react";
+import type { ComponentType, ReactNode } from "react";
 import { FieldTab, type Config } from "@puckeditor/core";
-import { compileStyle, isEmptyStyle, styleClass } from "./compile";
-import { MotionRuntime } from "./motion";
 import { StylePanel } from "./StylePanel";
+import { BoxRender, styledRender, type AnyProps } from "./styleRender";
 import type { PbStyle } from "./types";
-
-type AnyProps = Record<string, unknown> & { id: string; pbStyle?: PbStyle; puck?: { isEditing?: boolean } };
 type AnyComponent = {
   label?: string;
   fields?: Record<string, unknown>;
@@ -25,35 +22,6 @@ const styleField = {
     <StylePanel value={value} onChange={onChange} />
   ),
 };
-
-const cx = (...parts: (string | undefined)[]) => parts.filter(Boolean).join(" ");
-
-/** Marks an element for MotionRuntime on the published page. */
-function motionAttrs(style: PbStyle, editing?: boolean) {
-  if (editing || !style.motion?.enter) return {};
-  return { "data-pb-motion": style.motion.repeat ? "repeat" : "once" };
-}
-
-function StyleTag({ css }: { css: string }) {
-  return css ? <style dangerouslySetInnerHTML={{ __html: css }} /> : null;
-}
-
-/** Wraps a widget in its styled element. Widgets with no design data are left exactly as they were. */
-function Styled({ id, pbStyle, editing, children }: { id: string; pbStyle?: PbStyle; editing?: boolean; children: ReactNode }) {
-  if (isEmptyStyle(pbStyle)) return <>{children}</>;
-  const style = pbStyle as PbStyle;
-  return (
-    <>
-      <StyleTag css={compileStyle(id, style, { editing, wrapper: true })} />
-      {createElement(
-        style.tag || "div",
-        { id: style.cssId, className: cx(styleClass(id), style.className), ...motionAttrs(style, editing) },
-        children,
-      )}
-      {!editing && style.motion?.enter && <MotionRuntime />}
-    </>
-  );
-}
 
 /**
  * Container whose own element is the auto-layout box: its children are the
@@ -77,23 +45,7 @@ const Box: AnyComponent = {
       },
     } satisfies PbStyle,
   },
-  render: ({ id, pbStyle, puck, content }) => {
-    const style = pbStyle || {};
-    const Slot = content as ComponentType<Record<string, unknown>>;
-    return (
-      <>
-        <StyleTag css={compileStyle(id, style, { editing: puck?.isEditing })} />
-        <Slot
-          as={style.tag || "div"}
-          id={style.cssId}
-          className={cx(styleClass(id), style.className)}
-          minEmptyHeight={96}
-          {...motionAttrs(style, puck?.isEditing)}
-        />
-        {!puck?.isEditing && style.motion?.enter && <MotionRuntime />}
-      </>
-    );
-  },
+  render: BoxRender,
 };
 
 /** The same container, starting as a three-column grid. */
@@ -137,13 +89,7 @@ export function withStyleEngine<C extends Config>(config: C): C {
     components[type] = {
       ...c,
       fields: { ...(c.fields || {}), [STYLE_FIELD]: styleField },
-      render: c.pbSelf
-        ? Original
-        : (props: AnyProps) => (
-            <Styled id={props.id} pbStyle={props.pbStyle} editing={props.puck?.isEditing}>
-              <Original {...props} />
-            </Styled>
-          ),
+      render: styledRender(Original, c.pbSelf),
       // Widgets with hand-built tabs get Design appended; the rest get it from withAutoTabs.
       renderFields: ownTabs
         ? (params) => (

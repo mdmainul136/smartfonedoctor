@@ -23,13 +23,21 @@ import {
   buildMultiStoreSchema,
 } from "@/lib/schema";
 import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
+import { getCmsPage } from "@/actions/cmsPages";
 import { getStoreBranchesAction } from "@/actions/settings";
+import { getPublicFeaturedReviewsAction } from "@/actions/reviews";
+import { withCmsMetadata } from "@/lib/cmsMetadata";
 
-export const metadata: Metadata = {
+// Coded defaults; title, description and canonical can be changed in Admin > Pages > SEO.
+const baseMetadata: Metadata = {
   title: brandTitle("Customer Reviews & Store Ratings | SmartFoneDoctor Philadelphia"),
   description:
     "Read 420+ verified 5-star customer reviews across our 3 Philadelphia repair centers (52nd St Flagship, 4016 Lancaster Ave, and 4060 Lancaster Express). Rate your technician or book a repair.",
 };
+
+export async function generateMetadata(): Promise<Metadata> {
+  return withCmsMetadata("review", baseMetadata);
+}
 
 const STORE_SLUG_MAP: Record<number, string> = {
   1: "phl-01",
@@ -85,35 +93,12 @@ const STORE_HIGHLIGHTS: Record<
   },
 };
 
-const FEATURED_REVIEWS = [
-  {
-    author: "Marcus T.",
-    store: "Flagship HQ (33 S 52nd St)",
-    date: "November 2026",
-    device: "PlayStation 5",
-    rating: 5,
-    text: "My PS5 had the dreaded HDMI no signal issue after being knocked over. Dropped it off at 52nd St, and the tech micro-soldered a reinforced port same day. Tested 4K 120Hz on their bench before I left. Incredible service!",
-  },
-  {
-    author: "Elena R.",
-    store: "University City (4016 Lancaster)",
-    date: "November 2026",
-    device: "iPhone 15 Pro",
-    rating: 5,
-    text: "Cracked my iPhone screen right before class at Penn. They had a genuine grade OLED screen replaced in 25 minutes flat, and TrueTone / FaceID still work 100%. Super professional and fair price.",
-  },
-  {
-    author: "Darnell K.",
-    store: "Lancaster Express (4060 Lancaster)",
-    date: "October 2026",
-    device: "Samsung Galaxy S24 Ultra",
-    rating: 5,
-    text: "Phone wouldn't charge at all and showed moisture detected. Technician cleaned the port under microscope and replaced the flex cable within 40 minutes. 90-day warranty gives huge peace of mind.",
-  },
-];
-
 export default async function ReviewHubPage() {
-  const branchesRes = await getStoreBranchesAction();
+  const [cmsPage, branchesRes, featuredReviews] = await Promise.all([
+    getCmsPage("review"),
+    getStoreBranchesAction(),
+    getPublicFeaturedReviewsAction(),
+  ]);
   const stores: StoreLocation[] = (branchesRes.success && branchesRes.data && branchesRes.data.length > 0)
     ? branchesRes.data.map((b, idx) => ({
         id: typeof b.id === "number" ? b.id : idx + 1,
@@ -142,7 +127,7 @@ export default async function ReviewHubPage() {
       <JsonLd data={breadcrumbSchema} />
       <JsonLd data={multiStoreSchema} />
 
-      <CMSSectionRenderer slug="review">
+      <CMSSectionRenderer slug="review" initialPage={cmsPage}>
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20">
         {/* 1. Breadcrumb Navigation */}
         <nav
@@ -342,71 +327,6 @@ export default async function ReviewHubPage() {
           </div>
         </section>
 
-        {/* 4. Customer Testimonials Grid */}
-        <section className="mb-16 bg-white rounded-[24px] border border-neutral-200/90 p-8 sm:p-10 shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-sfd-teal block mb-1">
-                Real Customer Feedback
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#1d1c1a] tracking-tight">
-                Recent Verified Bench Reviews
-              </h2>
-            </div>
-            <Link
-              href="/schedule-repair"
-              className="text-xs font-bold text-sfd-teal hover:underline inline-flex items-center gap-1 self-start sm:self-auto"
-            >
-              <span>Book Your Own Repair</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {FEATURED_REVIEWS.map((rev, i) => (
-              <div
-                key={i}
-                className="bg-neutral-50 rounded-2xl p-5 border border-neutral-200/80 flex flex-col justify-between space-y-4"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-0.5">
-                      {[...Array(rev.rating)].map((_, idx) => (
-                        <Star
-                          key={idx}
-                          className="w-3.5 h-3.5 fill-amber-400 text-amber-400"
-                        />
-                      ))}
-                    </div>
-                    <span className="text-[11px] text-neutral-400">
-                      {rev.date}
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-neutral-700 leading-relaxed italic">
-                    &ldquo;{rev.text}&rdquo;
-                  </p>
-                </div>
-
-                <div className="pt-3 border-t border-neutral-200/60 flex items-center justify-between text-xs">
-                  <div>
-                    <span className="font-bold text-neutral-900 block">
-                      {rev.author}
-                    </span>
-                    <span className="text-[11px] text-neutral-500">
-                      {rev.store}
-                    </span>
-                  </div>
-                  <span className="text-[11px] font-semibold bg-white border border-neutral-200 px-2 py-0.5 rounded text-neutral-600">
-                    {rev.device}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* 5. Conversion Banner */}
         <section className="rounded-[24px] bg-[#1d1c1a] text-white p-8 sm:p-12 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-md">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-200">
@@ -439,6 +359,61 @@ export default async function ReviewHubPage() {
         </section>
       </div>
       </CMSSectionRenderer>
+
+      {featuredReviews.length > 0 && (
+        <section className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-8">
+            <div>
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-sfd-teal">
+                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                Verified Customer Feedback
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1d1c1a] mt-1">
+                Verified Philadelphia Customer Reviews
+              </h2>
+            </div>
+            <span className="text-xs text-neutral-500">
+              Showing {featuredReviews.length} featured review{featuredReviews.length === 1 ? "" : "s"}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {featuredReviews.map((rev) => (
+              <article
+                key={rev.id}
+                className="bg-white border border-neutral-200/90 rounded-[20px] p-6 shadow-xs flex flex-col justify-between gap-4"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-0.5" aria-label={`${rev.rating} out of 5 stars`}>
+                      {[...Array(Math.min(5, Math.max(1, rev.rating)))].map((_, idx) => (
+                        <Star key={idx} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                      ))}
+                    </div>
+                    <span className="text-[10.5px] font-semibold px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-700 border border-neutral-200">
+                      {rev.platform}
+                    </span>
+                  </div>
+
+                  <p className="text-[13.5px] text-neutral-700 leading-relaxed">
+                    &ldquo;{rev.content}&rdquo;
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-neutral-100 flex items-center justify-between gap-2 text-xs">
+                  <div>
+                    <div className="font-bold text-[#1d1c1a]">{rev.author}</div>
+                    <div className="text-[11px] text-neutral-500">
+                      {rev.location} · {rev.device}
+                    </div>
+                  </div>
+                  <span className="text-[11px] text-neutral-400 tabular-nums shrink-0">{rev.date}</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
 
       <Footer />
     </main>

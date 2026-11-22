@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { brandTitle } from "@/lib/seoTitle";
 import { getCmsPage } from "@/actions/cmsPages";
-import { compilePageCss } from "@/puck/style/compilePage";
 import HomePageClient from "@/components/site/HomePageClient";
 
 /**
@@ -67,23 +66,6 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function HomePage() {
   const page = await getCmsPage("/");
 
-  // If page has pre-compiled CSS, use it; otherwise JIT-compile from puckData content
-  const puckContent = (page?.puckData as { content?: unknown[] } | undefined)?.content;
-  const compiledCss =
-    page?.compiledCss ||
-    (Array.isArray(puckContent) && puckContent.length > 0
-      ? compilePageCss(puckContent)
-      : "");
-
-  return (
-    <>
-      {compiledCss ? (
-        <style
-          id="pb-css-home"
-          dangerouslySetInnerHTML={{ __html: compiledCss }}
-        />
-      ) : null}
-      <HomePageClient initialPage={page} />
-    </>
-  );
+  // Widget Design styles are rendered next to each widget (styleRender.tsx).
+  return <HomePageClient initialPage={page} />;
 }

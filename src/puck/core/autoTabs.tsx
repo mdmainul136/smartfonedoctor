@@ -61,11 +61,18 @@ function buildRenderFields(fieldDefs: Record<string, Field>) {
   }: {
     fields: Partial<Record<string, ReactNode>>;
   }) {
+    // Fields added at runtime by a widget's resolveFields are not in fieldDefs:
+    // place them by name, so they are never silently left out of the panel.
+    const known = new Set(Object.keys(fieldDefs));
+    const extra: Record<FieldTabId, string[]> = { content: [], style: [], advanced: [], design: [] };
+    for (const name of Object.keys(fields)) {
+      if (!known.has(name)) extra[classifyField(name)].push(name);
+    }
     return (
       <>
         {tabs.map((id) => (
           <FieldTab key={id} label={TAB_LABELS[id]}>
-            {groups[id].map((name) => (
+            {[...groups[id], ...extra[id]].map((name) => (
               <Fragment key={name}>{fields[name]}</Fragment>
             ))}
           </FieldTab>

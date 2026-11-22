@@ -11,7 +11,7 @@ export const HeroBlock: Block = {
       name: 'topPillTag',
       type: 'text',
       label: 'Badge / Pill Tag',
-      defaultValue: "Philadelphia's Trusted Leader in",
+      defaultValue: "Phone & computer repair in Philadelphia",
     },
     {
       name: 'headline',

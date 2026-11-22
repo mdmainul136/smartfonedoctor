@@ -1,13 +1,13 @@
 "use client";
 
-import "@/plugins/repair-shop/builderHost";
-import React, { useState, useEffect } from "react";
+// Public-site rendering only: no page-builder editor code is loaded here.
+import "@/plugins/repair-shop/siteHost";
+import React, { useState } from "react";
 import Link from "next/link";
-import { Render } from "@puckeditor/core";
-import { puckConfig } from "@/puck/config";
-import { withStyleEngine } from "@/puck/style";
-import type { PuckPageData } from "@/puck/types";
-import {
+import { PuckRender, type RenderConfig, type RenderData } from "@/puck/render/PuckRender";
+import { puckConfig as puckRenderConfig } from "@/puck/render/generated/config.render";
+import { withStyleRender } from "@/puck/style/styleRender";
+import type {
   CMSPage,
   PageSection,
   PageSectionItem,
@@ -15,9 +15,9 @@ import {
   PageSectionStyleBase,
   HeroStyleBase,
   HeroStyle,
-  getStoredCMSPages,
-  INITIAL_CMS_PAGES,
 } from "@/lib/cmsData";
+
+const renderConfig = withStyleRender(puckRenderConfig as unknown as RenderConfig);
 import { scopeCustomCss } from "@/lib/cmsCustomCss";
 import {
   Shield,
@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 
 import { RenderItemIcon } from "@/puck/components/shared";
+import { useProvidedCmsPage } from "@/components/site/CmsPageContext";
 
 export interface CMSSectionRendererProps {
   slug: string;
@@ -204,64 +205,24 @@ export default function CMSSectionRenderer({
   defaultChildren,
   fallbackHero,
 }: CMSSectionRendererProps) {
-  const [mounted, setMounted] = useState(false);
-  const [cmsPage, setCmsPage] = useState<CMSPage | null>(initialPage ?? null);
-
-  useEffect(() => {
-    const loadPage = () => {
-      try {
-        const pages = getStoredCMSPages();
-        const found = pages.find(
-          (p) =>
-            p.slug === slug ||
-            p.id === slug ||
-            (slug === "home" && (p.slug === "home" || p.id === "home"))
-        );
-        if (found) {
-          setCmsPage(found);
-        }
-      } catch (err) {
-        console.error("Error loading CMS page for slug:", slug, err);
-      }
-    };
-
-    if (!initialPage) {
-      loadPage();
-    }
-    setMounted(true);
-
-    const handleStorage = (e: StorageEvent) => {
-      if (!e.key || e.key.startsWith("sfd_cms_pages")) {
-        loadPage();
-      }
-    };
-
-    window.addEventListener("storage", handleStorage);
-    window.addEventListener("sfd-cms-pages-updated", loadPage);
-    return () => {
-      window.removeEventListener("storage", handleStorage);
-      window.removeEventListener("sfd-cms-pages-updated", loadPage);
-    };
-  }, [slug, initialPage]);
+  // Page data comes only from the server (Prisma). Visitors never see a
+  // browser-cached copy, so a published edit is what everyone gets.
+  const providedPage = useProvidedCmsPage();
+  const loaded: CMSPage | null =
+    initialPage ?? (providedPage && providedPage.slug === slug ? providedPage : null);
+  // Draft or archived pages never replace the built-in design for visitors.
+  const cmsPage = loaded?.status === "Published" ? loaded : null;
 
   const fallbackContent = children ?? defaultChildren;
 
   // If this page has Puck data, render directly with the shared Puck config
   const puckContent = (cmsPage?.puckData as { content?: unknown[] } | undefined)?.content;
   if (cmsPage?.puckData && Array.isArray(puckContent) && puckContent.length > 0) {
-    if ((slug === "home" || slug === "/") && !cmsPage.custom) {
-      return <>{fallbackContent}</>;
-    }
     return (
       <div className="sfd-cms-rendered-page w-full">
-        <Render config={withStyleEngine(puckConfig)} data={cmsPage.puckData as unknown as PuckPageData} />
+        <PuckRender config={renderConfig} data={cmsPage.puckData as unknown as RenderData} />
       </div>
     );
-  }
-
-  // Hydration safety: during SSR and before mount, render default children without layout flash
-  if (!mounted && !initialPage) {
-    return <>{fallbackContent}</>;
   }
 
   // Check if custom sections or custom page structure exist in storage
@@ -273,19 +234,15 @@ export default function CMSSectionRenderer({
     return <>{fallbackContent}</>;
   }
 
-  const defaultSeedPage = INITIAL_CMS_PAGES.find(
-    (p) => p.slug === slug || p.id === slug
-  );
-
+  // Older "sections" pages (before the page builder) only. No page in the DB
+  // uses this mode any more; the seed-headline comparison was dropped so the
+  // public bundle doesn't carry the seed data.
   const hasCustomHero = Boolean(
     cmsPage?.heroStyle?.customCss ||
       cmsPage?.heroStyle?.bgColor ||
       cmsPage?.heroStyle?.accentColor ||
       cmsPage?.heroStyle?.padding ||
-      cmsPage?.heroStyle?.align ||
-      (defaultSeedPage &&
-        cmsPage?.heroHeadline &&
-        cmsPage.heroHeadline !== defaultSeedPage.heroHeadline)
+      cmsPage?.heroStyle?.align
   );
 
   const heroStyle: HeroStyle = cmsPage?.heroStyle || {

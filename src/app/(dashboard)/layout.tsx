@@ -2,6 +2,7 @@ import Menu from "@/components/Dashboard/Menu";
 import Navbar from "@/components/Dashboard/Navbar";
 import Link from "next/link";
 import { StoreProvider } from "@/lib/storeContext";
+import SampleDataNotice from "@/components/Dashboard/SampleDataNotice";
 
 export default function DashboardLayout({
   children,
@@ -45,6 +46,7 @@ export default function DashboardLayout({
             <Navbar />
           </div>
           <main data-builder-host className="flex-1 min-w-0 w-full flex flex-col pb-12">
+            <SampleDataNotice />
             {children}
           </main>
         </div>

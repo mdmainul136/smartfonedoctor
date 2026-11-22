@@ -139,21 +139,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const settings = await getSeoSettings();
-
-  const siteName = settings?.siteName || "SmartFoneDoctor";
-  const logoUrl = settings?.logoUrl || "/logo-png.jpg";
-  const contactPhone = settings?.contactPhone || "+1-215-598-2090";
-  const streetAddress = settings?.streetAddress || "33 S 52nd St";
   const faviconUrl = settings?.faviconUrl || "/favicon.ico";
   const appleTouchIcon = settings?.appleTouchIcon || "/apple-touch-icon.png";
-
-  const sameAs = [
-    settings?.gmbUrl || "https://share.google/gTlyWLewR88ToAdJQ",
-    settings?.facebookUrl || "https://facebook.com/smartfonedoctor",
-    settings?.instagramUrl || "https://instagram.com/smartfonedoctor",
-    settings?.youtubeUrl,
-    settings?.linkedinUrl,
-  ].filter(Boolean) as string[];
 
   return (
     <html lang="en" suppressHydrationWarning>

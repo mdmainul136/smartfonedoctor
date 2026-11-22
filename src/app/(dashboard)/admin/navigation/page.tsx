@@ -23,15 +23,12 @@ import {
 } from "lucide-react";
 import {
   DEFAULT_NAV_MENU,
-  getStoredNavMenu,
   newNavId,
-  saveStoredNavMenu,
   type NavItem,
   type NavItemStyle,
   type NavItemType,
   type NavMenuConfig,
 } from "@/lib/navMenuData";
-import { getStoredCMSPages } from "@/lib/cmsData";
 import { getNavMenuAction, saveNavMenuAction } from "@/actions/navMenu";
 import { getCmsPagesAction } from "@/actions/cmsPages";
 
@@ -93,19 +90,14 @@ export default function NavigationBuilderPage() {
   const [pages, setPages] = useState<{ name: string; path: string }[]>([]);
 
   useEffect(() => {
-    // 1. Instant local cache
-    const stored = getStoredNavMenu();
-    setConfig(stored);
-    if (stored.items[0]) setSelectedId(stored.items[0].id);
-    setPages(getStoredCMSPages().map((p) => ({ name: p.name, path: p.path })));
-
-    // 2. Load from PostgreSQL via Server Action
+    // The menu visitors see is the one in the database.
     getNavMenuAction()
       .then((res) => {
         if (res.success && res.menu) {
           setConfig(res.menu);
-          saveStoredNavMenu(res.menu);
           if (res.menu.items[0]) setSelectedId(res.menu.items[0].id);
+        } else {
+          flash(false, `Could not load the menu: ${res.error ?? "unknown error"}`);
         }
       })
       .catch(console.error);
@@ -138,25 +130,23 @@ export default function NavigationBuilderPage() {
     const empty = config.items.find((i) => !i.label.trim());
     if (empty) return flash(false, "Every menu item needs a label.");
 
-    saveStoredNavMenu(config);
-    setDirty(false);
-
     const res = await saveNavMenuAction(config);
     if (res.success) {
-      flash(true, "Menu saved to PostgreSQL. The site header now shows it live.");
+      setDirty(false);
+      flash(true, "Menu saved. Every visitor now sees it in the site header.");
     } else {
-      flash(false, `Saved locally, but DB sync failed: ${res.error}`);
+      flash(false, `Not saved: ${res.error}`);
     }
   };
 
   const handleReset = async () => {
     if (!confirm("Reset the menu, header button and top bar to the original defaults?")) return;
+    const res = await saveNavMenuAction(DEFAULT_NAV_MENU);
+    if (!res.success) return flash(false, `Not reset: ${res.error}`);
     setConfig(DEFAULT_NAV_MENU);
     setSelectedId(DEFAULT_NAV_MENU.items[0].id);
-    saveStoredNavMenu(DEFAULT_NAV_MENU);
-    await saveNavMenuAction(DEFAULT_NAV_MENU);
     setDirty(false);
-    flash(true, "Menu reset to defaults in PostgreSQL and browser.");
+    flash(true, "Menu reset to the defaults for every visitor.");
   };
 
   const addItem = () => {
@@ -190,7 +180,7 @@ export default function NavigationBuilderPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#e8e8e8]">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-[22px] sm:text-[24px] font-bold text-[#111111] tracking-[-0.02em]">Menu Builder</h1>
+            <h1 className="text-[22px] sm:text-[24px] font-bold text-[#111111] tracking-[-0.02em]">Navigation</h1>
             {dirty && (
               <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
                 Unsaved changes

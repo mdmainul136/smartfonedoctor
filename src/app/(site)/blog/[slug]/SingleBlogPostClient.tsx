@@ -160,14 +160,14 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
   const guideSpecifications = [
     { label: "Hardware Topic", value: article.title },
     { label: "Category", value: article.categoryName },
-    { label: "Diagnostic Assessment", value: "$0.00 (100% Free at our Philadelphia Bench)" },
-    { label: "Average Repair Time", value: article.readTime.includes("min") ? "20 – 45 Minutes (Same-Day Express)" : "Same-Day Service" },
-    { label: "Component Grade", value: "OEM Original & Premium Grade-A+ Certified Parts" },
-    { label: "Warranty Guarantee", value: "90-Day Comprehensive Parts & Labor Warranty" },
-    { label: "Data Safety Policy", value: "Zero Data Wipe Guarantee (Photos, apps & credentials kept safe)" },
-    { label: "Bench Technicians", value: "WISE Level 2 & IPC-A-610 Master Certified Techs" },
-    { label: "Philadelphia Flagship", value: "33 S 52nd St, Philadelphia, PA 19139 (West Philly)" },
-    { label: "Walk-in Policy", value: "Walk-ins Welcome Daily – No Appointment Required" },
+    { label: "Diagnosis", value: "Free" },
+    { label: "Typical repair time", value: article.readTime.includes("min") ? "20–45 minutes, same day" : "Same-Day Service" },
+    { label: "Parts", value: "Original (OEM) or high-quality replacement parts" },
+    { label: "Warranty", value: "90 days on parts and labor" },
+    { label: "Your data", value: "We don't erase your data" },
+    { label: "Technicians", value: "WISE Level 2 and IPC-A-610 certified" },
+    { label: "Main store", value: "33 S 52nd St, Philadelphia, PA 19139" },
+    { label: "Walk-in Policy", value: "Walk-ins welcome, no appointment needed" },
   ];
 
   // Tailored Guide FAQs
@@ -182,7 +182,7 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
     },
     {
       question: "Will my photos, messages, or apps be erased during the repair?",
-      answer: "No. Our technicians work directly on hardware modules without factory-resetting or erasing storage. Your personal data remains 100% untouched and confidential.",
+      answer: "No. Our technicians work directly on hardware modules without factory-resetting or erasing storage. Your personal data stays untouched and confidential.",
     },
     {
       question: "What warranty do you offer on repairs?",
@@ -266,6 +266,7 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
       {/* ── 2. FEATURED IMAGE ───────────────────────────────────────────── */}
       <div className="max-w-[1000px] mx-auto px-4 sm:px-6 mt-8">
         <div className="rounded-2xl overflow-hidden shadow-md aspect-video bg-gray-100 border border-gray-200">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={article.featuredImage} alt={article.title} className="w-full h-full object-cover" />
         </div>
       </div>
@@ -282,14 +283,14 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
               <div>
                 <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
                   <Wrench className="w-4 h-4 text-sfd-teal" />
-                  <span>Technical Diagnostics &amp; Repair Specification</span>
+                  <span>Repair details</span>
                 </h3>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  Laboratory benchmark guidelines for this hardware repair
+                  Time, price, parts and warranty at our Philadelphia stores
                 </p>
               </div>
               <span className="text-[11px] font-bold text-sfd-teal uppercase tracking-wider bg-white px-2.5 py-1 rounded-md border border-gray-200">
-                Verified Lab Spec
+                At a glance
               </span>
             </div>
 
@@ -317,8 +318,8 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
             </div>
           </div>
 
-          {/* Related Repair Services — Juicy Internal Linking Widget */}
-          <section className="rounded-2xl bg-gradient-to-br from-teal-50 to-cyan-50 border border-teal-200/60 p-5 sm:p-6">
+          {/* Related repair services */}
+          <section className="rounded-2xl bg-[#f2f8f7] border border-teal-200/60 p-5 sm:p-6">
             <div className="flex items-center gap-2 mb-4">
               <Wrench className="w-4 h-4 text-sfd-teal" />
               <span className="text-xs font-bold uppercase tracking-widest text-sfd-teal">
@@ -433,8 +434,7 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
               Why Choose SmartFoneDoctor in Philadelphia?
             </h3>
             <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed mb-6">
-              Located in West Philadelphia at 33 S 52nd St, SmartFoneDoctor has been the premier 
-              hardware repair bench for University City students, local hospital staff, and neighborhood families. 
+              Located in West Philadelphia at 33 S 52nd St, SmartFoneDoctor repairs devices for University City students, local hospital staff and neighborhood families. 
               All diagnostics and repairs are performed in-house on our ESD-safe benches with genuine OEM-spec components.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -565,6 +565,7 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
                     className="group rounded-xl overflow-hidden border border-gray-200 hover:border-sfd-teal/40 hover:shadow-md transition-all bg-white"
                   >
                     <div className="aspect-video overflow-hidden bg-gray-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={rel.featuredImage}
                         alt={rel.title}
@@ -647,7 +648,7 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
             <div className="space-y-1.5 text-xs text-neutral-400 pt-1">
               <div className="flex justify-between">
                 <span>Diagnostics:</span>
-                <span className="font-bold text-emerald-400">100% Free</span>
+                <span className="font-bold text-emerald-400">Free</span>
               </div>
               <div className="flex justify-between">
                 <span>Turnaround:</span>

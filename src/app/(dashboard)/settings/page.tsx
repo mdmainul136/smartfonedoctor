@@ -202,7 +202,7 @@ export default function SettingsPage() {
   return (
     <div className="flex-1 p-4 sm:p-6 lg:p-8 flex flex-col gap-6 max-w-7xl w-full mx-auto antialiased">
       {/* 1. MATERIAL 3 HERO APP BAR / HEADER (Brand Teal & Slate Theme) */}
-      <div className="rounded-3xl bg-gradient-to-br from-teal-50/70 via-white to-emerald-50/30 p-6 sm:p-8 border border-teal-100 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+      <div className="rounded-3xl bg-white p-6 sm:p-8 border border-teal-100 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-5">
         <div className="space-y-1.5">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-2xl bg-[#009691] text-white flex items-center justify-center shadow-md shadow-[#009691]/25 shrink-0">
@@ -210,10 +210,10 @@ export default function SettingsPage() {
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 leading-tight">
-                Store Locations &amp; Integrations
+                Store locations &amp; integrations
               </h1>
               <p className="text-xs sm:text-sm text-slate-600 font-medium">
-                Manage retail store branches, operating hours, booking links, and service coordinates
+                Store addresses, opening hours and booking links.
               </p>
             </div>
           </div>
@@ -286,7 +286,7 @@ export default function SettingsPage() {
           }`}
         >
           <Sparkles className="w-4 h-4 text-[#009691]" />
-          <span>AI Engine &amp; Keys</span>
+          <span>AI keys</span>
         </button>
 
         <button
@@ -689,7 +689,7 @@ export default function SettingsPage() {
             <div>
               <h2 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-[#009691]" />
-                <span>AI Page Builder Keys &amp; Model Engine</span>
+                <span>AI keys for the page builder</span>
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
                 Configure your API keys for the AI assistant to generate repair content and landing pages.

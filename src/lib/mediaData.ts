@@ -64,8 +64,8 @@ export const INITIAL_MEDIA_LIBRARY: MediaItem[] = [
     id: "media-5",
     filename: "smartfone-doctor-logo.jpg",
     url: "/logo-png.jpg",
-    alt: "SmartFone Doctor official Philadelphia brand logo",
-    caption: "SmartFone Doctor Brand Identity",
+    alt: "SmartFoneDoctor official Philadelphia brand logo",
+    caption: "SmartFoneDoctor Brand Identity",
     filesize: 54096,
     mimeType: "image/jpeg",
     width: 600,
@@ -85,34 +85,6 @@ export const INITIAL_MEDIA_LIBRARY: MediaItem[] = [
     createdAt: "2026-11-12T16:00:00Z",
   },
 ];
-
-const STORAGE_KEY = "sfd_media_library_v1";
-
-export function getClientMediaLibrary(): MediaItem[] {
-  if (typeof window === "undefined") return INITIAL_MEDIA_LIBRARY;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
-      }
-    }
-  } catch (e) {
-    console.error("Failed to load media library from localStorage", e);
-  }
-  return INITIAL_MEDIA_LIBRARY;
-}
-
-export function saveClientMediaLibrary(items: MediaItem[]): void {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-    window.dispatchEvent(new CustomEvent("sfd-media-library-updated", { detail: items }));
-  } catch (e) {
-    console.error("Failed to save media library", e);
-  }
-}
 
 export function formatBytes(bytes?: number): string {
   if (!bytes || bytes === 0) return "0 B";

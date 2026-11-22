@@ -81,7 +81,8 @@ export default function HistoryPanel({
                   )}
                 </div>
                 <div className="text-[11px] text-gray-500">
-                  {rev.label || "Published"} · {countBlocks(rev.data)} sections
+                  {rev.label || "Published"}
+                  {rev.author ? ` by ${rev.author}` : ""} · {countBlocks(rev.data)} sections
                 </div>
               </div>
               <button

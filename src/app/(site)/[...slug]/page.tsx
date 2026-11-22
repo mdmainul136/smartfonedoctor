@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { brandTitle } from "@/lib/seoTitle";
-import { notFound, redirect, RedirectType } from "next/navigation";
+import { notFound, permanentRedirect, redirect } from "next/navigation";
 import CustomPage from "@/components/site/CustomPage";
 import { getCmsPage } from "@/actions/cmsPages";
-import { compilePageCss } from "@/puck/style/compilePage";
 import prisma from "@/lib/prisma";
+import { getCurrentAdminAction } from "@/actions/auth";
 
 type PageProps = {
   params: Promise<{ slug: string[] }>;
@@ -26,6 +26,12 @@ async function resolvePage(slug: string[]) {
 
   const path = `/${slug.join("/")}`;
   const page = await getCmsPage(path);
+  // Type templates (blog post, device...) are not pages of their own.
+  if (page?.category === "Template" || page?.category === "Global") return { page: null, path };
+  // Unpublished pages are visible to signed-in admins only (preview).
+  if (page && page.status !== "Published" && !(await getCurrentAdminAction())) {
+    return { page: null, path };
+  }
   return { page, path };
 }
 
@@ -39,13 +45,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!page) {
     return {
-      title: brandTitle("Page Not Found | SmartFone Doctor"),
+      title: brandTitle("Page Not Found | SmartFoneDoctor"),
       description: "The requested page could not be found.",
       robots: { index: false, follow: false },
     };
   }
 
-  const title = page.title || `${page.name} | SmartFone Doctor`;
+  const title = page.title || `${page.name} | SmartFoneDoctor`;
   const description =
     page.metaDesc ||
     page.heroSubtitle ||
@@ -68,7 +74,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title,
       description,
       url: canonicalUrl,
-      siteName: "SmartFone Doctor",
+      siteName: "SmartFoneDoctor",
       type: "website",
       images: [
         {
@@ -95,9 +101,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 /**
  * Pages created in Admin > Pages. Built-in pages have their own route folders,
  * which Next.js always prefers over this catch-all.
- *
- * Compiled widget CSS is injected as a plain <style> tag BEFORE the page
- * content — zero FOUC, full SSR, Google indexes styles, Lighthouse 99+.
  */
 export default async function CustomPageRoute({ params }: PageProps) {
   const { slug } = await params;
@@ -119,28 +122,15 @@ export default async function CustomPageRoute({ params }: PageProps) {
             data: { hitCount: { increment: 1 } },
           })
           .catch(() => {});
-        redirect(redirectRule.targetUrl, redirectRule.statusCode === 302 ? RedirectType.replace : RedirectType.replace);
+        // 301/308 rules are permanent (search engines move the ranking); 302/307 are temporary.
+        if (redirectRule.statusCode === 301 || redirectRule.statusCode === 308) permanentRedirect(redirectRule.targetUrl);
+        redirect(redirectRule.targetUrl);
       }
     }
 
     notFound();
   }
 
-  const css =
-    page.compiledCss ||
-    (page.puckData && (page.puckData as { content?: unknown[] }).content
-      ? compilePageCss((page.puckData as { content: unknown[] }).content)
-      : "");
-
-  return (
-    <>
-      {css ? (
-        <style
-          id={`pb-css-${page.slug}`}
-          dangerouslySetInnerHTML={{ __html: css }}
-        />
-      ) : null}
-      <CustomPage path={path} initialPage={page} />
-    </>
-  );
+  // Widget Design styles are rendered next to each widget (styleRender.tsx).
+  return <CustomPage path={path} initialPage={page} />;
 }

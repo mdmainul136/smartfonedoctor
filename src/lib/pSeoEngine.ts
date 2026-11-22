@@ -332,7 +332,7 @@ export const PSEO_ISSUES: PSeoIssue[] = [
     faqs: [
       {
         question: "Will my Face ID or Touch ID still work after the screen replacement?",
-        answer: "Yes, 100%. Our certified bench technicians transfer your original front sensor flex cable assembly to the new screen so your Face ID or biometric fingerprint security continues functioning seamlessly.",
+        answer: "Yes. Our certified bench technicians transfer your original front sensor flex cable assembly to the new screen so your Face ID or biometric fingerprint security continues functioning seamlessly.",
       },
       {
         question: "How long does a screen repair take at your Philadelphia store?",
@@ -557,6 +557,277 @@ export const PSEO_ISSUES: PSeoIssue[] = [
       },
     ],
   },
+  // ── TABLET REPAIR TYPES ──
+  {
+    slug: "screen-repair",
+    name: "Tablet Screen & Digitizer Glass Replacement",
+    shortName: "Screen Repair",
+    category: "tablet",
+    iconName: "Smartphone",
+    turnaroundMinutes: 60,
+    turnaroundDisplay: "Same Day (60–90 Mins)",
+    basePrice: 129,
+    oemPriceMultiplier: 1.4,
+    symptoms: [
+      "Shattered front digitizer glass or spiderweb cracks on iPad or Galaxy Tab",
+      "Dead touch zones, ghost typing, or unresponsive stylus/Apple Pencil input",
+      "LCD bleeding, vertical lines, or completely black tablet screen",
+      "Frame corners bent preventing flush screen seating",
+    ],
+    benchProcedures: [
+      {
+        title: "Controlled Thermal Separation",
+        desc: "We heat the tablet perimeter evenly to lift broken glass without straining ribbon cables or antenna flexes.",
+      },
+      {
+        title: "Frame Corner Alignment & Deburring",
+        desc: "Dented aluminum edges are straightened with specialized corner blocks so the new display sits completely flush.",
+      },
+      {
+        title: "Touch, Apple Pencil & True Tone Verification",
+        desc: "Every corner, stylus pressure curve, and ambient sensor is tested before industrial perimeter bonding cures.",
+      },
+    ],
+    toolsUsed: ["Thermal Tablet Heat Plate", "Aluminum Corner Straightener", "OEM Perimeter Gasket Clamp", "ESD Bench Mat"],
+    faqs: [
+      {
+        question: "Can you replace just the cracked glass on an iPad?",
+        answer: "On non-laminated iPad models we can replace the outer digitizer glass cleanly. On laminated iPad Pro, iPad Air, and Galaxy Tab models we install a factory-laminated full display assembly.",
+      },
+    ],
+  },
+  {
+    slug: "battery-replacement",
+    name: "Tablet High-Capacity Battery Replacement",
+    shortName: "Battery Replacement",
+    category: "tablet",
+    iconName: "Battery",
+    turnaroundMinutes: 60,
+    turnaroundDisplay: "Same Day (60 Mins)",
+    basePrice: 99,
+    oemPriceMultiplier: 1.35,
+    symptoms: [
+      "Tablet shuts off at 20–40% battery or drains rapidly overnight",
+      "Swollen lithium battery lifting the glass screen out of the frame",
+      "Needs to stay plugged into charger to boot or run apps",
+    ],
+    benchProcedures: [
+      {
+        title: "Safe Dual-Cell Adhesion Removal",
+        desc: "Old adhesive strips underneath the dual-cell tablet battery are dissolved with non-conductive solvent so cells are never punctured.",
+      },
+      {
+        title: "Zero-Cycle Battery Installation & Amp Draw Test",
+        desc: "We seat a fresh zero-cycle lithium pack and verify fast-charge current and temperature sensors.",
+      },
+    ],
+    toolsUsed: ["Dual-Cell Battery Pry Kit", "Digital USB-C Inline Wattmeter", "3M Factory Adhesive Strips"],
+    faqs: [
+      {
+        question: "What if my tablet screen is lifting from the frame?",
+        answer: "Stop charging it right away—that is a swollen battery pushing upward. Bring it in so we can safely vent and replace the cell before it cracks your display.",
+      },
+    ],
+  },
+  {
+    slug: "charging-port-repair",
+    name: "Tablet USB-C / Lightning Charging Port Repair",
+    shortName: "Charging Port Fix",
+    category: "tablet",
+    iconName: "Zap",
+    turnaroundMinutes: 60,
+    turnaroundDisplay: "Same Day (60–90 Mins)",
+    basePrice: 99,
+    oemPriceMultiplier: 1.35,
+    symptoms: [
+      "USB-C or Lightning cable feels loose or only charges when held at an angle",
+      "Tablet shows 'Accessory Not Supported' or zero charging icon",
+      "Broken tip stuck inside port or bent internal copper pins",
+    ],
+    benchProcedures: [
+      {
+        title: "Microscopic Port & Debris Audit",
+        desc: "We inspect pins under 40x magnification to see if compacted debris can be cleared free or if port replacement is needed.",
+      },
+      {
+        title: "Modular Flex or Micro-Soldered USB-C Port Replacement",
+        desc: "Damaged ports are replaced cleanly on the bench and tested at full PD voltage.",
+      },
+    ],
+    toolsUsed: ["40x Stereo Microscope", "JBC Micro-Soldering Station", "USB-C PD Load Analyzer"],
+    faqs: [
+      {
+        question: "Do you solder iPad Pro USB-C ports or swap the flex?",
+        answer: "We service both modular charging flexes and logic-board-soldered USB-C ports across all iPad, Galaxy Tab, and Surface generations.",
+      },
+    ],
+  },
+  {
+    slug: "water-damage-repair",
+    name: "Tablet Liquid Damage Ultrasonic Recovery",
+    shortName: "Water Damage Repair",
+    category: "tablet",
+    iconName: "Droplets",
+    turnaroundMinutes: 180,
+    turnaroundDisplay: "Same Day (2–4 Hours)",
+    basePrice: 109,
+    oemPriceMultiplier: 1.45,
+    symptoms: [
+      "Spilled drink or water submergence causing blank screen or boot loop",
+      "Backlight dim or blotchy liquid patches behind the glass",
+      "Charging failure or corrosion around speaker and dock area",
+    ],
+    benchProcedures: [
+      {
+        title: "Battery Isolation & Corrosion Wash",
+        desc: "We disconnect internal power immediately and clean oxidized logic board traces in a 40kHz ultrasonic bath.",
+      },
+      {
+        title: "Backlight & Charging Circuit Micro-Repair",
+        desc: "Shorted backlight filters and corroded connector pins are replaced under microscope inspection.",
+      },
+    ],
+    toolsUsed: ["Ultrasonic Cleaner", "Thermal Dehydration Oven", "Micro-Soldering Bench"],
+    faqs: [
+      {
+        question: "Can you recover files from a water-damaged iPad?",
+        answer: "Yes, our priority in ultrasonic recovery is stabilizing the logic board so your photos, notes, and app data stay intact.",
+      },
+    ],
+  },
+  // ── COMPUTER / LAPTOP REPAIR TYPES ──
+  {
+    slug: "screen-repair",
+    name: "MacBook & Laptop Retina/LCD Display Replacement",
+    shortName: "Screen Replacement",
+    category: "computer",
+    iconName: "Monitor",
+    turnaroundMinutes: 120,
+    turnaroundDisplay: "Same Day (2–3 Hours)",
+    basePrice: 249,
+    oemPriceMultiplier: 1.4,
+    symptoms: [
+      "Cracked MacBook Retina or Windows laptop LCD panel with black ink spots",
+      "Vertical rainbow lines, flickering backlight, or Flexgate display failure",
+      "External monitor works fine via HDMI/USB-C while built-in display is dark",
+    ],
+    benchProcedures: [
+      {
+        title: "Precision Clamshell Hinge & Antenna Disassembly",
+        desc: "We remove the top clutch assembly without kinking Wi-Fi/eDP display cables.",
+      },
+      {
+        title: "Full Display Lid or LCD Panel Assembly & True Tone Check",
+        desc: "We calibrate brightness curves, webcam, and sleep/wake hall sensors across all hinge angles.",
+      },
+    ],
+    toolsUsed: ["ESD Pentalobe & Torx Precision Kit", "Colorimetric Display Tester", "ESD Grounding Bench"],
+    faqs: [
+      {
+        question: "Is data wiped when you replace a MacBook or Windows laptop screen?",
+        answer: "Never. Your SSD, OS, and files remain completely untouched during screen replacement.",
+      },
+    ],
+  },
+  {
+    slug: "battery-replacement",
+    name: "Laptop & MacBook Battery Replacement",
+    shortName: "Battery Replacement",
+    category: "computer",
+    iconName: "Battery",
+    turnaroundMinutes: 60,
+    turnaroundDisplay: "Same Day (60 Mins)",
+    basePrice: 139,
+    oemPriceMultiplier: 1.35,
+    symptoms: [
+      "'Service Recommended' battery alert or high cycle count",
+      "Trackpad hard to click or bottom case bulging from swollen cells",
+      "Laptop powers off the instant MagSafe or USB-C charger is unplugged",
+    ],
+    benchProcedures: [
+      {
+        title: "Safe Cell Extraction & Top-Case Cleaning",
+        desc: "Glued MacBook and ultrabook cells are carefully released using non-flammable solvent without stressing the trackpad cable.",
+      },
+      {
+        title: "Cycle Calibration & Thermal Fan Dust Service",
+        desc: "We verify SMC/BIOS battery health telemetry and clean cooling fans while the bottom plate is open.",
+      },
+    ],
+    toolsUsed: ["MacBook Adhesive Release Bench", "IR Thermal Sensor Probe", "DC Power Bench Analyzer"],
+    faqs: [
+      {
+        question: "Should I still use a laptop with a bulging trackpad?",
+        answer: "No—pressure from a swollen cell can crack your glass trackpad or damage the keyboard ribbon. Bring it in for a same-day cell swap.",
+      },
+    ],
+  },
+  {
+    slug: "charging-port-repair",
+    name: "USB-C / MagSafe DC-In Power Port & Logic Board Repair",
+    shortName: "Charging & Board Fix",
+    category: "computer",
+    iconName: "Zap",
+    turnaroundMinutes: 120,
+    turnaroundDisplay: "Same Day (2–4 Hours)",
+    basePrice: 149,
+    oemPriceMultiplier: 1.35,
+    symptoms: [
+      "USB-C/Thunderbolt port not negotiating 20V fast charging",
+      "MagSafe LED stays off or charger tip sparks/wiggles loosely",
+      "Laptop dead with zero fan spin despite known-good power adapter",
+    ],
+    benchProcedures: [
+      {
+        title: "20V USB-C PD Handshake & CD3217 Power Rail Check",
+        desc: "We measure amp draw (5V vs 20V negotiation) on an inline USB-C meter to isolate port vs power-IC faults.",
+      },
+      {
+        title: "DC-In Board Swap or Micro-Soldered Port Replacement",
+        desc: "Modular MagSafe/USB-C boards or board-mounted DC jacks are replaced and stress-tested under load.",
+      },
+    ],
+    toolsUsed: ["USB-C PD Amp/Volt Tester", "Thermal Imaging Camera", "JBC Micro-Soldering Iron"],
+    faqs: [
+      {
+        question: "What if all USB-C ports stopped charging at once?",
+        answer: "On MacBooks and modern ultrabooks, that typically indicates a blown USB-C controller IC or shorted capacitor—something our micro-soldering bench diagnoses free.",
+      },
+    ],
+  },
+  {
+    slug: "water-damage-repair",
+    name: "Laptop Spill & Liquid Damage Ultrasonic Board Recovery",
+    shortName: "Liquid Damage Fix",
+    category: "computer",
+    iconName: "Droplets",
+    turnaroundMinutes: 240,
+    turnaroundDisplay: "24–48 Hours",
+    basePrice: 169,
+    oemPriceMultiplier: 1.45,
+    symptoms: [
+      "Coffee, water, or wine spilled onto MacBook or laptop keyboard",
+      "Sticky keys, no power, fan running at full speed, or no display",
+      "Short circuit tripping charger protection (0.00A draw)",
+    ],
+    benchProcedures: [
+      {
+        title: "Immediate Battery Disconnect & Logic Board Teardown",
+        desc: "We strip the board down cleanly to prevent sugar or coffee residue from corroding BGA chips.",
+      },
+      {
+        title: "Ultrasonic Logic Bath & Shorted Component Micro-Soldering",
+        desc: "After cleaning, we trace shorted PPBUS/VCORE power rails with thermal imaging and restore board power.",
+      },
+    ],
+    toolsUsed: ["Logic Board Ultrasonic Tank", "FLIR Thermal Camera", "Hot-Air Micro-Rework Station"],
+    faqs: [
+      {
+        question: "Can you save my files if the laptop won't turn on after a spill?",
+        answer: "Yes. Most MacBooks and Windows laptops have recoverable SSD storage or logic rails that can be restored for full use or full data rescue.",
+      },
+    ],
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -575,10 +846,20 @@ export const PHILLY_LOCAL_AREAS = [
   "Cobbs Creek",
 ];
 
+/**
+ * The repair catalog: devices and repair types. The live site reads it from the
+ * database (src/lib/repairCatalog.ts, edited in Admin); the constants above are
+ * the built-in defaults it was seeded from. Every function below takes the
+ * catalog to use, falling back to the built-in one.
+ */
+export type RepairCatalog = { devices: PSeoDevice[]; issues: PSeoIssue[] };
+export const CODE_CATALOG: RepairCatalog = { devices: PSEO_DEVICES, issues: PSEO_ISSUES };
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 4. RESOLVER & PAGE DATA BUILDER
 // ─────────────────────────────────────────────────────────────────────────────
-export function resolveDevice(slug: string): PSeoDevice | undefined {
+export function resolveDevice(slug: string, catalog: RepairCatalog = CODE_CATALOG): PSeoDevice | undefined {
+  const PSEO_DEVICES = catalog.devices;
   const clean = slug.toLowerCase().trim();
 
   // Flagship category service alias mappings
@@ -588,14 +869,20 @@ export function resolveDevice(slug: string): PSeoDevice | undefined {
   if (clean === "playstation-repair" || clean === "playstation" || clean === "ps5") return PSEO_DEVICES.find((d) => d.slug === "playstation-5");
   if (clean === "macbook-repair" || clean === "macbook" || clean === "imac-repair") return PSEO_DEVICES.find((d) => d.slug === "macbook-pro");
 
-  return PSEO_DEVICES.find(
-    (d) =>
-      d.slug.toLowerCase() === clean ||
-      d.name.toLowerCase().replace(/[^a-z0-9]/g, "-").includes(clean)
+  // An exact slug always wins; the loose "name contains" match is only a fallback.
+  // (Before, /iphone-16 matched "iPhone 16 Pro" first and showed the wrong phone.)
+  return (
+    PSEO_DEVICES.find((d) => d.slug.toLowerCase() === clean) ??
+    PSEO_DEVICES.find((d) => d.name.toLowerCase().replace(/[^a-z0-9]/g, "-").includes(clean))
   );
 }
 
-export function resolveIssue(slug: string): PSeoIssue | undefined {
+export function resolveIssue(
+  slug: string,
+  catalog: RepairCatalog = CODE_CATALOG,
+  category?: string
+): PSeoIssue | undefined {
+  const PSEO_ISSUES = catalog.issues;
   const clean = slug.toLowerCase().trim();
   // Map common synonyms
   const mappedSlug =
@@ -613,16 +900,25 @@ export function resolveIssue(slug: string): PSeoIssue | undefined {
       ? "hdmi-port-replacement"
       : clean;
 
+  if (category) {
+    const exactCategoryMatch = PSEO_ISSUES.find(
+      (i) => i.slug === mappedSlug && i.category === category
+    );
+    if (exactCategoryMatch) return exactCategoryMatch;
+  }
+
   return PSEO_ISSUES.find((i) => i.slug === mappedSlug);
 }
 
 export function buildPSeoPageData(
   categorySlug: string,
   deviceSlug: string,
-  issueSlug: string
+  issueSlug: string,
+  catalog: RepairCatalog = CODE_CATALOG
 ): PSeoPageData | null {
-  const device = resolveDevice(deviceSlug);
-  const issue = resolveIssue(issueSlug);
+  const { devices: PSEO_DEVICES, issues: PSEO_ISSUES } = catalog;
+  const device = resolveDevice(deviceSlug, catalog);
+  const issue = resolveIssue(issueSlug, catalog, device?.category || categorySlug);
 
   if (!device || !issue) return null;
 
@@ -656,7 +952,7 @@ export function buildPSeoPageData(
       "@type": "LocalBusiness",
       name: "SmartFoneDoctor Philadelphia",
       image: "https://smartfonedoctor.com/logo-png.jpg",
-      telephone: "+1-215-387-1700",
+      telephone: "+1-215-598-2090",
       address: {
         "@type": "PostalAddress",
         streetAddress: "33 S 52nd St",
@@ -919,8 +1215,13 @@ const CATEGORY_NOUN: Record<string, string> = {
   console: "Consoles",
 };
 
-export function buildDeviceModelCMS(category: string, deviceSlug: string): ServiceCMSData | null {
-  const device = resolveDevice(deviceSlug);
+export function buildDeviceModelCMS(
+  category: string,
+  deviceSlug: string,
+  catalog: RepairCatalog = CODE_CATALOG
+): ServiceCMSData | null {
+  const { devices: PSEO_DEVICES, issues: PSEO_ISSUES } = catalog;
+  const device = resolveDevice(deviceSlug, catalog);
   if (!device) return null;
 
   const relevantIssues = PSEO_ISSUES.filter(

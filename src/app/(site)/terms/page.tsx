@@ -4,8 +4,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Footer from "@/components/layout/Footer";
 import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
+import { getCmsPage } from "@/actions/cmsPages";
+import { withCmsMetadata } from "@/lib/cmsMetadata";
 
-export const metadata: Metadata = {
+// Coded defaults; title, description and canonical can be changed in Admin > Pages > SEO.
+const baseMetadata: Metadata = {
   title: brandTitle("Terms of Use | SmartFoneDoctor"),
   description:
     "Review the Terms of Use governing your access to and use of SmartFoneDoctor's website, diagnostic estimates, and device repair services.",
@@ -17,10 +20,15 @@ export const metadata: Metadata = {
   ],
 };
 
-export default function TermsOfUsePage() {
+export async function generateMetadata(): Promise<Metadata> {
+  return withCmsMetadata("terms", baseMetadata);
+}
+
+export default async function TermsOfUsePage() {
+  const cmsPage = await getCmsPage("terms");
   return (
     <main className="bg-[#fcfcfc] min-h-screen">
-      <CMSSectionRenderer slug="terms">
+      <CMSSectionRenderer slug="terms" initialPage={cmsPage}>
         <div className="max-w-[1140px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20">
         
         {/* 1. Breadcrumbs */}

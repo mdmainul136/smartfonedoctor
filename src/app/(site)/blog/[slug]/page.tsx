@@ -9,6 +9,17 @@ import {
 import { getBlogPostBySlugAction, getBlogPostsAction } from "@/actions/blog";
 import SingleBlogPostClient from "./SingleBlogPostClient";
 import Footer from "@/components/layout/Footer";
+import { getCmsPage } from "@/actions/cmsPages";
+import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
+import { RouteDataProvider } from "@/components/site/RouteDataContext";
+import { templateSlug } from "@/lib/cmsTemplates";
+import type { CMSPage } from "@/lib/cmsData";
+
+/** A published CMS page that has a builder layout. */
+function usable(page: CMSPage | null): page is CMSPage {
+  const blocks = (page?.puckData as { content?: unknown[] } | undefined)?.content;
+  return Boolean(page && page.status === "Published" && Array.isArray(blocks) && blocks.length > 0);
+}
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -26,7 +37,8 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const postRes = await getBlogPostBySlugAction(slug);
-  const article = postRes?.article || INITIAL_BLOG_ARTICLES.find((a) => a.slug === slug);
+  // Built-in copy only when the database can't be reached (a draft stays hidden).
+  const article = postRes?.success ? postRes.article : INITIAL_BLOG_ARTICLES.find((a) => a.slug === slug);
 
   if (!article) {
     return {
@@ -73,7 +85,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function BlogPostPage({ params }: PageProps) {
   const { slug } = await params;
   const postRes = await getBlogPostBySlugAction(slug);
-  const article = postRes?.article || INITIAL_BLOG_ARTICLES.find((a) => a.slug === slug);
+  // Built-in copy only when the database can't be reached (a draft stays hidden).
+  const article = postRes?.success ? postRes.article : INITIAL_BLOG_ARTICLES.find((a) => a.slug === slug);
 
   if (!article) {
     notFound();
@@ -81,6 +94,14 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   const allRes = await getBlogPostsAction();
   const allArticles = allRes?.success && allRes.articles ? allRes.articles : INITIAL_BLOG_ARTICLES;
+
+  // WordPress-style layout: a custom layout for this one URL wins, then the
+  // "Blog post" template (Admin > Pages > Templates), else the built-in design.
+  const [override, template] = await Promise.all([
+    getCmsPage(`/blog/${article.slug}`),
+    getCmsPage(templateSlug("blog-post")),
+  ]);
+  const layout = usable(override) && override.category !== "Template" ? override : usable(template) ? template : null;
 
   // ── JSON-LD Structured Data for Google Rich Snippets ──
   const breadcrumbSchema = {
@@ -161,7 +182,7 @@ export default async function BlogPostPage({ params }: PageProps) {
         name: "Will my photos, messages, or apps be erased during the repair?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "No. Our technicians work directly on hardware modules without factory-resetting or erasing storage. Your personal data remains 100% untouched and confidential.",
+          text: "No. Our technicians work directly on hardware modules without factory-resetting or erasing storage. Your personal data stays untouched and confidential.",
         },
       },
       {
@@ -191,7 +212,15 @@ export default async function BlogPostPage({ params }: PageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
 
-      <SingleBlogPostClient article={article} allArticles={allArticles} />
+      {layout ? (
+        <>
+          <RouteDataProvider value={{ type: "blog-post", data: { article, allArticles } }}>
+            <CMSSectionRenderer slug={layout.slug} initialPage={layout} />
+          </RouteDataProvider>
+        </>
+      ) : (
+        <SingleBlogPostClient article={article} allArticles={allArticles} />
+      )}
       <Footer />
     </main>
   );

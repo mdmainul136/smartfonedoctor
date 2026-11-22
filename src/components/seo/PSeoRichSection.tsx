@@ -205,14 +205,14 @@ export default function PSeoRichSection({
               <div>
                 <h3 className="text-base font-bold text-neutral-900 flex items-center gap-2">
                   <Wrench className="w-4 h-4 text-sfd-teal" />
-                  <span>Technical Bench Specification</span>
+                  <span>Repair details</span>
                 </h3>
                 <p className="text-xs text-neutral-500 mt-0.5">
-                  Verified hardware benchmarks and laboratory standards
+                  Time, price, parts and warranty
                 </p>
               </div>
               <span className="text-[11px] font-bold text-sfd-teal uppercase tracking-wider bg-white px-2.5 py-1 rounded-md border border-neutral-200">
-                Verified Spec
+                At a glance
               </span>
             </div>
 
@@ -246,11 +246,11 @@ export default function PSeoRichSection({
               <div className="flex items-center gap-2 mb-2">
                 <Cpu className="w-5 h-5 text-sfd-teal" />
                 <h3 className="text-lg sm:text-xl font-bold text-neutral-900">
-                  Key Repair Features &amp; Laboratory Standards
+                  Key repair features
                 </h3>
               </div>
               <p className="text-xs sm:text-sm text-neutral-600 mb-6">
-                All repairs performed by certified master technicians at our Philadelphia repair benches:
+                All repairs are done by certified technicians at our Philadelphia repair benches:
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

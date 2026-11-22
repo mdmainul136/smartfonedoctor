@@ -486,10 +486,10 @@ export default function SeoManagerPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-200">
         <div>
           <h1 className="text-xl font-bold text-gray-900">
-            SEO &amp; Schema Settings
+            SEO settings
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Configure site-wide meta tags, 301 redirects, webmaster verification, and Schema.org structured data.
+            Site-wide titles, redirects, search console verification and structured data.
           </p>
         </div>
 
@@ -736,7 +736,7 @@ export default function SeoManagerPage() {
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-[#009691]" />
                 <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
-                  Brand Identity &amp; Media Assets
+                  Logo &amp; sharing image
                 </h4>
               </div>
 
@@ -1007,7 +1007,7 @@ export default function SeoManagerPage() {
               </p>
             </div>
             <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800 leading-snug">
-              💡 These settings apply as global fallbacks whenever an individual page or blog post has empty SEO fields.
+              These settings apply as global fallbacks whenever an individual page or blog post has empty SEO fields.
             </div>
 
             {/* LIVE BRAND ASSET PREVIEW */}
@@ -1284,7 +1284,7 @@ export default function SeoManagerPage() {
             <div>
               <h3 className="text-sm font-semibold text-gray-900">Robots.txt, Sitemap &amp; AI Crawler Controls</h3>
               <p className="text-xs text-gray-500 mt-0.5">
-                Configure search engine crawl permissions, dynamic XML sitemaps, and LLM/AI Answer Engine discoverability.
+                Which search engines and AI crawlers may visit the site, and the sitemap.
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -1339,7 +1339,7 @@ export default function SeoManagerPage() {
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5">
                     <Bot className="w-4 h-4 text-purple-600" />
-                    <h4 className="text-xs font-bold text-gray-900">AI Search &amp; LLM Bots</h4>
+                    <h4 className="text-xs font-bold text-gray-900">AI crawlers</h4>
                   </div>
                   <p className="text-xs text-gray-600 leading-relaxed">
                     Allow GPTBot, ClaudeBot, PerplexityBot, and Applebot to index content for AI Overviews and chat citations.
@@ -1391,7 +1391,7 @@ export default function SeoManagerPage() {
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5">
                     <Sparkles className="w-4 h-4 text-amber-600" />
-                    <h4 className="text-xs font-bold text-gray-900">LLMs.txt &amp; Agent Knowledge</h4>
+                    <h4 className="text-xs font-bold text-gray-900">llms.txt (site summary for AI tools)</h4>
                   </div>
                   <p className="text-xs text-gray-600 leading-relaxed">
                     Provides clean, low-token Markdown knowledge files for Answer Engines and autonomous AI agent lookup.

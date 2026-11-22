@@ -1,21 +1,14 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { usePathname } from 'next/navigation';
 import { Mail } from 'lucide-react';
-import { DEFAULT_NAV_MENU, NAV_MENU_EVENT, getStoredNavMenu, telHref } from '@/lib/navMenuData';
+import { DEFAULT_NAV_MENU, telHref, type NavMenuConfig } from '@/lib/navMenuData';
 
-export default function TopBar() {
+export default function TopBar({ topBar: fromDb }: { topBar?: NavMenuConfig["topBar"] } = {}) {
   const pathname = usePathname();
-  // Tagline and phone come from Admin > Navigation & Menus.
-  const [topBar, setTopBar] = useState(DEFAULT_NAV_MENU.topBar);
-
-  useEffect(() => {
-    const load = () => setTopBar(getStoredNavMenu().topBar);
-    load();
-    window.addEventListener(NAV_MENU_EVENT, load);
-    return () => window.removeEventListener(NAV_MENU_EVENT, load);
-  }, []);
+  // Tagline and phone come from Admin > Navigation & Menus (loaded on the server).
+  const topBar = fromDb ?? DEFAULT_NAV_MENU.topBar;
   const isDashboard =
     pathname?.startsWith('/portal') ||
     pathname?.startsWith('/review') ||

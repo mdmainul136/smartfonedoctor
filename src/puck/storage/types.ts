@@ -5,6 +5,8 @@ export type BuilderRevision = {
   id: string;
   createdAt: number;
   label?: string;
+  /** Who published it, when the storage records that. */
+  author?: string;
   data: Data;
 };
 

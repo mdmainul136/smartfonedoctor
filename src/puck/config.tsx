@@ -37,6 +37,8 @@ import { createResponsiveField } from "@/puck/fields/ResponsiveField";
 import { createImagePickerField } from "@/puck/fields/ImagePickerField";
 import { createVisibilityField } from "@/puck/fields/VisibilityField";
 import { ColumnBlock } from "@/puck/layout/ElementorColumn";
+import { LegalDocument } from "@/puck/components/LegalDocument";
+import { generalWidgets, type GeneralComponents } from "@/puck/widgets/general";
 
 const ALIGN_FIELD = {
   type: "radio" as const,
@@ -98,9 +100,30 @@ export const puckConfig: Config<PuckComponents> = {
         "BreadcrumbBlock",
       ],
     },
-    sections: {
-      title: "Site Sections & Live Portals",
+    general: {
+      title: "General",
       components: [
+        "IconBoxBlock",
+        "ImageBoxBlock",
+        "IconListBlock",
+        "StarRatingBlock",
+        "ImageGalleryBlock",
+        "BeforeAfterBlock",
+        "PriceListBlock",
+        "ProgressBarBlock",
+        "SocialIconsBlock",
+        "AlertBlock",
+        "CountdownBlock",
+        "TableOfContentsBlock",
+        "MenuAnchorBlock",
+      ],
+    },
+    sections: {
+      title: "Site sections",
+      components: [
+        "SiteSectionBlock",
+        "GlobalBlockWidget",
+        "LegalDocumentBlock",
         "HeroBlock",
         "RepairTrackerBlock",
         "StatsCounterRowBlock",
@@ -125,10 +148,12 @@ export const puckConfig: Config<PuckComponents> = {
     },
   },
   components: {
+    // Icon Box, Image Box, Gallery, Before/After… (src/puck/widgets/general.tsx)
+    ...(generalWidgets as unknown as Config<GeneralComponents>["components"]),
     HeroBlock: {
       label: "Hero Banner",
       defaultProps: {
-        badgeText: "Philadelphia's Trusted Leader",
+        badgeText: "Phone & computer repair in Philadelphia",
         heading: "Fast, reliable repairs that keep your tech working.",
         subheading:
           "Repair services for smartphones, tablets, computers and game consoles, backed by certified technicians and a 90-day warranty.",
@@ -868,7 +893,7 @@ export const puckConfig: Config<PuckComponents> = {
     SplitBannerBlock: {
       label: "Split Feature Banner",
       defaultProps: {
-        heading: "Why Philadelphia Trusts SmartFone Doctor",
+        heading: "Why Philadelphia Trusts SmartFoneDoctor",
         subheading:
           "Walk in without an appointment or book online for priority bench service.",
         ctaText: "Schedule Repair",
@@ -1366,6 +1391,140 @@ export const puckConfig: Config<PuckComponents> = {
       },
     },
 
+    GlobalBlockWidget: {
+      label: "Global block",
+      defaultProps: { block: "" },
+      fields: {
+        block: { type: "select", label: "Global block", options: [{ label: "Choose a global block", value: "" }] },
+        locked: LOCK_FIELD,
+      },
+      // The list of global blocks comes from the app at runtime.
+      resolveFields: (_data, { fields }) => ({
+        ...fields,
+        block: {
+          type: "select",
+          label: "Global block (edit it once, it changes everywhere)",
+          options: [{ label: "Choose a global block", value: "" }, ...(getBuilderHost().widgets.getGlobalBlockOptions?.() ?? [])],
+        },
+      }),
+      resolvePermissions: resolveLockPermissions,
+      render: ({ block }) => {
+        const View = getBuilderHost().widgets.GlobalBlock;
+        if (!View) return <MissingHostWidget name="Global blocks" />;
+        return <View id={block} />;
+      },
+    },
+    LegalDocumentBlock: {
+      label: "Legal / text page",
+      defaultProps: {
+        breadcrumbLabel: "",
+        title: "Page title",
+        updatedLine: "Last Updated: ",
+        bodyHtml: "<h2>1. First section</h2><p>Write the text here.</p>",
+        closingHtml: "<h2>Contact Us</h2><p>For questions, contact us at:</p>",
+        contactHtml:
+          "<p>SmartFoneDoctor</p><p>33 S 52nd St, Philadelphia, PA 19139</p><p>Phone: <a href=\"tel:+12155982090\">(215) 598-2090</a></p>",
+        backLabel: "← Return to Home",
+        backHref: "/",
+        nextLabel: "",
+        nextHref: "",
+      },
+      fields: {
+        title: { type: "text", label: "Title (H1)" },
+        breadcrumbLabel: { type: "text", label: "Breadcrumb label (empty = title)" },
+        updatedLine: { type: "text", label: "Line under the title (e.g. Last Updated)" },
+        bodyHtml: { type: "richtext", label: "Body (headings, paragraphs, lists; a quote shows as a grey legal notice)" },
+        closingHtml: { type: "richtext", label: "Closing section (above the contact card)" },
+        contactHtml: { type: "richtext", label: "Contact card (first line is bold)" },
+        backLabel: { type: "text", label: "Bottom-left link text" },
+        backHref: { type: "text", label: "Bottom-left link URL" },
+        nextLabel: { type: "text", label: "Bottom-right link text" },
+        nextHref: { type: "text", label: "Bottom-right link URL" },
+        locked: LOCK_FIELD,
+      },
+      resolvePermissions: resolveLockPermissions,
+      render: (props) => <LegalDocument {...props} />,
+    },
+    SiteSectionBlock: {
+      label: "Site Section",
+      defaultProps: {
+        section: "",
+        content: {},
+        customCss: "",
+      },
+      fields: {
+        section: { type: "select", label: "Section", options: [{ label: "Choose a section", value: "" }] },
+        customCss: createCustomCssField(),
+        visibility: createVisibilityField(),
+        locked: LOCK_FIELD,
+      },
+      // The list of sections comes from the app at runtime, not from this file.
+      resolveFields: (data, { fields }) => {
+        const sections = getBuilderHost().widgets.sections ?? {};
+        const entry = sections[data.props.section];
+        return {
+          section: {
+            type: "select",
+            label: "Section",
+            options: [
+              { label: "Choose a section", value: "" },
+              ...Object.entries(sections).map(([value, s]) => ({ label: s.label, value })),
+            ],
+          },
+          // The chosen section's own inputs (headline, image...), when it has any.
+          ...(entry?.fields
+            ? {
+                content: {
+                  type: "object",
+                  label: "Content",
+                  // An empty input uses the section's built-in text, shown as the placeholder.
+                  objectFields: Object.fromEntries(
+                    Object.entries(entry.fields).map(([name, f]) => {
+                      const fallback = entry.defaults?.[name];
+                      return [
+                        name,
+                        (f.type === "text" || f.type === "textarea") && typeof fallback === "string"
+                          ? { ...f, placeholder: fallback }
+                          : f,
+                      ];
+                    })
+                  ),
+                },
+              }
+            : {}),
+          customCss: fields.customCss,
+          visibility: fields.visibility,
+          locked: fields.locked,
+        } as typeof fields;
+      },
+      // When a section is added or switched, start its inputs from the section's
+      // current text. Never on load, so opening a page does not create a draft.
+      resolveData: (data, { changed, trigger }) => {
+        if (trigger === "load" || !(trigger === "insert" || changed.section)) return data;
+        const entry = getBuilderHost().widgets.sections?.[data.props.section];
+        if (!entry?.defaults) return data;
+        return { ...data, props: { ...data.props, content: { ...entry.defaults } } };
+      },
+      resolvePermissions: resolveLockPermissions,
+      render: ({ id, section, content, customCss, visibility }) => {
+        const safeId = sanitizeSectionId(id, "site-section");
+        const scopedCss = customCss ? scopeCustomCss(customCss, safeId) : "";
+        const visibilityCss = buildVisibilityCss(safeId, visibility);
+        const entry = getBuilderHost().widgets.sections?.[section];
+        return (
+          <div id={`sfd-section-${safeId}`} className="w-full">
+            {scopedCss && <style dangerouslySetInnerHTML={{ __html: scopedCss }} />}
+            {visibilityCss && <style dangerouslySetInnerHTML={{ __html: visibilityCss }} />}
+            {entry ? (
+              // Always pass the saved content: on the public site fields are stripped.
+              <entry.component {...(content ?? {})} />
+            ) : (
+              <MissingHostWidget name={section ? `Section "${section}"` : "Pick a section in the panel. This block"} />
+            )}
+          </div>
+        );
+      },
+    },
     RepairTrackerBlock: {
       label: "Repair Live Tracker",
       defaultProps: {
@@ -1480,7 +1639,7 @@ export const puckConfig: Config<PuckComponents> = {
     StatsCounterRowBlock: {
       label: "Stats Counter Row",
       defaultProps: {
-        heading: "Philadelphia's Trusted Leader in Fast Device Repairs",
+        heading: "Phone & computer repair in Philadelphia Fast Device Repairs",
         subheading: "Every repair backed by WISE certification, OEM parts, and a 90-day warranty.",
         columns: 4,
         items: [
@@ -1762,32 +1921,16 @@ export const puckConfig: Config<PuckComponents> = {
     TestimonialBlock: {
       label: "Customer Testimonials",
       defaultProps: {
-        heading: "What Our Philadelphia Customers Say",
-        subheading: "Over 500+ five-star Google reviews from happy smartphone and laptop owners.",
+        heading: "What Our Customers Say",
+        subheading: "Paste real reviews from Google or Yelp (with the customer's permission).",
         columns: 3,
         items: [
           {
-            name: "Marcus Jenkins",
-            role: "University City",
+            name: "Customer name",
+            role: "Neighborhood",
             rating: 5,
-            text: "Fixed my iPhone 14 Pro shattered screen in 35 minutes flat while I waited. Screen looks OEM perfect and touch is super responsive. Highly recommended!",
-            date: "Verified Google Review",
-            source: "Google",
-          },
-          {
-            name: "Sarah Lin",
-            role: "West Philadelphia",
-            rating: 5,
-            text: "My MacBook wouldn't turn on after a coffee spill. The Apple Store said I needed a $900 board replacement. SmartFoneDoctor repaired it same day for a fraction of that!",
-            date: "Verified Google Review",
-            source: "Google",
-          },
-          {
-            name: "David Thompson",
-            role: "Center City",
-            rating: 5,
-            text: "Fastest repair service in the city. Clear pricing, no surprise fees, and they gave me a 90-day warranty on my Samsung battery replacement.",
-            date: "Verified Google Review",
+            text: "Paste the review text here.",
+            date: "Google review",
             source: "Google",
           },
         ],
@@ -1947,7 +2090,7 @@ export const puckConfig: Config<PuckComponents> = {
             device: "iPhone 13 / 14 / 15",
             price: "$119",
             turnaround: "30 Mins",
-            warranty: "Lifetime Limited",
+            warranty: "90-Day Free",
             popular: true,
             badge: "Most Popular",
             ctaText: "Book Repair",
@@ -3204,12 +3347,12 @@ export const puckConfig: Config<PuckComponents> = {
       label: "Partner & Certification Logo Strip",
       defaultProps: {
         heading: "Certified by the Industry's Highest Standards",
-        subheading: "Our technicians hold master-level credentials and use factory-grade repair stations.",
+        subheading: "Our technicians are WISE certified and work at ESD-safe repair benches.",
         items: [
           {
             name: "WISE Level 2 Certified",
             badge: "Master Techs",
-            description: "Wireless Industry Service Excellence Master Technicians",
+            description: "Wireless Industry Service Excellence certified technicians",
             link: "https://www.wisecertification.com",
           },
           {
@@ -4968,7 +5111,7 @@ export const puckConfig: Config<PuckComponents> = {
     IconBlock: {
       label: "Icon Widget",
       defaultProps: {
-        icon: "Sparkles",
+        icon: "Wrench",
         size: 32,
         color: "#00807A",
         bgColor: "rgba(0, 150, 145, 0.12)",
@@ -5007,12 +5150,12 @@ export const puckConfig: Config<PuckComponents> = {
         },
         shadow: {
           type: "select",
-          label: "Shadow & Glow",
+          label: "Shadow",
           options: [
             { label: "None", value: "none" },
             { label: "Subtle Shadow (sm)", value: "sm" },
             { label: "Medium Shadow (md)", value: "md" },
-            { label: "Brand Neon Glow", value: "glow" },
+            { label: "Soft colored shadow", value: "glow" },
           ],
         },
         hoverEffect: {

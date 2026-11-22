@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
+import { requireAdmin, requirePublisher } from "@/lib/adminGuard";
 
 export interface StoreBranchData {
   id: number;
@@ -73,6 +74,7 @@ export async function createStoreBranchAction(
   data: Omit<StoreBranchData, "id" | "isActive" | "order">
 ): Promise<ActionResponse<StoreBranchData>> {
   try {
+    await requirePublisher();
     if (!data.name?.trim() || !data.address?.trim() || !data.phone?.trim()) {
       return {
         success: false,
@@ -123,6 +125,7 @@ export async function updateStoreBranchAction(
   data: Partial<Omit<StoreBranchData, "id">>
 ): Promise<ActionResponse<StoreBranchData>> {
   try {
+    await requirePublisher();
     const existing = await prisma.storeBranch.findUnique({
       where: { id },
     });
@@ -169,6 +172,7 @@ export async function updateStoreBranchAction(
  */
 export async function deleteStoreBranchAction(id: number): Promise<ActionResponse> {
   try {
+    await requirePublisher();
     const count = await prisma.storeBranch.count({ where: { isActive: true } });
     if (count <= 1) {
       return {
@@ -202,6 +206,7 @@ export async function deleteStoreBranchAction(id: number): Promise<ActionRespons
  */
 export async function getAppSystemSettingsAction(): Promise<ActionResponse<AppSystemSettingsData>> {
   try {
+    await requireAdmin();
     let settings = await prisma.appSystemSettings.findUnique({
       where: { id: "global_config" },
     });
@@ -210,7 +215,7 @@ export async function getAppSystemSettingsAction(): Promise<ActionResponse<AppSy
       settings = await prisma.appSystemSettings.create({
         data: {
           id: "global_config",
-          siteName: "SmartFone Doctor",
+          siteName: "SmartFoneDoctor",
           supportEmail: "support@smartfonedoctor.com",
           supportPhone: "+1 (215) 598-2090",
           headquarters: "33 S 52nd St, Philadelphia, PA 19139",
@@ -243,11 +248,12 @@ export async function updateAppSystemSettingsAction(
   data: Partial<Omit<AppSystemSettingsData, "id">>
 ): Promise<ActionResponse<AppSystemSettingsData>> {
   try {
+    await requirePublisher();
     const updated = await prisma.appSystemSettings.upsert({
       where: { id: "global_config" },
       create: {
         id: "global_config",
-        siteName: data.siteName || "SmartFone Doctor",
+        siteName: data.siteName || "SmartFoneDoctor",
         supportEmail: data.supportEmail || "support@smartfonedoctor.com",
         supportPhone: data.supportPhone || "+1 (215) 598-2090",
         headquarters: data.headquarters || "33 S 52nd St, Philadelphia, PA 19139",

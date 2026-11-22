@@ -18,6 +18,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import Footer from "@/components/layout/Footer";
+import type { CommonIssueDetail } from "@/data/commonIssuesData";
 
 interface CommonArticle {
   id: string;
@@ -28,7 +29,8 @@ interface CommonArticle {
   targetLink: string;
 }
 
-const ISSUE_ARTICLES: CommonArticle[] = [
+/** Shortcut cards to repair service pages (topics without their own article). */
+const SERVICE_SHORTCUTS: CommonArticle[] = [
   {
     id: "art-1",
     category: "smartphones",
@@ -167,7 +169,30 @@ const ISSUE_ARTICLES: CommonArticle[] = [
   },
 ];
 
-export default function CommonIssuesClient() {
+const CARD_CATEGORY: Record<CommonIssueDetail["category"], CommonArticle["category"]> = {
+  smartphone: "smartphones",
+  computer: "computers",
+  tablet: "tablets",
+  console: "consoles",
+};
+
+/**
+ * Common issues index. Articles come from the database (Admin > Common Issues);
+ * the service shortcut cards above fill in topics that have no article yet.
+ */
+export default function CommonIssuesClient({ issues }: { issues: CommonIssueDetail[] }) {
+  const ISSUE_ARTICLES: CommonArticle[] = [
+    ...issues.map((i) => ({
+      id: `issue-${i.slug}`,
+      category: CARD_CATEGORY[i.category],
+      title: i.title,
+      description: i.leadText,
+      image: i.image,
+      targetLink: `/common-issues/${i.category}/${i.slug}`,
+    })),
+    // Hand-written cards that pointed at articles are replaced by the articles themselves.
+    ...SERVICE_SHORTCUTS.filter((c) => !c.targetLink.startsWith("/common-issues/")),
+  ];
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -574,7 +599,7 @@ export default function CommonIssuesClient() {
             <span className="text-sfd-teal font-bold">✓</span> Free Diagnostics &amp; Estimates
           </div>
           <div className="flex items-center gap-1.5 text-neutral-200">
-            <span className="text-sfd-teal font-bold">✓</span> Limited Lifetime Warranty
+            <span className="text-sfd-teal font-bold">✓</span> 90-Day Warranty
           </div>
           <div className="flex items-center gap-1.5 text-neutral-200">
             <span className="text-sfd-teal font-bold">✓</span> 3 Philadelphia Locations

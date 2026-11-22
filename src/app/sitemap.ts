@@ -1,125 +1,109 @@
 import type { MetadataRoute } from "next";
 import prisma from "@/lib/prisma";
+import { listTypeUrls } from "@/lib/themeTypes";
 
 export const revalidate = 3600; // Revalidate dynamic sitemap every 1 hour
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://smartfonedoctor.com";
 
+type Freq = MetadataRoute.Sitemap[number]["changeFrequency"];
+
+/**
+ * Every indexable page, from the database: CMS pages (incl. category hubs),
+ * published blog posts, and the device, repair and common-issue pages built
+ * from the catalog. Templates, drafts, redirecting URLs and redirect sources are
+ * left out, so every URL listed answers 200.
+ */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const entries: MetadataRoute.Sitemap = [];
-  const addedUrls = new Set<string>();
+  const added = new Set<string>();
+  const add = (path: string, priority: number, changeFrequency: Freq, lastModified?: Date, canonical?: string | null) => {
+    const own = `${BASE_URL}${path === "/" ? "" : path}`;
+    // A stored canonical is used only when it names this same page (some rows still
+    // point at old redirecting addresses such as /track).
+    const url = canonical && canonical.replace(/\/+$/, "") === own.replace(/\/+$/, "") ? canonical : own;
+    if (added.has(url)) return;
+    added.add(url);
+    entries.push({ url, priority, changeFrequency, ...(lastModified ? { lastModified } : {}) });
+  };
 
   try {
-    // Check if sitemap is enabled globally in SEO settings
     const seoSettings = await prisma.siteSeoSettings.findUnique({
       where: { id: "global_seo_settings" },
       select: { enableSitemap: true },
     });
+    if (seoSettings && seoSettings.enableSitemap === false) return [];
 
-    if (seoSettings && seoSettings.enableSitemap === false) {
-      return [];
+    // URLs that redirect: active DB redirect rules and the code's alias routes.
+    const redirectRules = await prisma.urlRedirect.findMany({ where: { isActive: true }, select: { sourceUrl: true } });
+    const skip = new Set<string>([
+      ...redirectRules.map((r) => r.sourceUrl),
+      "/track",
+      "/locations",
+      "/repairs/iphone",
+      "/repairs/ipad",
+      "/repairs/mac",
+      "/california-supply-chain-act",
+    ]);
+    // CMS rows whose path is an alias of the real page.
+    const ALIAS: Record<string, string> = { "/track": "/repair-status" };
+
+    // 1. Core pages that are always there.
+    add("/", 1.0, "daily");
+    for (const p of ["/repairs", "/schedule-repair"]) add(p, 0.9, "weekly");
+    add("/blog", 0.8, "daily");
+    for (const p of ["/repair-status", "/review", "/faq", "/common-issues", "/warranty", "/locations/i/book-repair"]) add(p, 0.7, "weekly");
+    add("/about", 0.6, "monthly");
+
+    // 2. Published CMS pages (incl. category hubs and legal pages); not templates.
+    const pages = await prisma.cmsPage.findMany({
+      where: { status: "Published", NOT: [{ category: "Template" }, { category: "Global" }] },
+      include: { seo: true },
+      orderBy: { updatedAt: "desc" },
+    });
+    for (const page of pages) {
+      if (page.seo?.robotsIndex === false || page.seo?.includeInSitemap === false) continue;
+      const path = ALIAS[page.path] ?? page.path;
+      if (skip.has(path) || path.startsWith("/_templates/")) continue;
+      const isHub = /^\/repairs\/(smartphone|tablet|computer|console)$/.test(path);
+      add(
+        path,
+        page.seo?.sitemapPriority ? Number(page.seo.sitemapPriority) : path === "/" ? 1.0 : isHub ? 0.9 : 0.6,
+        (page.seo?.changeFrequency as Freq) || (isHub ? "weekly" : "monthly"),
+        page.updatedAt,
+        page.seo?.canonicalUrl
+      );
     }
 
-    // 1. Fetch CMS Pages from PostgreSQL with attached SEO Metadata
-    const pages = await prisma.cmsPage.findMany({
+    // 3. Published blog posts.
+    const posts = await prisma.blogPost.findMany({
       where: { status: "Published" },
       include: { seo: true },
       orderBy: { updatedAt: "desc" },
     });
-
-    for (const page of pages) {
-      // Skip if explicitly marked as noindex or omitted from sitemap
-      if (page.seo?.robotsIndex === false || page.seo?.includeInSitemap === false) {
-        continue;
-      }
-
-      const rawPath = page.path === "/" ? "" : page.path;
-      const url = page.seo?.canonicalUrl || `${BASE_URL}${rawPath}`;
-      if (addedUrls.has(url)) continue;
-      addedUrls.add(url);
-
-      const priority = page.seo?.sitemapPriority
-        ? Number(page.seo.sitemapPriority)
-        : page.path === "/"
-        ? 1.0
-        : 0.8;
-
-      const changeFrequency =
-        (page.seo?.changeFrequency as MetadataRoute.Sitemap[number]["changeFrequency"]) ||
-        (page.path === "/" ? "daily" : "weekly");
-
-      entries.push({
-        url,
-        lastModified: page.updatedAt,
-        changeFrequency,
-        priority,
-      });
-    }
-
-    // 2. Fetch Blog Posts from PostgreSQL with attached SEO Metadata
-    const posts = await prisma.blogPost.findMany({
-      include: { seo: true },
-      orderBy: { updatedAt: "desc" },
-    });
-
     for (const post of posts) {
-      if (post.seo?.robotsIndex === false || post.seo?.includeInSitemap === false) {
-        continue;
-      }
-
-      const url = post.seo?.canonicalUrl || `${BASE_URL}/blog/${post.slug}`;
-      if (addedUrls.has(url)) continue;
-      addedUrls.add(url);
-
-      entries.push({
-        url,
-        lastModified: post.updatedAt,
-        changeFrequency:
-          (post.seo?.changeFrequency as MetadataRoute.Sitemap[number]["changeFrequency"]) ||
-          "monthly",
-        priority: post.seo?.sitemapPriority ? Number(post.seo.sitemapPriority) : 0.7,
-      });
+      if (post.seo?.robotsIndex === false || post.seo?.includeInSitemap === false) continue;
+      add(
+        `/blog/${post.slug}`,
+        post.seo?.sitemapPriority ? Number(post.seo.sitemapPriority) : 0.7,
+        (post.seo?.changeFrequency as Freq) || "monthly",
+        post.updatedAt,
+        post.seo?.canonicalUrl
+      );
     }
 
-    // 3. Ensure Core Hub, Category, and Customer Flow Pages are present
-    const CORE_ROUTES = [
-      { path: "/", priority: 1.0, freq: "daily" as const },
-      { path: "/repairs", priority: 0.9, freq: "weekly" as const },
-      { path: "/repairs/smartphone", priority: 0.9, freq: "weekly" as const },
-      { path: "/repairs/tablet", priority: 0.8, freq: "weekly" as const },
-      { path: "/repairs/computer", priority: 0.8, freq: "weekly" as const },
-      { path: "/repairs/console", priority: 0.8, freq: "weekly" as const },
-      { path: "/locations", priority: 0.9, freq: "weekly" as const },
-      { path: "/schedule-repair", priority: 0.9, freq: "weekly" as const },
-      { path: "/repair-status", priority: 0.8, freq: "daily" as const },
-      { path: "/blog", priority: 0.9, freq: "daily" as const },
-      { path: "/reviews", priority: 0.8, freq: "weekly" as const },
-      { path: "/faq", priority: 0.8, freq: "weekly" as const },
-      { path: "/about", priority: 0.7, freq: "monthly" as const },
-    ];
-
-    for (const route of CORE_ROUTES) {
-      const pathSuffix = route.path === "/" ? "" : route.path;
-      const url = `${BASE_URL}${pathSuffix}`;
-      if (!addedUrls.has(url)) {
-        addedUrls.add(url);
-        entries.push({
-          url,
-          lastModified: new Date(),
-          changeFrequency: route.freq,
-          priority: route.priority,
-        });
-      }
-    }
+    // 4. Catalog pages: devices (and service pages), device × repair, common issues.
+    const stores = await prisma.taxonomyStore.findMany({
+      where: { id: { in: ["catalog-devices", "catalog-repairs", "common-issues"] } },
+      select: { id: true, updatedAt: true },
+    });
+    const updated = (id: string) => stores.find((s) => s.id === id)?.updatedAt;
+    for (const path of await listTypeUrls("repair-device")) if (!skip.has(path)) add(path, 0.8, "weekly", updated("catalog-devices"));
+    for (const path of await listTypeUrls("repair-issue")) if (!skip.has(path)) add(path, 0.7, "weekly", updated("catalog-repairs"));
+    for (const path of await listTypeUrls("common-issue")) if (!skip.has(path)) add(path, 0.6, "monthly", updated("common-issues"));
   } catch (error) {
     console.error("Failed to generate dynamic sitemap:", error);
-    // Safe fallback so sitemap never returns 500 error to search engines
-    entries.push({
-      url: BASE_URL,
-      lastModified: new Date(),
-      changeFrequency: "daily",
-      priority: 1.0,
-    });
+    if (!entries.length) entries.push({ url: BASE_URL, lastModified: new Date(), changeFrequency: "daily", priority: 1.0 });
   }
 
   return entries;

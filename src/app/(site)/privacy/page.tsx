@@ -4,18 +4,26 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Footer from "@/components/layout/Footer";
 import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
+import { getCmsPage } from "@/actions/cmsPages";
+import { withCmsMetadata } from "@/lib/cmsMetadata";
 
-export const metadata: Metadata = {
+// Coded defaults; title, description and canonical can be changed in Admin > Pages > SEO.
+const baseMetadata: Metadata = {
   title: brandTitle("Privacy Policy | SmartFoneDoctor"),
   description:
     "Learn how SmartFoneDoctor collects, protects, uses, and respects your personal information and device data.",
   keywords: ["Privacy Policy", "SmartFoneDoctor Privacy", "Data Protection Philadelphia"],
 };
 
-export default function PrivacyPolicyPage() {
+export async function generateMetadata(): Promise<Metadata> {
+  return withCmsMetadata("privacy", baseMetadata);
+}
+
+export default async function PrivacyPolicyPage() {
+  const cmsPage = await getCmsPage("privacy");
   return (
     <main className="bg-[#fcfcfc] min-h-screen">
-      <CMSSectionRenderer slug="privacy">
+      <CMSSectionRenderer slug="privacy" initialPage={cmsPage}>
         <div className="max-w-[1140px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20">
         
         {/* Breadcrumbs */}

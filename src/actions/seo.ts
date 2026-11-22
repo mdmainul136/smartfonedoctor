@@ -1,6 +1,7 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import { requireAdmin, requirePublisher } from "@/lib/adminGuard";
 import { revalidatePath } from "next/cache";
 import { cleanVerificationToken } from "@/lib/seoSanitize";
 
@@ -99,6 +100,7 @@ export async function getSiteSeoSettingsAction() {
  */
 export async function updateSiteSeoSettingsAction(input: SiteSeoSettingsInput) {
   try {
+    await requirePublisher();
     const cleanedGoogle = cleanVerificationToken(input.googleSiteVerification);
     const cleanedBing = cleanVerificationToken(input.bingSiteVerification);
     const cleanedPinterest = cleanVerificationToken(input.pinterestVerification);
@@ -120,7 +122,7 @@ export async function updateSiteSeoSettingsAction(input: SiteSeoSettingsInput) {
         contactEmail: input.contactEmail || "contact@smartfonedoctor.com",
         streetAddress: input.streetAddress || "33 S 52nd St",
         cityStateZip: input.cityStateZip || "Philadelphia, PA 19139",
-        businessHours: input.businessHours || "Mon–Sat: 10:00 AM – 7:30 PM | Sun: 11:00 AM – 5:00 PM",
+        businessHours: input.businessHours || "Mon–Sat: 10:00 AM – 7:00 PM",
         facebookUrl: input.facebookUrl || "https://facebook.com/smartfonedoctor",
         instagramUrl: input.instagramUrl || "https://instagram.com/smartfonedoctor",
         youtubeUrl: input.youtubeUrl || null,
@@ -151,7 +153,7 @@ export async function updateSiteSeoSettingsAction(input: SiteSeoSettingsInput) {
         contactEmail: input.contactEmail || "contact@smartfonedoctor.com",
         streetAddress: input.streetAddress || "33 S 52nd St",
         cityStateZip: input.cityStateZip || "Philadelphia, PA 19139",
-        businessHours: input.businessHours || "Mon–Sat: 10:00 AM – 7:30 PM | Sun: 11:00 AM – 5:00 PM",
+        businessHours: input.businessHours || "Mon–Sat: 10:00 AM – 7:00 PM",
         facebookUrl: input.facebookUrl || "https://facebook.com/smartfonedoctor",
         instagramUrl: input.instagramUrl || "https://instagram.com/smartfonedoctor",
         youtubeUrl: input.youtubeUrl || null,
@@ -187,6 +189,7 @@ export async function updateSiteSeoSettingsAction(input: SiteSeoSettingsInput) {
  */
 export async function getUrlRedirectsAction() {
   try {
+    await requireAdmin();
     const redirects = await prisma.urlRedirect.findMany({
       orderBy: { createdAt: "desc" },
     });
@@ -202,6 +205,7 @@ export async function getUrlRedirectsAction() {
  */
 export async function upsertUrlRedirectAction(input: UrlRedirectInput) {
   try {
+    await requirePublisher();
     const cleanSource = input.sourceUrl.trim();
     const cleanTarget = input.targetUrl.trim();
 
@@ -244,6 +248,7 @@ export async function upsertUrlRedirectAction(input: UrlRedirectInput) {
  */
 export async function deleteUrlRedirectAction(id: string) {
   try {
+    await requirePublisher();
     await prisma.urlRedirect.delete({ where: { id } });
     return { success: true };
   } catch (err: unknown) {
@@ -257,6 +262,7 @@ export async function deleteUrlRedirectAction(id: string) {
  */
 export async function toggleUrlRedirectAction(id: string, isActive: boolean) {
   try {
+    await requirePublisher();
     const updated = await prisma.urlRedirect.update({
       where: { id },
       data: { isActive },

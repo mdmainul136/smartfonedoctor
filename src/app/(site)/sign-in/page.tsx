@@ -64,7 +64,7 @@ function SignInForm() {
             </span>
             <div className="flex flex-col text-left">
               <span className="text-base font-semibold text-zinc-900 leading-tight tracking-tight">
-                SmartFone Doctor
+                SmartFoneDoctor
               </span>
               <span className="text-xs text-zinc-500 leading-tight">
                 Philadelphia · Flagship Admin

@@ -2,15 +2,17 @@
 
 import React from "react";
 import Link from "next/link";
+import { WISE_DEFAULTS, pickText, type WiseProps } from "./sectionContent";
 
-export function WiseCertification() {
+export function WiseCertification(props: WiseProps) {
+  const d = WISE_DEFAULTS;
   return (
     <section className="bg-white py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-[1100px] mx-auto">
 
         {/* Section Heading */}
         <h2 className="text-[22px] sm:text-[26px] font-[550] text-[#1d1c1a] text-center mb-8 tracking-tight">
-          The SmartFoneDoctor Difference - Certified Technicians
+          {pickText(props.heading, d.heading)}
         </h2>
 
         {/* Big Card Container */}
@@ -54,29 +56,23 @@ export function WiseCertification() {
               </div>
 
               <h3 className="text-[17px] sm:text-[18px] font-bold text-[#1d1c1a] mb-3">
-                WISE Certified Technicians
+                {pickText(props.title, d.title)}
               </h3>
 
               <p className="text-[12.5px] sm:text-[13px] text-neutral-600 leading-relaxed mb-4">
-                SmartFoneDoctor is a proud WISE Certified Partner, an industry-recognized standard for
-                excellence in mobile device repair. Our WISE Certified Technicians complete extensive
-                training, with a strong focus on repair quality, safety protocols, and proper
-                lithium-ion battery handling. As a WISE Certified Partner, we are committed to
-                protecting your data and personal information throughout the repair process. Technicians
-                renew their certification annually, ensuring our repair practices stay current and
-                reliable.
+                {pickText(props.body, d.body)}
               </p>
 
               <p className="text-[12.5px] sm:text-[13px] font-bold text-[#1d1c1a] mb-5">
-                SmartFoneDoctor will not void your preexisting warranty.
+                {pickText(props.note, d.note)}
               </p>
 
               <div>
                 <Link
-                  href="#locations"
+                  href={pickText(props.buttonLink, d.buttonLink)}
                   className="inline-block py-2.5 px-6 rounded-full bg-sfd-teal hover:bg-sfd-tealDark text-white text-[13px] font-bold tracking-tight shadow-xs transition-colors"
                 >
-                  Choose Store
+                  {pickText(props.buttonText, d.buttonText)}
                 </Link>
               </div>
 

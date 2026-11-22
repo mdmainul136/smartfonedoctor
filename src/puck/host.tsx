@@ -1,4 +1,5 @@
 import type { AnchorHTMLAttributes, ComponentType } from "react";
+import type { Field } from "@puckeditor/core";
 
 /**
  * What the builder needs from the app it runs in. The builder never imports
@@ -40,6 +41,27 @@ export type HostWidgets = {
     showPickupChecklist?: boolean;
   }>;
   BookingWizard?: ComponentType;
+  /** Renders a global block (content edited once, shown wherever inserted). */
+  GlobalBlock?: ComponentType<{ id?: string }>;
+  /** The global blocks the editor can pick from. */
+  getGlobalBlockOptions?: () => { label: string; value: string }[];
+  /**
+   * Ready-made sections from the app's own code (a coded hero, a store finder...),
+   * offered in the "Site Section" block. Key = stable id saved in page data.
+   */
+  sections?: Record<string, HostSection>;
+};
+
+/**
+ * One coded section. `fields` (optional) become editable inputs in the builder;
+ * their values reach the component as props, starting from `defaults`.
+ */
+export type HostSection = {
+  label: string;
+  // Each section has its own props, so the registry cannot name one type.
+  component: ComponentType<any>;
+  fields?: Record<string, Field>;
+  defaults?: Record<string, unknown>;
 };
 
 export type BuilderHost = {

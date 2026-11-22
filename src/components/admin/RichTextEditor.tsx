@@ -870,7 +870,7 @@ export default function RichTextEditor({
         : `<p>${aiResultText.replace(/\n\n/g, "</p><p>").replace(/\n/g, "<br/>")}</p>`;
       document.execCommand("insertHTML", false, html);
     } else {
-      const html = `<p><br></p><div style="background: #f0fdfa; border-left: 4px solid #00897b; padding: 14px 18px; margin: 16px 0; border-radius: 0 8px 8px 0;"><span style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: #00897b; letter-spacing: 0.05em; display: block; margin-bottom: 4px;">✨ AI Optimized Insights</span>${aiResultText.replace(/\n/g, "<br/>")}</div><p><br></p>`;
+      const html = `<p><br></p><div style="background: #f0fdfa; border-left: 4px solid #00897b; padding: 14px 18px; margin: 16px 0; border-radius: 0 8px 8px 0;"><span style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: #00897b; letter-spacing: 0.05em; display: block; margin-bottom: 4px;">Key points</span>${aiResultText.replace(/\n/g, "<br/>")}</div><p><br></p>`;
       document.execCommand("insertHTML", false, html);
     }
 
@@ -951,7 +951,10 @@ export default function RichTextEditor({
     editorRef.current?.focus();
 
     const device = PSEO_DEVICES.find((d) => d.slug === selectedDeviceSlug) || PSEO_DEVICES[0];
-    const issue = PSEO_ISSUES.find((i) => i.slug === selectedIssueSlug) || PSEO_ISSUES[0];
+    const issue =
+      PSEO_ISSUES.find((i) => i.slug === selectedIssueSlug && i.category === device.category) ||
+      PSEO_ISSUES.find((i) => i.slug === selectedIssueSlug) ||
+      PSEO_ISSUES[0];
     const price = issue.basePrice + (device.releaseYear >= 2024 ? 20 : 0);
     const targetUrl = `/repairs/${device.category}/${device.slug}/${issue.slug}`;
 
@@ -2740,7 +2743,7 @@ export default function RichTextEditor({
                   </div>
                   <div>
                     <h4 className="font-bold text-gray-900 leading-tight text-xs">Block Style Inspector</h4>
-                    <span className="text-[10px] text-gray-400">Elementor-style CSS &amp; Layout</span>
+                    <span className="text-[10px] text-gray-400">Style &amp; layout</span>
                   </div>
                 </div>
                 <button
@@ -3033,7 +3036,7 @@ export default function RichTextEditor({
 
                   {/* 4. ONE-CLICK DESIGN PRESETS */}
                   <div className="space-y-2 pt-2 border-t border-gray-200">
-                    <span className="text-[11px] font-bold text-gray-700 uppercase tracking-wider block">1-Click Design Presets</span>
+                    <span className="text-[11px] font-bold text-gray-700 uppercase tracking-wider block">Design presets</span>
                     <div className="grid grid-cols-2 gap-1.5">
                       <button
                         type="button"
@@ -3045,7 +3048,7 @@ export default function RichTextEditor({
                         }}
                         className="p-1.5 rounded border border-emerald-200 bg-emerald-50 text-[10px] font-semibold text-emerald-800 hover:bg-emerald-100 text-left transition cursor-pointer"
                       >
-                        💡 Soft Tip
+                        Soft tip
                       </button>
                       <button
                         type="button"
@@ -3093,7 +3096,7 @@ export default function RichTextEditor({
                         }}
                         className="p-1.5 rounded border border-purple-200 bg-purple-50 text-[10px] font-semibold text-purple-800 hover:bg-purple-100 text-left transition cursor-pointer"
                       >
-                        ⭐ Pro Tip
+                        Pro tip
                       </button>
                       <button
                         type="button"
@@ -3772,7 +3775,7 @@ export default function RichTextEditor({
                 </div>
                 <div>
                   <h3 className="font-bold text-sm text-gray-900 leading-tight">
-                    Insert Advance pSEO Juicy Link &amp; Strategy
+                    Insert an internal link
                   </h3>
                   <span className="text-[11px] text-gray-400">
                     High-authority internal links connecting devices, issues &amp; prices
@@ -3818,8 +3821,8 @@ export default function RichTextEditor({
                     className="w-full h-[34px] px-2.5 rounded-lg border border-gray-300 text-xs font-semibold bg-white focus:outline-none focus:border-[#00897b]"
                   >
                     {PSEO_ISSUES.map((i) => (
-                      <option key={i.slug} value={i.slug}>
-                        {i.name} (from ${i.basePrice})
+                      <option key={`${i.category}:${i.slug}`} value={i.slug}>
+                        [{i.category}] {i.name} (from ${i.basePrice})
                       </option>
                     ))}
                   </select>
@@ -3829,7 +3832,7 @@ export default function RichTextEditor({
               {/* Linking Strategy Tabs */}
               <div>
                 <label className="text-[11px] font-bold uppercase tracking-wider text-gray-600 block mb-1.5">
-                  Juicy Linking Strategy
+                  Link type
                 </label>
                 <div className="grid grid-cols-3 gap-2">
                   <button
@@ -3885,7 +3888,7 @@ export default function RichTextEditor({
                     onChange={(e) => setCustomAnchorText(e.target.value)}
                     placeholder={`e.g. ${
                       (PSEO_DEVICES.find((d) => d.slug === selectedDeviceSlug) || PSEO_DEVICES[0]).name
-                    } ${(PSEO_ISSUES.find((i) => i.slug === selectedIssueSlug) || PSEO_ISSUES[0]).shortName}`}
+                    } ${(PSEO_ISSUES.find((i) => i.slug === selectedIssueSlug && i.category === (PSEO_DEVICES.find((d) => d.slug === selectedDeviceSlug) || PSEO_DEVICES[0]).category) || PSEO_ISSUES.find((i) => i.slug === selectedIssueSlug) || PSEO_ISSUES[0]).shortName}`}
                     className="w-full h-[32px] px-2.5 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-[#00897b]"
                   />
                 </div>
@@ -3893,7 +3896,7 @@ export default function RichTextEditor({
 
               {/* Target Destination Preview */}
               <div className="p-3 rounded-xl bg-gray-50 border border-gray-200 text-xs space-y-1">
-                <span className="text-[10px] uppercase font-bold text-gray-400 block">Link Destination (pSEO Canonical)</span>
+                <span className="text-[10px] uppercase font-bold text-gray-400 block">Link destination</span>
                 <span className="font-mono text-gray-800 text-[11px] font-semibold block truncate">
                   /repairs/
                   {(PSEO_DEVICES.find((d) => d.slug === selectedDeviceSlug) || PSEO_DEVICES[0]).category}/

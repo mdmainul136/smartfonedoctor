@@ -80,11 +80,12 @@ export async function GET() {
     }
 
     md += `## Core Services\n\n`;
-    md += `- [iPhone Screen & Battery Repair](${BASE_URL}/repairs/iphone.md): Screen swaps in 25–45 mins ($129–$299) and battery health restorations ($69–$99).\n`;
-    md += `- [Samsung Galaxy & Android Repair](${BASE_URL}/repairs/smartphone.md): Curved AMOLED screen replacements, back glass laser separation, and USB-C port soldering.\n`;
-    md += `- [iPad & Tablet Hardware Services](${BASE_URL}/repairs/ipad.md): Digitizer and LCD glass separation, charging port repairs, and battery replacements.\n`;
-    md += `- [MacBook & Laptop Bench Procedures](${BASE_URL}/repairs/mac.md): Liquid spill cleaning, screen assemblies, trackpads, and swollen battery replacements.\n`;
-    md += `- [Gaming Console HDMI Micro-Soldering](${BASE_URL}/repairs/computer.md): PS5, Xbox Series X, and Nintendo Switch HDMI port replacement and encoder IC chip repair.\n\n`;
+    md += `- [All Repair Services](${BASE_URL}/repairs.md): Every device category we fix, with brands, models and repair prices.\n`;
+    md += `- [iPhone Screen & Battery Repair](${BASE_URL}/repairs/smartphone/iphone-repair): Screen swaps in 25–45 mins ($129–$299) and battery health restorations ($69–$99).\n`;
+    md += `- [Samsung Galaxy & Android Repair](${BASE_URL}/repairs/smartphone/samsung-repair): Curved AMOLED screen replacements, back glass laser separation, and USB-C port soldering.\n`;
+    md += `- [iPad & Tablet Hardware Services](${BASE_URL}/repairs/tablet/ipad-repair): Digitizer and LCD glass separation, charging port repairs, and battery replacements.\n`;
+    md += `- [MacBook & Laptop Bench Procedures](${BASE_URL}/repairs/computer/macbook-repair): Liquid spill cleaning, screen assemblies, trackpads, and swollen battery replacements.\n`;
+    md += `- [Gaming Console HDMI Micro-Soldering](${BASE_URL}/repairs/console.md): PS5, Xbox Series X, and Nintendo Switch HDMI port replacement and encoder IC chip repair.\n\n`;
 
     if (blogPosts.length > 0) {
       md += `## Technical Repair Guides\n\n`;
@@ -97,7 +98,7 @@ export async function GET() {
 
     md += `## Online Actions\n\n`;
     md += `- [Online Repair Intake & Estimate](${BASE_URL}/schedule-repair.md): Interactive wizard for priority bench service and instant pricing.\n`;
-    md += `- [Live Repair Status Tracker](${BASE_URL}/repair-status.md): Real-time ticket lookup by ticket ID (e.g. SFD-10001) and customer phone number.\n\n`;
+    md += `- [Live Repair Status Tracker](${BASE_URL}/repair-status): Real-time ticket lookup by ticket ID (e.g. SFD-10001) and customer phone number.\n\n`;
 
     // 5. Optional Section (v2 spec standard for secondary links)
     md += `## Optional\n\n`;

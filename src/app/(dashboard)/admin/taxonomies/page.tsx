@@ -12,13 +12,13 @@ import {
   Search,
   CheckCircle2,
   ArrowRight,
-  Sparkles,
   Smartphone,
   Tablet,
   Gamepad2,
   Laptop,
   BookOpen,
   Info,
+  Link2,
 } from "lucide-react";
 import {
   DEVICE_CATEGORIES,
@@ -53,10 +53,10 @@ export default function TaxonomiesRoutingPage() {
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-[#111111] tracking-tight">
-                Taxonomies &amp; Content Architecture
+                Taxonomies
               </h1>
               <p className="text-[13px] text-[#6b6b6b]">
-                Interconnect Pages, Device Categories, Hardware Brands, Repair Services, and Knowledge Base Articles.
+                How pages, categories, brands and repairs link to each other.
               </p>
             </div>
           </div>
@@ -145,7 +145,7 @@ export default function TaxonomiesRoutingPage() {
       </div>
 
       {/* 3. Interconnection Architecture Banner */}
-      <div className="p-4 rounded-xl bg-gradient-to-r from-teal-50 to-indigo-50 border border-teal-200/80 flex flex-col md:flex-row md:items-center justify-between gap-3 text-sm">
+      <div className="p-4 rounded-xl bg-[#f8fafa] border border-teal-200/80 flex flex-col md:flex-row md:items-center justify-between gap-3 text-sm">
         <div className="flex items-start gap-3">
           <Info className="w-5 h-5 text-teal-700 shrink-0 mt-0.5" />
           <div>
@@ -162,7 +162,7 @@ export default function TaxonomiesRoutingPage() {
           onClick={() => setActiveTab("tester")}
           className="h-[32px] px-3 rounded-md bg-teal-700 hover:bg-teal-800 text-white font-semibold text-xs inline-flex items-center gap-1.5 shrink-0"
         >
-          <Sparkles className="w-3.5 h-3.5" />
+          <Link2 className="w-3.5 h-3.5" />
           <span>Launch URL Tester</span>
         </button>
       </div>
@@ -179,7 +179,7 @@ export default function TaxonomiesRoutingPage() {
             { id: "models", label: `Device Models (${DEVICE_MODELS_TAXONOMY.length})` },
             { id: "pages", label: `Core Pages (${CORE_PAGES_TAXONOMY.length})` },
             { id: "blogs", label: `Guides & Blog (${BLOG_POSTS_TAXONOMY.length})` },
-            { id: "tester", label: "⚡ Live URL Resolver Tester" },
+            { id: "tester", label: "URL tester" },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -574,7 +574,7 @@ export default function TaxonomiesRoutingPage() {
                     </Link>
                   </div>
                   <p className="text-[11px] text-gray-500">
-                    ✅ Automatically linked into navigation flyouts and customer click paths.
+                    Linked automatically in menus that point to it.
                   </p>
                 </div>
               </div>

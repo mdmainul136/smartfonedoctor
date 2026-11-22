@@ -1,16 +1,15 @@
 "use client";
 
-import NextLink from "next/link";
+import "./siteHost";
 import MediaModal from "@/components/admin/MediaModal";
-import RepairTrackerWidget from "@/components/site/RepairTrackerWidget";
-import ScheduleRepairWizard from "@/components/booking/ScheduleRepairWizard";
 import { getStoredAiSettings } from "@/lib/aiSettings";
-import { setBuilderHost, type MediaPickerProps } from "@/puck/host";
+import { getBuilderHost, setBuilderHost, type MediaPickerProps } from "@/puck/host";
+import { SITE_SECTIONS } from "./siteSections";
 
 /**
- * Plugs SmartFone Doctor's app into the page builder: Next.js links, the media
- * library and the AI keys from Settings. Imported once by every place that
- * renders builder pages (the admin editor and the public site).
+ * Editor additions on top of the public site host (siteHost.tsx): the media
+ * library, the AI keys from Settings and the site sections with their editable
+ * fields. Imported by the admin page editor only.
  */
 
 function SiteMediaPicker({ isOpen, onClose, onSelect, initialUrl }: MediaPickerProps) {
@@ -25,13 +24,9 @@ function SiteMediaPicker({ isOpen, onClose, onSelect, initialUrl }: MediaPickerP
 }
 
 setBuilderHost({
-  Link: NextLink,
   MediaPicker: SiteMediaPicker,
   getAiSettings: getStoredAiSettings,
   aiEndpoint: "/api/admin/puck-ai",
   aiSettingsHref: "/settings",
-  widgets: {
-    RepairTracker: RepairTrackerWidget,
-    BookingWizard: ScheduleRepairWizard,
-  },
+  widgets: { ...getBuilderHost().widgets, sections: SITE_SECTIONS },
 });

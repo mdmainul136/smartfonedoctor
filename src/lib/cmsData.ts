@@ -109,7 +109,8 @@ export interface CMSPage {
   slug: string;
   name: string;
   path: string;
-  category: "Core" | "Repairs" | "Utility" | "Legal";
+  /** Template: a type template (e.g. every blog post), edited like a page but not a URL itself. */
+  category: "Core" | "Repairs" | "Utility" | "Legal" | "Template" | "Global";
   title: string;
   metaDesc: string;
   heroHeadline: string;
@@ -117,7 +118,10 @@ export interface CMSPage {
   heroBadge: string;
   primaryCtaText: string;
   primaryCtaLink: string;
-  status: "Published" | "Draft";
+  /** Archived: kept for reference, never shown to visitors. Scheduled: goes live at `scheduledAt`. */
+  status: "Published" | "Draft" | "Archived" | "Scheduled";
+  /** ISO date-time a Scheduled page goes live. */
+  scheduledAt?: string;
   lastEdited: string;
   author: string;
   contentHtml?: string;
@@ -148,14 +152,32 @@ export const INITIAL_CMS_PAGES: CMSPage[] = [
     metaDesc: "Philadelphia's top-rated cell phone, iPhone, iPad, MacBook, and console repair shop. 30-minute screen and battery service with warranty.",
     heroHeadline: "Fast, reliable repairs that keep your tech working when it matters.",
     heroSubtitle: "Repair services for smartphones, tablets, computers and game consoles, backed by certified technicians and a 90-day free warranty.",
-    heroBadge: "Philadelphia's Trusted Leader in",
+    heroBadge: "Phone & computer repair in Philadelphia",
     primaryCtaText: "Book your repair",
     primaryCtaLink: "/schedule-repair",
     status: "Published",
     lastEdited: "Today, 1:40 PM",
     author: "Dr. Mike",
     custom: false,
-    puckData: null,
+    // The coded home page as "Site Section" blocks (see src/plugins/repair-shop/siteSections.tsx).
+    // "Reset" in the editor restores this layout.
+    puckData: {
+      root: { props: {} },
+      content: [
+        "home-hero",
+        "home-benefits",
+        "home-common-issues",
+        "home-reviews",
+        "home-store-finder",
+        "home-guarantees",
+        "home-wise",
+        "home-faq",
+        "home-guides",
+      ].map((section) => ({
+        type: "SiteSectionBlock",
+        props: { id: `SiteSectionBlock-${section}`, section, customCss: "" },
+      })),
+    },
   },
   {
     id: "repairs",
@@ -307,7 +329,7 @@ export const INITIAL_CMS_PAGES: CMSPage[] = [
                 device: "iPhone 13 / 14 / 15",
                 price: "$119",
                 turnaround: "30 Mins",
-                warranty: "Lifetime Limited",
+                warranty: "90-Day Free",
                 popular: true,
                 badge: "Most Popular",
                 ctaText: "Book Repair",
@@ -482,7 +504,7 @@ export const INITIAL_CMS_PAGES: CMSPage[] = [
                 device: "iPhone 15 / 14 / 13 Pro",
                 price: "$129",
                 turnaround: "30 Mins",
-                warranty: "Lifetime Limited",
+                warranty: "90-Day Free",
                 popular: true,
                 badge: "Most Requested",
                 ctaText: "Book Screen Fix",
@@ -545,47 +567,6 @@ export const INITIAL_CMS_PAGES: CMSPage[] = [
             ],
             bgColor: "#ffffff",
             textColor: "#0f172a",
-            accentColor: "#00807A",
-            padding: "56px 24px",
-            customCss: "",
-          },
-        },
-        {
-          type: "TestimonialBlock",
-          props: {
-            id: "TestimonialBlock-iphone-reviews",
-            heading: "What iPhone Owners Say",
-            subheading: "Real feedback from local iPhone users across Philadelphia.",
-            columns: 3,
-            items: [
-              {
-                name: "Marcus Jenkins",
-                role: "iPhone 14 Pro User",
-                rating: 5,
-                text: "Fixed my iPhone 14 Pro shattered screen in 35 minutes flat while I waited. Screen looks OEM perfect and touch is super responsive!",
-                date: "Google Review",
-                source: "Google",
-              },
-              {
-                name: "Ashley Davis",
-                role: "iPhone 13 User",
-                rating: 5,
-                text: "Battery was draining in 2 hours. SmartFoneDoctor swapped it in 20 minutes, now lasts all day again. Super affordable!",
-                date: "Google Review",
-                source: "Google",
-              },
-              {
-                name: "Robert Morales",
-                role: "iPhone 15 Pro Max",
-                rating: 5,
-                text: "Cracked both front and back glass after a drop on concrete. They used laser separation and it looks brand new. Amazing work!",
-                date: "Google Review",
-                source: "Google",
-              },
-            ],
-            bgColor: "#f8fafc",
-            textColor: "#0f172a",
-            cardBgColor: "#ffffff",
             accentColor: "#00807A",
             padding: "56px 24px",
             customCss: "",
@@ -698,7 +679,7 @@ export const INITIAL_CMS_PAGES: CMSPage[] = [
                 device: "Samsung Galaxy S24 / S23 / S22",
                 price: "$149",
                 turnaround: "45 Mins",
-                warranty: "Lifetime Limited",
+                warranty: "90-Day Free",
                 popular: true,
                 badge: "Most Requested",
                 ctaText: "Book Screen Fix",
@@ -884,7 +865,7 @@ export const INITIAL_CMS_PAGES: CMSPage[] = [
                 device: "iPad Pro 11 / 12.9 & iPad Air",
                 price: "$179",
                 turnaround: "Same Day",
-                warranty: "Lifetime Limited",
+                warranty: "90-Day Free",
                 popular: false,
                 badge: "",
                 ctaText: "Book Screen Fix",
@@ -1048,7 +1029,7 @@ export const INITIAL_CMS_PAGES: CMSPage[] = [
                 device: "MacBook Pro & Air 13 / 14 / 16",
                 price: "$249",
                 turnaround: "24-48 Hours",
-                warranty: "Lifetime Limited",
+                warranty: "90-Day Free",
                 popular: true,
                 badge: "OEM Grade",
                 ctaText: "Book Screen Fix",
@@ -1630,47 +1611,6 @@ export const INITIAL_CMS_PAGES: CMSPage[] = [
           },
         },
         {
-          type: "TestimonialBlock",
-          props: {
-            id: "TestimonialBlock-about-reviews",
-            heading: "Trusted by Philadelphia Residents & Students",
-            subheading: "Here is what our community has to say about their experience at SmartFoneDoctor.",
-            columns: 3,
-            items: [
-              {
-                name: "Elena Rostova",
-                role: "Penn Medicine Student",
-                rating: 5,
-                text: "Had my iPad screen crushed right before finals week. They repaired it in 40 minutes and gave me a student discount. Lifesavers!",
-                date: "Google Review",
-                source: "Google",
-              },
-              {
-                name: "James Wilson",
-                role: "West Philly Resident",
-                rating: 5,
-                text: "They are honest. Took in my phone thinking the port was broken, but they showed me it was just compacted lint. Cleaned it for free!",
-                date: "Google Review",
-                source: "Google",
-              },
-              {
-                name: "Michael Chang",
-                role: "Drexel University",
-                rating: 5,
-                text: "Best tech repair in Philadelphia by far. Quick turnaround, clear communication, and fair pricing.",
-                date: "Google Review",
-                source: "Google",
-              },
-            ],
-            bgColor: "#ffffff",
-            textColor: "#0f172a",
-            cardBgColor: "#f8fafc",
-            accentColor: "#00807A",
-            padding: "56px 24px",
-            customCss: "",
-          },
-        },
-        {
           type: "FaqBlock",
           props: {
             id: "FaqBlock-about-faq",
@@ -1813,7 +1753,7 @@ export const INITIAL_CMS_PAGES: CMSPage[] = [
                 device: "iPhone 13 / 14 / 15",
                 price: "$119",
                 turnaround: "30 Mins",
-                warranty: "Lifetime Limited",
+                warranty: "90-Day Free",
                 popular: true,
                 badge: "Most Popular",
                 ctaText: "Select This Repair",
@@ -1989,71 +1929,6 @@ export const INITIAL_CMS_PAGES: CMSPage[] = [
             ],
             bgColor: "#0f172a",
             textColor: "#ffffff",
-            accentColor: "#00807A",
-            padding: "56px 24px",
-            customCss: "",
-          },
-        },
-        {
-          type: "TestimonialBlock",
-          props: {
-            id: "TestimonialBlock-review-wall",
-            heading: "Verified Customer Experiences",
-            subheading: "Read recent reviews from customers who had their iPhones, laptops, and game consoles repaired.",
-            columns: 3,
-            items: [
-              {
-                name: "Marcus Jenkins",
-                role: "University City",
-                rating: 5,
-                text: "Fixed my iPhone 14 Pro shattered screen in 35 minutes flat while I waited. Screen looks OEM perfect and touch is super responsive. Highly recommended!",
-                date: "Google Review",
-                source: "Google",
-              },
-              {
-                name: "Sarah Lin",
-                role: "West Philadelphia",
-                rating: 5,
-                text: "My MacBook wouldn't turn on after a coffee spill. The Apple Store said I needed a $900 board replacement. SmartFoneDoctor repaired it same day for a fraction of that!",
-                date: "Google Review",
-                source: "Google",
-              },
-              {
-                name: "David Thompson",
-                role: "Center City",
-                rating: 5,
-                text: "Fastest repair service in the city. Clear pricing, no surprise fees, and they gave me a 90-day warranty on my Samsung battery replacement.",
-                date: "Google Review",
-                source: "Google",
-              },
-              {
-                name: "Elena Rostova",
-                role: "Penn Medicine",
-                rating: 5,
-                text: "Had my iPad screen crushed right before finals week. They repaired it in 40 minutes and gave me a student discount. Lifesavers!",
-                date: "Google Review",
-                source: "Google",
-              },
-              {
-                name: "James Wilson",
-                role: "West Philly",
-                rating: 5,
-                text: "They are honest. Took in my phone thinking the port was broken, but they showed me it was just compacted lint. Cleaned it for free!",
-                date: "Google Review",
-                source: "Google",
-              },
-              {
-                name: "Michael Chang",
-                role: "Drexel University",
-                rating: 5,
-                text: "Best tech repair in Philadelphia by far. Quick turnaround, clear communication, and fair pricing.",
-                date: "Google Review",
-                source: "Google",
-              },
-            ],
-            bgColor: "#ffffff",
-            textColor: "#0f172a",
-            cardBgColor: "#f8fafc",
             accentColor: "#00807A",
             padding: "56px 24px",
             customCss: "",
@@ -2409,7 +2284,6 @@ export const INITIAL_CMS_PAGES: CMSPage[] = [
   },
 ];
 
-
 export interface CatalogServiceItem {
   id: string;
   name: string;
@@ -2460,7 +2334,7 @@ export const INITIAL_SERVICES_CATALOG: CatalogServiceItem[] = [
     retailPrice: 129,
     costPrice: 35,
     turnaroundTag: "60 Mins",
-    warrantyTag: "Lifetime Workmanship",
+    warrantyTag: "90-Day Workmanship",
     stockStatus: "In Stock",
     isPopular: false,
   },
@@ -2557,87 +2431,33 @@ export const INITIAL_SERVICES_CATALOG: CatalogServiceItem[] = [
   },
 ];
 
-export const CMS_PAGES_STORAGE_KEY = "sfd_cms_pages_v4";
-
-export function getStoredCMSPages(): CMSPage[] {
-  if (typeof window === "undefined") return INITIAL_CMS_PAGES;
-  try {
-    const raw = localStorage.getItem(CMS_PAGES_STORAGE_KEY);
-    if (!raw) {
-      localStorage.setItem(CMS_PAGES_STORAGE_KEY, JSON.stringify(INITIAL_CMS_PAGES));
-      return INITIAL_CMS_PAGES;
-    }
-    const parsed = JSON.parse(raw) as CMSPage[];
-    let changed = false;
-
-    // Ensure any new initial pages are added to storage
-    for (const init of INITIAL_CMS_PAGES) {
-      if (!parsed.some((p) => p.slug === init.slug || p.id === init.id)) {
-        parsed.push(init);
-        changed = true;
-      }
-    }
-
-    const hydrated = parsed.map((stored) => {
-      const seed = INITIAL_CMS_PAGES.find(
-        (init) => init.slug === stored.slug || init.id === stored.id
-      );
-      if (!seed?.puckData) return stored;
-
-      const storedContent = (stored.puckData as { content?: unknown[] } | undefined)?.content;
-      const seedContent = (seed.puckData as { content?: unknown[] } | undefined)?.content;
-
-      // A page someone published in the builder is theirs: never replace it,
-      // even if it now has fewer sections than the seed template.
-      if (stored.puckEditedAt) return stored;
-
-      // Untouched pages: fill a missing layout, or pick up sections added to the seed.
-      if (
-        !stored.puckData ||
-        !Array.isArray(storedContent) ||
-        storedContent.length === 0 ||
-        (Array.isArray(seedContent) && seedContent.length > (storedContent?.length || 0))
-      ) {
-        changed = true;
-        return {
-          ...stored,
-          puckData: seed.puckData,
-          featuredImage: stored.featuredImage?.includes("1581092160607")
-            ? seed.featuredImage
-            : stored.featuredImage || seed.featuredImage,
-        };
-      }
-
-      if (
-        stored.featuredImage?.includes("1581092160607") &&
-        seed?.featuredImage
-      ) {
-        changed = true;
-        return { ...stored, featuredImage: seed.featuredImage };
-      }
-      return stored;
-    });
-
-    if (changed) {
-      localStorage.setItem(CMS_PAGES_STORAGE_KEY, JSON.stringify(hydrated));
-    }
-    return hydrated;
-  } catch (err) {
-    return INITIAL_CMS_PAGES;
+/**
+ * Whether visitors see this page's builder layout, and if not, why. Some built-in
+ * routes keep their coded design no matter what the builder holds.
+ */
+export function builderLayoutStatus(page: CMSPage): { live: boolean; note?: string } {
+  if (page.status === "Archived") return { live: false, note: "Archived: not shown on the site" };
+  if (page.category === "Global") return { live: true, note: "Global block: shown on every page that inserts it" };
+  if (page.category === "Template") {
+    const blocks = (page.puckData as { content?: unknown[] } | undefined)?.content;
+    const used = page.status === "Published" && Array.isArray(blocks) && blocks.length > 0;
+    return used
+      ? { live: true, note: `Template: used by every ${page.name.replace(/^Template:\s*/i, "")} page` }
+      : { live: false, note: "Template not published: pages use their built-in design" };
   }
-}
-
-/** Returns false when the browser refused to store the pages (storage full). */
-export function saveStoredCMSPages(pages: CMSPage[]): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    localStorage.setItem(CMS_PAGES_STORAGE_KEY, JSON.stringify(pages));
-    window.dispatchEvent(new CustomEvent("sfd-cms-pages-updated"));
-    return true;
-  } catch (err) {
-    console.error("Failed to save CMS pages", err);
-    return false;
-  }
+  if (page.status === "Draft") return { live: false, note: "Draft: only admins can preview it" };
+  if (page.status === "Scheduled")
+    return {
+      live: false,
+      note: page.scheduledAt
+        ? `Scheduled: goes live ${new Date(page.scheduledAt).toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short" })}`
+        : "Scheduled: no date set yet",
+    };
+  if (page.slug === "schedule-repair") return { live: false, note: "Booking page uses its built-in design" };
+  const blocks = (page.puckData as { content?: unknown[] } | undefined)?.content;
+  if (!Array.isArray(blocks) || blocks.length === 0)
+    return { live: false, note: "No builder layout yet: built-in design shows" };
+  return { live: true };
 }
 
 /** URL prefixes a custom page may not use. */

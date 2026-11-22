@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { requireAdmin } from "@/lib/adminGuard";
 
 export type FaqItem = {
   id: number;
@@ -69,6 +70,7 @@ export async function createFaqAction(data: {
   order?: number;
 }): Promise<ActionResponse<FaqItem>> {
   try {
+    await requireAdmin();
     if (!data.question?.trim() || !data.answer?.trim()) {
       return {
         success: false,
@@ -123,6 +125,7 @@ export async function updateFaqAction(
   }>
 ): Promise<ActionResponse<FaqItem>> {
   try {
+    await requireAdmin();
     const updated = await prisma.faqs.update({
       where: { id },
       data: {
@@ -162,6 +165,7 @@ export async function updateFaqAction(
  */
 export async function deleteFaqAction(id: number): Promise<ActionResponse<{ id: number }>> {
   try {
+    await requireAdmin();
     await prisma.faqs.delete({
       where: { id },
     });

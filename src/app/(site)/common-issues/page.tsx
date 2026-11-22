@@ -2,6 +2,7 @@ import React from "react";
 import { brandTitle } from "@/lib/seoTitle";
 import type { Metadata } from "next";
 import CommonIssuesClient from "./CommonIssuesClient";
+import { getCommonIssues } from "@/lib/commonIssuesStore";
 
 export const metadata: Metadata = {
   title: brandTitle("Common Repair Issues & Troubleshooting | SmartFoneDoctor Philadelphia"),
@@ -18,7 +19,8 @@ export const metadata: Metadata = {
   ],
 };
 
-export default function CommonIssuesPage() {
-  return <CommonIssuesClient />;
+export default async function CommonIssuesPage() {
+  // Articles from Admin > Common Issues.
+  return <CommonIssuesClient issues={await getCommonIssues()} />;
 }
 

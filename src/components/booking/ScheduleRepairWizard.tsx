@@ -34,21 +34,21 @@ export interface WizardStore {
 const STORES: WizardStore[] = [
   {
     id: 1,
-    name: "Smart Fone Doctor (Smartphone Doctor)",
+    name: "SmartFoneDoctor - 33 S 52nd St",
     address: "33 S 52nd St, Philadelphia, PA 19139, United States",
     phone: "2155982090",
     displayPhone: "(215) 598-2090",
   },
   {
     id: 2,
-    name: "Smart Fone Doctor",
+    name: "SmartFoneDoctor - 4016 Lancaster Ave",
     address: "4016 Lancaster Ave, Philadelphia, PA 19104, United States",
     phone: "2155982090",
     displayPhone: "(215) 598-2090",
   },
   {
     id: 3,
-    name: "Smart FoneDoctor",
+    name: "SmartFoneDoctor - 4060 Lancaster Ave",
     address: "4060 Lancaster Ave, Philadelphia, PA 19104, United States",
     phone: "2155982090",
     displayPhone: "(215) 598-2090",

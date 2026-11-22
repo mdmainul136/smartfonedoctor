@@ -1,98 +1,76 @@
 "use client";
 
-import React, { useState } from "react";
-import { Star, ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { REVIEWS_DEFAULTS, pickList, pickText, type ReviewContent, type ReviewsProps } from "./sectionContent";
+import { getPublicFeaturedReviewsAction } from "@/actions/reviews";
 
-interface Review {
-  id: number;
-  author: string;
-  location: string;
-  rating: number;
-  date: string;
-  content: string;
-  device: string;
-}
+export function ReviewsSection(props: ReviewsProps) {
+  const d = REVIEWS_DEFAULTS;
+  const [dbReviews, setDbReviews] = useState<ReviewContent[]>([]);
+  const hasExplicitProps = Array.isArray(props.reviews) && props.reviews.length > 0;
 
-const REVIEWS: Review[] = [
-  {
-    id: 1,
-    author: "Marcus Thorne",
-    location: "Center City, Philadelphia",
-    rating: 5,
-    date: "Verified Google Review",
-    device: "iPhone 15 Pro Screen Replacement",
-    content:
-      "Shattered my screen dropping it on Market St. Walked into their 52nd St shop, they had the OLED part in stock, and had it fully restored in 35 minutes with TrueTone working. Honest pricing and zero hidden fees.",
-  },
-  {
-    id: 2,
-    author: "Elena Rostova",
-    location: "University City, Philadelphia",
-    rating: 5,
-    date: "Verified Google Review",
-    device: "MacBook Pro Liquid Spill Recovery",
-    content:
-      "Apple told me my water-damaged MacBook motherboard was a total loss and wanted $1,200. SmartFoneDoctor's technicians did ultrasonic cleaning and micro-soldered two resistors. Works perfectly and saved all my university thesis files!",
-  },
-  {
-    id: 3,
-    author: "David K. Campbell",
-    location: "West Philadelphia",
-    rating: 5,
-    date: "Verified Google Review",
-    device: "PS5 HDMI Port Replacement",
-    content:
-      "Brought my son's PlayStation 5 in with a bent HDMI port. The technician showed me the board repair under their digital microscope before pickup. Completed same-day and backed by a 90-day warranty. Real craftsmen.",
-  },
-  {
-    id: 4,
-    author: "Sarah Jenkins",
-    location: "Fishtown, Philadelphia",
-    rating: 5,
-    date: "Verified Google Review",
-    device: "Samsung Galaxy S24 Battery & Back Glass",
-    content:
-      "Fastest repair service in Philly! Battery was swelling and back glass was cracked. Replaced both in under an hour while I waited. Clean, air-conditioned customer lounge and super friendly staff.",
-  },
-];
+  useEffect(() => {
+    if (hasExplicitProps) return;
+    let active = true;
+    getPublicFeaturedReviewsAction()
+      .then((rows) => {
+        if (!active || !rows.length) return;
+        setDbReviews(
+          rows.map((r) => ({
+            author: r.author,
+            location: r.location,
+            device: r.device,
+            content: r.content,
+            rating: r.rating,
+          }))
+        );
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [hasExplicitProps]);
 
-export function ReviewsSection() {
+  const REVIEWS = pickList(props.reviews, dbReviews.length > 0 ? dbReviews : d.reviews);
   const [startIndex, setStartIndex] = useState(0);
+  // Arrows only when there are more reviews than fit on screen (3).
+  const canPage = REVIEWS.length > 3;
+  const lastStart = Math.max(0, REVIEWS.length - 3);
 
   const prev = () => {
-    setStartIndex((curr) => (curr === 0 ? REVIEWS.length - 3 : curr - 1));
+    setStartIndex((curr) => (curr === 0 ? lastStart : curr - 1));
   };
 
   const next = () => {
-    setStartIndex((curr) => (curr >= REVIEWS.length - 3 ? 0 : curr + 1));
+    setStartIndex((curr) => (curr >= lastStart ? 0 : curr + 1));
   };
 
-  const visibleReviews = REVIEWS.slice(startIndex, startIndex + 3);
-  if (visibleReviews.length < 3) {
-    visibleReviews.push(...REVIEWS.slice(0, 3 - visibleReviews.length));
-  }
+  const visibleReviews = REVIEWS.slice(Math.min(startIndex, lastStart), Math.min(startIndex, lastStart) + 3);
+
+  // Only real reviews are shown; with none entered the section stays hidden.
+  if (REVIEWS.length === 0) return null;
 
   return (
     <section className="bg-[#fcfcfc] py-8 sm:py-12 px-3 sm:px-6">
       <div className="max-w-[1265px] mx-auto bg-[#1c2333] text-white rounded-3xl sm:rounded-[32px] p-6 sm:p-10 lg:p-12 relative overflow-hidden shadow-lg">
-        {/* Subtle decorative glow */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Header row */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 relative z-10">
           <div>
             <div className="inline-block bg-white/10 text-neutral-200 rounded-full py-1 px-3 text-xs font-medium tracking-wide mb-2 select-none">
-              <span>Customer Reviews</span>
+              <span>{pickText(props.badge, d.badge)}</span>
             </div>
             <h2 className="text-2xl sm:text-3xl lg:text-[34px] font-bold text-white tracking-tight">
-              See Why Customers Trust Us
+              {pickText(props.heading, d.heading)}
             </h2>
             <p className="text-xs sm:text-sm text-neutral-300 mt-1">
-              Over 2,400+ verified 5-star Google reviews across our Philadelphia stores.
+              {pickText(props.subtitle, d.subtitle)}
             </p>
           </div>
 
           {/* Navigation Controls */}
+          {canPage && (
           <div className="flex items-center gap-2 self-start sm:self-auto">
             <button
               onClick={prev}
@@ -109,19 +87,20 @@ export function ReviewsSection() {
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
+          )}
         </div>
 
         {/* 3 Review Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 relative z-10">
-          {visibleReviews.map((rev) => (
+          {visibleReviews.map((rev, i) => (
             <div
-              key={rev.id}
+              key={`${rev.author}-${i}`}
               className="bg-white text-neutral-900 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow"
             >
               <div>
                 {/* 5 Stars */}
                 <div className="flex items-center gap-1 mb-3">
-                  {[...Array(rev.rating)].map((_, i) => (
+                  {[...Array(Math.min(5, Math.max(1, Number(rev.rating) || 5)))].map((_, i) => (
                     <Star
                       key={i}
                       className="w-4 h-4 fill-amber-400 text-amber-400"
@@ -137,15 +116,7 @@ export function ReviewsSection() {
 
               {/* Reviewer Details */}
               <div className="pt-3 border-t border-neutral-100 flex flex-col gap-0.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-neutral-900">
-                    {rev.author}
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                    <span>Verified</span>
-                  </span>
-                </div>
+                <span className="text-xs font-bold text-neutral-900">{rev.author}</span>
                 <span className="text-[11px] text-neutral-500">
                   {rev.location} · {rev.device}
                 </span>

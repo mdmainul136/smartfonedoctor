@@ -161,7 +161,7 @@ export default function SupplyChainPage() {
                 Environmental
               </h2>
               <p>
-                We recognize that environmental responsibility is integral to producing world-class repair services. Suppliers are expected to create regenerative processes and will minimize adverse effects on the community environment and natural resources while safeguarding public health.
+                We recognize that environmental responsibility is part of doing repair work well. Suppliers are expected to create regenerative processes and will minimize adverse effects on the community environment and natural resources while safeguarding public health.
               </p>
               <div className="space-y-3 pl-2 sm:pl-4">
                 <p>

@@ -18,12 +18,9 @@ import {
   Copy,
   ChevronRight,
   Layers,
-  Sparkles,
 } from "lucide-react";
 import {
   DeviceCategory,
-  getStoredCategories,
-  saveStoredCategories,
 } from "@/lib/taxonomy";
 import { getTaxonomyAction, saveTaxonomyAction } from "@/actions/taxonomy";
 
@@ -86,14 +83,11 @@ export default function CategoriesCRUDPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    setCategories(getStoredCategories());
-
     let mounted = true;
     getTaxonomyAction<DeviceCategory>("categories")
       .then((res) => {
         if (mounted && res.success && res.data.length > 0) {
           setCategories(res.data);
-          saveStoredCategories(res.data);
         }
       })
       .catch(console.error);
@@ -146,7 +140,7 @@ export default function CategoriesCRUDPage() {
     }));
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name?.trim()) return;
 
@@ -170,20 +164,20 @@ export default function CategoriesCRUDPage() {
       showToast(`Added category "${formData.name}"`);
     }
 
+    // The database is the only copy: the list changes only when the save worked.
+    const res = await saveTaxonomyAction("categories", updated).catch((err: unknown) => ({ success: false, error: String(err) }));
+    if (!res.success) return showToast(`Not saved: ${res.error ?? "unknown error"}`);
     setCategories(updated);
-    saveStoredCategories(updated);
     setIsModalOpen(false);
-
-    saveTaxonomyAction("categories", updated).catch(console.error);
   };
 
   const handleDelete = async (id: string, name: string) => {
     if (confirm(`Are you sure you want to delete category "${name}"?`)) {
       const updated = categories.filter((c) => c.id !== id);
+      const res = await saveTaxonomyAction("categories", updated).catch((err: unknown) => ({ success: false, error: String(err) }));
+      if (!res.success) return showToast(`Not deleted: ${res.error ?? "unknown error"}`);
       setCategories(updated);
-      saveStoredCategories(updated);
       showToast(`Deleted "${name}"`);
-      await saveTaxonomyAction("categories", updated).catch(console.error);
     }
   };
 
@@ -215,10 +209,10 @@ export default function CategoriesCRUDPage() {
             <span className="text-gray-900 font-semibold">Categories</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-[#111111] tracking-tight">
-            Device Categories
+            Device categories
           </h1>
           <p className="text-xs text-gray-500 mt-0.5">
-            Manage top-level hardware product families (Smartphones, Tablets, Consoles, Computers) and diagnostic taxonomies.
+            Phones, tablets, consoles and computers. Each has its own repair hub page.
           </p>
         </div>
 
@@ -237,69 +231,6 @@ export default function CategoriesCRUDPage() {
             <Plus className="w-4 h-4" />
             <span>Add Category</span>
           </button>
-        </div>
-      </div>
-
-      {/* ── KPI METRICS CARDS (Clean Bento Style) ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bg-white border border-[#e8e8e8] rounded-xl p-3.5 sm:p-4 shadow-2xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block">
-              Core Categories
-            </span>
-            <span className="text-xl sm:text-2xl font-bold text-gray-900 mt-0.5 block">
-              {categories.length} Platforms
-            </span>
-            <span className="text-[11px] text-emerald-600 font-medium">All active on site</span>
-          </div>
-          <div className="w-10 h-10 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center text-[#009691] shrink-0">
-            <FolderTree className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="bg-white border border-[#e8e8e8] rounded-xl p-3.5 sm:p-4 shadow-2xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block">
-              Hardware Brands
-            </span>
-            <span className="text-xl sm:text-2xl font-bold text-gray-900 mt-0.5 block">
-              8 Major OEMs
-            </span>
-            <span className="text-[11px] text-gray-500 font-medium">Apple, Samsung, Google &amp; more</span>
-          </div>
-          <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
-            <Layers className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="bg-white border border-[#e8e8e8] rounded-xl p-3.5 sm:p-4 shadow-2xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block">
-              Device Catalog
-            </span>
-            <span className="text-xl sm:text-2xl font-bold text-[#009691] mt-0.5 block">
-              35+ Models
-            </span>
-            <span className="text-[11px] text-gray-500 font-medium">Instant repair quotes</span>
-          </div>
-          <div className="w-10 h-10 rounded-lg bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-600 shrink-0">
-            <Smartphone className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="bg-white border border-[#e8e8e8] rounded-xl p-3.5 sm:p-4 shadow-2xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block">
-              Diagnostic Coverage
-            </span>
-            <span className="text-xl sm:text-2xl font-bold text-gray-900 mt-0.5 block">
-              100% Complete
-            </span>
-            <span className="text-[11px] text-emerald-600 font-medium">SEO &amp; pSEO ready</span>
-          </div>
-          <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-            <Sparkles className="w-5 h-5" />
-          </div>
         </div>
       </div>
 

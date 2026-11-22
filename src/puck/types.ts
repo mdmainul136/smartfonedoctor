@@ -1,3 +1,4 @@
+import type { GeneralComponents } from "@/puck/widgets/general";
 import type { Data, RichText, Slot } from "@puckeditor/core";
 
 export type BlockVisibility = {
@@ -489,6 +490,16 @@ export type CounterBlockProps = {
   visibility?: BlockVisibility;
 };
 
+/** Drops in one of the app's coded sections (see HostWidgets.sections). */
+export type SiteSectionBlockProps = {
+  section: string;
+  /** Values for the section's own editable fields, if it has any. */
+  content?: Record<string, unknown>;
+  customCss: string;
+  locked?: boolean;
+  visibility?: BlockVisibility;
+};
+
 export type RepairTrackerBlockProps = {
   title: string;
   subtitle: string;
@@ -795,6 +806,21 @@ export type PuckComponents = {
   FaqBlock: FaqBlockProps;
   CtaBannerBlock: CtaBannerBlockProps;
   RepairTrackerBlock: RepairTrackerBlockProps;
+  SiteSectionBlock: SiteSectionBlockProps;
+  GlobalBlockWidget: { block: string; locked?: boolean };
+  LegalDocumentBlock: {
+    breadcrumbLabel: string;
+    title: string;
+    updatedLine: string;
+    bodyHtml: string;
+    closingHtml: string;
+    contactHtml: string;
+    backLabel: string;
+    backHref: string;
+    nextLabel: string;
+    nextHref: string;
+    locked?: boolean;
+  };
   StatsCounterRowBlock: StatsCounterRowBlockProps;
   StepProcessBlock: StepProcessBlockProps;
   TestimonialBlock: TestimonialBlockProps;
@@ -823,7 +849,7 @@ export type PuckComponents = {
   SpacerDividerBlock: SpacerDividerBlockProps;
   HtmlBlock: HtmlBlockProps;
   GoogleMapBlock: GoogleMapBlockProps;
-};
+} & GeneralComponents;
 
 export type PuckPageData = Data<PuckComponents>;
 

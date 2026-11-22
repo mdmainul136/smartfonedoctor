@@ -21,7 +21,6 @@ import {
   Globe,
   ShieldCheck,
   ArrowRight,
-  Sparkles,
 } from "lucide-react";
 
 export default function ListingsCatalogPage() {
@@ -149,7 +148,7 @@ export default function ListingsCatalogPage() {
   return (
     <div className="flex-1 min-w-0 w-full px-4 sm:px-6 py-6 flex flex-col gap-6 overflow-x-hidden antialiased">
       {/* 1. MATERIAL 3 HERO HEADER (Brand Teal & Elevated Surface) */}
-      <div className="rounded-3xl bg-gradient-to-br from-teal-50/70 via-white to-emerald-50/30 p-5 sm:p-7 border border-teal-100/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+      <div className="rounded-3xl bg-white p-5 sm:p-7 border border-teal-100/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-5">
         <div className="flex items-center gap-3.5">
           <div className="w-11 h-11 rounded-2xl bg-[#009691] text-white flex items-center justify-center shadow-md shadow-[#009691]/25 shrink-0">
             <Layers className="w-5 h-5" />
@@ -157,7 +156,7 @@ export default function ListingsCatalogPage() {
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 leading-tight">
-                Missing Citations &amp; Directory Catalog
+                Directory catalog
               </h1>
               <span className="inline-flex items-center gap-1 rounded-full bg-teal-100/80 text-[#009691] text-[11px] font-semibold px-2.5 py-0.5">
                 {storeShortName}
@@ -341,7 +340,7 @@ export default function ListingsCatalogPage() {
               Mainstream Directory Catalog ({filteredCatalog.length})
             </h2>
             <p className="text-xs text-slate-500 font-medium">
-              Add high-authority national and Philadelphia citations to reinforce AI entity confidence
+              Directories where the business is not listed yet
             </p>
           </div>
 

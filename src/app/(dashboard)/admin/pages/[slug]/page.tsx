@@ -3,18 +3,17 @@
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { INITIAL_CMS_PAGES, CMSPage, getStoredCMSPages, saveStoredCMSPages } from "@/lib/cmsData";
-import { upsertCmsPageAction } from "@/actions/cmsPages";
-import { compilePageCss } from "@/puck/style/compilePage";
+import { INITIAL_CMS_PAGES, CMSPage } from "@/lib/cmsData";
+import { getCmsPageForEditorAction, upsertCmsPageAction } from "@/actions/cmsPages";
 import {
   ArrowLeft,
   Save,
   ExternalLink,
   Check,
   Globe,
-  Sparkles,
   PenTool,
   RotateCcw,
+  LayoutTemplate,
 } from "lucide-react";
 import PageSeoPanel from "@/components/admin/PageSeoPanel";
 import PuckPageEditor from "@/components/admin/PuckPageEditor";
@@ -28,81 +27,97 @@ export default function DedicatedPageEditor({
   const router = useRouter();
   const { slug } = use(params);
 
-  const initialPage =
-    INITIAL_CMS_PAGES.find((p) => p.slug === slug) ||
-    INITIAL_CMS_PAGES[0];
+  const seedPage = INITIAL_CMS_PAGES.find((p) => p.slug === slug) ?? null;
 
-  const [page, setPage] = useState<CMSPage>(initialPage);
+  const [page, setPage] = useState<CMSPage | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [savedToast, setSavedToast] = useState<string | null>(null);
+  const [errorToast, setErrorToast] = useState<string | null>(null);
   const [editorMode, setEditorMode] = useState<"visual" | "seo">("visual");
-  // Bumped whenever the builder must reload from `page` (stored page loaded, template reset).
+  // Bumped whenever the builder must reload from `page` (DB page loaded, template reset).
   const [editorNonce, setEditorNonce] = useState(0);
 
+  // The database is the source of truth for the editor.
   useEffect(() => {
-    const list = getStoredCMSPages();
-    const found = list.find((p) => p.slug === slug);
-    if (found) {
-      setPage(found);
+    let cancelled = false;
+    getCmsPageForEditorAction(slug).then((res) => {
+      if (cancelled) return;
+      if (!res.success) {
+        setLoadError(res.error ?? "Could not load this page.");
+        return;
+      }
+      if (!res.page) {
+        setLoadError(`No page with slug "${slug}" exists.`);
+        return;
+      }
+      setPage(res.page);
       setEditorNonce((n) => n + 1);
-    }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [slug]);
 
   const handleUpdate = (field: keyof CMSPage, value: any) => {
-    setPage((prev) => ({ ...prev, [field]: value, lastEdited: "Just now" }));
+    setPage((prev) => (prev ? { ...prev, [field]: value, lastEdited: "Just now" } : prev));
+  };
+
+  /** Writes the page to the database and reports the real result. */
+  const persist = async (next: CMSPage, successMsg: string): Promise<boolean> => {
+    setErrorToast(null);
+    const res = await upsertCmsPageAction(next).catch((err: unknown) => ({
+      success: false as const,
+      error: err instanceof Error ? err.message : String(err),
+      page: undefined,
+    }));
+    if (!res.success) {
+      setErrorToast(`Not saved: ${res.error ?? "unknown error"}`);
+      return false;
+    }
+    if (res.page) setPage(res.page);
+    setSavedToast(successMsg);
+    setTimeout(() => setSavedToast(null), 3500);
+    return true;
   };
 
   const handleSave = async () => {
+    if (!page) return;
     setIsSaving(true);
-    const updatedPage: CMSPage = { ...page, lastEdited: "Just now" };
-    const allPages = getStoredCMSPages();
-    const updated = allPages.map((p) =>
-      p.id === updatedPage.id || p.slug === updatedPage.slug
-        ? updatedPage
-        : p
-    );
-    saveStoredCMSPages(updated);
-    await upsertCmsPageAction(updatedPage).catch(console.error);
-
+    await persist({ ...page, lastEdited: "Just now" }, `Changes & SEO metadata saved for "${page.name}".`);
     setIsSaving(false);
-    setSavedToast(`Changes & SEO metadata published for "${page.name}"!`);
-    setTimeout(() => setSavedToast(null), 3500);
   };
 
   const handlePuckPublish = async (data: PuckPageData) => {
-    // 🎨 Compile all widget pbStyle data → single CSS string → save to DB
-    const compiledCss = compilePageCss(
-      (data.content || []) as unknown[]
-    );
-
+    if (!page) return;
     const updatedPage: CMSPage = {
       ...page,
       puckData: data as unknown as Record<string, unknown>,
-      compiledCss,
+      // Design styles render next to each widget; no page-level CSS copy is stored.
+      compiledCss: undefined,
       puckEditedAt: Date.now(),
-      // Publishing in the builder puts a draft page live.
-      status: "Published",
+      // Publishing in the builder puts a draft page live, unless it is scheduled
+      // for later: then the layout is saved and the page still goes live on time.
+      status:
+        page.status === "Scheduled" && page.scheduledAt && new Date(page.scheduledAt).getTime() > Date.now()
+          ? "Scheduled"
+          : "Published",
       lastEdited: "Just now",
     };
-    setPage(updatedPage);
-    const allPages = getStoredCMSPages();
-    const updated = allPages.map((p) =>
-      p.id === updatedPage.id || p.slug === updatedPage.slug ? updatedPage : p
+    // Throwing tells the builder the publish failed: it then keeps the page
+    // marked unpublished and does not record a revision.
+    const ok = await persist(
+      updatedPage,
+      updatedPage.status === "Scheduled"
+        ? `Saved. "${updatedPage.name}" goes live ${new Date(updatedPage.scheduledAt as string).toLocaleString()}.`
+        : `"${updatedPage.name}" is published.`
     );
-    saveStoredCMSPages(updated);
-
-    // Persist directly to PostgreSQL via Server Action (non-blocking)
-    await upsertCmsPageAction(updatedPage).catch((err) => {
-      console.error("Failed to save Puck layout to PostgreSQL:", err);
-    });
-
-    setSavedToast(`Page & CSS published for "${updatedPage.name}"!`);
-    setTimeout(() => setSavedToast(null), 3500);
+    if (!ok) throw new Error("The page could not be saved to the database.");
   };
 
   const handleResetToTemplate = () => {
-    const seed = INITIAL_CMS_PAGES.find((p) => p.slug === slug || p.id === page.id);
-    if (!seed || !seed.puckData) return;
+    const seed = seedPage;
+    if (!page || !seed || !seed.puckData) return;
     if (confirm(`Reset "${page.name}" to the official default template layout? Any unsaved edits will be replaced.`)) {
       const updatedPage: CMSPage = {
         ...page,
@@ -111,17 +126,31 @@ export default function DedicatedPageEditor({
         puckEditedAt: undefined,
         lastEdited: "Just now",
       };
+      // Only the editor is reset; nothing goes live until Publish.
       setPage(updatedPage);
       setEditorNonce((n) => n + 1);
-      const allPages = getStoredCMSPages();
-      const updated = allPages.map((p) =>
-        p.id === updatedPage.id || p.slug === updatedPage.slug ? updatedPage : p
-      );
-      saveStoredCMSPages(updated);
-      setSavedToast(`Reset "${updatedPage.name}" to default template layout!`);
+      setSavedToast(`Reset "${updatedPage.name}" to the template. Publish to make it live.`);
       setTimeout(() => setSavedToast(null), 3500);
     }
   };
+
+  if (!page) {
+    return (
+      <div className="flex-1 w-full px-6 py-10">
+        {loadError ? (
+          <div className="max-w-xl rounded-[8px] border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-800">
+            <p className="font-semibold">Could not open the editor</p>
+            <p className="mt-1">{loadError}</p>
+            <Link href="/admin/pages" className="mt-3 inline-block font-semibold underline">
+              Back to pages
+            </Link>
+          </div>
+        ) : (
+          <p className="text-[13px] text-gray-500">Loading page from the database…</p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div data-builder-host className="flex-1 min-w-0 w-full px-4 sm:px-6 py-5 flex flex-col gap-5 overflow-x-hidden">
@@ -163,7 +192,7 @@ export default function DedicatedPageEditor({
                   : "text-gray-600 hover:text-gray-900"
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <LayoutTemplate className="w-3.5 h-3.5" />
               <span>Edit with Builder</span>
             </button>
             <button
@@ -217,7 +246,7 @@ export default function DedicatedPageEditor({
 
       {/* TOAST MESSAGE */}
       {savedToast && (
-        <div data-builder-hide className="bg-[#dcfae5] border border-[#86efac] text-[#065f46] rounded-[8px] px-4 py-3 flex items-center justify-between gap-3 text-[13px] shadow-sm animate-in fade-in">
+        <div role="status" className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[1000] w-[min(92vw,520px)] bg-[#dcfae5] border border-[#86efac] text-[#065f46] rounded-[8px] px-4 py-3 flex items-center justify-between gap-3 text-[13px] shadow-lg animate-in fade-in">
           <div className="flex items-center gap-2">
             <Check className="w-4 h-4 text-[#059669] shrink-0" />
             <span className="font-semibold">{savedToast}</span>
@@ -226,6 +255,19 @@ export default function DedicatedPageEditor({
             type="button"
             onClick={() => setSavedToast(null)}
             className="text-[#065f46] hover:text-black font-semibold text-xs cursor-pointer"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {errorToast && (
+        <div role="alert" className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[1001] w-[min(92vw,520px)] bg-red-50 border border-red-200 text-red-800 rounded-[8px] px-4 py-3 flex items-center justify-between gap-3 text-[13px] shadow-lg">
+          <span className="font-semibold">{errorToast}</span>
+          <button
+            type="button"
+            onClick={() => setErrorToast(null)}
+            className="text-red-800 hover:text-black font-semibold text-xs cursor-pointer"
           >
             Dismiss
           </button>

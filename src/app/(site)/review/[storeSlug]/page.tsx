@@ -115,7 +115,8 @@ export default function CustomerQrReviewHubPage() {
     recordShieldIntercept(
       storeId,
       selectedStars,
-      shieldPhone ? `Callback: ${shieldPhone}` : "Manager Recovery Requested"
+      shieldPhone ? `Callback: ${shieldPhone}` : "Manager Recovery Requested",
+      shieldMessage
     );
     setShieldSubmitted(true);
   };
@@ -128,7 +129,7 @@ export default function CustomerQrReviewHubPage() {
         <div className="p-5 border-b border-[#eaeaea]">
           <div className="flex items-baseline justify-between gap-2">
             <h1 className="text-[20px] font-semibold text-[#111111] tracking-[-0.02em]">
-              Smart Fone Doctor
+              SmartFoneDoctor
             </h1>
             <span className="text-[13px] font-medium text-[#111111] tabular-nums shrink-0">
               4.8 <span className="text-amber-500">★</span>{" "}
@@ -330,7 +331,7 @@ export default function CustomerQrReviewHubPage() {
                   {
                     id: "gmb" as TrackingChannelId,
                     title: "Google Business Profile",
-                    sub: `Smart Fone Doctor · ${store.address}`,
+                    sub: `SmartFoneDoctor · ${store.address}`,
                     badge: "Most Popular",
                     url: "https://www.google.com/maps",
                   },
@@ -410,7 +411,7 @@ export default function CustomerQrReviewHubPage() {
                   {
                     id: "facebook" as TrackingChannelId,
                     title: "Facebook Page",
-                    sub: "Smart Fone Doctor Philadelphia",
+                    sub: "SmartFoneDoctor Philadelphia",
                     reward: "+Free Lens Wipe",
                     url: "https://www.facebook.com",
                   },

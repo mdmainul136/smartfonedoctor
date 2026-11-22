@@ -48,23 +48,6 @@ export interface Lead {
   estValue: number;
 }
 
-const INITIAL_LEADS: Lead[] = [
-  { id: 1, name: "Marcus Johnson", device: "iPhone 15 Pro", issue: "Cracked OLED Screen", source: "Google Maps", storeId: 1, date: "2024-11-10", status: "Confirmed", phone: "+1 (215) 555-1001", estValue: 189 },
-  { id: 2, name: "Aliyah Thompson", device: "Samsung Galaxy S23", issue: "Battery Replacement", source: "ChatGPT / AI", storeId: 2, date: "2024-11-10", status: "New", phone: "+1 (215) 555-1002", estValue: 69 },
-  { id: 3, name: "David Kim", device: "iPhone 13", issue: "Water Damage Ultrasonic", source: "Google Search", storeId: 3, date: "2024-11-09", status: "Contacted", phone: "+1 (610) 555-1003", estValue: 110 },
-  { id: 4, name: "Priya Patel", device: "Google Pixel 8", issue: "USB-C Charging Port", source: "Calendly", storeId: 1, date: "2024-11-09", status: "Completed", phone: "+1 (215) 555-1004", estValue: 69 },
-  { id: 5, name: "James Williams", device: "iPhone 15", issue: "Back Glass Laser Repair", source: "Yelp", storeId: 2, date: "2024-11-08", status: "Completed", phone: "+1 (215) 555-1005", estValue: 129 },
-  { id: 6, name: "Sarah Chen", device: "Samsung Galaxy A54", issue: "Speaker & Earpiece", source: "Google Maps", storeId: 3, date: "2024-11-08", status: "Lost / No Show", phone: "+1 (610) 555-1006", estValue: 59 },
-  { id: 7, name: "Robert Davis", device: "iPhone 12", issue: "Screen Replacement", source: "Facebook", storeId: 1, date: "2024-11-07", status: "Confirmed", phone: "+1 (215) 555-1007", estValue: 139 },
-  { id: 8, name: "Maria Garcia", device: "OnePlus 11", issue: "Battery Replacement", source: "Google Maps", storeId: 2, date: "2024-11-07", status: "New", phone: "+1 (215) 555-1008", estValue: 65 },
-  { id: 9, name: "Antoine Vance", device: "PS5 Console", issue: "HDMI Port Micro-Soldering", source: "ChatGPT / AI", storeId: 1, date: "2024-11-06", status: "New", phone: "+1 (215) 555-1009", estValue: 149 },
-  { id: 10, name: "Elena Rostova", device: "Galaxy Z Fold 4", issue: "Inner Screen Assembly", source: "Walk-in", storeId: 1, date: "2024-11-06", status: "Contacted", phone: "+1 (215) 555-1010", estValue: 249 },
-  { id: 11, name: "Malik Washington", device: "iPhone 14", issue: "Camera Lens Replacement", source: "Calendly", storeId: 2, date: "2024-11-05", status: "Confirmed", phone: "+1 (215) 555-1011", estValue: 79 },
-  { id: 12, name: "Tariq Hasan", device: "Google Pixel 7", issue: "Battery Drain Fast", source: "Walk-in", storeId: 3, date: "2024-11-05", status: "Completed", phone: "+1 (215) 555-1012", estValue: 65 },
-  { id: 13, name: "Chloe Martin", device: "iPhone 13 Pro", issue: "OLED Screen Green Line", source: "ChatGPT / AI", storeId: 1, date: "2024-11-04", status: "Confirmed", phone: "+1 (215) 555-1013", estValue: 219 },
-  { id: 14, name: "Brandon Lee", device: "Samsung S22 Ultra", issue: "Cracked Front Glass", source: "Instagram", storeId: 3, date: "2024-11-04", status: "Lost / No Show", phone: "+1 (215) 555-1014", estValue: 189 },
-];
-
 const STATUS_PILL: Record<LeadStatus, string> = {
   New: "bg-[#fffbeb] text-[#92400e] border border-[#fde68a]",
   Contacted: "bg-[#eeeeee] text-[#111111]",
@@ -87,7 +70,7 @@ export default function LeadsPage() {
     useStoreContext();
   const storeShortName = selectedStore.name.replace("SmartFoneDoctor - ", "");
 
-  const [leads, setLeads] = useState<Lead[]>(INITIAL_LEADS);
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [filterStatus, setFilterStatus] = useState<LeadStatus | "All">("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -116,11 +99,12 @@ export default function LeadsPage() {
     setIsLoading(true);
     getLeadsAction()
       .then((res) => {
-        if (mounted && res.success && res.leads.length > 0) {
-          setLeads(res.leads as unknown as Lead[]);
-        }
+        if (!mounted) return;
+        // The database is the only source: no sample leads.
+        if (res.success) setLeads(res.leads as unknown as Lead[]);
+        else notify(`Could not load leads: ${res.error ?? "unknown error"}`);
       })
-      .catch(console.error)
+      .catch((err: unknown) => mounted && notify(`Could not load leads: ${String(err)}`))
       .finally(() => {
         if (mounted) setIsLoading(false);
       });
@@ -139,38 +123,38 @@ export default function LeadsPage() {
     };
   }, []);
 
+  // Writes go to the database first; the list changes only when they worked.
+  const failed = (err: unknown) => ({ success: false as const, error: err instanceof Error ? err.message : String(err) });
+
   const handleStatusChange = async (id: number, nextStatus: LeadStatus) => {
-    setLeads((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, status: nextStatus } : item
-      )
-    );
+    const res = await updateLeadAction(id, { status: nextStatus }).catch(failed);
+    if (!res.success) return notify(`Not saved: ${res.error ?? "unknown error"}`);
+    setLeads((prev) => prev.map((item) => (item.id === id ? { ...item, status: nextStatus } : item)));
     notify(`Status updated to ${nextStatus}.`);
-    await updateLeadAction(id, { status: nextStatus }).catch(console.error);
   };
 
   const handleUpdateLead = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingLead) return;
-    setLeads((prev) =>
-      prev.map((l) => (l.id === editingLead.id ? editingLead : l))
-    );
-    notify(`Lead for ${editingLead.name} updated.`);
     const target = editingLead;
-    setEditingLead(null);
-    await updateLeadAction(target.id, {
+    const res = await updateLeadAction(target.id, {
       status: target.status,
       estValue: target.estValue,
       storeId: target.storeId,
-    }).catch(console.error);
+    }).catch(failed);
+    if (!res.success) return notify(`Not saved: ${res.error ?? "unknown error"}`);
+    setLeads((prev) => prev.map((l) => (l.id === target.id ? target : l)));
+    setEditingLead(null);
+    notify(`Lead for ${target.name} updated.`);
   };
 
   const handleDeleteLead = async (id: number) => {
     const target = leads.find((l) => l.id === id);
+    const res = await deleteLeadAction(id).catch(failed);
+    setDeletingLead(null);
+    if (!res.success) return notify(`Not deleted: ${res.error ?? "unknown error"}`);
     setLeads((prev) => prev.filter((l) => l.id !== id));
     notify(`Deleted lead for ${target?.name ?? "customer"}.`);
-    setDeletingLead(null);
-    await deleteLeadAction(id).catch(console.error);
   };
 
   const handleAddLead = async (e: React.FormEvent) => {

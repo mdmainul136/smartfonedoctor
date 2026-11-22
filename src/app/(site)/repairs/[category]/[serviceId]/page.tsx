@@ -3,8 +3,14 @@ import { brandTitle } from "@/lib/seoTitle";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getAllServicesCMS, getServiceCMS } from "@/data/servicesData";
-import { buildDeviceModelCMS, PSEO_DEVICES } from "@/lib/pSeoEngine";
+import { buildDeviceModelCMS } from "@/lib/pSeoEngine";
+import { getRepairCatalog } from "@/lib/repairCatalog";
 import ServiceDetailClient from "./ServiceDetailClient";
+import Footer from "@/components/layout/Footer";
+import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
+import { RouteDataProvider } from "@/components/site/RouteDataContext";
+import { pickLayout } from "@/lib/pickLayout";
+
 
 interface PageProps {
   params: Promise<{
@@ -21,7 +27,8 @@ export async function generateStaticParams() {
   }));
 
   // Also include top dynamic devices
-  const deviceParams = PSEO_DEVICES.map((d) => ({
+  const { devices } = await getRepairCatalog();
+  const deviceParams = devices.map((d) => ({
     category: d.category,
     serviceId: d.slug,
   }));
@@ -31,7 +38,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { category, serviceId } = await params;
-  const service = getServiceCMS(category, serviceId) || buildDeviceModelCMS(category, serviceId);
+  const service = getServiceCMS(category, serviceId) || buildDeviceModelCMS(category, serviceId, await getRepairCatalog());
 
   if (!service) {
     return {
@@ -53,11 +60,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ServiceDetailPage({ params }: PageProps) {
   const { category, serviceId } = await params;
-  const service = getServiceCMS(category, serviceId) || buildDeviceModelCMS(category, serviceId);
+  const service = getServiceCMS(category, serviceId) || buildDeviceModelCMS(category, serviceId, await getRepairCatalog());
 
   if (!service) {
     notFound();
   }
 
-  return <ServiceDetailClient service={service} />;
+  // Layout from Admin > Pages > Templates > "Template: Device page" (or this URL's own page).
+  const layout = await pickLayout(`/repairs/${category}/${serviceId}`, "repair-device");
+  if (!layout) return <ServiceDetailClient service={service} />;
+  return (
+    <>
+      <RouteDataProvider value={{ type: "repair-device", data: { service } }}>
+        <CMSSectionRenderer slug={layout.page.slug} initialPage={layout.page} />
+      </RouteDataProvider>
+      <Footer />
+    </>
+  );
 }

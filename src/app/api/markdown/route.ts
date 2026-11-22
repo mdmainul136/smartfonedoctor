@@ -27,8 +27,11 @@ function stripHtml(html: string): string {
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    let rawPath = searchParams.get("path") || "";
+    // Reached by the "/<page>.md" rewrite: req.url may still be the original
+    // "/<page>.md" URL, so read the page from it when the query is missing.
+    const url = new URL(req.url);
+    const fromQuery = req.nextUrl.searchParams.get("path") || url.searchParams.get("path");
+    let rawPath = fromQuery || (url.pathname.endsWith(".md") ? url.pathname : "");
     // Clean leading slashes and trailing .md
     rawPath = rawPath.replace(/^\/+/, "").replace(/\.md$/, "");
 
@@ -43,7 +46,8 @@ export async function GET(req: NextRequest) {
         include: { seo: true },
       });
 
-      if (post) {
+      // Drafts stay private, like the HTML page.
+      if (post && post.status === "Published") {
         pageTitle = post.title;
         markdown += `# ${post.title}\n\n`;
         if (post.excerpt) markdown += `> ${post.excerpt}\n\n`;
@@ -90,8 +94,11 @@ export async function GET(req: NextRequest) {
     // 4. Check CMS Pages (e.g. repairs, repairs/iphone, about, schedule-repair, review)
     if (!markdown) {
       const lookupSlug = rawPath.replace(/\//g, "-") || "home";
+      // Live pages only: no drafts, type templates or global blocks.
       const page = await prisma.cmsPage.findFirst({
         where: {
+          status: "Published",
+          NOT: [{ category: "Template" }, { category: "Global" }],
           OR: [
             { slug: lookupSlug },
             { path: `/${rawPath}` },

@@ -21,8 +21,6 @@ import {
 import {
   MediaItem,
   INITIAL_MEDIA_LIBRARY,
-  getClientMediaLibrary,
-  saveClientMediaLibrary,
   formatBytes,
 } from "@/lib/mediaData";
 
@@ -73,7 +71,7 @@ export default function MediaModal({
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load media items from server and fallback to client localStorage
+  // Load media items from the server (the database list)
   const loadMedia = async () => {
     setLoading(true);
     try {
@@ -83,7 +81,6 @@ export default function MediaModal({
         const data = text ? JSON.parse(text) : {};
         if (data.items && Array.isArray(data.items)) {
           setItems(data.items);
-          saveClientMediaLibrary(data.items);
           return;
         }
       }
@@ -92,8 +89,7 @@ export default function MediaModal({
     } finally {
       setLoading(false);
     }
-    const local = getClientMediaLibrary();
-    setItems(local);
+    setUploadError("Could not load the media library. Please sign in again and retry.");
   };
 
   useEffect(() => {
@@ -128,7 +124,7 @@ export default function MediaModal({
     if (!files || files.length === 0) return;
     const file = files[0];
     if (!file.type.startsWith("image/")) {
-      setUploadError("Please upload an image file (PNG, JPG, WEBP, GIF, SVG).");
+      setUploadError("Please upload a JPEG, PNG, WebP, GIF or AVIF image (max 10 MB).");
       return;
     }
 
@@ -151,37 +147,18 @@ export default function MediaModal({
         if (data.item) {
           const updated = [data.item, ...items];
           setItems(updated);
-          saveClientMediaLibrary(updated);
           setSelectedItem(data.item);
           setAltText(data.item.alt);
           setActiveTab("library");
         }
       } else {
-        throw new Error("Server rejected file upload");
+        const text = await res.text();
+        const data = text ? JSON.parse(text) : {};
+        throw new Error(data.error || "The server did not accept this file.");
       }
     } catch (err: unknown) {
-      console.warn("Upload fallback to base64 data URL", err);
-      // Fallback client-side reader
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const base64 = e.target?.result as string;
-        const fallbackItem: MediaItem = {
-          id: `local-${Date.now()}`,
-          filename: file.name,
-          url: base64,
-          alt: file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " "),
-          filesize: file.size,
-          mimeType: file.type,
-          createdAt: new Date().toISOString(),
-        };
-        const updated = [fallbackItem, ...items];
-        setItems(updated);
-        saveClientMediaLibrary(updated);
-        setSelectedItem(fallbackItem);
-        setAltText(fallbackItem.alt);
-        setActiveTab("library");
-      };
-      reader.readAsDataURL(file);
+      // No silent browser-only fallback: the file must really be saved.
+      setUploadError(err instanceof Error ? err.message : "Upload failed.");
     } finally {
       setUploading(false);
     }
@@ -192,17 +169,14 @@ export default function MediaModal({
     e.stopPropagation();
     if (!confirm(`Delete "${item.filename}" from media library?`)) return;
 
-    try {
-      await fetch(`/api/admin/media?id=${item.id}&filename=${item.filename}`, {
-        method: "DELETE",
-      });
-    } catch {
-      // Ignored
+    const res = await fetch(`/api/admin/media?id=${encodeURIComponent(item.id)}`, { method: "DELETE" }).catch(() => null);
+    if (!res?.ok) {
+      setUploadError("Could not delete the image. Please retry.");
+      return;
     }
 
     const filtered = items.filter((it) => it.id !== item.id);
     setItems(filtered);
-    saveClientMediaLibrary(filtered);
     if (selectedItem?.id === item.id) {
       setSelectedItem(null);
     }

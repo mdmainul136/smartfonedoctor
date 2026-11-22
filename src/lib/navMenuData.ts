@@ -61,41 +61,7 @@ export const DEFAULT_NAV_MENU: NavMenuConfig = {
   },
 };
 
-const STORAGE_KEY = "sfd_nav_menu_v1";
 export const NAV_MENU_EVENT = "sfd-nav-menu-updated";
-
-export function getStoredNavMenu(): NavMenuConfig {
-  if (typeof window === "undefined") return DEFAULT_NAV_MENU;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as Partial<NavMenuConfig>;
-      if (Array.isArray(parsed?.items)) {
-        return {
-          items: parsed.items,
-          cta: { ...DEFAULT_NAV_MENU.cta, ...parsed.cta },
-          topBar: { ...DEFAULT_NAV_MENU.topBar, ...parsed.topBar },
-        };
-      }
-    }
-  } catch (e) {
-    console.error("Failed to read the navigation menu", e);
-  }
-  return DEFAULT_NAV_MENU;
-}
-
-/** Returns false when the browser refused to store it. */
-export function saveStoredNavMenu(config: NavMenuConfig): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-    window.dispatchEvent(new Event(NAV_MENU_EVENT));
-    return true;
-  } catch (e) {
-    console.error("Failed to save the navigation menu", e);
-    return false;
-  }
-}
 
 export const newNavId = (prefix: string) => `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
 

@@ -38,9 +38,11 @@ import {
 
 interface Props {
   service: ServiceCMSData;
+  /** False when a page-builder template renders the page (it adds the footer after its own blocks). */
+  withFooter?: boolean;
 }
 
-export default function ServiceDetailClient({ service }: Props) {
+export default function ServiceDetailClient({ service, withFooter = true }: Props) {
   const [viewMode, setViewMode] = useState<"models" | "issues">("models");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -530,11 +532,11 @@ export default function ServiceDetailClient({ service }: Props) {
         {/* 5.5. Automated Technical Specifications & pSEO Bench Overview */}
         <div className="mb-16">
           <PSeoRichSection
-            title={`${service.serviceName} Technical Bench Specifications & Overview`}
-            subtitle={`Certified laboratory standards and hardware repair benchmarks for ${service.serviceName} in Philadelphia, PA. All repairs handled on-site with 90-day warranty.`}
-            badge="Philadelphia Laboratory Spec"
+            title={`${service.serviceName}: repair details`}
+            subtitle={`Time, price, parts and warranty for ${service.serviceName} at our Philadelphia stores.`}
+            badge="At a glance"
             specifications={[
-              { label: "Service Name", value: `${service.serviceName} Repair & Diagnostics` },
+              { label: "Service Name", value: service.serviceName },
               { label: "Hardware Category", value: service.categoryName },
               {
                 label: "Models Supported",
@@ -543,14 +545,14 @@ export default function ServiceDetailClient({ service }: Props) {
                     ? service.models.slice(0, 4).map((m) => m.title).join(", ") + " & all models"
                     : "All Generations & Variants Supported",
               },
-              { label: "Average Turnaround", value: "20 – 45 Minutes (Same-Day Express Bench)" },
-              { label: "Diagnostic Fee", value: "$0.00 (100% Free Upfront Assessment)" },
-              { label: "Parts Quality", value: "OEM Original & Premium Grade-A+ Certified Assemblies" },
-              { label: "Warranty Guarantee", value: "90-Day Comprehensive Parts & Labor Warranty" },
-              { label: "Data Safety Policy", value: "Zero Data Wipe Guarantee (Photos, apps & credentials kept intact)" },
-              { label: "Technician Standard", value: "WISE Certified Level 2 & ESD-Safe Bench Master Techs" },
-              { label: "Flagship Bench Location", value: "33 S 52nd St, Philadelphia, PA 19139" },
-              { label: "Walk-in Policy", value: "Walk-ins Welcome Daily – No Appointment Required" },
+              { label: "Typical repair time", value: "20–45 minutes, same day" },
+              { label: "Diagnosis", value: "Free" },
+              { label: "Parts", value: "Original (OEM) or high-quality replacement parts" },
+              { label: "Warranty", value: "90 days on parts and labor" },
+              { label: "Your data", value: "We don't erase your data" },
+              { label: "Technicians", value: "WISE Level 2 certified, ESD-safe benches" },
+              { label: "Main store", value: "33 S 52nd St, Philadelphia, PA 19139" },
+              { label: "Walk-in Policy", value: "Walk-ins welcome, no appointment needed" },
             ]}
             keyFeatures={[
               {
@@ -563,7 +565,7 @@ export default function ServiceDetailClient({ service }: Props) {
               },
               {
                 title: "Zero Data Loss Guarantee",
-                desc: "Unlike manufacturer mail-in service centers that wipe your storage clean, your personal photos, files, and apps remain 100% safe and untouched.",
+                desc: "Unlike manufacturer mail-in service centers that wipe your storage clean, your personal photos, files, and apps stay safe and untouched.",
               },
               {
                 title: "Component-Level Micro-Soldering",
@@ -574,14 +576,14 @@ export default function ServiceDetailClient({ service }: Props) {
                 desc: "You receive an exact written quote before any technician starts work. Zero hidden bench fees or surprise charges.",
               },
               {
-                title: "90-Day Peace of Mind Warranty",
+                title: "90-day warranty",
                 desc: "Every installed component is backed by our comprehensive 90-day warranty against manufacturer defects and touch unresponsiveness.",
               },
             ]}
             faqs={[
               {
                 question: `How much does ${service.serviceName} repair cost in Philadelphia?`,
-                answer: `Diagnostic testing for your ${service.serviceName} is always 100% free at SmartFoneDoctor. Basic battery and port repairs start from $69, and screen replacements start from $89 depending on your exact model and component grade (Premium Aftermarket vs Factory OEM).`,
+                answer: `Diagnostic testing for your ${service.serviceName} is always free at SmartFoneDoctor. Basic battery and port repairs start from $69, and screen replacements start from $89 depending on your exact model and component grade (Premium Aftermarket vs Factory OEM).`,
               },
               {
                 question: `How long does ${service.serviceName} repair take?`,
@@ -593,7 +595,7 @@ export default function ServiceDetailClient({ service }: Props) {
               },
               {
                 question: `Will my photos and personal data be wiped during the repair?`,
-                answer: `No. Our certified technicians repair the hardware directly without resetting the device. Your photos, contacts, and personal data remain 100% untouched.`,
+                answer: `No. Our certified technicians repair the hardware directly without resetting the device. Your photos, contacts, and personal data stay untouched.`,
               },
               {
                 question: `Where are your Philadelphia repair stores located?`,
@@ -637,7 +639,7 @@ export default function ServiceDetailClient({ service }: Props) {
       </div>
 
       {/* Global Footer */}
-      <Footer />
+      {withFooter && <Footer />}
     </main>
   );
 }

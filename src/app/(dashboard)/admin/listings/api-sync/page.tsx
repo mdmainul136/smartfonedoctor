@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useStoreContext } from "@/lib/storeContext";
 import { useListings, ApiConnector } from "@/lib/listingsContext";
 import ListingsNav from "@/components/Dashboard/ListingsNav";
-import { RefreshCw, X, Check } from "lucide-react";
+import { ExternalLink, RefreshCw, X, Check } from "lucide-react";
 
 export default function ListingsApiSyncPage() {
   const { stores } = useStoreContext();
@@ -13,6 +13,21 @@ export default function ListingsApiSyncPage() {
   const [syncingId, setSyncingId] = useState<string | null>(null);
   const [syncingAll, setSyncingAll] = useState(false);
   const [lastSyncedBanner, setLastSyncedBanner] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const oauthState = params.get("oauth");
+    const oauthErr = params.get("oauth_error");
+    if (oauthState === "connected") {
+      setLastSyncedBanner(
+        "Google Business Profile OAuth 2.0 connected and refresh token saved to PostgreSQL."
+      );
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (oauthErr) {
+      setLastSyncedBanner(`Google OAuth notice: ${oauthErr}`);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
 
   const [activeConnector, setActiveConnector] = useState<ApiConnector | null>(
     null
@@ -55,15 +70,17 @@ export default function ListingsApiSyncPage() {
   const handleSaveConfig = (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeConnector) return;
-    if (!activeConnector.connected) {
-      toggleConnector(
-        activeConnector.id,
-        accountLabelInput.trim() || "Connected via API token"
-      );
-    }
+    const cleanKey =
+      apiKeyInput && !apiKeyInput.includes("••") ? apiKeyInput.trim() : undefined;
+    toggleConnector(
+      activeConnector.id,
+      accountLabelInput.trim() || "Connected via API token",
+      cleanKey,
+      true
+    );
     pullFromApi(activeConnector.id);
     setLastSyncedBanner(
-      `${activeConnector.name} credentials saved and all 3 Philadelphia store locations synced.`
+      `${activeConnector.name} credentials saved to database and all 3 Philadelphia store locations synced.`
     );
     setActiveConnector(null);
   };
@@ -383,7 +400,7 @@ export default function ListingsApiSyncPage() {
               <div>
                 <label className="block text-[14px] font-medium text-[#111111] mb-2">
                   {activeConnector.authType === "OAuth 2.0"
-                    ? "OAuth 2.0 refresh token"
+                    ? "OAuth 2.0 access / API token"
                     : "API key / bearer secret"}
                 </label>
                 <input
@@ -392,6 +409,20 @@ export default function ListingsApiSyncPage() {
                   onChange={(e) => setApiKeyInput(e.target.value)}
                   className="w-full h-[38px] px-3 rounded-[6px] border border-[#e5e7eb] bg-white text-[14px] text-[#111111] font-mono focus:outline-none focus:border-[#111111]"
                 />
+                {activeConnector.id === "google-gbp" && (
+                  <div className="mt-2.5 flex items-center justify-between gap-2 rounded-[6px] bg-teal-50/60 border border-teal-200/80 px-3 py-2 text-[12px]">
+                    <span className="text-[#111111]">
+                      Or authorize one-click Google Business Profile write access:
+                    </span>
+                    <a
+                      href="/api/admin/google-oauth?action=connect"
+                      className="inline-flex items-center gap-1 font-semibold text-sfd-teal hover:underline shrink-0"
+                    >
+                      <span>Connect OAuth</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                )}
               </div>
 
               <div className="p-3.5 rounded-[6px] bg-[#f9f9f9] border border-[#e8e8e8] flex flex-col gap-2 text-[13px]">

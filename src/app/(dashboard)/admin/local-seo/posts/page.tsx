@@ -154,7 +154,7 @@ export default function GmbPostsPage() {
           <div>
             <div className="flex items-center gap-2.5">
               <h1 className="text-xl font-bold text-gray-900">
-                Google Business Posts &amp; Offers
+                Google Business posts
               </h1>
               <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
                 <CheckCircle2 className="w-3 h-3 text-emerald-600" />
@@ -162,7 +162,7 @@ export default function GmbPostsPage() {
               </span>
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              Publish weekly promotional updates and announcements to keep your Google Maps profile active and ranking in local Philadelphia searches.
+              Updates and offers for your Google Business Profile.
             </p>
           </div>
 

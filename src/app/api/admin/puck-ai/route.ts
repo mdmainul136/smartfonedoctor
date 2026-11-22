@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { localPuckHandler, type LocalAiProvider } from "@/puck/ai/localPuckHandler";
 import type { PuckPageData } from "@/puck/types";
+import { getCurrentAdminAction } from "@/actions/auth";
 
 export async function GET() {
   const hasGemini = Boolean(
@@ -17,6 +18,10 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  // Uses the server's AI keys: admins only.
+  if (!(await getCurrentAdminAction())) {
+    return NextResponse.json({ error: "Please sign in to the admin." }, { status: 401 });
+  }
   try {
     const body = (await req.json()) as {
       prompt?: string;

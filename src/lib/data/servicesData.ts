@@ -177,7 +177,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
       },
       {
         title: "How much will it cost?",
-        description: "100% transparent pricing. Every repair starts with a free multi-point diagnostic check and an exact upfront quote.",
+        description: "Transparent pricing. Every repair starts with a free multi-point diagnostic check and an exact upfront quote.",
         image: "https://images.unsplash.com/photo-1556740758-90de374c12ad?w=600&auto=format&fit=crop&q=80",
         linkText: "Get free store estimate >",
       },
@@ -192,8 +192,8 @@ export const SERVICES_CMS: ServiceCMSData[] = [
       apple: {
         badge: "Available at SFD",
         title: "Apple® Genuine Parts & Service",
-        description: "Restore your iPhone with factory-spec original parts. Enjoy peace of mind knowing your Face ID and True Tone remain 100% functional.",
-        guarantee: "Lifetime Workmanship Guarantee",
+        description: "Restore your iPhone with factory-spec original parts. Face ID and True Tone keep working.",
+        guarantee: "90-Day Workmanship Guarantee",
       },
     },
     seo: {
@@ -358,7 +358,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
       {
         id: "ssd",
         title: "High-Speed SSD Upgrade & Data Recovery",
-        description: "Upgrade slow mechanical hard drives or Fusion drives to blazing-fast NVMe SSDs with complete file transfer.",
+        description: "Upgrade slow mechanical hard drives or Fusion drives to fast NVMe SSDs with complete file transfer.",
         image: "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 1–2 Hours",
       },

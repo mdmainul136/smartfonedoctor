@@ -1,6 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import {
+  getQrTrackingStateAction,
+  recordQrEventAction,
+  addQrCouponAction,
+  deactivateQrCouponAction,
+  addQrTrackedLinkAction,
+} from "@/actions/reviews";
 
 export type TrackingChannelId =
   | "gmb"
@@ -66,7 +73,7 @@ export const INITIAL_STORE_QR_ANALYTICS: Record<number, StoreQrAnalytics> = {
         id: "gmb",
         label: "Google Business Profile",
         category: "Review Directory",
-        handleOrTarget: "Smart Fone Doctor · 33 S 52nd St",
+        handleOrTarget: "SmartFoneDoctor · 33 S 52nd St",
         destinationUrl: "https://www.google.com/maps",
         clicks: 138,
         verifiedConversions: 54,
@@ -138,7 +145,7 @@ export const INITIAL_STORE_QR_ANALYTICS: Record<number, StoreQrAnalytics> = {
         id: "gmb",
         label: "Google Business Profile",
         category: "Review Directory",
-        handleOrTarget: "Smart Fone Doctor · 4016 Lancaster Ave",
+        handleOrTarget: "SmartFoneDoctor · 4016 Lancaster Ave",
         destinationUrl: "https://www.google.com/maps",
         clicks: 104,
         verifiedConversions: 41,
@@ -210,7 +217,7 @@ export const INITIAL_STORE_QR_ANALYTICS: Record<number, StoreQrAnalytics> = {
         id: "gmb",
         label: "Google Business Profile",
         category: "Review Directory",
-        handleOrTarget: "Smart Fone Doctor · 4060 Lancaster Ave",
+        handleOrTarget: "SmartFoneDoctor · 4060 Lancaster Ave",
         destinationUrl: "https://www.google.com/maps",
         clicks: 82,
         verifiedConversions: 33,
@@ -433,10 +440,20 @@ export function useQrTracking() {
 
   useEffect(() => {
     setData(loadState());
+    let cancelled = false;
+    void getQrTrackingStateAction()
+      .then((res) => {
+        if (!cancelled && res.success && res.state) {
+          saveState(res.state);
+          setData(res.state);
+        }
+      })
+      .catch(() => {});
     const sync = () => setData(loadState());
     window.addEventListener("storage", sync);
     window.addEventListener("sfd-qr-tracking-updated", sync);
     return () => {
+      cancelled = true;
       window.removeEventListener("storage", sync);
       window.removeEventListener("sfd-qr-tracking-updated", sync);
     };
@@ -477,6 +494,14 @@ export function useQrTracking() {
       };
       saveState(next);
       setData(next);
+      void recordQrEventAction({ type: "scan", storeId, deviceOs, source })
+        .then((res) => {
+          if (res.success && res.state) {
+            saveState(res.state);
+            setData(res.state);
+          }
+        })
+        .catch(() => {});
     },
     []
   );
@@ -536,12 +561,26 @@ export function useQrTracking() {
       };
       saveState(next);
       setData(next);
+      void recordQrEventAction({
+        type: "channel_click",
+        storeId,
+        channelId,
+        verifiedConversion,
+        perkOrNote,
+      })
+        .then((res) => {
+          if (res.success && res.state) {
+            saveState(res.state);
+            setData(res.state);
+          }
+        })
+        .catch(() => {});
     },
     []
   );
 
   const recordShieldIntercept = useCallback(
-    (storeId: number, rating: number, feedbackNote: string) => {
+    (storeId: number, rating: number, feedbackNote: string, message?: string) => {
       const current = loadState();
       const target = current.byStore[storeId] ?? current.byStore[1];
       const newEvent: QrScanEvent = {
@@ -569,6 +608,20 @@ export function useQrTracking() {
       };
       saveState(next);
       setData(next);
+      void recordQrEventAction({
+        type: "shield_intercept",
+        storeId,
+        rating,
+        feedbackNote,
+        message,
+      })
+        .then((res) => {
+          if (res.success && res.state) {
+            saveState(res.state);
+            setData(res.state);
+          }
+        })
+        .catch(() => {});
     },
     []
   );
@@ -580,6 +633,14 @@ export function useQrTracking() {
     const next: StoredPayload = { ...current, coupons: [...current.coupons, newCoupon] };
     saveState(next);
     setData(next);
+    void addQrCouponAction(coupon)
+      .then((res) => {
+        if (res.success && res.state) {
+          saveState(res.state);
+          setData(res.state);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const deactivateCoupon = useCallback((couponId: string) => {
@@ -592,6 +653,14 @@ export function useQrTracking() {
     };
     saveState(next);
     setData(next);
+    void deactivateQrCouponAction(couponId)
+      .then((res) => {
+        if (res.success && res.state) {
+          saveState(res.state);
+          setData(res.state);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // ─── Link management ────────────────────────────────────────────────────────
@@ -601,6 +670,14 @@ export function useQrTracking() {
     const next: StoredPayload = { ...current, links: [...current.links, newLink] };
     saveState(next);
     setData(next);
+    void addQrTrackedLinkAction(link)
+      .then((res) => {
+        if (res.success && res.state) {
+          saveState(res.state);
+          setData(res.state);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   return {

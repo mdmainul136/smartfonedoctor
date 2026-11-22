@@ -3,50 +3,27 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ArrowRight } from "lucide-react";
+import { FAQ_DEFAULTS, pickList, pickText, type FaqSectionProps } from "./sectionContent";
 
 export interface FaqItem {
   question: string;
   answer: string;
 }
 
-export const HOMEPAGE_FAQS: FaqItem[] = [
-  {
-    question: "How do I book a repair at a SmartFoneDoctor store?",
-    answer:
-      "You can book an appointment directly through our online store locator by selecting your nearest location and choosing 'Book Repair'. You can also call your local store or walk in anytime during business hours for same-day service.",
-  },
-  {
-    question: "What kinds of devices do you repair?",
-    answer:
-      "We repair all major smartphone models (Apple iPhone, Samsung Galaxy, Google Pixel, Motorola), iPads and tablets, MacBooks, Windows laptops, desktop computers, gaming consoles (PlayStation, Xbox, Nintendo), and smartwatches.",
-  },
-  {
-    question: "How much will my repair cost?",
-    answer:
-      "Pricing depends on the specific device model and type of repair needed. We provide a completely free diagnostic inspection and upfront estimate before any work begins, so you know the exact cost with no surprise fees.",
-  },
-  {
-    question: "How long will my repair take?",
-    answer:
-      "Most standard smartphone repairs, such as cracked screen replacements and battery swaps, are completed in under 45 minutes to 1 hour. Tablet, laptop, and console repairs are usually completed same-day or within 24 to 48 hours.",
-  },
-  {
-    question: "Does SmartFoneDoctor use certified parts?",
-    answer:
-      "Yes, we exclusively utilize OEM-grade and certified premium replacement parts that meet strict industry quality and safety specifications. All parts installed by our WISE Certified technicians include our limited warranty.",
-  },
-  {
-    question: "Do you sell Certified Pre-Owned (CPO) devices?",
-    answer:
-      "Yes! Many of our SmartFoneDoctor locations carry a wide selection of fully inspected, cleaned, and tested Certified Pre-Owned smartphones, tablets, and laptops. Each device comes backed with a warranty for your peace of mind.",
-  },
-];
+/** Built-in home FAQs (also used for the page's FAQ schema when nothing is edited). */
+export const HOMEPAGE_FAQS: FaqItem[] = FAQ_DEFAULTS.items;
 
-const FAQS_COL1 = HOMEPAGE_FAQS.slice(0, 3);
-const FAQS_COL2 = HOMEPAGE_FAQS.slice(3, 6);
+/** The questions a Home FAQ section shows: its edited list, or the built-in one. */
+export function homeFaqItems(props?: FaqSectionProps): FaqItem[] {
+  return pickList(props?.items, FAQ_DEFAULTS.items).filter((f) => f.question && f.answer);
+}
 
-export function FaqSection() {
+export function FaqSection(props: FaqSectionProps) {
   const [openIndex, setOpenIndex] = useState<string | null>(null);
+  const faqs = homeFaqItems(props);
+  const half = Math.ceil(faqs.length / 2);
+  const FAQS_COL1 = faqs.slice(0, half);
+  const FAQS_COL2 = faqs.slice(half);
 
   const toggle = (key: string) => {
     setOpenIndex(openIndex === key ? null : key);
@@ -58,7 +35,7 @@ export function FaqSection() {
 
         {/* Heading */}
         <h2 className="text-[22px] sm:text-[26px] font-[550] text-[#1d1c1a] text-center mb-8 sm:mb-10 tracking-tight">
-          Frequently Asked Questions about SmartFoneDoctor
+          {pickText(props.heading, FAQ_DEFAULTS.heading)}
         </h2>
 
         {/* 2-Column Accordion Grid */}
@@ -141,10 +118,10 @@ export function FaqSection() {
         {/* View All FAQs CTA */}
         <div className="text-center mt-10">
           <Link
-            href="/faq"
+            href={pickText(props.buttonLink, FAQ_DEFAULTS.buttonLink)}
             className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-bold transition border border-neutral-200/80"
           >
-            <span>View All 24 Repair FAQs</span>
+            <span>{pickText(props.buttonText, FAQ_DEFAULTS.buttonText)}</span>
             <ArrowRight className="w-3.5 h-3.5 text-sfd-teal" />
           </Link>
         </div>

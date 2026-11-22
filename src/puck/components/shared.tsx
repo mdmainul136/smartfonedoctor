@@ -1,8 +1,37 @@
 "use client";
 
 import React, { useState } from "react";
+
+const LazyDynamicIcon = React.lazy(() =>
+  import("lucide-react/dynamic").then((m) => ({ default: m.DynamicIcon }))
+);
+
+/** Any lucide icon not in ICON_MAP, fetched on its own when first shown (browser only). */
+function LazyLucideIcon(props: {
+  name: string;
+  className?: string;
+  style?: React.CSSProperties;
+  fallback?: React.ComponentProps<typeof LazyDynamicIcon>["fallback"];
+}) {
+  const [mounted, setMounted] = useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+  if (!mounted) {
+    return <span className="inline-block h-4 w-4 shrink-0" aria-hidden="true" />;
+  }
+  return (
+    <React.Suspense fallback={<span className="inline-block h-4 w-4 shrink-0" aria-hidden="true" />}>
+      <LazyDynamicIcon
+        name={props.name as React.ComponentProps<typeof LazyDynamicIcon>["name"]}
+        className={props.className}
+        style={props.style}
+        fallback={props.fallback}
+      />
+    </React.Suspense>
+  );
+}
 import {
-  icons,
   Shield,
   ShieldCheck,
   Clock,
@@ -317,29 +346,50 @@ export function RenderItemIcon({
     /\.(svg|png|webp|jpg|jpeg|gif)$/i.test(trimmed)
   ) {
     return (
-      <img
-        src={trimmed}
-        alt="icon"
-        className={`object-contain shrink-0 ${className}`}
-        style={mergedStyle}
-      />
+      <>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={trimmed}
+          alt="icon"
+          className={`object-contain shrink-0 ${className}`}
+          style={mergedStyle}
+        />
+      </>
     );
   }
 
-  // 3. Lucide Icons (all 2,000+ icons supported dynamically)
-  // Try direct match, normalized PascalCase, or from curated static map
+  // 3. Lucide icons. The common ones are bundled (ICON_MAP); any other of the
+  // 2,000+ icons is loaded on its own when a page uses it, so pages don't carry
+  // the whole icon set.
   const pascalName = trimmed
     .replace(/[-_ ]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ""))
     .replace(/^[a-z]/, (c) => c.toUpperCase());
 
-  const LucideComp =
-    (icons as Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>>)[trimmed] ||
-    (icons as Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>>)[pascalName] ||
-    ICON_MAP[trimmed] ||
-    ICON_MAP[pascalName];
-
+  const LucideComp = ICON_MAP[trimmed] || ICON_MAP[pascalName];
   if (LucideComp) {
     return <LucideComp className={className} style={mergedStyle} />;
+  }
+
+  const textSymbol = (
+    <span
+      className={`inline-flex items-center justify-center leading-none select-none shrink-0 ${className}`}
+      style={{
+        fontSize: size ? `${Math.round(Number(size) * 0.75)}px` : undefined,
+        ...mergedStyle,
+      }}
+    >
+      {trimmed}
+    </span>
+  );
+
+  if (/^[A-Za-z][A-Za-z0-9_ -]*$/.test(trimmed)) {
+    const kebab = pascalName
+      .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
+      .replace(/([a-zA-Z])([0-9])/g, "$1-$2")
+      .toLowerCase();
+    return (
+      <LazyLucideIcon name={kebab} className={className} style={mergedStyle} fallback={() => textSymbol} />
+    );
   }
 
   // 4. Emoji or short text symbol (e.g. 🛠️, ⚡, 🍎, 5★)

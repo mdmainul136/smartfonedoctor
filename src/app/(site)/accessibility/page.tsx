@@ -4,18 +4,26 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Footer from "@/components/layout/Footer";
 import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
+import { getCmsPage } from "@/actions/cmsPages";
+import { withCmsMetadata } from "@/lib/cmsMetadata";
 
-export const metadata: Metadata = {
+// Coded defaults; title, description and canonical can be changed in Admin > Pages > SEO.
+const baseMetadata: Metadata = {
   title: brandTitle("Accessibility Statement | SmartFoneDoctor"),
   description:
     "SmartFoneDoctor is committed to digital accessibility and providing a website that is usable for all people, including those with disabilities.",
   keywords: ["Accessibility Statement", "SmartFoneDoctor Accessibility", "WCAG 2.1 AAA"],
 };
 
-export default function AccessibilityStatementPage() {
+export async function generateMetadata(): Promise<Metadata> {
+  return withCmsMetadata("accessibility", baseMetadata);
+}
+
+export default async function AccessibilityStatementPage() {
+  const cmsPage = await getCmsPage("accessibility");
   return (
     <main className="bg-[#fcfcfc] min-h-screen">
-      <CMSSectionRenderer slug="accessibility">
+      <CMSSectionRenderer slug="accessibility" initialPage={cmsPage}>
         <div className="max-w-[1140px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20">
         
         {/* Breadcrumbs */}

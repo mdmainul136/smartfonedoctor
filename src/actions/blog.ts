@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { INITIAL_BLOG_ARTICLES, type BlogArticle } from "@/lib/blogData";
+import { canPublish, requireAdmin, requirePublisher } from "@/lib/adminGuard";
 
 /** Convert a database row to the typed BlogArticle model */
 function rowToBlogArticle(row: {
@@ -76,8 +77,26 @@ async function ensureSeededBlogArticles(): Promise<void> {
   }
 }
 
-/** Server Action: Get all blog posts from PostgreSQL */
+/** Published blog posts (public site). Drafts never leave the admin. */
 export async function getBlogPostsAction(): Promise<{
+  success: boolean;
+  articles: BlogArticle[];
+  error?: string;
+}> {
+  return loadPosts(false);
+}
+
+/** Every blog post incl. drafts: admin only. */
+export async function getBlogPostsAdminAction(): Promise<{
+  success: boolean;
+  articles: BlogArticle[];
+  error?: string;
+}> {
+  await requireAdmin();
+  return loadPosts(true);
+}
+
+async function loadPosts(includeDrafts: boolean): Promise<{
   success: boolean;
   articles: BlogArticle[];
   error?: string;
@@ -86,6 +105,7 @@ export async function getBlogPostsAction(): Promise<{
     await ensureSeededBlogArticles();
 
     const rows = await prisma.blogPost.findMany({
+      where: includeDrafts ? {} : { status: "Published" },
       orderBy: { createdAt: "desc" },
     });
 
@@ -103,8 +123,26 @@ export async function getBlogPostsAction(): Promise<{
   }
 }
 
-/** Server Action: Get a single blog post by slug from PostgreSQL */
+/** One published blog post (public site); null for drafts and unknown slugs. */
 export async function getBlogPostBySlugAction(slug: string): Promise<{
+  success: boolean;
+  article: BlogArticle | null;
+  error?: string;
+}> {
+  return loadPost(slug, false);
+}
+
+/** One blog post incl. drafts, for the admin editor. */
+export async function getBlogPostAdminAction(slug: string): Promise<{
+  success: boolean;
+  article: BlogArticle | null;
+  error?: string;
+}> {
+  await requireAdmin();
+  return loadPost(slug, true);
+}
+
+async function loadPost(slug: string, includeDrafts: boolean): Promise<{
   success: boolean;
   article: BlogArticle | null;
   error?: string;
@@ -116,12 +154,11 @@ export async function getBlogPostBySlugAction(slug: string): Promise<{
       where: { slug },
     });
 
+    // The database is the source of truth: a row that exists is never replaced by built-in data.
     if (row) {
-      return { success: true, article: rowToBlogArticle(row) };
+      return { success: true, article: includeDrafts || row.status === "Published" ? rowToBlogArticle(row) : null };
     }
-
-    const fallback = INITIAL_BLOG_ARTICLES.find((a) => a.slug === slug) || null;
-    return { success: true, article: fallback };
+    return { success: true, article: null };
   } catch (err) {
     console.error("[getBlogPostBySlugAction] Error:", err);
     const fallback = INITIAL_BLOG_ARTICLES.find((a) => a.slug === slug) || null;
@@ -140,6 +177,14 @@ export async function upsertBlogPostAction(article: BlogArticle): Promise<{
   error?: string;
 }> {
   try {
+    const admin = await requireAdmin();
+    // Editors save drafts only; publishing or changing a live post needs an admin.
+    if (!canPublish(admin.role)) {
+      const existing = await prisma.blogPost.findUnique({ where: { slug: article.slug }, select: { status: true } });
+      if (article.status === "Published" || existing?.status === "Published") {
+        return { success: false, error: "Only an admin can publish or change a published post. Save it as a Draft for review." };
+      }
+    }
     const data = {
       slug: article.slug,
       title: article.title,
@@ -183,6 +228,7 @@ export async function deleteBlogPostAction(idOrSlug: string): Promise<{
   error?: string;
 }> {
   try {
+    await requirePublisher();
     const post = await prisma.blogPost.findFirst({
       where: {
         OR: [{ id: idOrSlug }, { slug: idOrSlug }],

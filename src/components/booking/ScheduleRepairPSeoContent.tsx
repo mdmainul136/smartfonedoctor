@@ -23,9 +23,11 @@ import {
   Gamepad2,
   Check,
 } from "lucide-react";
-import { resolveDevice, PSEO_DEVICES } from "@/lib/pSeoEngine";
+import { resolveDevice, type RepairCatalog } from "@/lib/pSeoEngine";
 
 interface Props {
+  /** The live repair catalog (from the database), passed by the server page. */
+  catalog?: RepairCatalog;
   deviceParam?: string;
   makeParam?: string;
   modelParam?: string;
@@ -33,6 +35,7 @@ interface Props {
 }
 
 export default function ScheduleRepairPSeoContent({
+  catalog,
   deviceParam,
   makeParam,
   modelParam,
@@ -43,7 +46,7 @@ export default function ScheduleRepairPSeoContent({
 
   // Resolve device if present in query param (e.g. "iPad-Pro-12.9" or "ipad")
   const queryDevice = deviceParam || modelParam || "";
-  const matchedDevice = queryDevice ? resolveDevice(queryDevice) : undefined;
+  const matchedDevice = queryDevice ? resolveDevice(queryDevice, catalog) : undefined;
 
   const deviceName = matchedDevice
     ? matchedDevice.name
@@ -59,22 +62,22 @@ export default function ScheduleRepairPSeoContent({
 
   const deviceSpecs = matchedDevice
     ? matchedDevice.specs
-    : "All generations supported · OEM & Premium Grade-A+ components · Same-day walk-in service";
+    : "All generations supported · Tested replacement parts · Same-day walk-in service";
 
   // Specifications Table Data
   const specifications = [
     { label: "Service Name", value: `${deviceName} Express Repair & Diagnostics` },
     { label: "Device Category", value: categoryName },
     { label: "Turnaround Time", value: "20 – 45 Minutes (Average Same-Day Bench Service)" },
-    { label: "Diagnostic Fee", value: "$0.00 (100% Free Upfront Assessment)" },
-    { label: "Component Quality", value: "OEM Original & Premium Grade-A+ Certified Assemblies" },
-    { label: "Warranty Coverage", value: "90-Day Comprehensive Parts & Labor Guarantee" },
-    { label: "Technician Credentials", value: "WISE Certified Level 2 & IPC-A-610 Master Technicians" },
-    { label: "Data Safety Policy", value: "Zero Data Wipe Guarantee (Photos, files & apps kept 100% intact)" },
-    { label: "Walk-in Policy", value: "Walk-ins Welcome Daily – No Appointment Required" },
+    { label: "Diagnostic Fee", value: "Free" },
+    { label: "Component Quality", value: "OEM and tested aftermarket parts" },
+    { label: "Warranty Coverage", value: "90 days on parts and labor" },
+    { label: "Technician Credentials", value: "WISE Level 2 and IPC-A-610 certified technicians" },
+    { label: "Data Safety Policy", value: "We don't erase your data" },
+    { label: "Walk-in Policy", value: "Walk-ins welcome Mon–Sat, no appointment required" },
     { label: "Flagship Bench Location", value: "33 S 52nd St, Philadelphia, PA 19139 (West Philly)" },
-    { label: "Store Hours", value: "Mon–Sat: 10:00 AM – 7:00 PM | Sun: 11:00 AM – 5:00 PM" },
-    { label: "Customer Helpline", value: "(215) 598-2090 / (215) 387-1700" },
+    { label: "Store Hours", value: "Mon–Sat: 10:00 AM – 7:00 PM" },
+    { label: "Customer Helpline", value: "(215) 598-2090" },
   ];
 
   // Key Features
@@ -88,7 +91,7 @@ export default function ScheduleRepairPSeoContent({
       desc: "Our technicians use specialized EEPROM programmers to transfer display serials and ambient sensors, preserving factory biometric security and color calibration.",
     },
     {
-      title: "100% Zero Data Loss Policy",
+      title: "Your Data Stays Intact",
       desc: "Unlike factory mail-in programs that automatically factory-reset your device, our bench repairs leave your photos, messages, apps, and credentials completely untouched.",
     },
     {
@@ -100,7 +103,7 @@ export default function ScheduleRepairPSeoContent({
       desc: "We stock factory original and top-tier Grade-A+ displays, high-cycle batteries, and precision flex cables to ensure original tactile feel.",
     },
     {
-      title: "90-Day Peace of Mind Warranty",
+      title: "90-day warranty",
       desc: "Every completed repair is backed by a 90-day parts and labor warranty against manufacturing defects and touch unresponsiveness.",
     },
   ];
@@ -109,15 +112,15 @@ export default function ScheduleRepairPSeoContent({
   const faqs = [
     {
       question: `How much does a ${deviceName} repair cost in Philadelphia?`,
-      answer: `At SmartFoneDoctor, diagnostic testing is always 100% free. Screen replacements typically start from $69–$129 depending on your specific model and whether you choose our Premium Aftermarket or OEM Original component tier. You receive a guaranteed upfront quote before any work starts—zero hidden fees.`,
+      answer: `At SmartFoneDoctor, diagnostic testing is always free. Screen replacements typically start from $69–$129 depending on your specific model and whether you choose our Premium Aftermarket or OEM Original component tier. You receive a guaranteed upfront quote before any work starts—zero hidden fees.`,
     },
     {
       question: "Do I need to make an appointment or can I walk in?",
-      answer: "No appointment is necessary! Walk-ins are welcome every day at our 33 S 52nd St flagship location in West Philadelphia as well as our Lancaster Ave and Woodland Ave branches. Booking online simply reserves your replacement part and secures priority bench queue time.",
+      answer: "No appointment is necessary. Walk-ins are welcome Monday through Saturday at our 33 S 52nd St flagship in West Philadelphia as well as our 4016 Lancaster Ave and 4060 Lancaster Ave stores. Booking online reserves your replacement part and bench time.",
     },
     {
       question: `Will I lose my photos, files, or apps during a ${deviceName} repair?`,
-      answer: "No. Unlike carrier stores or manufacturer mail-in depots that wipe devices clean, our hardware repairs are performed directly on the damaged component without touching your motherboard data storage. Your photos, contacts, and personal data remain 100% safe and intact.",
+      answer: "No. Unlike carrier stores or manufacturer mail-in depots that wipe devices clean, our hardware repairs are performed directly on the damaged component without touching your motherboard data storage. Your photos, contacts, and personal data stay safe and intact.",
     },
     {
       question: `How long will it take to repair my ${deviceName}?`,
@@ -210,7 +213,7 @@ export default function ScheduleRepairPSeoContent({
         <div className="mb-8">
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <span className="bg-sfd-teal/10 text-sfd-teal border border-sfd-teal/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-              Philadelphia Repair Bench Spec
+              Repair Overview
             </span>
             <span className="bg-neutral-100 text-neutral-700 px-3 py-1 rounded-full text-xs font-medium border border-neutral-200 flex items-center gap-1">
               <Clock className="w-3.5 h-3.5 text-sfd-teal" />
@@ -282,14 +285,14 @@ export default function ScheduleRepairPSeoContent({
               <div>
                 <h3 className="text-base font-bold text-neutral-900 flex items-center gap-2">
                   <Wrench className="w-4 h-4 text-sfd-teal" />
-                  <span>Technical Bench Specification</span>
+                  <span>Repair Specifications</span>
                 </h3>
                 <p className="text-xs text-neutral-500 mt-0.5">
-                  Hardware standards and laboratory guidelines for {deviceName}
+                  Service details for {deviceName}
                 </p>
               </div>
               <span className="text-[11px] font-bold text-sfd-teal uppercase tracking-wider bg-white px-2.5 py-1 rounded-md border border-neutral-200">
-                Verified Bench Spec
+                90-Day Warranty
               </span>
             </div>
 
@@ -322,11 +325,11 @@ export default function ScheduleRepairPSeoContent({
             <div className="flex items-center gap-2 mb-2">
               <Cpu className="w-5 h-5 text-sfd-teal" />
               <h3 className="text-lg sm:text-xl font-bold text-neutral-900">
-                Key Features &amp; Laboratory Standards for {deviceName}
+                What&apos;s Included With Your {deviceName} Repair
               </h3>
             </div>
             <p className="text-xs sm:text-sm text-neutral-600 mb-6">
-              Every device brought to our Philadelphia stores receives surgical-grade bench care:
+              What to expect when you bring your device to our Philadelphia stores:
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -399,7 +402,7 @@ export default function ScheduleRepairPSeoContent({
                 </p>
                 <div className="pt-2 border-t border-neutral-700/60 flex items-center justify-between text-xs text-neutral-400">
                   <span>Mon–Sat: 10am–7pm</span>
-                  <span>Sun: 11am–5pm</span>
+                  <span>Sun: Closed</span>
                 </div>
                 <a
                   href="tel:+12155982090"

@@ -4,19 +4,13 @@ import React from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { FeatureCard } from "./FeatureCard";
+import { COMMON_ISSUES_DEFAULTS, pickList, pickText, type CommonIssuesProps } from "./sectionContent";
 
-const issues = [
-  { label: "iPhone Screen Repair",       href: "/repairs/smartphone/iphone-16-pro/screen-repair",       highlighted: true  },
-  { label: "iPhone Battery Replacement", href: "/repairs/smartphone/iphone-16-pro/battery-replacement",  highlighted: true  },
-  { label: "Galaxy AMOLED Repair",       href: "/repairs/smartphone/galaxy-s25/screen-repair",          highlighted: true  },
-  { label: "Computer & Mac Repair",      href: "/repairs/computer/macbook-pro",                         highlighted: true  },
-  { label: "PS5 HDMI Port Repair",       href: "/repairs/console/playstation-5/hdmi-port-replacement",  highlighted: false },
-  { label: "Charging Port Repair",      href: "/repairs/smartphone/iphone-16-pro/charging-port-repair", highlighted: false },
-  { label: "Water Damage Recovery",      href: "/repairs/smartphone/iphone-16-pro/water-damage-repair", highlighted: false },
-  { label: "Back Glass Laser Repair",   href: "/repairs/smartphone/iphone-16-pro/back-glass-repair",   highlighted: false },
-];
+export function CommonIssues(props: CommonIssuesProps) {
+  const d = COMMON_ISSUES_DEFAULTS;
+  const issues = pickList(props.items, d.items);
+  const linkHref = pickText(props.linkHref, d.linkHref);
 
-export function CommonIssues() {
   return (
     // page-level section — no distinct background (flows with page bg)
     <section className="bg-[#fcfcfc] px-4 sm:px-6 lg:px-8 pb-10 sm:pb-14">
@@ -26,7 +20,7 @@ export function CommonIssues() {
 
         {/* Heading — ~36px tall at desktop */}
         <h2 className="text-[24px] sm:text-[26px] font-[550] text-[#1d1c1a] leading-[1.4] tracking-[-0.01em] m-0">
-          Common Issues We Fix Every Day
+          {pickText(props.heading, d.heading)}
         </h2>
 
         {/* section-12-2: grid 4×263px cols, 2×64px rows, gap-16px */}
@@ -42,10 +36,10 @@ export function CommonIssues() {
         >
           {issues.map((issue) => (
             <FeatureCard
-              key={issue.label}
+              key={`${issue.label}-${issue.href}`}
               label={issue.label}
               href={issue.href}
-              highlighted={issue.highlighted}
+              highlighted={Boolean(issue.highlighted)}
             />
           ))}
         </div>
@@ -53,13 +47,13 @@ export function CommonIssues() {
         {/* Explore All Services Link */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-neutral-100">
           <span className="text-xs text-neutral-500 font-medium">
-            Need service for another device brand or specific hardware issue?
+            {pickText(props.footerText, d.footerText)}
           </span>
           <Link
-            href="/repairs"
+            href={linkHref}
             className="text-xs font-bold text-sfd-teal hover:underline inline-flex items-center gap-1 group"
           >
-            <span>Explore All Repair Services &amp; Device Models</span>
+            <span>{pickText(props.linkText, d.linkText)}</span>
             <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </div>

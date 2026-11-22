@@ -13,15 +13,12 @@ import {
   X,
   Copy,
   ChevronRight,
-  Sparkles,
   Smartphone,
   Layers,
 } from "lucide-react";
 import {
   BrandTaxonomy,
   DEVICE_CATEGORIES,
-  getStoredBrands,
-  saveStoredBrands,
 } from "@/lib/taxonomy";
 import { getTaxonomyAction, saveTaxonomyAction } from "@/actions/taxonomy";
 
@@ -73,14 +70,11 @@ export default function BrandsCRUDPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    setBrands(getStoredBrands());
-
     let mounted = true;
     getTaxonomyAction<BrandTaxonomy>("brands")
       .then((res) => {
         if (mounted && res.success && res.data.length > 0) {
           setBrands(res.data);
-          saveStoredBrands(res.data);
         }
       })
       .catch(console.error);
@@ -142,7 +136,7 @@ export default function BrandsCRUDPage() {
     }));
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name?.trim()) return;
 
@@ -165,20 +159,20 @@ export default function BrandsCRUDPage() {
       showToast(`Added brand "${formData.name}"`);
     }
 
+    // The database is the only copy: the list changes only when the save worked.
+    const res = await saveTaxonomyAction("brands", updated).catch((err: unknown) => ({ success: false, error: String(err) }));
+    if (!res.success) return showToast(`Not saved: ${res.error ?? "unknown error"}`);
     setBrands(updated);
-    saveStoredBrands(updated);
     setIsModalOpen(false);
-
-    saveTaxonomyAction("brands", updated).catch(console.error);
   };
 
   const handleDelete = async (id: string, name: string) => {
     if (confirm(`Are you sure you want to delete brand "${name}"?`)) {
       const updated = brands.filter((b) => b.id !== id);
+      const res = await saveTaxonomyAction("brands", updated).catch((err: unknown) => ({ success: false, error: String(err) }));
+      if (!res.success) return showToast(`Not deleted: ${res.error ?? "unknown error"}`);
       setBrands(updated);
-      saveStoredBrands(updated);
       showToast(`Deleted "${name}"`);
-      await saveTaxonomyAction("brands", updated).catch(console.error);
     }
   };
 
@@ -213,10 +207,10 @@ export default function BrandsCRUDPage() {
             <span className="text-gray-900 font-semibold">Brands</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-[#111111] tracking-tight">
-            Hardware Brands &amp; OEMs
+            Brands
           </h1>
           <p className="text-xs text-gray-500 mt-0.5">
-            Manage device manufacturers (Apple, Samsung, Google, Sony, Microsoft, Nintendo) and their landing hub URLs.
+            Device makers shown in the menus and on repair pages.
           </p>
         </div>
 
@@ -235,69 +229,6 @@ export default function BrandsCRUDPage() {
             <Plus className="w-4 h-4" />
             <span>Add Brand</span>
           </button>
-        </div>
-      </div>
-
-      {/* ── KPI METRICS CARDS (Clean Bento Style) ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bg-white border border-[#e8e8e8] rounded-xl p-3.5 sm:p-4 shadow-2xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block">
-              Active Hardware Brands
-            </span>
-            <span className="text-xl sm:text-2xl font-bold text-gray-900 mt-0.5 block">
-              {brands.length} Brands
-            </span>
-            <span className="text-[11px] text-emerald-600 font-medium">Mapped to public hubs</span>
-          </div>
-          <div className="w-10 h-10 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center text-[#009691] shrink-0">
-            <Tag className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="bg-white border border-[#e8e8e8] rounded-xl p-3.5 sm:p-4 shadow-2xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block">
-              Tier 1 Flags
-            </span>
-            <span className="text-xl sm:text-2xl font-bold text-gray-900 mt-0.5 block">
-              Apple &amp; Samsung
-            </span>
-            <span className="text-[11px] text-gray-500 font-medium">Same-day 30-min express bench</span>
-          </div>
-          <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
-            <Smartphone className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="bg-white border border-[#e8e8e8] rounded-xl p-3.5 sm:p-4 shadow-2xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block">
-              Console &amp; Gaming
-            </span>
-            <span className="text-xl sm:text-2xl font-bold text-gray-900 mt-0.5 block">
-              Sony &amp; Nintendo
-            </span>
-            <span className="text-[11px] text-purple-600 font-medium">Micro-soldering &amp; HDMI</span>
-          </div>
-          <div className="w-10 h-10 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shrink-0">
-            <Layers className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="bg-white border border-[#e8e8e8] rounded-xl p-3.5 sm:p-4 shadow-2xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block">
-              Warranty Standard
-            </span>
-            <span className="text-xl sm:text-2xl font-bold text-[#009691] mt-0.5 block">
-              90-Day Guarantee
-            </span>
-            <span className="text-[11px] text-emerald-600 font-medium">OEM calibration certified</span>
-          </div>
-          <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-            <Sparkles className="w-5 h-5" />
-          </div>
         </div>
       </div>
 

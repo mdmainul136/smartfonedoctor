@@ -7,16 +7,24 @@ import { HelpCircle, Calendar, MapPin, Wrench } from "lucide-react";
 import Footer from "@/components/layout/Footer";
 import { JsonLd, buildFaqSchema, buildBreadcrumbSchema } from "@/lib/schema";
 import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
+import { getCmsPage } from "@/actions/cmsPages";
 import { getFaqsAction } from "@/actions/faqs";
 import FaqClient from "@/components/site/FaqClient";
+import { withCmsMetadata } from "@/lib/cmsMetadata";
 
-export const metadata: Metadata = {
+// Coded defaults; title, description and canonical can be changed in Admin > Pages > SEO.
+const baseMetadata: Metadata = {
   title: brandTitle("Frequently Asked Questions | SmartFoneDoctor"),
   description:
     "Find answers to common questions about phone, tablet, computer, and game console repairs, warranty policies, pricing, and certified pre-owned devices at SmartFoneDoctor.",
 };
 
+export async function generateMetadata(): Promise<Metadata> {
+  return withCmsMetadata("faq", baseMetadata);
+}
+
 export default async function FaqPage() {
+  const cmsPage = await getCmsPage("faq");
   const faqsRes = await getFaqsAction();
   const faqs = faqsRes?.success && faqsRes.data ? faqsRes.data : [];
 
@@ -25,11 +33,24 @@ export default async function FaqPage() {
     { name: "Frequently Asked Questions", url: "/faq" },
   ]);
 
+  // Schema must match what visitors see: when the builder layout is live, its
+  // FAQ blocks are the page's questions; otherwise the coded list from the faqs table.
+  type BuilderBlock = { type?: string; props?: { items?: { title?: string; description?: string }[] } };
+  const builderFaqs =
+    cmsPage?.status === "Published"
+      ? (((cmsPage.puckData as { content?: BuilderBlock[] } | undefined)?.content ?? [])
+          .filter((b) => b.type === "FaqBlock")
+          .flatMap((b) => b.props?.items ?? [])
+          .filter((i) => i.title && i.description)
+          .map((i) => ({ question: i.title as string, answer: i.description as string })))
+      : [];
   const faqSchema = buildFaqSchema(
-    faqs.map((f) => ({
-      question: f.question,
-      answer: f.answer,
-    }))
+    builderFaqs.length
+      ? builderFaqs
+      : faqs.map((f) => ({
+          question: f.question,
+          answer: f.answer,
+        }))
   );
 
   return (
@@ -38,7 +59,7 @@ export default async function FaqPage() {
       <JsonLd data={breadcrumbSchema} />
       <JsonLd data={faqSchema} />
 
-      <CMSSectionRenderer slug="faq">
+      <CMSSectionRenderer slug="faq" initialPage={cmsPage}>
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20">
 
           {/* 1. Breadcrumbs */}

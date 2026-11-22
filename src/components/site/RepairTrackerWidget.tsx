@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { lookupRepairTicketAction } from "@/actions/leads";
 import {
   CheckCircle2,
   Clock,
@@ -76,22 +77,24 @@ export default function RepairTrackerWidget({
   const [copied, setCopied] = useState(false);
   const [result, setResult] = useState<TrackingResult | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (!ticketId.trim() || !lastName.trim()) {
-      setError("Please provide both your Ticket ID and Last Name to track status.");
+    const rawTicket = ticketId.trim();
+    const rawLastName = lastName.trim();
+
+    if (!rawTicket) {
+      setError("Please enter your Ticket ID (e.g. SFD-10001) or phone number.");
       return;
     }
 
-    setLoading(true);
-
-    setTimeout(() => {
+    const demoMatch = rawTicket.toUpperCase() === (demoTicketId || "SFD-84920").toUpperCase();
+    if (demoMatch) {
       setLoading(false);
       setResult({
-        ticketId: ticketId.trim().toUpperCase(),
-        lastName: lastName.trim(),
+        ticketId: rawTicket.toUpperCase(),
+        lastName: rawLastName || demoLastName || "Smith",
         device: "Apple iPhone 15 Pro",
         service: "Screen Damage Repair & Battery Replacement",
         checkInDate: "Today, 11:30 AM",
@@ -145,7 +148,115 @@ export default function RepairTrackerWidget({
           },
         ],
       });
-    }, 450);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await lookupRepairTicketAction(rawTicket, rawLastName || undefined);
+      setLoading(false);
+
+      if (!res.success || !res.ticket) {
+        setError(
+          res.error ||
+            "No matching repair ticket found. Check your Ticket ID (e.g. SFD-10001) or phone number."
+        );
+        setResult(null);
+        return;
+      }
+
+      const t = res.ticket;
+      const isCompleted = t.status === "Completed";
+      const isConfirmed = t.status === "Confirmed";
+      const isContacted = t.status === "Contacted";
+
+      const mappedStore = t.store.includes("4016")
+        ? {
+            name: "SmartFoneDoctor (University City)",
+            badge: "Philadelphia Store #2",
+            address: "4016 Lancaster Ave, Philadelphia, PA 19104",
+            phone: "(215) 598-2090",
+            gmbUrl: "https://maps.google.com/?q=4016+Lancaster+Ave,+Philadelphia,+PA+19104",
+          }
+        : t.store.includes("4060")
+        ? {
+            name: "SmartFoneDoctor (Lancaster Express)",
+            badge: "Philadelphia Store #3",
+            address: "4060 Lancaster Ave, Philadelphia, PA 19104",
+            phone: "(215) 598-2090",
+            gmbUrl: "https://maps.google.com/?q=4060+Lancaster+Ave,+Philadelphia,+PA+19104",
+          }
+        : {
+            name: "SmartFoneDoctor (Flagship)",
+            badge: "Philadelphia Store #1",
+            address: "33 S 52nd St, Philadelphia, PA 19139",
+            phone: "(215) 598-2090",
+            gmbUrl: "https://share.google/gTlyWLewR88ToAdJQ",
+          };
+
+      const progressPercent = isCompleted ? 100 : isConfirmed ? 60 : isContacted ? 40 : 20;
+      const statusLabel: TrackingResult["status"] = isCompleted
+        ? "Ready for Pickup"
+        : isConfirmed
+        ? "In Progress"
+        : "Diagnostic Inspection";
+
+      setResult({
+        ticketId: t.ticketNumber,
+        lastName: rawLastName || t.customerName,
+        device: t.device,
+        service: t.issue,
+        checkInDate: t.createdAt,
+        estimatedReady: isCompleted ? "Ready for Pickup Now" : "Same-Day Bench Turnaround",
+        status: statusLabel,
+        progressPercent,
+        store: mappedStore,
+        timeline: [
+          {
+            title: "Device Checked In",
+            subtitle: "Intake registration & ticket logged",
+            timestamp: t.createdAt,
+            status: "completed",
+            technicianNote: `Logged into bench queue at ${mappedStore.address} for ${t.customerName}.`,
+          },
+          {
+            title: "Diagnostic Inspection",
+            subtitle: "Multi-point hardware and circuit verification",
+            timestamp: isCompleted || isConfirmed ? "Completed" : isContacted ? "In Progress" : "Queued",
+            status: isCompleted || isConfirmed ? "completed" : isContacted ? "current" : "current",
+            technicianNote: `Technician inspection scheduled for: ${t.issue}. Call ${mappedStore.phone} for live bench updates.`,
+          },
+          {
+            title: "Repair in Progress",
+            subtitle: "Component replacement and precision re-sealing",
+            timestamp: isCompleted ? "Completed" : isConfirmed ? "Active on Bench" : "Pending Diagnostic",
+            status: isCompleted ? "completed" : isConfirmed ? "current" : "upcoming",
+            technicianNote: isCompleted
+              ? `Replacement components installed and verified ($${t.estValue} est.).`
+              : "Certified parts staged at our ESD bench.",
+          },
+          {
+            title: "Quality Control & Calibration",
+            subtitle: "Sensor, touch, charging & audio verification",
+            timestamp: isCompleted ? "Passed" : "Pending Repair",
+            status: isCompleted ? "completed" : "upcoming",
+            technicianNote: "90-day parts and labor warranty active upon QC sign-off.",
+          },
+          {
+            title: "Ready for Customer Pickup",
+            subtitle: "Cleaned, sanitized, and ready for collection",
+            timestamp: isCompleted ? "Ready Now" : "Same-Day Target",
+            status: isCompleted ? "completed" : "upcoming",
+            technicianNote: isCompleted
+              ? `Ready at ${mappedStore.address}. Bring photo ID and Ticket #${t.ticketNumber}.`
+              : `We will text or call when ready at ${mappedStore.address}.`,
+          },
+        ],
+      });
+    } catch {
+      setLoading(false);
+      setError("Could not reach the repair ticket database. Please try again.");
+    }
   };
 
   const handleFillDemo = () => {
@@ -463,7 +574,7 @@ export default function RepairTrackerWidget({
                       <strong>#{result.ticketId}</strong>).
                     </p>
                     <p className="text-[11px] text-neutral-500">
-                      All repairs are covered by our Limited Lifetime Parts & Craftsmanship Warranty.
+                      All repairs are covered by our 90-day parts and labor warranty.
                     </p>
                   </div>
                 )}

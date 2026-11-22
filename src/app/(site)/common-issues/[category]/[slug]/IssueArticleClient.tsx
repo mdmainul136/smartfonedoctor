@@ -21,9 +21,11 @@ import PSeoRichSection from "@/components/seo/PSeoRichSection";
 interface Props {
   issue: CommonIssueDetail;
   relatedIssues: CommonIssueDetail[];
+  /** False when a page-builder template renders the page (it adds the footer after its own blocks). */
+  withFooter?: boolean;
 }
 
-export default function IssueArticleClient({ issue, relatedIssues }: Props) {
+export default function IssueArticleClient({ issue, relatedIssues, withFooter = true }: Props) {
   return (
     <main className="bg-[#fcfcfc] min-h-screen">
       <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 pt-5 pb-16">
@@ -234,20 +236,20 @@ export default function IssueArticleClient({ issue, relatedIssues }: Props) {
         {/* 3.5. Automated Technical Specifications & pSEO Bench Overview */}
         <div className="mb-14">
           <PSeoRichSection
-            title={`${issue.title} Technical Specifications & Bench Overview`}
-            subtitle={`Certified laboratory procedures and troubleshooting benchmarks for ${issue.title} in Philadelphia, PA.`}
-            badge="Philadelphia Laboratory Spec"
+            title={`${issue.title}: repair details`}
+            subtitle={`Time, price, parts and warranty for ${issue.title} at our Philadelphia stores.`}
+            badge="At a glance"
             specifications={[
               { label: "Hardware Issue", value: issue.title },
               { label: "Category", value: issue.categoryName },
-              { label: "Average Bench Time", value: "20 – 45 Minutes (Same-Day Express Service)" },
-              { label: "Diagnostic Fee", value: "$0.00 (100% Free Upfront Hardware Assessment)" },
-              { label: "Replacement Grade", value: "OEM Original & Premium Grade-A+ Components" },
-              { label: "Warranty Coverage", value: "90-Day Comprehensive Parts & Labor Warranty" },
-              { label: "Data Safety Guarantee", value: "Zero Data Wipe Guarantee (Storage kept 100% intact)" },
-              { label: "Bench Technicians", value: "WISE Level 2 & IPC-A-610 Certified Master Techs" },
-              { label: "Flagship Location", value: "33 S 52nd St, Philadelphia, PA 19139" },
-              { label: "Walk-in Policy", value: "Walk-ins Welcome Daily – No Appointment Needed" },
+              { label: "Typical repair time", value: "20–45 minutes, same day" },
+              { label: "Diagnosis", value: "Free" },
+              { label: "Parts", value: "Original (OEM) or high-quality replacement parts" },
+              { label: "Warranty", value: "90 days on parts and labor" },
+              { label: "Your data", value: "We don't erase your data" },
+              { label: "Technicians", value: "WISE Level 2 and IPC-A-610 certified" },
+              { label: "Main store", value: "33 S 52nd St, Philadelphia, PA 19139" },
+              { label: "Walk-in Policy", value: "Walk-ins welcome, no appointment needed" },
             ]}
             keyFeatures={[
               {
@@ -278,7 +280,7 @@ export default function IssueArticleClient({ issue, relatedIssues }: Props) {
             faqs={[
               {
                 question: `How much does ${issue.title.toLowerCase()} cost in Philadelphia?`,
-                answer: `Diagnostic inspection for ${issue.title.toLowerCase()} is always 100% free at SmartFoneDoctor. Depending on your exact device model, repair costs typically start from $69 with all parts and labor included.`,
+                answer: `Diagnostic inspection for ${issue.title.toLowerCase()} is always free at SmartFoneDoctor. Depending on your exact device model, repair costs typically start from $69 with all parts and labor included.`,
               },
               {
                 question: `Can I walk in to have my device repaired for this issue?`,
@@ -389,7 +391,7 @@ export default function IssueArticleClient({ issue, relatedIssues }: Props) {
       </div>
 
       {/* Global Footer */}
-      <Footer />
+      {withFooter && <Footer />}
     </main>
   );
 }

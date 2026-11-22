@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { role } from "@/lib/data";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
+import { LayoutTemplate, LifeBuoy, CircleDollarSign,
   LayoutDashboard,
   CalendarCheck,
   Wrench,
@@ -24,6 +24,7 @@ import {
   LogOut,
   ChevronDown,
   LucideIcon,
+  FileCode2,
 } from "lucide-react";
 import { LOCAL_SEO_LINKS } from "./LocalSeoNav";
 import { LISTINGS_SUB_LINKS } from "./ListingsNav";
@@ -70,6 +71,12 @@ const menuItems: { title: string; items: MenuLink[] }[] = [
         visible: ["admin"],
       },
       {
+        icon: LayoutTemplate,
+        label: "Theme Builder",
+        href: "/admin/theme-builder",
+        visible: ["admin"],
+      },
+      {
         icon: ImageIcon,
         label: "Media Library",
         href: "/admin/media",
@@ -100,6 +107,18 @@ const menuItems: { title: string; items: MenuLink[] }[] = [
         visible: ["admin"],
       },
       {
+        icon: CircleDollarSign,
+        label: "Repair Types & Prices",
+        href: "/admin/repair-types",
+        visible: ["admin"],
+      },
+      {
+        icon: LifeBuoy,
+        label: "Common Issues",
+        href: "/admin/common-issues",
+        visible: ["admin"],
+      },
+      {
         icon: BookOpen,
         label: "Guides & Blog",
         href: "/admin/blog",
@@ -118,7 +137,7 @@ const menuItems: { title: string; items: MenuLink[] }[] = [
         visible: ["admin"],
       },
       {
-        icon: Sparkles,
+        icon: FileCode2,
         label: "Google Schema & SEO",
         href: "/admin/seo",
         visible: ["admin"],

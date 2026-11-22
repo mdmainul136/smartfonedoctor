@@ -12,16 +12,16 @@ import {
   Check,
   Clock,
   Calendar,
-  Sparkles,
   FileText,
 } from "lucide-react";
 import {
   BlogArticle,
-  getStoredBlogArticles,
-  saveStoredBlogArticles,
-  getStoredBlogCategories,
+  INITIAL_BLOG_CATEGORIES,
+  type BlogCategoryTaxonomy,
 } from "@/lib/blogData";
-import { getBlogPostsAction, deleteBlogPostAction } from "@/actions/blog";
+import { getBlogPostsAdminAction, deleteBlogPostAction } from "@/actions/blog";
+import { getTaxonomyAction } from "@/actions/taxonomy";
+import BlogCategoriesManager from "@/components/admin/BlogCategoriesManager";
 
 export default function BlogGuidesDirectoryPage() {
   const [articles, setArticles] = useState<BlogArticle[]>([]);
@@ -29,21 +29,24 @@ export default function BlogGuidesDirectoryPage() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  // Categories come from the database; null until loaded.
+  const [categoryRows, setCategoryRows] = useState<BlogCategoryTaxonomy[] | null>(null);
+  useEffect(() => {
+    getTaxonomyAction<BlogCategoryTaxonomy>("blog-categories")
+      .then((res) => setCategoryRows(res.data))
+      .catch(() => setCategoryRows(INITIAL_BLOG_CATEGORIES));
+  }, []);
 
   useEffect(() => {
-    // 1. Initial cached state
-    setArticles(getStoredBlogArticles());
-
-    // 2. Sync with PostgreSQL
+    // The database is the only copy of the posts.
     let mounted = true;
-    getBlogPostsAction()
+    getBlogPostsAdminAction()
       .then((res) => {
-        if (mounted && res.success && res.articles.length > 0) {
-          setArticles(res.articles);
-          saveStoredBlogArticles(res.articles);
-        }
+        if (!mounted) return;
+        if (res.success) setArticles(res.articles);
+        else setToastMessage(`Could not load posts: ${res.error ?? "unknown error"}`);
       })
-      .catch(console.error);
+      .catch((err: unknown) => mounted && setToastMessage(`Could not load posts: ${String(err)}`));
 
     return () => {
       mounted = false;
@@ -57,15 +60,16 @@ export default function BlogGuidesDirectoryPage() {
 
   const handleDelete = async (id: string, title: string) => {
     if (confirm(`Are you sure you want to delete article "${title}"?`)) {
-      const updated = articles.filter((a) => a.id !== id);
-      setArticles(updated);
-      saveStoredBlogArticles(updated);
+      const res = await deleteBlogPostAction(id).catch((err: unknown) => ({ success: false, error: String(err) }));
+      if (!res.success) return showToast(`Not deleted: ${res.error ?? "unknown error"}`);
+      setArticles((prev) => prev.filter((a) => a.id !== id));
       showToast(`Deleted "${title}"`);
-      await deleteBlogPostAction(id).catch(console.error);
     }
   };
 
-  const categories = getStoredBlogCategories();
+  const categories = categoryRows ?? [];
+  const usedBy: Record<string, number> = {};
+  for (const a of articles) usedBy[a.categoryId] = (usedBy[a.categoryId] ?? 0) + 1;
 
   const filtered = articles.filter((a) => {
     const matchesSearch =
@@ -98,10 +102,10 @@ export default function BlogGuidesDirectoryPage() {
             <span className="text-gray-900 font-medium">Guides &amp; Blog</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-[#111111] tracking-tight">
-            Repair Bench Guides &amp; Blog Posts
+            Guides &amp; blog
           </h1>
           <p className="text-xs text-gray-500 mt-0.5">
-            Every single article has its own dedicated page with rich writing canvas, taxonomy category, and Google SERP SEO preview.
+            Repair guides published on the website. Each post has its own page and SEO settings.
           </p>
         </div>
 
@@ -123,6 +127,10 @@ export default function BlogGuidesDirectoryPage() {
           </Link>
         </div>
       </div>
+
+      {categoryRows && (
+        <BlogCategoriesManager categories={categoryRows} usedBy={usedBy} onSaved={setCategoryRows} />
+      )}
 
       {/* Filters Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 rounded-lg border border-gray-200">
@@ -190,6 +198,7 @@ export default function BlogGuidesDirectoryPage() {
                   <td className="py-3.5 px-4 font-bold text-gray-900 max-w-sm">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-10 rounded bg-gray-100 overflow-hidden shrink-0 border border-gray-200">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={article.featuredImage}
                           alt={article.title}

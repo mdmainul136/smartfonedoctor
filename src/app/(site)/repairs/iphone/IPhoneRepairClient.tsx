@@ -455,7 +455,7 @@ export default function IPhoneRepairClient() {
                   How much will it cost?
                 </h3>
                 <p className="text-xs sm:text-[13px] text-neutral-600 leading-relaxed">
-                  At SmartFoneDoctor, we believe in 100% transparent pricing. Every repair starts with a
+                  At SmartFoneDoctor, we believe in transparent pricing. Every repair starts with a
                   free multi-point diagnostic check and an exact upfront quote before any work begins.
                   No surprise fees, no hidden labor costs. If we cannot fix your device, you owe us nothing.
                 </p>
@@ -514,13 +514,12 @@ export default function IPhoneRepairClient() {
                 Apple® Genuine Parts &amp; Service
               </h3>
               <p className="mt-2 text-xs sm:text-[13px] text-neutral-300 leading-relaxed">
-                Restore your iPhone with factory-spec original parts. Enjoy peace of mind knowing your
-                Face ID, True Tone display calibration, and battery health telemetry remain 100% functional
+                Restore your iPhone with factory-spec original parts. YourFace ID, True Tone display calibration, and battery health telemetry keep working
                 and error-free.
               </p>
               <div className="mt-6 flex items-center gap-2 text-neutral-300">
                 <ShieldCheck className="w-4 h-4 text-sfd-teal" />
-                <span className="text-xs font-medium">Lifetime Workmanship Guarantee</span>
+                <span className="text-xs font-medium">90-Day Workmanship Guarantee</span>
               </div>
             </div>
 

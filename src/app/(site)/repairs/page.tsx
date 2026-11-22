@@ -17,7 +17,8 @@ import {
   Sparkles,
   BookOpen,
 } from "lucide-react";
-import { PSEO_DEVICES, PSEO_ISSUES, PHILLY_LOCAL_AREAS } from "@/lib/pSeoEngine";
+import { PHILLY_LOCAL_AREAS } from "@/lib/pSeoEngine";
+import { getRepairCatalog } from "@/lib/repairCatalog";
 import {
   JsonLd,
   buildBreadcrumbSchema,
@@ -25,12 +26,15 @@ import {
   STORES,
 } from "@/lib/schema";
 import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
+import { getCmsPage } from "@/actions/cmsPages";
 import { getTaxonomyAction } from "@/actions/taxonomy";
 import { getBlogPostsAction } from "@/actions/blog";
 import { getStoreBranchesAction } from "@/actions/settings";
 import type { DeviceModelTaxonomy, ServiceIssueTaxonomy } from "@/lib/taxonomy";
+import { withCmsMetadata } from "@/lib/cmsMetadata";
 
-export const metadata: Metadata = {
+// Coded defaults; title, description and canonical can be changed in Admin > Pages > SEO.
+const baseMetadata: Metadata = {
   title: brandTitle("Professional Device Repair in Philadelphia | Same-Day Service | SmartFoneDoctor"),
   description:
     "Expert walk-in repair services for iPhones, Samsung Galaxy, iPads, MacBooks, and Game Consoles in Philadelphia. 30-min screen replacements, battery repairs, and 90-day warranty.",
@@ -43,6 +47,10 @@ export const metadata: Metadata = {
     "Same day device repair",
   ],
 };
+
+export async function generateMetadata(): Promise<Metadata> {
+  return withCmsMetadata("repairs", baseMetadata);
+}
 
 const CATEGORIES = [
   {
@@ -84,8 +92,8 @@ const CATEGORIES = [
 ];
 
 export default async function RepairsHubPage() {
-  const [modelsRes, issuesRes, blogsRes, branchesRes] = await Promise.all([
-    getTaxonomyAction<DeviceModelTaxonomy>("models"),
+  const cmsPage = await getCmsPage("repairs");
+  const [issuesRes, blogsRes, branchesRes] = await Promise.all([
     getTaxonomyAction<ServiceIssueTaxonomy>("issues"),
     getBlogPostsAction(),
     getStoreBranchesAction(),
@@ -111,16 +119,11 @@ export default async function RepairsHubPage() {
         }))
       : STORES;
 
-  const popularDevices =
-    modelsRes.success && modelsRes.data && modelsRes.data.length > 0
-      ? modelsRes.data.slice(0, 8).map((m) => ({
-          name: m.name,
-          slug: m.url ? m.url.split("/").pop() || m.id : m.id,
-          category: m.categorySlug,
-          specs: `${m.brandSlug?.toUpperCase() || "OEM"} · Diagnostic Ready`,
-          image: "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400&auto=format&fit=crop&q=80",
-        }))
-      : PSEO_DEVICES.slice(0, 8);
+  const catalog = await getRepairCatalog();
+
+  // Devices come from the repair catalog (Admin > Device Models), so every card
+  // links to a real device page.
+  const popularDevices = catalog.devices.slice(0, 8);
 
   const coreIssues =
     issuesRes.success && issuesRes.data && issuesRes.data.length > 0
@@ -132,7 +135,7 @@ export default async function RepairsHubPage() {
           basePrice: iss.startingPrice || 69,
           symptoms: [iss.badge || "Precision hardware replacement with 90-day warranty."],
         }))
-      : PSEO_ISSUES.slice(0, 6);
+      : catalog.issues.slice(0, 6);
 
   const recentGuides =
     blogsRes.success && blogsRes.articles && blogsRes.articles.length > 0
@@ -150,7 +153,7 @@ export default async function RepairsHubPage() {
       <JsonLd data={breadcrumbSchema} />
       <JsonLd data={storeSchema} />
 
-      <CMSSectionRenderer slug="repairs">
+      <CMSSectionRenderer slug="repairs" initialPage={cmsPage}>
         {/* 1. HERO HEADER */}
         <div className="bg-white border-b border-gray-200">
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 text-center space-y-4">

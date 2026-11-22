@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  Image as ImageIcon,
   Upload,
   Search,
   Grid,
@@ -15,9 +14,7 @@ import {
   ExternalLink,
   Plus,
   RefreshCw,
-  FolderTree,
   AlertCircle,
-  HardDrive,
   FileText,
   X,
   Eye,
@@ -25,8 +22,6 @@ import {
 import {
   MediaItem,
   INITIAL_MEDIA_LIBRARY,
-  getClientMediaLibrary,
-  saveClientMediaLibrary,
   formatBytes,
 } from "@/lib/mediaData";
 
@@ -56,7 +51,6 @@ export default function MediaManagementPage() {
         const data = await res.json();
         if (data.items && Array.isArray(data.items)) {
           setItems(data.items);
-          saveClientMediaLibrary(data.items);
           setLoading(false);
           return;
         }
@@ -64,8 +58,7 @@ export default function MediaManagementPage() {
     } catch {
       // Fallback
     }
-    const local = getClientMediaLibrary();
-    setItems(local);
+    setUploadError("Could not load the media library. Please sign in again and retry.");
     setLoading(false);
   };
 
@@ -77,7 +70,7 @@ export default function MediaManagementPage() {
     if (!files || files.length === 0) return;
     const file = files[0];
     if (!file.type.startsWith("image/")) {
-      setUploadError("Please upload an image file (PNG, JPG, WEBP, GIF, SVG).");
+      setUploadError("Please upload a JPEG, PNG, WebP, GIF or AVIF image (max 10 MB).");
       return;
     }
 
@@ -99,30 +92,14 @@ export default function MediaManagementPage() {
         if (data.item) {
           const updated = [data.item, ...items];
           setItems(updated);
-          saveClientMediaLibrary(updated);
         }
       } else {
-        throw new Error("Server rejected file upload");
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "The server did not accept this file.");
       }
     } catch (err: unknown) {
-      console.warn("Upload fallback to base64 data URL", err);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const base64 = e.target?.result as string;
-        const fallbackItem: MediaItem = {
-          id: `local-${Date.now()}`,
-          filename: file.name,
-          url: base64,
-          alt: file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " "),
-          filesize: file.size,
-          mimeType: file.type,
-          createdAt: new Date().toISOString(),
-        };
-        const updated = [fallbackItem, ...items];
-        setItems(updated);
-        saveClientMediaLibrary(updated);
-      };
-      reader.readAsDataURL(file);
+      // No silent browser-only fallback: the file must really be saved.
+      setUploadError(err instanceof Error ? err.message : "Upload failed.");
     } finally {
       setUploading(false);
     }
@@ -131,17 +108,14 @@ export default function MediaManagementPage() {
   const handleDelete = async (item: MediaItem) => {
     if (!confirm(`Are you sure you want to delete "${item.filename}"?`)) return;
 
-    try {
-      await fetch(`/api/admin/media?id=${item.id}&filename=${item.filename}`, {
-        method: "DELETE",
-      });
-    } catch {
-      // Ignored
+    const res = await fetch(`/api/admin/media?id=${encodeURIComponent(item.id)}`, { method: "DELETE" }).catch(() => null);
+    if (!res?.ok) {
+      setUploadError("Could not delete the image. Please retry.");
+      return;
     }
 
     const filtered = items.filter((it) => it.id !== item.id);
     setItems(filtered);
-    saveClientMediaLibrary(filtered);
     if (inspectItem?.id === item.id) {
       setInspectItem(null);
     }
@@ -160,15 +134,24 @@ export default function MediaManagementPage() {
     setEditCaption(item.caption || "");
   };
 
-  const handleSaveInspect = () => {
+  const handleSaveInspect = async () => {
     if (!inspectItem) return;
+    // Saved in the database, so every admin and every page sees the new alt text.
+    const res = await fetch("/api/admin/media", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: inspectItem.id, alt: editAlt, caption: editCaption }),
+    }).catch(() => null);
+    if (!res?.ok) {
+      setUploadError("Could not save the alt text. Please retry.");
+      return;
+    }
     const updated = items.map((it) =>
       it.id === inspectItem.id
         ? { ...it, alt: editAlt.trim(), caption: editCaption.trim() || undefined }
         : it
     );
     setItems(updated);
-    saveClientMediaLibrary(updated);
     setInspectItem(null);
   };
 
@@ -187,80 +170,41 @@ export default function MediaManagementPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-[1700px] mx-auto space-y-6">
       
-      {/* 1. TOP HEADER & ACTION BAR */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-5 border-b border-gray-200">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-700">
-              <ImageIcon className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
-                Media Library &amp; Asset Manager
-              </h1>
-              <p className="text-[13px] text-gray-500">
-                Upload and organize hardware repair photography, bench guides, diagrams, and brand assets.
-              </p>
-            </div>
+      {/* Header: same style as Pages */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#e8e8e8]">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <h1 className="text-[22px] sm:text-[24px] font-bold text-[#111111] tracking-[-0.02em]">Media</h1>
+            <span className="text-[12px] font-semibold text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full tabular-nums">
+              {loading ? "…" : `${items.length} file${items.length === 1 ? "" : "s"} · ${formatBytes(totalSize)}`}
+            </span>
           </div>
+          <p className="text-[13px] text-[#5f6368] mt-0.5">Photos used on the website. Pick them in the page builder or blog editor.</p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={loadMedia}
-            className="h-[36px] px-3 rounded-[6px] border border-gray-300 bg-white hover:bg-gray-50 text-[13px] font-medium text-gray-700 inline-flex items-center gap-1.5 transition-colors cursor-pointer"
-            title="Refresh library"
+            className="h-[34px] px-3 rounded-[6px] border border-[#d1d5db] bg-white hover:bg-[#f9f9f9] text-[13px] font-medium text-[#111111] inline-flex items-center gap-1.5 whitespace-nowrap transition-colors cursor-pointer"
+            title="Reload the list"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-teal-600" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
             <span>Refresh</span>
           </button>
-
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="h-[36px] px-4 rounded-[6px] bg-[#00897b] hover:bg-[#00796b] text-white text-[13px] font-semibold inline-flex items-center gap-2 shadow-xs transition cursor-pointer"
+            disabled={uploading}
+            className="h-[34px] px-3.5 rounded-[6px] bg-[#009691] hover:bg-[#007f7b] text-white text-[13px] font-semibold inline-flex items-center gap-1.5 whitespace-nowrap transition-colors cursor-pointer disabled:opacity-60"
           >
-            <Upload className="w-4 h-4" />
-            <span>Upload New Media</span>
+            <Upload className="w-3.5 h-3.5" />
+            <span>{uploading ? "Uploading…" : "Upload"}</span>
           </button>
         </div>
       </div>
 
-      {/* 2. STATS CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-2xs flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-700 shrink-0">
-            <ImageIcon className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="text-xs text-gray-400 font-medium block">Total Media Assets</span>
-            <span className="text-lg font-bold text-gray-900">{items.length} files</span>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-2xs flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-700 shrink-0">
-            <HardDrive className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="text-xs text-gray-400 font-medium block">Storage Allocated</span>
-            <span className="text-lg font-bold text-gray-900">{formatBytes(totalSize)}</span>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-2xs flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-700 shrink-0">
-            <FolderTree className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="text-xs text-gray-400 font-medium block">Upload Directory</span>
-            <span className="text-xs font-mono font-bold text-gray-800">public/uploads</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 3. DRAG & DROP UPLOAD ZONE */}
+      {/* Drop zone */}
       <div
         onDragOver={(e) => {
           e.preventDefault();
@@ -272,39 +216,19 @@ export default function MediaManagementPage() {
           setDragActive(false);
           handleFileUpload(e.dataTransfer.files);
         }}
-        className={`p-6 border-2 border-dashed rounded-xl flex flex-col items-center justify-center text-center transition-all bg-white ${
-          dragActive
-            ? "border-teal-500 bg-teal-50/50"
-            : "border-gray-300 hover:border-gray-400"
+        className={`px-6 py-5 border-2 border-dashed rounded-[8px] flex flex-col items-center justify-center text-center transition-colors bg-white ${
+          dragActive ? "border-[#009691] bg-[#f2f8f7]" : "border-gray-300 hover:border-gray-400"
         }`}
       >
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
           onChange={(e) => handleFileUpload(e.target.files)}
           className="hidden"
         />
-
-        <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center mb-2">
-          <Upload className="w-5 h-5" />
-        </div>
-
-        <p className="text-sm font-bold text-gray-800">
-          Drop repair images here to upload immediately
-        </p>
-        <p className="text-xs text-gray-500 mb-3">
-          Supports PNG, JPG, WEBP, and SVG (automatically optimized for fast web delivery).
-        </p>
-
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
-          className="px-4 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold shadow-2xs transition cursor-pointer"
-        >
-          {uploading ? "Uploading file..." : "Browse Files"}
-        </button>
+        <p className="text-[13px] font-medium text-gray-800">Drop a photo here, or use Upload</p>
+        <p className="text-[12px] text-gray-500 mt-0.5">JPG, PNG, WebP, GIF or AVIF, up to 10 MB.</p>
 
         {uploadError && (
           <div className="mt-3 flex items-center gap-1.5 text-xs text-red-600 bg-red-50 p-2 rounded-lg">
@@ -358,7 +282,15 @@ export default function MediaManagementPage() {
       </div>
 
       {/* 5. MEDIA DISPLAY (GRID VS LIST) */}
-      {viewMode === "grid" ? (
+      {loading || filteredItems.length === 0 ? (
+        <div className="rounded-[8px] border border-[#e8e8e8] bg-white px-4 py-10 text-center text-[13px] text-gray-500">
+          {loading
+            ? "Loading media…"
+            : items.length === 0
+            ? "No photos yet. Upload one to use it on the website."
+            : "No photos match your search."}
+        </div>
+      ) : viewMode === "grid" ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {filteredItems.map((item) => (
             <div
