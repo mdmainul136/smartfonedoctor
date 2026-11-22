@@ -145,6 +145,11 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var p=window.location.pathname;if(p&&p.indexOf("//")!==-1){window.location.replace(p.replace(/\\/{2,}/g,"/")+window.location.search+window.location.hash);}}catch(e){}})();`,
+          }}
+        />
         <link rel="icon" href={faviconUrl} sizes="any" />
         <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
         <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16" />
