@@ -140,7 +140,7 @@ export default async function RootLayout({
 }) {
   const settings = await getSeoSettings();
 
-  const siteName = settings?.siteName || "SmartFoneDoctor (Smartphone Doctor)";
+  const siteName = settings?.siteName || "SmartFoneDoctor";
   const logoUrl = settings?.logoUrl || "/logo-png.jpg";
   const contactPhone = settings?.contactPhone || "+1-215-598-2090";
   const streetAddress = settings?.streetAddress || "33 S 52nd St";
@@ -154,66 +154,6 @@ export default async function RootLayout({
     settings?.youtubeUrl,
     settings?.linkedinUrl,
   ].filter(Boolean) as string[];
-
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    name: siteName,
-    image: `${siteUrl}${logoUrl}`,
-    telephone: contactPhone,
-    url: siteUrl,
-    priceRange: "$$",
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: streetAddress,
-      addressLocality: "Philadelphia",
-      addressRegion: "PA",
-      postalCode: "19139",
-      addressCountry: "US",
-    },
-    geo: {
-      "@type": "GeoCoordinates",
-      latitude: 39.9572,
-      longitude: -75.2267,
-    },
-    department: [
-      {
-        "@type": "LocalBusiness",
-        name: "Smart Fone Doctor - 4016 Lancaster",
-        telephone: contactPhone,
-        address: {
-          "@type": "PostalAddress",
-          streetAddress: "4016 Lancaster Ave",
-          addressLocality: "Philadelphia",
-          addressRegion: "PA",
-          postalCode: "19104",
-          addressCountry: "US",
-        },
-      },
-      {
-        "@type": "LocalBusiness",
-        name: "Smart FoneDoctor - 4060 Lancaster",
-        telephone: contactPhone,
-        address: {
-          "@type": "PostalAddress",
-          streetAddress: "4060 Lancaster Ave",
-          addressLocality: "Philadelphia",
-          addressRegion: "PA",
-          postalCode: "19104",
-          addressCountry: "US",
-        },
-      },
-    ],
-    openingHoursSpecification: [
-      {
-        "@type": "OpeningHoursSpecification",
-        dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-        opens: "10:00",
-        closes: "19:00",
-      },
-    ],
-    sameAs,
-  };
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -234,10 +174,6 @@ export default async function RootLayout({
         {cleanVerificationToken(settings?.facebookAppId) && (
           <meta property="fb:app_id" content={cleanVerificationToken(settings?.facebookAppId)!} />
         )}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
       </head>
       <body
         suppressHydrationWarning

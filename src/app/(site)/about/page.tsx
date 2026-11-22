@@ -22,7 +22,7 @@ import AboutMap, { StorePoint } from "@/components/about/AboutMap";
 import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
 import { getStoreBranchesAction } from "@/actions/settings";
 import { getCmsPage } from "@/actions/cmsPages";
-import { compilePageCss } from "@/puck/style/compilePage";
+import { brandTitle } from "@/lib/seoTitle";
 import { JsonLd, buildBreadcrumbSchema } from "@/lib/schema";
 
 /**
@@ -45,7 +45,7 @@ export async function generateMetadata(): Promise<Metadata> {
     "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1600&auto=format&fit=crop&q=85";
 
   return {
-    title,
+    title: brandTitle(title),
     description,
     keywords:
       page?.keywords && page.keywords.length > 0
@@ -130,14 +130,6 @@ export default async function AboutPage() {
       }))
       : undefined;
 
-  // Compile pre-rendered CSS if Page Builder blocks are present
-  const puckContent = (page?.puckData as { content?: unknown[] } | undefined)?.content;
-  const compiledCss =
-    page?.compiledCss ||
-    (Array.isArray(puckContent) && puckContent.length > 0
-      ? compilePageCss(puckContent)
-      : "");
-
   // ─── Rich Structured Data (Breadcrumb + Multi-Entity AboutPage + AEO Knowledge Graph) ───
   const breadcrumbSchema = buildBreadcrumbSchema([
     { name: "Home", url: "/" },
@@ -178,7 +170,7 @@ export default async function AboutPage() {
         },
         mainEntity: {
           "@type": ["LocalBusiness", "ElectronicsStore"],
-          "@id": "https://smartfonedoctor.com/#organization",
+          "@id": "https://smartfonedoctor.com/#localbusiness",
           name: "SmartFoneDoctor",
           alternateName: ["Smart Fone Doctor", "SmartFone Doctor Philadelphia"],
           url: "https://smartfonedoctor.com",
@@ -231,14 +223,6 @@ export default async function AboutPage() {
       {/* ── JSON-LD Structured Data for Search & AI Engines ── */}
       <JsonLd data={breadcrumbSchema} />
       <JsonLd data={aboutPageSchema} />
-
-      {/* Pre-compiled CSS for Page Builder blocks (Zero Layout Shift) */}
-      {compiledCss ? (
-        <style
-          id="pb-css-about"
-          dangerouslySetInnerHTML={{ __html: compiledCss }}
-        />
-      ) : null}
 
       <CMSSectionRenderer slug="about" initialPage={page}>
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20">
@@ -492,7 +476,7 @@ export default async function AboutPage() {
                   Our Customers Are The Most Important To Us
                 </h2>
                 <p className="text-xs sm:text-[13.5px] text-neutral-600 leading-relaxed">
-                  Our customers mean everything to us. Because of your trust, we invest continuously in state-of-the-art diagnostic stations, micro-soldering microscopes, and laser back glass separators. Our 90-day comprehensive warranty on all replacement parts and labor is proof of our stance on quality repairs and superior service.
+                  Our customers mean everything to us. Because of your trust, we keep investing in diagnostic stations, micro-soldering microscopes, and laser back glass separators. Our 90-day comprehensive warranty on all replacement parts and labor is proof of our stance on quality repairs and superior service.
                 </p>
               </div>
 

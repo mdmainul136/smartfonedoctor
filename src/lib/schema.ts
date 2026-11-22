@@ -97,8 +97,8 @@ export function buildWebSiteSchema(
     description:
       "Philadelphia's premier hardware repair bench for smartphones, tablets, computers, and game consoles.",
     publisher: {
-      "@type": "Organization",
-      "@id": `${SITE_URL}/#organization`,
+      "@type": ["LocalBusiness", "ElectronicsStore"],
+      "@id": `${SITE_URL}/#localbusiness`,
       name: "SmartFoneDoctor",
       logo: {
         "@type": "ImageObject",
@@ -393,8 +393,8 @@ export function buildArticleSchema(
       jobTitle: article.author?.role || "Lead Hardware Technician & Founder",
     },
     publisher: {
-      "@type": "Organization",
-      "@id": `${SITE_URL}/#organization`,
+      "@type": ["LocalBusiness", "ElectronicsStore"],
+      "@id": `${SITE_URL}/#localbusiness`,
       name: "SmartFoneDoctor",
       logo: {
         "@type": "ImageObject",
@@ -419,8 +419,8 @@ export function buildCollectionPageSchema(
     description,
     url: ensureAbsoluteUrl(url),
     publisher: {
-      "@type": "Organization",
-      "@id": `${SITE_URL}/#organization`,
+      "@type": ["LocalBusiness", "ElectronicsStore"],
+      "@id": `${SITE_URL}/#localbusiness`,
       name: "SmartFoneDoctor",
     },
   };

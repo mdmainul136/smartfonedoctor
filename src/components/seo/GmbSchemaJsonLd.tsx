@@ -52,7 +52,7 @@ export default async function GmbSchemaJsonLd() {
       "@graph": [
         {
           "@type": ["LocalBusiness", "ElectronicsStore"],
-          "@id": `${siteUrl}/#organization`,
+          "@id": `${siteUrl}/#localbusiness`,
           name: siteName,
           legalName: entity?.legalName || "SmartFoneDoctor LLC",
           url: siteUrl,
