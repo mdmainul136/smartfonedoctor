@@ -9,17 +9,19 @@ import { WiseCertification } from "@/components/home/WiseCertification";
 import { ReviewsSection } from "@/components/home/ReviewsSection";
 import { GuaranteesBento } from "@/components/home/GuaranteesBento";
 import { FaqSection, HOMEPAGE_FAQS, homeFaqItems } from "@/components/home/FaqSection";
-import type { FaqSectionProps } from "@/components/home/sectionContent";
+import type { FaqSectionProps, ReviewContent } from "@/components/home/sectionContent";
 import { JsonLd, buildWebSiteSchema, buildFaqSchema } from "@/lib/schema";
 import { LatestGuides } from "@/components/home/LatestGuides";
 import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
+import { RouteDataProvider } from "@/components/site/RouteDataContext";
 import type { CMSPage } from "@/lib/cmsData";
 
 export interface HomePageClientProps {
   initialPage?: CMSPage | null;
+  initialReviews?: ReviewContent[];
 }
 
-export default function HomePageClient({ initialPage }: HomePageClientProps) {
+export default function HomePageClient({ initialPage, initialReviews }: HomePageClientProps) {
   const webSiteSchema = buildWebSiteSchema();
 
   // FAQ schema must match the questions visitors see. With the builder layout
@@ -54,6 +56,7 @@ export default function HomePageClient({ initialPage }: HomePageClientProps) {
       {faqSchema && <JsonLd data={faqSchema} />}
 
       {/* CMS Dynamic Section Renderer with SSR fallback */}
+      <RouteDataProvider value={{ type: "home", data: { featuredReviews: initialReviews ?? [] } }}>
       <CMSSectionRenderer slug="home" initialPage={initialPage} fallbackHero={<HeroSection />}>
         {/* 1. Hero Section */}
         <HeroSection />
@@ -65,7 +68,7 @@ export default function HomePageClient({ initialPage }: HomePageClientProps) {
         <CommonIssues />
 
         {/* 4. See Why Customers Trust Us (Authentic Google Reviews) */}
-        <ReviewsSection />
+        <ReviewsSection reviews={initialReviews} />
 
         {/* 5. Book a Repair & Store Locator with Map */}
         <div id="locations">
@@ -90,6 +93,7 @@ export default function HomePageClient({ initialPage }: HomePageClientProps) {
         <LatestGuides />
 
       </CMSSectionRenderer>
+      </RouteDataProvider>
 
       {/* Footer */}
       <Footer />

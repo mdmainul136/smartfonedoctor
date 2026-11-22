@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { brandTitle } from "@/lib/seoTitle";
 import { getCmsPage } from "@/actions/cmsPages";
+import { getPublicFeaturedReviewsAction } from "@/actions/reviews";
+import type { ReviewContent } from "@/components/home/sectionContent";
 import HomePageClient from "@/components/site/HomePageClient";
 
 /**
@@ -64,8 +66,19 @@ export async function generateMetadata(): Promise<Metadata> {
  * Ensures zero Layout Shift (CLS) and zero FOUC for both Puck designs and custom layouts.
  */
 export default async function HomePage() {
-  const page = await getCmsPage("/");
+  const [page, featuredReviews] = await Promise.all([
+    getCmsPage("/"),
+    getPublicFeaturedReviewsAction(),
+  ]);
+
+  const initialReviews: ReviewContent[] = featuredReviews.map((r) => ({
+    author: r.author,
+    location: r.location,
+    device: r.device,
+    content: r.content,
+    rating: r.rating,
+  }));
 
   // Widget Design styles are rendered next to each widget (styleRender.tsx).
-  return <HomePageClient initialPage={page} />;
+  return <HomePageClient initialPage={page} initialReviews={initialReviews} />;
 }

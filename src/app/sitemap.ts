@@ -3,7 +3,8 @@ import prisma from "@/lib/prisma";
 import { listTypeUrls } from "@/lib/themeTypes";
 import { GEO_STORES, toNeighborhoodSlug } from "@/lib/geoPages";
 
-export const revalidate = 3600; // Revalidate dynamic sitemap every 1 hour
+export const dynamic = "force-dynamic"; // Generate dynamically from live DB so docker build never caches a 1-URL fallback
+export const revalidate = 0;
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://smartfonedoctor.com";
 

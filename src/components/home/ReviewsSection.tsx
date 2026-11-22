@@ -4,14 +4,18 @@ import React, { useEffect, useState } from "react";
 import { Star, ChevronLeft, ChevronRight } from "lucide-react";
 import { REVIEWS_DEFAULTS, pickList, pickText, type ReviewContent, type ReviewsProps } from "./sectionContent";
 import { getPublicFeaturedReviewsAction } from "@/actions/reviews";
+import { useRouteData } from "@/components/site/RouteDataContext";
 
 export function ReviewsSection(props: ReviewsProps) {
   const d = REVIEWS_DEFAULTS;
-  const [dbReviews, setDbReviews] = useState<ReviewContent[]>([]);
+  const homeData = useRouteData<{ featuredReviews?: ReviewContent[] }>("home");
+  const ssrReviews = homeData?.featuredReviews ?? [];
+  const [dbReviews, setDbReviews] = useState<ReviewContent[]>(ssrReviews);
   const hasExplicitProps = Array.isArray(props.reviews) && props.reviews.length > 0;
+  const hasSsrReviews = ssrReviews.length > 0;
 
   useEffect(() => {
-    if (hasExplicitProps) return;
+    if (hasExplicitProps || hasSsrReviews) return;
     let active = true;
     getPublicFeaturedReviewsAction()
       .then((rows) => {
@@ -30,7 +34,7 @@ export function ReviewsSection(props: ReviewsProps) {
     return () => {
       active = false;
     };
-  }, [hasExplicitProps]);
+  }, [hasExplicitProps, hasSsrReviews]);
 
   const REVIEWS = pickList(props.reviews, dbReviews.length > 0 ? dbReviews : d.reviews);
   const [startIndex, setStartIndex] = useState(0);
