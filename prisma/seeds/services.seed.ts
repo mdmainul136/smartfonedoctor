@@ -9,7 +9,7 @@ const LOCATIONS = [
     address: "33 S 52nd St, Fl 2nd, Philadelphia, PA 19139",
     neighborhood: "West Philadelphia, PA",
     phone: "+1 (215) 598-2090",
-    hours: "Mon–Sat: 10:00 AM – 7:30 PM | Sun: 11:00 AM – 5:00 PM",
+    hours: "Mon–Sat: 10:00 AM – 7:00 PM | Sun: Closed",
     google_maps_url: "https://share.google/gTlyWLewR88ToAdJQ",
     google_rating: new Prisma.Decimal(4.9),
     total_reviews: new Prisma.Decimal(1520),

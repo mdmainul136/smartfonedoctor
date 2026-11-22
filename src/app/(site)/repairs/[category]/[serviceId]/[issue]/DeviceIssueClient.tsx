@@ -30,17 +30,19 @@ interface Props {
 }
 
 export default function DeviceIssueClient({ data }: Props) {
-  const { device, issue, pricing, schemas, siblingRepairs, siblingDevices, relatedBlogGuides, neighborhoods } = data;
+  const { device, issue, pricing, siblingRepairs, siblingDevices, relatedBlogGuides, neighborhoods, answerCapsule } = data;
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [selectedTier, setSelectedTier] = useState<"aftermarket" | "oem">("aftermarket");
 
+  const categoryHeroSummary: Record<PSeoPageData["device"]["category"], string> = {
+    smartphone: `Certified bench technician repair for your ${device.name}. We restore factory display brightness, touch response, battery health, and sealing with tested parts in Philadelphia.`,
+    tablet: `Precision bench service for your ${device.name}. We repair laminated screens, dual-cell batteries, USB-C ports, and logic rails using corner-alignment tools and OEM-grade components.`,
+    computer: `Same-day hardware & micro-soldering service for your ${device.name}. Screens, batteries, USB-C/MagSafe power ports, and liquid-damage recovery with all SSD data preserved.`,
+    console: `Board-level micro-soldering and thermal restoration for your ${device.name}. We reinforce HDMI ports, service liquid-metal cooling, and restore optical/USB-C ports on our bench.`,
+  };
+
   return (
     <main className="bg-[#fafbfc] min-h-screen pb-20">
-      {/* ── JSON-LD Structured Data for Google ── */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas.breadcrumb) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas.service) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas.localBusiness) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas.faq) }} />
 
       {/* ── 1. BREADCRUMBS ── */}
       <div className="bg-white border-b border-gray-200">
@@ -99,8 +101,16 @@ export default function DeviceIssueClient({ data }: Props) {
               </h1>
 
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed max-w-2xl">
-                Certified bench technician repair for your {device.name}. We restore original display clarity, touch sensitivity, and battery performance using factory-grade parts at our Philadelphia repair shop.
+                {categoryHeroSummary[device.category]}
               </p>
+
+              {/* Quick Answer Capsule (AEO / Direct Answer) */}
+              <div className="p-3.5 rounded-xl bg-teal-50/70 border border-sfd-teal/20 text-xs sm:text-[13px] text-[#1d1c1a] leading-relaxed max-w-2xl">
+                <span className="font-bold text-sfd-teal uppercase tracking-wider text-[10.5px] block mb-1">
+                  Quick Repair Answer · Philadelphia
+                </span>
+                {answerCapsule}
+              </div>
 
               {/* Price & Turnaround Box */}
               <div className="flex flex-wrap items-center gap-6 p-4 rounded-2xl bg-gray-50 border border-gray-200">

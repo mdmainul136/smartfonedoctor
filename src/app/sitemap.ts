@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import prisma from "@/lib/prisma";
 import { listTypeUrls } from "@/lib/themeTypes";
+import { GEO_STORES, toNeighborhoodSlug } from "@/lib/geoPages";
 
 export const revalidate = 3600; // Revalidate dynamic sitemap every 1 hour
 
@@ -52,7 +53,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     add("/", 1.0, "daily");
     for (const p of ["/repairs", "/schedule-repair"]) add(p, 0.9, "weekly");
     add("/blog", 0.8, "daily");
-    for (const p of ["/repair-status", "/review", "/faq", "/common-issues", "/warranty", "/locations/i/book-repair"]) add(p, 0.7, "weekly");
+    for (const path of ["/repair-status", "/review", "/faq", "/common-issues", "/warranty", "/locations/i/book-repair"]) add(path, 0.7, "weekly");
+    for (const geo of GEO_STORES) add(`/locations/${geo.slug}`, 0.9, "weekly");
+    const neighborhoods = await prisma.geoNeighborhood.findMany({ select: { name: true, updatedAt: true } });
+    for (const hood of neighborhoods) add(`/locations/areas/${toNeighborhoodSlug(hood.name)}`, 0.8, "weekly", hood.updatedAt);
     add("/about", 0.6, "monthly");
 
     // 2. Published CMS pages (incl. category hubs and legal pages); not templates.

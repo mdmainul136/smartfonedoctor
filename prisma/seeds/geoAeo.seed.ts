@@ -202,15 +202,15 @@ export async function seedGeoAeo() {
     }
   }
 
-  // 4. Seed Knowledge Graph Entity
+  // 4. Seed Knowledge Graph Entity (only include real verified external IDs; avoid placeholders)
   await prisma.knowledgeGraphEntity.upsert({
     where: { id: "sfd_knowledge_entity" },
     update: {
       entityName: "SmartFoneDoctor",
       legalName: "SmartFoneDoctor LLC",
       entityType: "LocalBusiness",
-      wikidataId: "Q115862892",
-      googleKnowledgeGraphId: "kg:/g/11s0_smartfonedoctor",
+      wikidataId: null,
+      googleKnowledgeGraphId: null,
       sameAsUrls: [
         "https://maps.google.com/?cid=15243892090",
         "https://www.yelp.com/biz/smart-fone-doctor-philadelphia",
@@ -225,8 +225,8 @@ export async function seedGeoAeo() {
       entityName: "SmartFoneDoctor",
       legalName: "SmartFoneDoctor LLC",
       entityType: "LocalBusiness",
-      wikidataId: "Q115862892",
-      googleKnowledgeGraphId: "kg:/g/11s0_smartfonedoctor",
+      wikidataId: null,
+      googleKnowledgeGraphId: null,
       sameAsUrls: [
         "https://maps.google.com/?cid=15243892090",
         "https://www.yelp.com/biz/smart-fone-doctor-philadelphia",
@@ -237,7 +237,7 @@ export async function seedGeoAeo() {
       jurisdiction: "Philadelphia, Pennsylvania, United States",
     },
   });
-  console.log(`  ✓ Synced Knowledge Graph Entity (Wikidata & Google KG IDs)`);
+  console.log(`  ✓ Synced Knowledge Graph Entity (clean sameAs links, no placeholder IDs)`);
 
   console.log("✅ [Seeder] AEO & GEO seeded successfully.");
 }

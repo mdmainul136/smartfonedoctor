@@ -88,8 +88,14 @@ export default async function DeviceIssueServicePage({ params }: PageProps) {
 
   // Layout from Admin > Pages > Templates > "Template: Repair page" (or this URL's own page).
   const layout = await pickLayout(`/repairs/${category}/${serviceId}/${issue}`, "repair-issue");
+  const { schemas } = data;
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas.breadcrumb) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas.service) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas.localBusiness) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas.faq) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas.howTo) }} />
       {layout ? (
         <>
           <RouteDataProvider value={{ type: "repair-issue", data: { page: data } }}>

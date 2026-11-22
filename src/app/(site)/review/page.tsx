@@ -26,6 +26,7 @@ import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
 import { getCmsPage } from "@/actions/cmsPages";
 import { getStoreBranchesAction } from "@/actions/settings";
 import { getPublicFeaturedReviewsAction } from "@/actions/reviews";
+import { getGeoStoreById } from "@/lib/geoPages";
 import { withCmsMetadata } from "@/lib/cmsMetadata";
 
 // Coded defaults; title, description and canonical can be changed in Admin > Pages > SEO.
@@ -302,19 +303,25 @@ export default async function ReviewHubPage() {
                       <span>Review This Store (QR Portal)</span>
                     </Link>
 
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-3 gap-2">
+                      <Link
+                        href={`/locations/${getGeoStoreById(store.id).slug}`}
+                        className="py-2 px-2 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-medium text-[11px] text-center transition flex items-center justify-center gap-1"
+                      >
+                        <span>Store Page</span>
+                      </Link>
                       <a
                         href={store.gmbUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="py-2 px-3 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-medium text-[11px] text-center transition flex items-center justify-center gap-1"
+                        className="py-2 px-2 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-medium text-[11px] text-center transition flex items-center justify-center gap-1"
                       >
                         <span>Google Maps</span>
                         <ExternalLink className="w-3 h-3 text-neutral-500" />
                       </a>
                       <Link
                         href={`/schedule-repair?store=${store.id}`}
-                        className="py-2 px-3 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-medium text-[11px] text-center transition flex items-center justify-center gap-1"
+                        className="py-2 px-2 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-medium text-[11px] text-center transition flex items-center justify-center gap-1"
                       >
                         <span>Book Bench</span>
                         <Calendar className="w-3 h-3 text-neutral-500" />

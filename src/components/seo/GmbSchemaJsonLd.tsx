@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { getGeoStoreByCode } from "@/lib/geoPages";
 
 export default async function GmbSchemaJsonLd() {
   try {
@@ -12,19 +13,23 @@ export default async function GmbSchemaJsonLd() {
     const siteName = settings?.siteName || "SmartFoneDoctor";
 
     const departments = locations.map((loc) => {
+      const geo = getGeoStoreByCode(loc.store_code);
       const zipMatch = loc.address.match(/\b\d{5}\b/);
-      const zip = zipMatch ? zipMatch[0] : "19139";
+      const zip = geo?.postalCode || (zipMatch ? zipMatch[0] : "19139");
+      const storeUrl = geo
+        ? `${siteUrl}/locations/${geo.slug}`
+        : `${siteUrl}/locations/i/book-repair`;
 
       return {
         "@type": ["LocalBusiness", "ElectronicsStore"],
         "@id": `${siteUrl}/locations#${loc.store_code.replace(/_/g, "-")}`,
-        name: loc.name,
-        url: `${siteUrl}/locations`,
+        name: geo?.name || loc.name,
+        url: storeUrl,
         telephone: loc.phone || "+1-215-598-2090",
         priceRange: "$$",
         address: {
           "@type": "PostalAddress",
-          streetAddress: loc.address,
+          streetAddress: geo?.streetAddress || loc.address,
           addressLocality: "Philadelphia",
           addressRegion: "PA",
           postalCode: zip,
@@ -32,20 +37,29 @@ export default async function GmbSchemaJsonLd() {
         },
         geo: {
           "@type": "GeoCoordinates",
-          latitude: 39.9572,
-          longitude: -75.2267,
+          latitude: geo?.latitude ?? 39.9576,
+          longitude: geo?.longitude ?? -75.2268,
         },
-        hasMap: loc.google_maps_url || "https://maps.google.com/?cid=15243892090",
+        hasMap: loc.google_maps_url || geo?.gmbUrl || "https://maps.google.com/?cid=15243892090",
         openingHoursSpecification: [
           {
             "@type": "OpeningHoursSpecification",
             dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
             opens: "10:00",
-            closes: "19:30",
+            closes: "19:00",
           },
         ],
       };
     });
+
+    const filteredSameAs = (
+      entity?.sameAsUrls || [
+        "https://maps.google.com/?cid=15243892090",
+        "https://www.yelp.com/biz/smart-fone-doctor-philadelphia",
+        "https://www.bbb.org/us/pa/philadelphia/profile/cell-phone-repair/smartfonedoctor",
+        "https://facebook.com/smartfonedoctorphilly",
+      ]
+    ).filter((u) => !u.includes("wikidata.org/wiki/Q115862892"));
 
     const schemaGraph = {
       "@context": "https://schema.org",
@@ -72,13 +86,7 @@ export default async function GmbSchemaJsonLd() {
             "19104",
             "19143",
           ],
-          sameAs: entity?.sameAsUrls || [
-            "https://maps.google.com/?cid=15243892090",
-            "https://www.yelp.com/biz/smart-fone-doctor-philadelphia",
-            "https://www.bbb.org/us/pa/philadelphia/profile/cell-phone-repair/smartfonedoctor",
-            "https://facebook.com/smartfonedoctorphilly",
-            "https://www.wikidata.org/wiki/Q115862892",
-          ],
+          sameAs: filteredSameAs,
           hasMap: "https://maps.google.com/?cid=15243892090",
           department: departments,
           hasOfferCatalog: {

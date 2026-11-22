@@ -56,7 +56,9 @@ export interface PSeoPageData {
     service: Record<string, unknown>;
     localBusiness: Record<string, unknown>;
     faq: Record<string, unknown>;
+    howTo: Record<string, unknown>;
   };
+  answerCapsule: string;
   siblingRepairs: { name: string; url: string; price: number; turnaround: string }[];
   siblingDevices: { name: string; url: string; image: string }[];
   relatedBlogGuides: { title: string; url: string; readTime: string }[];
@@ -557,6 +559,109 @@ export const PSEO_ISSUES: PSeoIssue[] = [
       },
     ],
   },
+  {
+    slug: "overheating-fan-repair",
+    name: "Console Overheating, Liquid Metal & Fan Repair",
+    shortName: "Overheating & Fan Fix",
+    category: "console",
+    iconName: "Thermometer",
+    turnaroundMinutes: 90,
+    turnaroundDisplay: "Same Day (60–90 Mins)",
+    basePrice: 89,
+    oemPriceMultiplier: 1.35,
+    symptoms: [
+      "Console fan sounding like a jet engine or shutting off with overheating warning",
+      "Dry spot on PS5 APU liquid metal causing thermal throttling or sudden power loss",
+      "Dust-clogged heatsink fins blocking exhaust airflow on PS5, Xbox Series X, or Switch",
+    ],
+    benchProcedures: [
+      {
+        title: "Full Chassis Tear-Down & Ultrasonic Exhaust Cleaning",
+        desc: "We remove accumulated dust blankets from the power supply vents, blower fan blades, and copper heatsink channels.",
+      },
+      {
+        title: "APU Liquid Metal Respotting / High-Conductivity Paste",
+        desc: "Oxidized PS5 liquid metal is re-leveled across the APU die and brass cooler with sealed foam barrier inspection.",
+      },
+      {
+        title: "4K Stress Benchmark & Fan RPM Acoustic Audit",
+        desc: "We run sustained 4K gaming loads on our bench monitor to verify silent thermal stability.",
+      },
+    ],
+    toolsUsed: ["Liquid Metal Applicator Kit", "Thermal Grizzly Conductonaut", "Compressed Nitrogen Duster", "IR Thermal Camera"],
+    faqs: [
+      {
+        question: "Why does my PS5 shut off completely after 20 minutes of gaming?",
+        answer: "PS5 units standing vertically often develop a bare dry spot on the APU liquid metal or have heavy dust buildup blocking the internal power supply vents, triggering instant thermal shutdown.",
+      },
+    ],
+  },
+  {
+    slug: "disc-drive-repair",
+    name: "PlayStation & Xbox Optical Disc Drive Repair",
+    shortName: "Disc Drive Repair",
+    category: "console",
+    iconName: "Disc",
+    turnaroundMinutes: 90,
+    turnaroundDisplay: "Same Day (60–90 Mins)",
+    basePrice: 119,
+    oemPriceMultiplier: 1.35,
+    symptoms: [
+      "Console will not pull discs in, clicks repeatedly, or refuses to eject games",
+      "Unrecognized Disc error or loud grinding sound during spin-up",
+      "Dirty laser lens or slipped mechanical intake rollers",
+    ],
+    benchProcedures: [
+      {
+        title: "Roller Mechanism & Gear Alignment",
+        desc: "We realign slipped optical drive gears, clean intake rollers, and remove any jammed or doubled discs safely.",
+      },
+      {
+        title: "Laser Pickup & Daughterboard Preservation",
+        desc: "Because PS5/Xbox drives are paired to the motherboard, we swap worn KEM laser optics while keeping your original paired drive controller.",
+      },
+    ],
+    toolsUsed: ["Optical Drive Gear Kit", "Isopropyl Laser Optics Swabs", "ESD Console Bench"],
+    faqs: [
+      {
+        question: "Can you fix a PS5 or Xbox disc drive without losing game data?",
+        answer: "Yes. Servicing rollers or the laser pickup preserves your motherboard-paired drive PCB and keeps all installed games and saves untouched.",
+      },
+    ],
+  },
+  {
+    slug: "charging-port-repair",
+    name: "Nintendo Switch & Handheld USB-C Port Replacement",
+    shortName: "USB-C Port Fix",
+    category: "console",
+    iconName: "Zap",
+    turnaroundMinutes: 90,
+    turnaroundDisplay: "Same Day (60–90 Mins)",
+    basePrice: 99,
+    oemPriceMultiplier: 1.35,
+    symptoms: [
+      "Nintendo Switch not charging, flashing dead battery icon, or failing TV dock mode",
+      "Bent inner pins inside bottom USB-C receptacle",
+      "M92T36 power management IC shorted from third-party chargers",
+    ],
+    benchProcedures: [
+      {
+        title: "Hot-Air USB-C Dual-Row Micro-Soldering",
+        desc: "We desolder the broken Switch USB-C port under 40x magnification without lifting delicate hidden inner pads.",
+      },
+      {
+        title: "15V TV Dock Output & M92T36 Rail Verification",
+        desc: "We verify both 5V handheld charging and 15V 2.6A TV dock video negotiation on a live Nintendo dock.",
+      },
+    ],
+    toolsUsed: ["40x Stereo Microscope", "JBC Nano Micro-Soldering Iron", "USB-C PD Load Meter"],
+    faqs: [
+      {
+        question: "Why does my Nintendo Switch charge slowly but won't connect to the TV dock?",
+        answer: "Hidden secondary pins inside the USB-C port or the PI3USB video chip handle TV output separately from basic charging. Our microscope bench replaces both cleanly.",
+      },
+    ],
+  },
   // ── TABLET REPAIR TYPES ──
   {
     slug: "screen-repair",
@@ -928,9 +1033,13 @@ export function buildPSeoPageData(
 
   const canonicalUrl = `/repairs/${categorySlug}/${device.slug}/${issue.slug}`;
 
-  // SEO Titles & Metadata
-  const seoTitle = `${device.name} ${issue.shortName} in Philadelphia | Same-Day from $${aftermarketPrice} | SmartFoneDoctor`;
+  // SEO Titles & Metadata (keep seoTitle <= 60 chars to prevent SERP truncation)
+  const phillyShort = `${device.name} ${issue.shortName} Philly | From $${aftermarketPrice}`;
+  const compactTitle = `${device.name} ${issue.shortName} | From $${aftermarketPrice}`;
+  const rawTitle = phillyShort.length <= 60 ? phillyShort : compactTitle;
+  const seoTitle = rawTitle.length <= 60 ? rawTitle : `${rawTitle.slice(0, 57)}...`;
   const metaDescription = `Need fast ${device.name} ${issue.shortName.toLowerCase()} in Philadelphia? Done in ${issue.turnaroundDisplay} with 90-day warranty. Walk into 33 S 52nd St or book online today!`;
+  const answerCapsule = `SmartFoneDoctor repairs the ${device.name} ${issue.shortName.toLowerCase()} in Philadelphia starting at $${aftermarketPrice} ($${oemPrice} OEM tier) with a typical turnaround of ${issue.turnaroundDisplay}. Every repair includes a 90-day parts and labor warranty with walk-in service Mon–Sat 10:00 AM–7:00 PM at 33 S 52nd St, 4016 Lancaster Ave, and 4060 Lancaster Ave.`;
 
   // Schemas
   const breadcrumb = {
@@ -1028,6 +1137,26 @@ export function buildPSeoPageData(
         "@type": "Answer",
         text: f.answer,
       },
+    })),
+  };
+
+  const howToSchema = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: `How SmartFoneDoctor Performs ${device.name} ${issue.shortName}`,
+    description: metaDescription,
+    totalTime: `PT${issue.turnaroundMinutes}M`,
+    estimatedCost: {
+      "@type": "MonetaryAmount",
+      currency: "USD",
+      value: aftermarketPrice,
+    },
+    tool: issue.toolsUsed.map((t) => ({ "@type": "HowToTool", name: t })),
+    step: issue.benchProcedures.map((proc, index) => ({
+      "@type": "HowToStep",
+      position: index + 1,
+      name: proc.title,
+      text: proc.desc,
     })),
   };
 
@@ -1196,7 +1325,9 @@ export function buildPSeoPageData(
       service: serviceSchema,
       localBusiness: localBusinessSchema,
       faq: faqSchema,
+      howTo: howToSchema,
     },
+    answerCapsule,
     siblingRepairs,
     siblingDevices,
     relatedBlogGuides,

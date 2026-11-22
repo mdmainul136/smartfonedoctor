@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getGeoStoreByCode, toNeighborhoodSlug } from "@/lib/geoPages";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 3600; // 1 hour edge cache
@@ -54,8 +55,9 @@ export async function GET() {
     // 4. H2 File List Sections
     md += `## Store Locations\n\n`;
     for (const loc of locations) {
-      const slug = loc.store_code.replace(/_/g, "-");
-      md += `- [${loc.name}](${BASE_URL}/locations.md#${slug}): ${loc.address}. Phone: ${loc.phone}. Hours: ${loc.hours || "Mon–Sat 10:00 AM – 7:00 PM"}.\n`;
+      const geo = getGeoStoreByCode(loc.store_code);
+      const locUrl = geo ? `${BASE_URL}/locations/${geo.slug}.md` : `${BASE_URL}/locations.md`;
+      md += `- [${geo?.name || loc.name}](${locUrl}): ${loc.address}. Phone: ${loc.phone}. Hours: Mon–Sat 10:00 AM – 7:00 PM (Sun: Closed).\n`;
     }
     md += `\n`;
 
@@ -74,7 +76,7 @@ export async function GET() {
       for (const n of neighborhoods) {
         const zips = n.zipCodes.join(", ");
         const landmarks = n.keyLandmarks.join("; ");
-        md += `- [${n.name}](${BASE_URL}/locations.md#store-${n.storeId}): Radius ${n.radius} around ${landmarks} (Zip codes: ${zips}). Category: ${n.type}.\n`;
+        md += `- [${n.name}](${BASE_URL}/locations/areas/${toNeighborhoodSlug(n.name)}.md): Radius ${n.radius} around ${landmarks} (Zip codes: ${zips}). Category: ${n.type}.\n`;
       }
       md += `\n`;
     }
@@ -102,8 +104,9 @@ export async function GET() {
 
     // 5. Optional Section (v2 spec standard for secondary links)
     md += `## Optional\n\n`;
+    md += `- [Full Knowledge Base (llms-full.txt)](${BASE_URL}/llms-full.txt): Complete single-file catalog, repair prices, common issues, FAQs, and locations.\n`;
     md += `- [Full Business FAQs](${BASE_URL}/faq.md): Detailed questions on 90-day warranties, data security, turnarounds, and diagnostic fees.\n`;
-    md += `- [Customer Reviews & Ratings](${BASE_URL}/review.md): Verified customer ratings (4.9/5.0 across 1,500+ Google and Yelp reviews).\n`;
+    md += `- [Customer Reviews & Ratings](${BASE_URL}/review.md): Verified customer feedback and ratings across all 3 West Philadelphia stores.\n`;
     md += `- [Complete XML Sitemap](${BASE_URL}/sitemap.xml): Machine-readable index of all published URLs.\n`;
 
     return new NextResponse(md, {
