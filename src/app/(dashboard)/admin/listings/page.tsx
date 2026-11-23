@@ -46,7 +46,7 @@ export default function ListingsPage() {
     selectedStore,
     isAllStores,
   } = useStoreContext();
-  const { directories, updateStoreEntry, auditAllNap } = useListings();
+  const { directories, isLoading, updateStoreEntry, auditAllNap } = useListings();
   const storeShortName = selectedStore.name.replace("SmartFoneDoctor - ", "");
 
   const [statusFilter, setStatusFilter] = useState<"All" | ListingStatus>("All");
@@ -54,6 +54,7 @@ export default function ListingsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
+  const [auditNotice, setAuditNotice] = useState<string | null>(null);
 
   const [editingTarget, setEditingTarget] = useState<{
     dir: DirectoryListing;
@@ -125,16 +126,24 @@ export default function ListingsPage() {
     copyText("all-nap", block);
   };
 
-  const handleRunScan = () => {
+  const handleRunScan = async () => {
     setIsScanning(true);
-    setTimeout(() => {
-      auditAllNap(isAllStores ? undefined : selectedStoreId);
-      setIsScanning(false);
-    }, 650);
+    const res = await auditAllNap(isAllStores ? undefined : selectedStoreId);
+    setIsScanning(false);
+    setAuditNotice(
+      res.message ||
+        res.error ||
+        "Completed live NAP & URL reachability check."
+    );
   };
 
   const openEditModal = (dir: DirectoryListing, storeId: number) => {
-    const entry = dir.stores[storeId];
+    const entry = dir.stores[storeId] ?? {
+      status: "Missing" as ListingStatus,
+      napMatch: 0,
+      rating: null,
+      url: "",
+    };
     setEditingTarget({ dir, storeId });
     setEditStatus(entry.status);
     setEditUrl(entry.url || dir.claimPortalUrl);
@@ -145,16 +154,25 @@ export default function ListingsPage() {
     e.preventDefault();
     if (!editingTarget) return;
     const { dir, storeId } = editingTarget;
-    const prev = dir.stores[storeId];
+    const prev = dir.stores[storeId] ?? {
+      status: "Missing" as ListingStatus,
+      napMatch: 0,
+      rating: null,
+      url: "",
+    };
     const newNap =
       editStatus === "Synced" ? 100 : editStatus === "Mismatch" ? 78 : 0;
+    const stamp = new Date().toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
 
     updateStoreEntry(dir.id, storeId, {
       ...prev,
       status: editStatus,
       napMatch: newNap,
       url: editStatus === "Missing" ? "" : editUrl.trim(),
-      lastSynced: "Today",
+      lastSynced: editStatus === "Missing" ? "Never" : `Manual update (${stamp})`,
       issue: editStatus === "Synced" ? undefined : editIssue.trim() || undefined,
     });
     setEditingTarget(null);
@@ -170,7 +188,9 @@ export default function ListingsPage() {
               Directory listings
             </h1>
             <p className="text-[14px] text-[#5f6368] mt-1">
-              {isAllStores ? (
+              {isLoading ? (
+                "Loading directory citations from PostgreSQL…"
+              ) : isAllStores ? (
                 <>
                   {metrics.synced} of {metrics.total} store citations synced across{" "}
                   <span className="text-[#111111] font-medium">
@@ -193,8 +213,8 @@ export default function ListingsPage() {
           <div className="flex flex-wrap items-center gap-2 shrink-0">
             <button
               type="button"
-              onClick={handleRunScan}
-              disabled={isScanning}
+              onClick={() => void handleRunScan()}
+              disabled={isScanning || isLoading}
               className="h-[32px] px-3 rounded-[6px] border border-[#d1d5db] bg-white hover:bg-[#f9f9f9] text-[13px] font-medium text-[#111111] inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-60"
             >
               <RefreshCw
@@ -218,6 +238,20 @@ export default function ListingsPage() {
 
         <ListingsNav />
       </div>
+
+      {auditNotice && (
+        <div className="bg-slate-50 border border-slate-200 text-slate-700 rounded-[6px] px-4 py-2.5 flex items-center justify-between gap-3 text-[13px]">
+          <span>{auditNotice}</span>
+          <button
+            type="button"
+            onClick={() => setAuditNotice(null)}
+            aria-label="Dismiss audit notice"
+            className="p-0.5 hover:opacity-75 cursor-pointer shrink-0"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* 2. DIVIDED KPI STRIP (1 container split by 1px hairlines, no duplicate filter underline) */}
       <div

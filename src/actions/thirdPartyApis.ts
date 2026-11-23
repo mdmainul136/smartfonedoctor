@@ -7,15 +7,25 @@ import { Prisma, enum_reviews_source, enum_reviews_store } from "@prisma/client"
 import {
   INITIAL_API_CONNECTORS,
   INITIAL_DIRECTORIES,
+  createUnverifiedStores,
   type ApiConnector,
   type DirectoryListing,
   type DirectoryTier,
+  type ListingStatus,
   type StoreListingEntry,
   type SyncMode,
 } from "@/lib/listingsData";
 import {
   fetchGooglePlaceLive,
   fetchYelpStoreLive,
+  fetchMetaPagesLive,
+  fetchTrustpilotLive,
+  fetchDataForSeoListingsLive,
+  resolveValidGbpAccessToken,
+  verifyGbpOAuthLive,
+  verifyAppleConnectLive,
+  verifyBingPlacesKeyLive,
+  checkUrlReachableLive,
   PHILLY_STORES,
   type ExternalLiveReview,
 } from "@/lib/externalApis";
@@ -32,6 +42,10 @@ const KNOWN_AUTHORITY = new Map(
   INITIAL_DIRECTORIES.map((d) => [d.id, d.authority])
 );
 
+const KNOWN_API_PROVIDER = new Map(
+  INITIAL_DIRECTORIES.filter((d) => d.apiProviderId).map((d) => [d.id, d.apiProviderId!])
+);
+
 const STORE_CODE_TO_ID: Record<string, number> = {
   nd_st: 1,
   lancaster_4016: 2,
@@ -43,6 +57,98 @@ const STORE_ID_TO_REVIEW_ENUM: Record<number, enum_reviews_store> = {
   2: enum_reviews_store.lancaster_4016,
   3: enum_reviews_store.lancaster_4060,
 };
+
+const VALID_LISTING_STATUSES = new Set<ListingStatus>(["Synced", "Mismatch", "Missing"]);
+
+function cleanSecret(val: string | null | undefined): string | undefined {
+  const s = val?.trim();
+  if (!s || s.includes("••")) return undefined;
+  return s;
+}
+
+function formatSyncTimestamp(): string {
+  return new Date().toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function resolveConnectorCredentials(c: {
+  id: string;
+  apiKeyEncrypted?: string | null;
+  apiSecretEncrypted?: string | null;
+}): {
+  hasCredentials: boolean;
+  source: "database" | "env" | "none";
+  primaryKey?: string;
+  secondarySecret?: string;
+  googleApiKey?: string;
+} {
+  const dbKey = cleanSecret(c.apiKeyEncrypted);
+  const dbSecret = cleanSecret(c.apiSecretEncrypted);
+
+  if (c.id === "google-gbp") {
+    const envMapsKey = cleanSecret(
+      process.env.GOOGLE_MAPS_API_KEY || process.env.GOOGLE_PLACES_API_KEY
+    );
+    const envAccess = cleanSecret(process.env.GOOGLE_GBP_ACCESS_TOKEN);
+    const envRefresh = cleanSecret(process.env.GOOGLE_GBP_REFRESH_TOKEN);
+    const googleApiKey =
+      (dbKey && !dbKey.startsWith("ya29.") && !dbKey.startsWith("1//") ? dbKey : undefined) ||
+      envMapsKey;
+    const hasOauth =
+      Boolean(dbKey && (dbKey.startsWith("ya29.") || dbKey.startsWith("1//"))) ||
+      Boolean(dbSecret) ||
+      Boolean(envAccess || envRefresh);
+
+    if (dbKey || dbSecret) {
+      return {
+        hasCredentials: true,
+        source: "database",
+        primaryKey: dbKey || envMapsKey,
+        secondarySecret: dbSecret || envRefresh,
+        googleApiKey,
+      };
+    }
+    if (envMapsKey || hasOauth) {
+      return {
+        hasCredentials: true,
+        source: "env",
+        primaryKey: envMapsKey || envAccess || envRefresh,
+        secondarySecret: envRefresh,
+        googleApiKey: envMapsKey,
+      };
+    }
+    return { hasCredentials: false, source: "none" };
+  }
+
+  let envKey: string | undefined;
+  if (c.id === "yelp-fusion") envKey = cleanSecret(process.env.YELP_API_KEY);
+  else if (c.id === "facebook-graph") {
+    envKey = cleanSecret(process.env.META_ACCESS_TOKEN || process.env.FACEBOOK_ACCESS_TOKEN);
+  } else if (c.id === "trustpilot-api") {
+    envKey = cleanSecret(process.env.TRUSTPILOT_API_KEY);
+  } else if (c.id === "dataforseo-scanner") {
+    const login = cleanSecret(process.env.DATAFORSEO_LOGIN);
+    const pass = cleanSecret(process.env.DATAFORSEO_PASSWORD);
+    envKey =
+      login && pass ? `${login}:${pass}` : cleanSecret(process.env.DATAFORSEO_API_KEY);
+  } else if (c.id === "apple-connect") {
+    envKey = cleanSecret(process.env.APPLE_BUSINESS_CONNECT_TOKEN);
+  } else if (c.id === "bing-sync") {
+    envKey = cleanSecret(process.env.BING_PLACES_API_KEY);
+  }
+
+  if (dbKey) {
+    return { hasCredentials: true, source: "database", primaryKey: dbKey, secondarySecret: dbSecret };
+  }
+  if (envKey) {
+    return { hasCredentials: true, source: "env", primaryKey: envKey };
+  }
+  return { hasCredentials: false, source: "none" };
+}
 
 async function mergeExternalReviewsToHub(liveReviews: ExternalLiveReview[]): Promise<number> {
   if (liveReviews.length === 0) return 0;
@@ -144,20 +250,78 @@ function mapConnectorRow(c: {
   directoriesCovered: string[];
   locationsMatched: number;
   endpointDoc: string;
+  apiKeyEncrypted?: string | null;
+  apiSecretEncrypted?: string | null;
 }): ApiConnector {
+  const cred = resolveConnectorCredentials(c);
+  const isActuallyConnected = Boolean(
+    cred.hasCredentials && (c.connected || cred.source === "env")
+  );
+  const cleanLabel =
+    isActuallyConnected
+      ? c.accountLabel && c.accountLabel !== "Not configured"
+        ? c.accountLabel
+        : cred.source === "env"
+        ? "Configured via environment variable"
+        : "Connected via saved API credentials"
+      : "Not configured";
+
   return {
     id: c.id,
     name: c.name,
     provider: c.provider,
     capability: c.capability as ApiConnector["capability"],
     authType: c.authType as ApiConnector["authType"],
-    connected: c.connected,
-    accountLabel: c.accountLabel || "Not connected",
-    lastPulled: c.lastPulled || "Never",
+    connected: isActuallyConnected,
+    hasCredentials: cred.hasCredentials,
+    credentialSource: cred.source,
+    accountLabel: cleanLabel,
+    lastPulled: isActuallyConnected ? c.lastPulled || "Never" : "Never",
     directoriesCovered: c.directoriesCovered || [],
-    locationsMatched: c.locationsMatched,
+    locationsMatched: isActuallyConnected ? c.locationsMatched : 0,
     endpointDoc: c.endpointDoc,
   };
+}
+
+function normalizeDirectoryStores(rawStores: Prisma.JsonValue): Record<number, StoreListingEntry> {
+  const fallback = createUnverifiedStores();
+  if (!rawStores || typeof rawStores !== "object" || Array.isArray(rawStores)) {
+    return fallback;
+  }
+  const source = rawStores as Record<string, unknown>;
+  const result: Record<number, StoreListingEntry> = {};
+
+  for (const sid of [1, 2, 3]) {
+    const rawEntry = source[String(sid)];
+    if (!rawEntry || typeof rawEntry !== "object") {
+      result[sid] = fallback[sid];
+      continue;
+    }
+    const e = rawEntry as Omit<Partial<StoreListingEntry>, "status"> & {
+      status?: string;
+      note?: string;
+    };
+    const status = e.status && VALID_LISTING_STATUSES.has(e.status as ListingStatus)
+      ? (e.status as ListingStatus)
+      : "Missing";
+
+    if (e.status === "unchecked") {
+      result[sid] = fallback[sid];
+      continue;
+    }
+
+    result[sid] = {
+      status,
+      napMatch: typeof e.napMatch === "number" ? e.napMatch : status === "Synced" ? 100 : 0,
+      rating: typeof e.rating === "number" ? e.rating : null,
+      reviewsCount: typeof e.reviewsCount === "number" ? e.reviewsCount : undefined,
+      url: typeof e.url === "string" ? e.url : "",
+      lastSynced: e.lastSynced || "Never",
+      issue: e.issue || (status === "Missing" ? "Not yet synced — connect API or verify manually" : undefined),
+    };
+  }
+
+  return result;
 }
 
 function mapDirectoryRow(d: {
@@ -178,11 +342,11 @@ function mapDirectoryRow(d: {
     domain: d.domain,
     category: d.category,
     tier: d.tier as DirectoryTier,
-    authority: KNOWN_AUTHORITY.get(d.id) ?? d.overallNapMatch,
+    authority: KNOWN_AUTHORITY.get(d.id) ?? 75,
     syncMode: d.syncMode as SyncMode,
     claimPortalUrl: d.portalUrl || `https://${d.domain}`,
-    apiProviderId: d.apiProviderId || undefined,
-    stores: (d.stores as unknown as Record<number, StoreListingEntry>) || {},
+    apiProviderId: d.apiProviderId || KNOWN_API_PROVIDER.get(d.id),
+    stores: normalizeDirectoryStores(d.stores),
   };
 }
 
@@ -203,11 +367,11 @@ async function ensureThirdPartySeeded(): Promise<void> {
           provider: conn.provider,
           capability: conn.capability,
           authType: conn.authType,
-          connected: conn.connected,
-          accountLabel: conn.accountLabel,
-          lastPulled: conn.lastPulled,
+          connected: false,
+          accountLabel: "Not configured",
+          lastPulled: "Never",
           endpointDoc: conn.endpointDoc,
-          locationsMatched: conn.locationsMatched,
+          locationsMatched: 0,
           directoriesCovered: conn.directoriesCovered,
         },
       });
@@ -228,8 +392,8 @@ async function ensureThirdPartySeeded(): Promise<void> {
           syncMode: dir.syncMode,
           apiProviderId: dir.apiProviderId || null,
           portalUrl: dir.claimPortalUrl,
-          stores: dir.stores as unknown as Prisma.InputJsonValue,
-          overallNapMatch: dir.authority || 95,
+          stores: createUnverifiedStores() as unknown as Prisma.InputJsonValue,
+          overallNapMatch: 0,
         },
       });
     }
@@ -237,7 +401,7 @@ async function ensureThirdPartySeeded(): Promise<void> {
 }
 
 /**
- * Fetch all third-party API connectors
+ * Fetch all third-party API connectors with truthful credential detection.
  */
 export async function getApiConnectorsAction(): Promise<{
   success: boolean;
@@ -262,7 +426,7 @@ export async function getApiConnectorsAction(): Promise<{
 }
 
 /**
- * Connect, update credentials, or disconnect a third-party API
+ * Save real credentials or disconnect a third-party API connector.
  */
 export async function toggleConnectorStatusAction(input: ApiConnectorUpdateInput) {
   try {
@@ -274,27 +438,72 @@ export async function toggleConnectorStatusAction(input: ApiConnectorUpdateInput
     const nextConnected =
       input.connected !== undefined ? input.connected : !connector.connected;
 
+    if (!nextConnected) {
+      const updated = await prisma.apiConnector.update({
+        where: { id: input.id },
+        data: {
+          connected: false,
+          accountLabel: "Not configured",
+          apiKeyEncrypted: null,
+          apiSecretEncrypted: null,
+          lastPulled: "Never",
+          locationsMatched: 0,
+        },
+      });
+
+      await prisma.apiSyncLog.create({
+        data: {
+          connectorId: input.id,
+          action: "API_DISCONNECTED",
+          status: "Warning",
+          itemsSynced: 0,
+          message: `Cleared saved credentials and disconnected ${updated.name}`,
+        },
+      });
+
+      revalidatePath("/admin/listings");
+      revalidatePath("/admin/listings/api-sync");
+      revalidatePath("/admin/listings/ai-visibility");
+      return { success: true, connector: mapConnectorRow(updated) };
+    }
+
+    const incomingKey = cleanSecret(input.apiKey);
+    const existingCred = resolveConnectorCredentials(connector);
+    const hasAnyKey = Boolean(incomingKey || existingCred.hasCredentials);
+
+    if (!hasAnyKey) {
+      return {
+        success: false,
+        needsApiKey: true,
+        error: `Cannot connect ${connector.name} without a valid API key or OAuth token.`,
+      };
+    }
+
+    const cleanLabel =
+      input.accountLabel?.trim() &&
+      input.accountLabel.trim() !== "Not configured"
+        ? input.accountLabel.trim()
+        : existingCred.source === "env" && !incomingKey
+        ? "Configured via environment variable"
+        : "API Key Configured";
+
     const updated = await prisma.apiConnector.update({
       where: { id: input.id },
       data: {
-        connected: nextConnected,
-        accountLabel:
-          input.accountLabel ||
-          (nextConnected ? connector.accountLabel || "Connected via API" : "Not connected"),
-        apiKeyEncrypted: input.apiKey ? input.apiKey : connector.apiKeyEncrypted,
-        lastPulled: nextConnected ? "Just now" : connector.lastPulled,
+        connected: true,
+        accountLabel: cleanLabel,
+        ...(incomingKey ? { apiKeyEncrypted: incomingKey } : {}),
+        lastPulled: connector.lastPulled || "Saved — click Pull to verify",
       },
     });
 
     await prisma.apiSyncLog.create({
       data: {
         connectorId: input.id,
-        action: nextConnected ? "API_CONNECTED" : "API_DISCONNECTED",
+        action: "API_CONFIGURED",
         status: "Success",
         itemsSynced: updated.locationsMatched,
-        message: nextConnected
-          ? `Connected credentials for ${updated.name}`
-          : `Disconnected credentials for ${updated.name}`,
+        message: `Saved credentials for ${updated.name}`,
       },
     });
 
@@ -308,46 +517,125 @@ export async function toggleConnectorStatusAction(input: ApiConnectorUpdateInput
   }
 }
 
+async function updateDirectoryStoresFromLivePull(
+  dirId: string,
+  entriesByStore: Map<
+    number,
+    {
+      napMatch: number;
+      rating?: number | null;
+      reviewsCount?: number;
+      url?: string;
+      issue?: string;
+    }
+  >,
+  syncLabel: string,
+  fallbackUrl: string
+) {
+  const dir = await prisma.directoryListing.findUnique({ where: { id: dirId } });
+  if (!dir) return;
+
+  const cur = normalizeDirectoryStores(dir.stores);
+  const nextStores: Record<number, StoreListingEntry> = { ...cur };
+
+  for (const [sid, r] of entriesByStore.entries()) {
+    const prev = cur[sid] ?? { status: "Missing", napMatch: 0, rating: null, url: "" };
+    nextStores[sid] = {
+      ...prev,
+      status: r.napMatch >= 90 ? "Synced" : "Mismatch",
+      napMatch: r.napMatch,
+      rating: r.rating !== undefined ? r.rating : prev.rating,
+      reviewsCount: r.reviewsCount !== undefined ? r.reviewsCount : prev.reviewsCount,
+      url: r.url || prev.url || dir.portalUrl || fallbackUrl,
+      lastSynced: syncLabel,
+      issue: r.issue ?? (r.napMatch < 90 ? `NAP address or phone mismatch on ${dir.name}` : undefined),
+    };
+  }
+
+  const vals = Object.values(nextStores);
+  const avgNap = vals.length
+    ? Math.round(vals.reduce((a, b) => a + (b.napMatch ?? 0), 0) / vals.length)
+    : 0;
+
+  await prisma.directoryListing.update({
+    where: { id: dirId },
+    data: {
+      stores: nextStores as unknown as Prisma.InputJsonValue,
+      overallNapMatch: avgNap,
+    },
+  });
+}
+
 /**
- * Trigger an API pull for a connector and update linked directory listings in PostgreSQL
+ * Trigger a real live HTTP pull for a connector. Never fakes Synced / 100% when credentials are missing or invalid.
  */
-export async function triggerApiPullAction(connectorId: string) {
+export async function triggerApiPullAction(connectorId: string): Promise<{
+  success: boolean;
+  needsApiKey?: boolean;
+  liveSynced?: boolean;
+  newReviewsAdded?: number;
+  warningMessage?: string;
+  error?: string;
+  connector?: ApiConnector;
+  log?: unknown;
+}> {
   try {
     await requireAdmin();
     await ensureThirdPartySeeded();
     const connector = await prisma.apiConnector.findUnique({ where: { id: connectorId } });
     if (!connector) return { success: false, error: "Connector not found" };
 
-    const gmbByStoreId = new Map<number, { rating: number; reviewsCount: number }>();
-    const existingProfiles =
-      connectorId === "google-gbp" ? await prisma.gmbProfile.findMany() : [];
-    const existingPlaceIdByStore = new Map<number, string | null>();
-    for (const p of existingProfiles) {
-      const sid = STORE_CODE_TO_ID[p.storeCode];
-      if (sid) {
-        existingPlaceIdByStore.set(sid, p.googlePlaceId);
-        gmbByStoreId.set(sid, {
-          rating: p.rating ? Number(p.rating) : 4.8,
-          reviewsCount: p.reviewsCount,
-        });
-      }
+    const cred = resolveConnectorCredentials(connector);
+    if (!cred.hasCredentials) {
+      const normalizedConn = await prisma.apiConnector.update({
+        where: { id: connectorId },
+        data: {
+          connected: false,
+          accountLabel: "Not configured",
+          locationsMatched: 0,
+        },
+      });
+
+      const log = await prisma.apiSyncLog.create({
+        data: {
+          connectorId,
+          action: "PULL_SKIPPED",
+          status: "Warning",
+          itemsSynced: 0,
+          message: `Skipped pull: No API key or OAuth token configured for ${connector.name}.`,
+        },
+      });
+
+      revalidatePath("/admin/listings/api-sync");
+      return {
+        success: false,
+        needsApiKey: true,
+        liveSynced: false,
+        connector: mapConnectorRow(normalizedConn),
+        log,
+        error: `No API key or OAuth token configured for ${connector.name}. Click Configure to add real credentials.`,
+      };
     }
 
+    const syncTimeLabel = formatSyncTimestamp();
     let liveSynced = false;
+    let locationsMatched = 0;
     let newReviewsAdded = 0;
-    let warningMessage: string | undefined;
+    let errorMsg: string | undefined;
+    let successMsg = "";
 
     if (connectorId === "google-gbp") {
-      const rawKey =
-        connector.apiKeyEncrypted ||
-        process.env.GOOGLE_MAPS_API_KEY ||
-        process.env.GOOGLE_PLACES_API_KEY;
-      const apiKey = rawKey && !rawKey.includes("••") ? rawKey : undefined;
+      const existingProfiles = await prisma.gmbProfile.findMany();
+      const existingPlaceIdByStore = new Map<number, string | null>();
+      for (const p of existingProfiles) {
+        const sid = STORE_CODE_TO_ID[p.storeCode];
+        if (sid) existingPlaceIdByStore.set(sid, p.googlePlaceId);
+      }
 
-      if (apiKey) {
+      if (cred.googleApiKey) {
         const results = await Promise.all(
           [1, 2, 3].map((sid) =>
-            fetchGooglePlaceLive(apiKey, sid, existingPlaceIdByStore.get(sid))
+            fetchGooglePlaceLive(cred.googleApiKey!, sid, existingPlaceIdByStore.get(sid))
           )
         );
         const liveByStore = new Map(
@@ -358,6 +646,7 @@ export async function triggerApiPullAction(connectorId: string) {
 
         if (liveByStore.size > 0) {
           liveSynced = true;
+          locationsMatched = liveByStore.size;
           for (const [sid, r] of liveByStore.entries()) {
             const storeCode = PHILLY_STORES[sid]?.storeCode || "nd_st";
             await prisma.gmbProfile
@@ -381,187 +670,196 @@ export async function triggerApiPullAction(connectorId: string) {
                 },
               })
               .catch(() => {});
-
-            gmbByStoreId.set(sid, {
-              rating: r.rating ?? gmbByStoreId.get(sid)?.rating ?? 4.8,
-              reviewsCount: r.reviewsCount ?? gmbByStoreId.get(sid)?.reviewsCount ?? 50,
-            });
           }
 
-          const gmbDir = await prisma.directoryListing.findUnique({ where: { id: "gmb" } });
-          if (gmbDir) {
-            const cur = (gmbDir.stores as unknown as Record<number, StoreListingEntry>) || {};
-            const nextStores: Record<number, StoreListingEntry> = { ...cur };
-            for (const [sid, r] of liveByStore.entries()) {
-              const prev = cur[sid] ?? { status: "Missing", napMatch: 0, rating: null, url: "" };
-              nextStores[sid] = {
-                ...prev,
-                status: r.napMatch >= 90 ? "Synced" : "Mismatch",
-                napMatch: r.napMatch,
-                rating: r.rating ?? prev.rating,
-                reviewsCount: r.reviewsCount ?? prev.reviewsCount,
-                url: r.mapsUrl || prev.url || gmbDir.portalUrl || "https://business.google.com",
-                lastSynced: "Live Google API",
-                issue:
-                  r.napMatch < 90
-                    ? "NAP address or phone mismatch on Google Places"
-                    : undefined,
-              };
-            }
-            const vals = Object.values(nextStores);
-            const avgNap = vals.length
-              ? Math.round(vals.reduce((a, b) => a + (b.napMatch ?? 0), 0) / vals.length)
-              : 100;
-            await prisma.directoryListing.update({
-              where: { id: "gmb" },
-              data: {
-                stores: nextStores as unknown as Prisma.InputJsonValue,
-                overallNapMatch: avgNap,
-              },
-            });
-          }
+          await updateDirectoryStoresFromLivePull(
+            "gmb",
+            liveByStore,
+            `Live Google API (${syncTimeLabel})`,
+            "https://business.google.com"
+          );
+          successMsg = `Pulled ${locationsMatched} Philadelphia location(s) & ${newReviewsAdded} new review(s) from Google Places API.`;
         } else {
-          warningMessage =
+          errorMsg =
             results.map((r) => r.error).find(Boolean) ||
-            "Google Places API call returned no matching results";
+            "Google Places API returned 0 matching locations.";
         }
       }
-    } else if (connectorId === "yelp-fusion") {
-      const rawKey = connector.apiKeyEncrypted || process.env.YELP_API_KEY;
-      const apiKey = rawKey && !rawKey.includes("••") ? rawKey : undefined;
 
-      if (apiKey) {
-        const results = await Promise.all([1, 2, 3].map((sid) => fetchYelpStoreLive(apiKey, sid)));
-        const liveByStore = new Map(
-          results.filter((r) => r.success).map((r) => [r.storeId, r])
+      // If no Places key succeeded, attempt real GBP OAuth API check
+      if (!liveSynced) {
+        const oauthRes = await resolveValidGbpAccessToken(
+          connector.apiKeyEncrypted,
+          connector.apiSecretEncrypted
         );
-        const allLiveReviews = results.flatMap((r) => (r.success ? r.reviews : []));
-        newReviewsAdded = await mergeExternalReviewsToHub(allLiveReviews);
-
-        if (liveByStore.size > 0) {
-          liveSynced = true;
-          const yelpDir = await prisma.directoryListing.findUnique({ where: { id: "yelp" } });
-          if (yelpDir) {
-            const cur = (yelpDir.stores as unknown as Record<number, StoreListingEntry>) || {};
-            const nextStores: Record<number, StoreListingEntry> = { ...cur };
-            for (const [sid, r] of liveByStore.entries()) {
-              const prev = cur[sid] ?? { status: "Missing", napMatch: 0, rating: null, url: "" };
-              nextStores[sid] = {
-                ...prev,
-                status: r.napMatch >= 90 ? "Synced" : "Mismatch",
-                napMatch: r.napMatch,
-                rating: r.rating ?? prev.rating,
-                reviewsCount: r.reviewsCount ?? prev.reviewsCount,
-                url: r.url || prev.url || yelpDir.portalUrl || "https://www.yelp.com",
-                lastSynced: "Live Yelp Fusion API",
-                issue:
-                  r.napMatch < 90
-                    ? "NAP address or phone mismatch on Yelp profile"
-                    : undefined,
-              };
+        if (oauthRes.accessToken) {
+          const verified = await verifyGbpOAuthLive(oauthRes.accessToken);
+          if (verified.ok) {
+            liveSynced = true;
+            locationsMatched = verified.locationsMatched;
+            const byStoreMap = new Map(
+              Object.entries(verified.byStore).map(([sid, v]) => [Number(sid), v])
+            );
+            if (byStoreMap.size > 0) {
+              await updateDirectoryStoresFromLivePull(
+                "gmb",
+                byStoreMap,
+                `Live GBP OAuth (${syncTimeLabel})`,
+                "https://business.google.com"
+              );
             }
-            const vals = Object.values(nextStores);
-            const avgNap = vals.length
-              ? Math.round(vals.reduce((a, b) => a + (b.napMatch ?? 0), 0) / vals.length)
-              : 100;
-            await prisma.directoryListing.update({
-              where: { id: "yelp" },
-              data: {
-                stores: nextStores as unknown as Prisma.InputJsonValue,
-                overallNapMatch: avgNap,
-              },
-            });
+            successMsg = `Verified Google OAuth (${verified.accountCount} account(s), ${verified.locationsMatched} matched location(s)).`;
+            errorMsg = undefined;
+          } else {
+            errorMsg = verified.error || errorMsg;
           }
-        } else {
-          warningMessage =
-            results.map((r) => r.error).find(Boolean) ||
-            "Yelp Fusion API call returned no matching results";
+        } else if (!errorMsg) {
+          errorMsg = oauthRes.error || "Missing Google Places API key or valid GBP OAuth token.";
         }
+      }
+    } else if (connectorId === "yelp-fusion" && cred.primaryKey) {
+      const results = await Promise.all(
+        [1, 2, 3].map((sid) => fetchYelpStoreLive(cred.primaryKey!, sid))
+      );
+      const liveByStore = new Map(
+        results.filter((r) => r.success).map((r) => [r.storeId, r])
+      );
+      const allLiveReviews = results.flatMap((r) => (r.success ? r.reviews : []));
+      newReviewsAdded = await mergeExternalReviewsToHub(allLiveReviews);
+
+      if (liveByStore.size > 0) {
+        liveSynced = true;
+        locationsMatched = liveByStore.size;
+        await updateDirectoryStoresFromLivePull(
+          "yelp",
+          liveByStore,
+          `Live Yelp Fusion API (${syncTimeLabel})`,
+          "https://www.yelp.com"
+        );
+        successMsg = `Pulled ${locationsMatched} store listing(s) & ${newReviewsAdded} new review(s) from Yelp Fusion API.`;
+      } else {
+        errorMsg =
+          results.map((r) => r.error).find(Boolean) ||
+          "Yelp Fusion API returned 0 matching listings.";
+      }
+    } else if (connectorId === "facebook-graph" && cred.primaryKey) {
+      const metaRes = await fetchMetaPagesLive(cred.primaryKey);
+      if (metaRes.success && metaRes.pagesMatched > 0) {
+        liveSynced = true;
+        locationsMatched = metaRes.pagesMatched;
+        const byStoreMap = new Map(
+          Object.entries(metaRes.byStore).map(([sid, v]) => [Number(sid), v])
+        );
+        await updateDirectoryStoresFromLivePull(
+          "facebook",
+          byStoreMap,
+          `Live Meta Graph API (${syncTimeLabel})`,
+          "https://www.facebook.com"
+        );
+        successMsg = `Synced ${locationsMatched} Facebook Page(s) (${metaRes.accountName || "Meta Graph"}).`;
+      } else {
+        errorMsg = metaRes.error || "Meta Graph API pull failed.";
+      }
+    } else if (connectorId === "trustpilot-api" && cred.primaryKey) {
+      const tpRes = await fetchTrustpilotLive(cred.primaryKey, "smartfonedoctor.com");
+      if (tpRes.success) {
+        liveSynced = true;
+        locationsMatched = 3;
+        const domainMap = new Map([
+          [
+            1,
+            {
+              napMatch: 100,
+              rating: tpRes.rating ?? null,
+              reviewsCount: tpRes.reviewsCount,
+              url: tpRes.url,
+            },
+          ],
+          [
+            2,
+            {
+              napMatch: 100,
+              rating: tpRes.rating ?? null,
+              reviewsCount: tpRes.reviewsCount,
+              url: tpRes.url,
+            },
+          ],
+          [
+            3,
+            {
+              napMatch: 100,
+              rating: tpRes.rating ?? null,
+              reviewsCount: tpRes.reviewsCount,
+              url: tpRes.url,
+            },
+          ],
+        ]);
+        await updateDirectoryStoresFromLivePull(
+          "trustpilot",
+          domainMap,
+          `Live Trustpilot API (${syncTimeLabel})`,
+          "https://www.trustpilot.com"
+        );
+        successMsg = `Pulled Trustpilot rating (${tpRes.rating ?? "N/A"} / ${tpRes.reviewsCount ?? 0} reviews) for ${tpRes.displayName}.`;
+      } else {
+        errorMsg = tpRes.error || "Trustpilot Business API lookup failed.";
+      }
+    } else if (connectorId === "dataforseo-scanner" && cred.primaryKey) {
+      const dfsRes = await fetchDataForSeoListingsLive(cred.primaryKey);
+      if (dfsRes.success && Object.keys(dfsRes.byStore).length > 0) {
+        liveSynced = true;
+        locationsMatched = Object.keys(dfsRes.byStore).length;
+        const byStoreMap = new Map(
+          Object.entries(dfsRes.byStore).map(([sid, v]) => [Number(sid), v])
+        );
+        for (const dirId of ["ezlocal", "yellowpages"]) {
+          await updateDirectoryStoresFromLivePull(
+            dirId,
+            byStoreMap,
+            `Live DataForSEO API (${syncTimeLabel})`,
+            `https://${dirId}.com`
+          );
+        }
+        successMsg = `Scanned ${dfsRes.totalFound} DataForSEO listings; matched ${locationsMatched} Philadelphia branch(es).`;
+      } else {
+        errorMsg = dfsRes.error || "DataForSEO scan returned 0 matched locations.";
+      }
+    } else if (connectorId === "apple-connect" && cred.primaryKey) {
+      const appleRes = await verifyAppleConnectLive(cred.primaryKey);
+      if (appleRes.ok) {
+        liveSynced = true;
+        locationsMatched = appleRes.locationsCount;
+        successMsg = `Verified Apple Business Connect token (${appleRes.locationsCount} company record(s)).`;
+      } else {
+        errorMsg = appleRes.error || "Apple Business Connect API verification failed.";
+      }
+    } else if (connectorId === "bing-sync" && cred.primaryKey) {
+      const bingRes = await verifyBingPlacesKeyLive(cred.primaryKey);
+      if (bingRes.ok) {
+        liveSynced = true;
+        locationsMatched = bingRes.locationsMatched;
+        successMsg = `Verified Bing Maps/Places API across ${locationsMatched} Philadelphia address(es).`;
+      } else {
+        errorMsg = bingRes.error || "Bing Places API verification failed.";
       }
     }
 
     const updated = await prisma.apiConnector.update({
       where: { id: connectorId },
       data: {
-        connected: true,
-        lastPulled: liveSynced ? "Just now (Live API)" : "Just now",
+        connected: liveSynced || connector.connected,
+        locationsMatched: liveSynced ? locationsMatched : connector.locationsMatched,
+        lastPulled: liveSynced ? `Live (${syncTimeLabel})` : connector.lastPulled || "Never",
       },
     });
-
-    const linkedDirs = await prisma.directoryListing.findMany({
-      where: { apiProviderId: connectorId },
-    });
-
-    const biDirectional =
-      connectorId === "google-gbp" ||
-      connectorId === "facebook-graph" ||
-      connectorId === "bing-sync" ||
-      connectorId === "apple-connect";
-
-    if (!liveSynced) {
-      for (const dir of linkedDirs) {
-        const currentStores =
-          (dir.stores as unknown as Record<number, StoreListingEntry>) || {};
-        const nextStores: Record<number, StoreListingEntry> = {};
-
-        for (const sid of [1, 2, 3]) {
-          const prev = currentStores[sid] ?? {
-            status: "Missing",
-            napMatch: 0,
-            rating: null,
-            url: "",
-          };
-          const gmbLive = gmbByStoreId.get(sid);
-
-          if (biDirectional) {
-            nextStores[sid] = {
-              ...prev,
-              status: "Synced",
-              napMatch: 100,
-              url: prev.url || dir.portalUrl || `https://${dir.domain}`,
-              lastSynced: "Just now via DB sync",
-              issue: undefined,
-              ...(gmbLive
-                ? { rating: gmbLive.rating, reviewsCount: gmbLive.reviewsCount }
-                : {}),
-            };
-          } else {
-            nextStores[sid] = {
-              ...prev,
-              lastSynced: "Just now via DB sync",
-            };
-          }
-        }
-
-        const values = Object.values(nextStores);
-        const avgNap = values.length
-          ? Math.round(values.reduce((acc, s) => acc + (s.napMatch ?? 0), 0) / values.length)
-          : dir.overallNapMatch;
-
-        await prisma.directoryListing.update({
-          where: { id: dir.id },
-          data: {
-            stores: nextStores as unknown as Prisma.InputJsonValue,
-            overallNapMatch: avgNap,
-          },
-        });
-      }
-    }
-
-    const logStatus = warningMessage ? "Warning" : "Success";
-    const logMsg = warningMessage
-      ? `Live HTTP pull fallback for ${connector.name}: ${warningMessage}`
-      : liveSynced
-      ? `Pulled live HTTP API data & ${newReviewsAdded} new reviews for ${connector.name}`
-      : `Synced ${linkedDirs.length} directories (${connector.locationsMatched} stores) from local DB for ${connector.name}`;
 
     const log = await prisma.apiSyncLog.create({
       data: {
         connectorId,
-        action: liveSynced ? "LIVE_HTTP_API_PULL" : "LIVE_API_PULL",
-        status: logStatus,
-        itemsSynced: connector.locationsMatched,
-        message: logMsg,
+        action: "LIVE_HTTP_API_PULL",
+        status: liveSynced ? "Success" : "Failed",
+        itemsSynced: liveSynced ? locationsMatched : 0,
+        message: liveSynced ? successMsg : errorMsg || `Pull failed for ${connector.name}`,
       },
     });
 
@@ -570,13 +868,14 @@ export async function triggerApiPullAction(connectorId: string) {
     revalidatePath("/admin/listings/ai-visibility");
     revalidatePath("/admin/reviews");
     revalidatePath("/admin/local-seo");
+
     return {
-      success: true,
-      connector: mapConnectorRow(updated),
-      log,
+      success: liveSynced,
       liveSynced,
       newReviewsAdded,
-      warningMessage,
+      connector: mapConnectorRow(updated),
+      log,
+      ...(liveSynced ? {} : { error: errorMsg || `Live pull failed for ${connector.name}` }),
     };
   } catch (err: unknown) {
     console.error("Failed to trigger API pull:", err);
@@ -620,7 +919,7 @@ export async function upsertDirectoryListingAction(dir: DirectoryListing): Promi
     const entries = Object.values(dir.stores || {});
     const avgNap = entries.length
       ? Math.round(entries.reduce((acc, e) => acc + (e?.napMatch ?? 0), 0) / entries.length)
-      : dir.authority;
+      : 0;
 
     await prisma.directoryListing.upsert({
       where: { id: dir.id },
@@ -659,71 +958,138 @@ export async function upsertDirectoryListingAction(dir: DirectoryListing): Promi
 }
 
 /**
- * Run NAP audit across all tracked directories in PostgreSQL
+ * Run a real NAP audit: pulls any connected APIs and HTTP-verifies claimed listing URLs.
  */
 export async function auditAllDirectoriesNapAction(storeId?: number): Promise<{
   success: boolean;
+  connectorsPulled: number;
+  urlsChecked: number;
+  reachableCount: number;
+  unreachableCount: number;
+  message: string;
   error?: string;
 }> {
   try {
     await requireAdmin();
     await ensureThirdPartySeeded();
+
+    // 1. Pull any connectors that actually have real credentials configured
+    const allConns = await prisma.apiConnector.findMany();
+    let connectorsPulled = 0;
+    for (const c of allConns) {
+      const cred = resolveConnectorCredentials(c);
+      if (cred.hasCredentials) {
+        const res = await triggerApiPullAction(c.id);
+        if (res.success) connectorsPulled += 1;
+      }
+    }
+
+    // 2. HTTP-verify any claimed non-empty listing URLs without faking unverified rows
     const dirs = await prisma.directoryListing.findMany();
+    const targetStores = storeId ? [storeId] : [1, 2, 3];
+    const syncStamp = formatSyncTimestamp();
+    let urlsChecked = 0;
+    let reachableCount = 0;
+    let unreachableCount = 0;
 
     for (const dir of dirs) {
-      const currentStores =
-        (dir.stores as unknown as Record<number, StoreListingEntry>) || {};
-      const nextStores = { ...currentStores };
-      for (const sid of [1, 2, 3]) {
-        if (!storeId || storeId === sid) {
-          if (nextStores[sid]) {
-            nextStores[sid] = {
-              ...nextStores[sid],
-              lastSynced: "Scanned just now",
-            };
-          }
+      const normalized = normalizeDirectoryStores(dir.stores);
+      let mutated = false;
+
+      for (const sid of targetStores) {
+        const entry = normalized[sid];
+        if (!entry || !entry.url?.trim()) continue;
+        urlsChecked += 1;
+        const probe = await checkUrlReachableLive(entry.url);
+        mutated = true;
+        if (probe.reachable) {
+          reachableCount += 1;
+          normalized[sid] = {
+            ...entry,
+            lastSynced: `HTTP Verified (${syncStamp})`,
+            issue: entry.status === "Mismatch" ? entry.issue : undefined,
+          };
+        } else {
+          unreachableCount += 1;
+          normalized[sid] = {
+            ...entry,
+            lastSynced: `HTTP Failed (${syncStamp})`,
+            issue: probe.error || `Listing URL returned HTTP ${probe.status}`,
+          };
         }
       }
-      await prisma.directoryListing.update({
-        where: { id: dir.id },
-        data: { stores: nextStores as unknown as Prisma.InputJsonValue },
-      });
+
+      if (mutated) {
+        await prisma.directoryListing.update({
+          where: { id: dir.id },
+          data: { stores: normalized as unknown as Prisma.InputJsonValue },
+        });
+      }
     }
+
+    const summaryMsg = `Audited ${dirs.length} directories: pulled ${connectorsPulled} connected API(s), checked ${urlsChecked} claimed URL(s) (${reachableCount} reachable, ${unreachableCount} failed).`;
 
     await prisma.apiSyncLog
       .create({
         data: {
           connectorId: "dataforseo-scanner",
-          action: "NAP_AUDIT",
-          status: "Success",
-          itemsSynced: storeId ? 1 : 3,
-          message: storeId
-            ? `Completed NAP audit for Store #${storeId} across ${dirs.length} directories`
-            : `Completed NAP audit across all 3 stores (${dirs.length} directories)`,
+          action: "NAP_HTTP_AUDIT",
+          status: unreachableCount > 0 ? "Warning" : "Success",
+          itemsSynced: connectorsPulled + reachableCount,
+          message: summaryMsg,
         },
       })
       .catch(() => {});
 
     revalidatePath("/admin/listings");
-    return { success: true };
+    revalidatePath("/admin/listings/api-sync");
+    revalidatePath("/admin/listings/ai-visibility");
+
+    return {
+      success: true,
+      connectorsPulled,
+      urlsChecked,
+      reachableCount,
+      unreachableCount,
+      message: summaryMsg,
+    };
   } catch (err: unknown) {
     console.error("Failed to audit directories:", err);
-    return { success: false, error: err instanceof Error ? err.message : "Audit failed" };
+    return {
+      success: false,
+      connectorsPulled: 0,
+      urlsChecked: 0,
+      reachableCount: 0,
+      unreachableCount: 0,
+      message: "Audit failed",
+      error: err instanceof Error ? err.message : "Audit failed",
+    };
   }
 }
 
 /**
- * Fetch recent sync logs
+ * Fetch recent sync logs (newest first)
  */
 export async function getApiSyncLogsAction(connectorId?: string) {
   try {
     await requireAdmin();
     const where = connectorId ? { connectorId } : {};
-    const logs = await prisma.apiSyncLog.findMany({
+    const rows = await prisma.apiSyncLog.findMany({
       where,
+      include: { connector: { select: { name: true } } },
       orderBy: { createdAt: "desc" },
-      take: 20,
+      take: 25,
     });
+    const logs = rows.map((r) => ({
+      id: r.id,
+      connectorId: r.connectorId,
+      connectorName: r.connector.name,
+      action: r.action,
+      status: r.status,
+      itemsSynced: r.itemsSynced,
+      message: r.message,
+      createdAt: r.createdAt.toISOString(),
+    }));
     return { success: true, logs };
   } catch (err: unknown) {
     console.error("Failed to fetch sync logs:", err);

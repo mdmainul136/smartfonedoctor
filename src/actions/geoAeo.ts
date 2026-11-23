@@ -104,8 +104,8 @@ export async function deleteGeoNeighborhoodAction(id: string) {
 /**
  * Helper to ensure plain objects cross the Server-Action boundary (stripping Decimal & Date prototypes)
  */
-function serializeGuardrail<T extends { confidenceScore?: any }>(item: T): T & { confidenceScore: number | null } {
-  if (!item) return item as any;
+function serializeGuardrail<T extends { confidenceScore?: unknown }>(item: T): T & { confidenceScore: number | null } {
+  if (!item) return item as T & { confidenceScore: number | null };
   return {
     ...item,
     confidenceScore: item.confidenceScore != null ? Number(item.confidenceScore) : 1.0,
@@ -185,7 +185,7 @@ export async function deleteAeoBrandGuardrailAction(id: string) {
 }
 
 /**
- * Fetch all Simulated AEO Prompts
+ * Fetch all Tracked AEO Prompts
  */
 export async function getAeoSimulatedPromptsAction() {
   try {
@@ -194,7 +194,7 @@ export async function getAeoSimulatedPromptsAction() {
     });
     return { success: true, prompts };
   } catch (err: unknown) {
-    console.error("Failed to fetch simulated prompts:", err);
+    console.error("Failed to fetch tracked prompts:", err);
     return { success: false, prompts: [] };
   }
 }
@@ -210,7 +210,7 @@ export interface SimulatedPromptInput {
 }
 
 /**
- * Upsert a simulated AEO prompt
+ * Upsert a tracked AEO prompt
  */
 export async function upsertAeoSimulatedPromptAction(input: SimulatedPromptInput) {
   try {
@@ -223,7 +223,7 @@ export async function upsertAeoSimulatedPromptAction(input: SimulatedPromptInput
           intent: input.intent,
           category: input.category,
           expectedCitation: input.expectedCitation || "SmartFoneDoctor",
-          verifiedStatus: input.verifiedStatus || "Cited",
+          verifiedStatus: input.verifiedStatus || "Not Probed",
           storeId: input.storeId || 1,
         },
       });
@@ -236,7 +236,7 @@ export async function upsertAeoSimulatedPromptAction(input: SimulatedPromptInput
           intent: input.intent,
           category: input.category,
           expectedCitation: input.expectedCitation || "SmartFoneDoctor",
-          verifiedStatus: input.verifiedStatus || "Cited",
+          verifiedStatus: input.verifiedStatus || "Not Probed",
           storeId: input.storeId || 1,
         },
       });
@@ -244,13 +244,13 @@ export async function upsertAeoSimulatedPromptAction(input: SimulatedPromptInput
       return { success: true, prompt: created };
     }
   } catch (err: unknown) {
-    console.error("Failed to upsert simulated prompt:", err);
+    console.error("Failed to upsert prompt:", err);
     return { success: false, error: err instanceof Error ? err.message : "Database mutation failed" };
   }
 }
 
 /**
- * Delete a simulated AEO prompt
+ * Delete a tracked AEO prompt
  */
 export async function deleteAeoSimulatedPromptAction(id: string) {
   try {
@@ -259,7 +259,7 @@ export async function deleteAeoSimulatedPromptAction(id: string) {
     revalidatePath("/admin/listings/ai-visibility");
     return { success: true };
   } catch (err: unknown) {
-    console.error("Failed to delete simulated prompt:", err);
+    console.error("Failed to delete prompt:", err);
     return { success: false, error: err instanceof Error ? err.message : "Database delete failed" };
   }
 }
@@ -288,24 +288,27 @@ export interface KnowledgeGraphInput {
 }
 
 /**
- * Update Knowledge Graph Entity (Wikidata & Google KG IDs)
+ * Update Knowledge Graph Entity (Wikidata & Google KG IDs — never injects placeholder IDs)
  */
 export async function updateKnowledgeGraphEntityAction(input: KnowledgeGraphInput) {
   try {
     await requireAdmin();
+    const cleanWikidata = input.wikidataId?.trim() || null;
+    const cleanGoogleKg = input.googleKnowledgeGraphId?.trim() || null;
+
     const updated = await prisma.knowledgeGraphEntity.upsert({
       where: { id: "sfd_knowledge_entity" },
       update: {
-        wikidataId: input.wikidataId,
-        googleKnowledgeGraphId: input.googleKnowledgeGraphId,
+        wikidataId: cleanWikidata,
+        googleKnowledgeGraphId: cleanGoogleKg,
         sameAsUrls: input.sameAsUrls,
-        primaryTopic: input.primaryTopic,
-        jurisdiction: input.jurisdiction,
+        ...(input.primaryTopic ? { primaryTopic: input.primaryTopic } : {}),
+        ...(input.jurisdiction ? { jurisdiction: input.jurisdiction } : {}),
       },
       create: {
         id: "sfd_knowledge_entity",
-        wikidataId: input.wikidataId || "Q115862892",
-        googleKnowledgeGraphId: input.googleKnowledgeGraphId || "kg:/g/11s0_smartfonedoctor",
+        wikidataId: cleanWikidata,
+        googleKnowledgeGraphId: cleanGoogleKg,
         sameAsUrls: input.sameAsUrls || [],
         primaryTopic: input.primaryTopic || "Consumer Electronics Repair Service",
         jurisdiction: input.jurisdiction || "Philadelphia, Pennsylvania, United States",
@@ -320,8 +323,264 @@ export async function updateKnowledgeGraphEntityAction(input: KnowledgeGraphInpu
   }
 }
 
+export interface LiveVisibilityAuditResult {
+  success: boolean;
+  checkedAt: string;
+  siteUrl: string;
+  robots: {
+    ok: boolean;
+    status: number;
+    allowedBots: string[];
+    content: string;
+  };
+  sitemap: {
+    ok: boolean;
+    status: number;
+    urlCount: number;
+  };
+  llmsTxt: {
+    ok: boolean;
+    status: number;
+    bytes: number;
+    content: string;
+  };
+  llmsFullTxt: {
+    ok: boolean;
+    status: number;
+    bytes: number;
+  };
+  schema: {
+    ok: boolean;
+    homepageStatus: number;
+    locationPageStatus: number;
+    types: string[];
+    sameAsCount: number;
+    sampleJsonLd: string;
+  };
+  aiProviders: {
+    geminiConfigured: boolean;
+    openaiConfigured: boolean;
+    defaultProvider: string;
+  };
+  dbCounts: {
+    neighborhoods: number;
+    guardrails: number;
+    gmbPosts: number;
+    sameAsUrlsCount: number;
+    hasWikidataId: boolean;
+    hasGoogleKgId: boolean;
+  };
+  error?: string;
+}
+
+const KNOWN_AI_BOTS = [
+  "GPTBot",
+  "OAI-SearchBot",
+  "Google-Extended",
+  "Applebot-Extended",
+  "PerplexityBot",
+  "ClaudeBot",
+];
+
+function extractJsonLdBlocks(html: string): {
+  types: string[];
+  sameAsCount: number;
+  sampleJsonLd: string;
+} {
+  const types = new Set<string>();
+  let sameAsCount = 0;
+  let sampleJsonLd = "";
+
+  const scriptRegex = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+  let match: RegExpExecArray | null;
+
+  const inspectNode = (node: unknown) => {
+    if (!node || typeof node !== "object") return;
+    if (Array.isArray(node)) {
+      node.forEach(inspectNode);
+      return;
+    }
+    const obj = node as Record<string, unknown>;
+    const rawType = obj["@type"];
+    if (typeof rawType === "string") types.add(rawType);
+    else if (Array.isArray(rawType)) {
+      rawType.forEach((t) => typeof t === "string" && types.add(t));
+    }
+    if (Array.isArray(obj.sameAs)) {
+      sameAsCount = Math.max(sameAsCount, obj.sameAs.length);
+    }
+    if (Array.isArray(obj["@graph"])) {
+      obj["@graph"].forEach(inspectNode);
+    }
+  };
+
+  while ((match = scriptRegex.exec(html)) !== null) {
+    const rawJson = match[1]?.trim();
+    if (!rawJson) continue;
+    try {
+      const parsed = JSON.parse(rawJson);
+      inspectNode(parsed);
+      if (!sampleJsonLd && (rawJson.includes("LocalBusiness") || rawJson.includes("ElectronicsStore"))) {
+        sampleJsonLd = JSON.stringify(parsed, null, 2);
+      }
+    } catch {
+      // Skip malformed JSON-LD block
+    }
+  }
+
+  return { types: Array.from(types), sameAsCount, sampleJsonLd };
+}
+
+async function fetchLiveText(url: string): Promise<{ ok: boolean; status: number; text: string }> {
+  try {
+    const res = await fetch(url, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(7000),
+      headers: { "User-Agent": "SmartFoneDoctor-LiveAudit/1.0" },
+    });
+    const text = res.ok ? await res.text() : "";
+    return { ok: res.ok, status: res.status, text };
+  } catch {
+    return { ok: false, status: 0, text: "" };
+  }
+}
+
+/**
+ * Perform real live HTTP probes against smartfonedoctor.com and read live PostgreSQL configuration.
+ */
+export async function runLiveVisibilityAuditAction(): Promise<LiveVisibilityAuditResult> {
+  try {
+    await requireAdmin();
+    const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://smartfonedoctor.com").replace(
+      /\/$/,
+      ""
+    );
+
+    const [
+      robotsRes,
+      sitemapRes,
+      llmsRes,
+      llmsFullRes,
+      homeRes,
+      locRes,
+      neighborhoods,
+      guardrails,
+      gmbPosts,
+      kgEntity,
+      settings,
+    ] = await Promise.all([
+      fetchLiveText(`${siteUrl}/robots.txt`),
+      fetchLiveText(`${siteUrl}/sitemap.xml`),
+      fetchLiveText(`${siteUrl}/llms.txt`),
+      fetchLiveText(`${siteUrl}/llms-full.txt`),
+      fetchLiveText(`${siteUrl}/`),
+      fetchLiveText(`${siteUrl}/locations/west-philadelphia-52nd-st`),
+      prisma.geoNeighborhood.count(),
+      prisma.aeoBrandGuardrail.count(),
+      prisma.gmbPost.count(),
+      prisma.knowledgeGraphEntity.findUnique({ where: { id: "sfd_knowledge_entity" } }),
+      prisma.appSystemSettings.findUnique({ where: { id: "global_config" } }),
+    ]);
+
+    const allowedBots = robotsRes.ok
+      ? KNOWN_AI_BOTS.filter((bot) => {
+          const idx = robotsRes.text.indexOf(bot);
+          if (idx === -1) return robotsRes.text.includes("User-agent: *") && !robotsRes.text.includes(`Disallow: /\n`);
+          const slice = robotsRes.text.slice(idx, idx + 120);
+          return !slice.includes("Disallow: /");
+        })
+      : [];
+
+    const urlMatches = sitemapRes.ok ? sitemapRes.text.match(/<url>/gi) : null;
+    const urlCount = urlMatches ? urlMatches.length : 0;
+
+    const homeSchema = homeRes.ok ? extractJsonLdBlocks(homeRes.text) : { types: [], sameAsCount: 0, sampleJsonLd: "" };
+    const locSchema = locRes.ok ? extractJsonLdBlocks(locRes.text) : { types: [], sameAsCount: 0, sampleJsonLd: "" };
+    const combinedTypes = Array.from(new Set([...homeSchema.types, ...locSchema.types]));
+
+    const geminiConfigured = Boolean(
+      settings?.geminiApiKey?.trim() || process.env.GEMINI_API_KEY?.trim()
+    );
+    const openaiConfigured = Boolean(
+      settings?.openaiApiKey?.trim() || process.env.OPENAI_API_KEY?.trim()
+    );
+
+    return {
+      success: true,
+      checkedAt: new Date().toISOString(),
+      siteUrl,
+      robots: {
+        ok: robotsRes.ok,
+        status: robotsRes.status,
+        allowedBots,
+        content: robotsRes.text,
+      },
+      sitemap: {
+        ok: sitemapRes.ok,
+        status: sitemapRes.status,
+        urlCount,
+      },
+      llmsTxt: {
+        ok: llmsRes.ok,
+        status: llmsRes.status,
+        bytes: Buffer.byteLength(llmsRes.text, "utf8"),
+        content: llmsRes.text,
+      },
+      llmsFullTxt: {
+        ok: llmsFullRes.ok,
+        status: llmsFullRes.status,
+        bytes: Buffer.byteLength(llmsFullRes.text, "utf8"),
+      },
+      schema: {
+        ok: combinedTypes.length > 0,
+        homepageStatus: homeRes.status,
+        locationPageStatus: locRes.status,
+        types: combinedTypes,
+        sameAsCount: Math.max(homeSchema.sameAsCount, locSchema.sameAsCount),
+        sampleJsonLd: locSchema.sampleJsonLd || homeSchema.sampleJsonLd,
+      },
+      aiProviders: {
+        geminiConfigured,
+        openaiConfigured,
+        defaultProvider: settings?.defaultAiProvider || "gemini",
+      },
+      dbCounts: {
+        neighborhoods,
+        guardrails,
+        gmbPosts,
+        sameAsUrlsCount: kgEntity?.sameAsUrls?.length ?? 0,
+        hasWikidataId: Boolean(kgEntity?.wikidataId?.trim()),
+        hasGoogleKgId: Boolean(kgEntity?.googleKnowledgeGraphId?.trim()),
+      },
+    };
+  } catch (err: unknown) {
+    console.error("runLiveVisibilityAuditAction failed:", err);
+    return {
+      success: false,
+      checkedAt: new Date().toISOString(),
+      siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://smartfonedoctor.com",
+      robots: { ok: false, status: 0, allowedBots: [], content: "" },
+      sitemap: { ok: false, status: 0, urlCount: 0 },
+      llmsTxt: { ok: false, status: 0, bytes: 0, content: "" },
+      llmsFullTxt: { ok: false, status: 0, bytes: 0 },
+      schema: { ok: false, homepageStatus: 0, locationPageStatus: 0, types: [], sameAsCount: 0, sampleJsonLd: "" },
+      aiProviders: { geminiConfigured: false, openaiConfigured: false, defaultProvider: "gemini" },
+      dbCounts: {
+        neighborhoods: 0,
+        guardrails: 0,
+        gmbPosts: 0,
+        sameAsUrlsCount: 0,
+        hasWikidataId: false,
+        hasGoogleKgId: false,
+      },
+      error: err instanceof Error ? err.message : "Live visibility audit failed",
+    };
+  }
+}
+
 export interface LiveAiProbeResult {
   success: boolean;
+  needsApiKey?: boolean;
   engine: string;
   isLiveApi: boolean;
   cited: boolean;
@@ -334,130 +593,264 @@ export interface LiveAiProbeResult {
   error?: string;
 }
 
+function detectBrandMention(text: string): boolean {
+  const lower = text.toLowerCase();
+  return (
+    lower.includes("smartfonedoctor") ||
+    lower.includes("smart fone doctor") ||
+    lower.includes("smartfonedoctor.com") ||
+    lower.includes("33 s 52nd") ||
+    lower.includes("4016 lancaster") ||
+    lower.includes("4060 lancaster")
+  );
+}
+
 /**
- * Run a live AI Visibility Probe against Google Gemini / OpenAI / Knowledge Graph
+ * Run a real live AI Visibility Probe against Google Gemini or OpenAI APIs.
+ * Never returns simulated citations when API keys are missing or calls fail.
  */
-export async function probeLiveAiVisibilityAction(promptQuery: string, storeId: number = 1): Promise<LiveAiProbeResult> {
+export async function probeLiveAiVisibilityAction(
+  promptQuery: string,
+  _storeId: number = 1,
+  promptRecordId?: string
+): Promise<LiveAiProbeResult> {
+  const nowStr = new Date().toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+
   try {
     await requireAdmin();
-    const [settings, store, rawGuardrails, entity] = await Promise.all([
-      prisma.appSystemSettings.findUnique({ where: { id: "global_config" } }),
-      prisma.locations.findFirst({ where: { id: storeId } }),
-      prisma.aeoBrandGuardrail.findMany({ take: 6 }),
-      prisma.knowledgeGraphEntity.findUnique({ where: { id: "sfd_knowledge_entity" } }),
-    ]);
+    const settings = await prisma.appSystemSettings.findUnique({
+      where: { id: "global_config" },
+    });
 
-    const guardrails = rawGuardrails.map(serializeGuardrail);
+    const geminiKey =
+      settings?.geminiApiKey?.trim() || process.env.GEMINI_API_KEY?.trim();
+    const openaiKey =
+      settings?.openaiApiKey?.trim() || process.env.OPENAI_API_KEY?.trim();
 
-    const storeName = store?.name || "SmartFoneDoctor - 33 S 52nd St (West Philly)";
-    const storeAddress = store?.address || "33 S 52nd St, Philadelphia, PA 19139";
-    const storePhone = store?.phone || "+1 (215) 598-2090";
+    if (!geminiKey && !openaiKey) {
+      return {
+        success: false,
+        needsApiKey: true,
+        engine: "Not Configured",
+        isLiveApi: false,
+        cited: false,
+        citationRank: "API Key Required",
+        confidenceScore: 0,
+        generatedAnswer: "",
+        sourcesReferenced: [],
+        verifiedAt: nowStr,
+        error:
+          "No live AI API key is configured. Add GEMINI_API_KEY or OPENAI_API_KEY in Admin Settings (or .env) to run real AI visibility probes.",
+      };
+    }
 
-    const geminiKey = settings?.geminiApiKey || process.env.GEMINI_API_KEY;
+    const preferOpenAi =
+      settings?.defaultAiProvider === "openai" && Boolean(openaiKey);
+    const searchPrompt = `Answer this customer search query about phone, computer, or console repair in Philadelphia, PA concisely (under 100 words), recommending real businesses you find or know:\n\n"${promptQuery}"`;
 
-    // Check if we have an active API key to hit live Gemini API
-    if (geminiKey) {
-      try {
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [
-                {
-                  role: "user",
-                  parts: [
-                    {
-                      text: `You are an AI assistant helping a Philadelphia resident. The user asks: "${promptQuery}".
-Provide a helpful, direct recommendation based on verified Philadelphia electronics repair stores: SmartFoneDoctor (${storeName}, ${storeAddress}, Phone: ${storePhone}, 25-30 min walk-in screen turnaround, PS5/Xbox HDMI micro-soldering, 90-day warranty, Mon-Sat 10am-7pm).
-Cite the shop, address, turnaround, and warranty. Keep it under 80 words.`,
-                    },
-                  ],
+    if (!preferOpenAi && geminiKey) {
+      let lastGeminiError = "";
+      for (const model of ["gemini-2.5-flash", "gemini-2.0-flash"]) {
+        for (const useSearchTool of [true, false]) {
+          const payload: Record<string, unknown> = {
+            contents: [{ role: "user", parts: [{ text: searchPrompt }] }],
+            generationConfig: { maxOutputTokens: 260, temperature: 0.2 },
+          };
+          if (useSearchTool) {
+            payload.tools = [{ google_search: {} }];
+          }
+
+          const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
+              geminiKey
+            )}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+              cache: "no-store",
+              signal: AbortSignal.timeout(12000),
+            }
+          ).catch(() => null);
+
+          if (!response) {
+            lastGeminiError = `Network error reaching Gemini API (${model})`;
+            continue;
+          }
+
+          const data = (await response.json().catch(() => ({}))) as {
+            error?: { message?: string };
+            candidates?: Array<{
+              content?: { parts?: Array<{ text?: string }> };
+              groundingMetadata?: {
+                groundingChunks?: Array<{ web?: { title?: string; uri?: string } }>;
+              };
+            }>;
+          };
+
+          if (!response.ok) {
+            lastGeminiError = data.error?.message || `Gemini HTTP ${response.status}`;
+            continue;
+          }
+
+          const text =
+            data.candidates?.[0]?.content?.parts
+              ?.map((p) => p.text || "")
+              .join(" ")
+              .trim() || "";
+
+          if (!text) continue;
+
+          const cited = detectBrandMention(text);
+          const groundingSources = (
+            data.candidates?.[0]?.groundingMetadata?.groundingChunks || []
+          )
+            .map((c) => c.web?.title || c.web?.uri)
+            .filter((s): s is string => Boolean(s));
+
+          const engineLabel = `${model} (${
+            useSearchTool && groundingSources.length > 0
+              ? "Live Search Grounding"
+              : "Live API"
+          })`;
+
+          if (promptRecordId) {
+            await prisma.aeoSimulatedPrompt
+              .update({
+                where: { id: promptRecordId },
+                data: {
+                  verifiedStatus: cited ? "Cited" : "Not Cited",
+                  expectedCitation: `Live API (${engineLabel})`,
                 },
-              ],
-              generationConfig: { maxOutputTokens: 200, temperature: 0.2 },
-            }),
+              })
+              .catch(() => {});
           }
-        );
 
-        if (response.ok) {
-          const data = await response.json();
-          const generatedText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (generatedText) {
-            const isCited =
-              generatedText.toLowerCase().includes("smartfonedoctor") ||
-              generatedText.toLowerCase().includes("smart fone doctor");
-            return {
-              success: true,
-              engine: "Google Gemini 1.5 Flash (Live API)",
-              isLiveApi: true,
-              cited: isCited,
-              citationRank: "#1 Dominant Recommendation",
-              confidenceScore: 0.99,
-              generatedAnswer: generatedText.trim(),
-              sourcesReferenced: ["Google Business Profile API", "/llms.txt", "Schema.org LocalBusiness"],
-              verifiedAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
-            };
-          }
+          return {
+            success: true,
+            engine: engineLabel,
+            isLiveApi: true,
+            cited,
+            citationRank: cited ? "Cited in Live Response" : "Not Cited",
+            confidenceScore: cited ? 1 : 0,
+            generatedAnswer: text,
+            sourcesReferenced: groundingSources,
+            verifiedAt: nowStr,
+          };
         }
-      } catch (geminiErr) {
-        console.warn("Live Gemini API call fell back to semantic engine:", geminiErr);
+      }
+
+      if (!openaiKey) {
+        return {
+          success: false,
+          engine: "Google Gemini API",
+          isLiveApi: false,
+          cited: false,
+          citationRank: "API Error",
+          confidenceScore: 0,
+          generatedAnswer: "",
+          sourcesReferenced: [],
+          verifiedAt: nowStr,
+          error: lastGeminiError || "Live Gemini API probe failed.",
+        };
       }
     }
 
-    // Dynamic semantic simulation matching ground truth guardrails & knowledge graph
-    const lowerQuery = promptQuery.toLowerCase();
-    const matchedGuardrail =
-      guardrails.find((g: { topic: string; canonicalAnswer: string }) => {
-        const t = g.topic.toLowerCase();
-        if (lowerQuery.includes("screen") || lowerQuery.includes("iphone") || lowerQuery.includes("samsung")) {
-          return t.includes("turnaround") || t.includes("parts") || t.includes("warranty");
-        }
-        if (lowerQuery.includes("hdmi") || lowerQuery.includes("ps5") || lowerQuery.includes("xbox") || lowerQuery.includes("console")) {
-          return t.includes("hdmi") || t.includes("micro-soldering");
-        }
-        if (lowerQuery.includes("hour") || lowerQuery.includes("saturday") || lowerQuery.includes("open") || lowerQuery.includes("close")) {
-          return t.includes("hours") || t.includes("saturday");
-        }
-        return false;
-      }) || guardrails[0];
+    if (openaiKey) {
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${openaiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [{ role: "user", content: searchPrompt }],
+          max_tokens: 240,
+          temperature: 0.2,
+        }),
+        cache: "no-store",
+        signal: AbortSignal.timeout(12000),
+      });
 
-    const answerSnippet = matchedGuardrail
-      ? `${matchedGuardrail.canonicalAnswer} Available at SmartFoneDoctor (${storeAddress}, ${storePhone}). Open Monday–Saturday 10:00 AM – 7:00 PM.`
-      : `SmartFoneDoctor is the top-ranked repair center in West Philadelphia at ${storeAddress} (${storePhone}), offering 25–30 min same-day walk-ins and a 90-day warranty across all 3 stores.`;
+      const json = (await res.json().catch(() => ({}))) as {
+        error?: { message?: string };
+        choices?: Array<{ message?: { content?: string } }>;
+      };
+
+      if (!res.ok) {
+        return {
+          success: false,
+          engine: "OpenAI GPT-4o-mini",
+          isLiveApi: false,
+          cited: false,
+          citationRank: "API Error",
+          confidenceScore: 0,
+          generatedAnswer: "",
+          sourcesReferenced: [],
+          verifiedAt: nowStr,
+          error: json.error?.message || `OpenAI HTTP ${res.status}`,
+        };
+      }
+
+      const text = json.choices?.[0]?.message?.content?.trim() || "";
+      const cited = detectBrandMention(text);
+      const engineLabel = "OpenAI GPT-4o-mini (Live API)";
+
+      if (promptRecordId) {
+        await prisma.aeoSimulatedPrompt
+          .update({
+            where: { id: promptRecordId },
+            data: {
+              verifiedStatus: cited ? "Cited" : "Not Cited",
+              expectedCitation: `Live API (${engineLabel})`,
+            },
+          })
+          .catch(() => {});
+      }
+
+      return {
+        success: true,
+        engine: engineLabel,
+        isLiveApi: true,
+        cited,
+        citationRank: cited ? "Cited in Live Response" : "Not Cited",
+        confidenceScore: cited ? 1 : 0,
+        generatedAnswer: text,
+        sourcesReferenced: [],
+        verifiedAt: nowStr,
+      };
+    }
 
     return {
-      success: true,
-      engine: geminiKey
-        ? "Google Gemini 1.5 Flash (Verified Knowledge Capsule)"
-        : "Semantic AI Citation Engine (llms.txt & GBP)",
-      isLiveApi: !!geminiKey,
-      cited: true,
-      citationRank: "#1 Verified Authority",
-      confidenceScore: 0.98,
-      generatedAnswer: answerSnippet,
-      sourcesReferenced: [
-        "Google Business Profile API (Verified Place ID)",
-        "Apple Business Connect (Canonical Pin)",
-        "/llms.txt Ground Truth Capsule",
-        entity?.wikidataId ? `Wikidata Entity (${entity.wikidataId})` : "Knowledge Graph Graph Entity",
-      ],
-      matchedTopic: matchedGuardrail?.topic || "Turnaround & Capabilities",
-      verifiedAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+      success: false,
+      needsApiKey: true,
+      engine: "Not Configured",
+      isLiveApi: false,
+      cited: false,
+      citationRank: "API Key Required",
+      confidenceScore: 0,
+      generatedAnswer: "",
+      sourcesReferenced: [],
+      verifiedAt: nowStr,
+      error: "No usable Gemini or OpenAI response received.",
     };
   } catch (err: unknown) {
     console.error("AI visibility probe error:", err);
     return {
       success: false,
-      engine: "Semantic AI Engine",
+      engine: "Live AI Probe",
       isLiveApi: false,
       cited: false,
       citationRank: "Error",
       confidenceScore: 0,
       generatedAnswer: "",
       sourcesReferenced: [],
-      verifiedAt: new Date().toLocaleTimeString(),
+      verifiedAt: nowStr,
       error: err instanceof Error ? err.message : "Failed to run AI visibility probe",
     };
   }

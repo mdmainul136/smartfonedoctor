@@ -83,13 +83,17 @@ export default function ListingsCatalogPage() {
   };
 
   const handleQuickClaimActive = (dirId: string, portalUrl: string) => {
+    const stamp = new Date().toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
     copyStoreNap();
     updateStoreEntry(dirId, selectedStoreId, {
       status: "Synced",
       napMatch: 100,
       rating: null,
       url: portalUrl,
-      lastSynced: "Today",
+      lastSynced: `Manual claim (${stamp})`,
       issue: undefined,
     });
   };
@@ -216,13 +220,17 @@ export default function ListingsCatalogPage() {
         </div>
 
         <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
-          <span className="text-xs font-medium text-slate-500">Active Claimed Citations</span>
+          <span className="text-xs font-medium text-slate-500">Claimed for Location</span>
           <div className="flex items-baseline gap-2 mt-2">
             <span className="text-2xl font-bold text-slate-900 tabular-nums leading-none">
-              {directories.length}
+              {
+                directories.filter(
+                  (d) => d.stores[selectedStoreId]?.status === "Synced"
+                ).length
+              }
             </span>
             <span className="text-xs font-semibold text-[#009691] bg-teal-50 px-2.5 py-0.5 rounded-full border border-teal-200/60">
-              live &amp; verified
+              of {directories.length} tracked
             </span>
           </div>
         </div>

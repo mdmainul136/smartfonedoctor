@@ -1,5 +1,5 @@
 // Server-side outbound HTTP clients for Google Places API, Google Business Profile OAuth API,
-// Yelp Fusion v3 API, and Twilio REST SMS API.
+// Yelp Fusion v3 API, Meta Graph API, Trustpilot API, DataForSEO API, and Twilio REST SMS API.
 
 export interface StoreMeta {
   storeId: number;
@@ -741,6 +741,569 @@ export async function sendTwilioSmsLive(params: {
     return {
       sentLive: false,
       error: err instanceof Error ? err.message : "Twilio network error",
+    };
+  }
+}
+
+export interface LiveMetaPageResult {
+  success: boolean;
+  accountName?: string;
+  pagesMatched: number;
+  byStore: Record<
+    number,
+    {
+      napMatch: number;
+      rating: number | null;
+      reviewsCount?: number;
+      url: string;
+    }
+  >;
+  error?: string;
+}
+
+/**
+ * Fetch live Facebook Page / Business Portfolio details via Meta Graph API v20.0.
+ */
+export async function fetchMetaPagesLive(accessToken: string): Promise<LiveMetaPageResult> {
+  const token = accessToken.trim();
+  if (!token) {
+    return { success: false, pagesMatched: 0, byStore: {}, error: "Missing Meta Graph access token" };
+  }
+
+  type GraphPageNode = {
+    id?: string;
+    name?: string;
+    phone?: string;
+    single_line_address?: string;
+    overall_star_rating?: number;
+    rating_count?: number;
+    link?: string;
+    website?: string;
+  };
+
+  try {
+    const fields = "id,name,phone,single_line_address,overall_star_rating,rating_count,link,website";
+    const meRes = await fetch(
+      `https://graph.facebook.com/v20.0/me?fields=${encodeURIComponent(fields)}&access_token=${encodeURIComponent(token)}`,
+      { cache: "no-store", signal: AbortSignal.timeout(8000) }
+    );
+    const meJson = (await meRes.json().catch(() => ({}))) as GraphPageNode & {
+      error?: { message?: string };
+    };
+
+    if (!meRes.ok || meJson.error) {
+      return {
+        success: false,
+        pagesMatched: 0,
+        byStore: {},
+        error: meJson.error?.message || `Meta Graph HTTP ${meRes.status}`,
+      };
+    }
+
+    let pages: GraphPageNode[] = [];
+    if (meJson.single_line_address || meJson.phone || meJson.overall_star_rating != null) {
+      pages = [meJson];
+    } else {
+      const acctRes = await fetch(
+        `https://graph.facebook.com/v20.0/me/accounts?fields=${encodeURIComponent(fields)}&access_token=${encodeURIComponent(token)}`,
+        { cache: "no-store", signal: AbortSignal.timeout(8000) }
+      );
+      const acctJson = (await acctRes.json().catch(() => ({}))) as {
+        data?: GraphPageNode[];
+        error?: { message?: string };
+      };
+      if (!acctRes.ok || acctJson.error) {
+        return {
+          success: false,
+          pagesMatched: 0,
+          byStore: {},
+          error: acctJson.error?.message || `Meta Pages lookup HTTP ${acctRes.status}`,
+        };
+      }
+      pages = acctJson.data || [];
+    }
+
+    if (pages.length === 0) {
+      return {
+        success: false,
+        accountName: meJson.name,
+        pagesMatched: 0,
+        byStore: {},
+        error: "Token is valid but returned 0 managed Facebook Pages.",
+      };
+    }
+
+    const byStore: LiveMetaPageResult["byStore"] = {};
+    for (const [sidStr, store] of Object.entries(PHILLY_STORES)) {
+      const sid = Number(sidStr);
+      const matched = pages.find((p) =>
+        `${p.single_line_address || ""} ${p.name || ""}`
+          .toLowerCase()
+          .includes(store.streetNumber)
+      );
+      if (matched) {
+        byStore[sid] = {
+          napMatch: computeNapMatch(matched.single_line_address, matched.phone, store),
+          rating: matched.overall_star_rating ?? null,
+          reviewsCount: matched.rating_count,
+          url: matched.link || (matched.id ? `https://www.facebook.com/${matched.id}` : "https://www.facebook.com"),
+        };
+      }
+    }
+
+    // Single brand Facebook Page fallback -> attach to Store 1 only if street match was absent
+    if (Object.keys(byStore).length === 0 && pages.length === 1) {
+      const primary = pages[0];
+      byStore[1] = {
+        napMatch: computeNapMatch(primary.single_line_address, primary.phone, PHILLY_STORES[1]),
+        rating: primary.overall_star_rating ?? null,
+        reviewsCount: primary.rating_count,
+        url: primary.link || (primary.id ? `https://www.facebook.com/${primary.id}` : "https://www.facebook.com"),
+      };
+    }
+
+    return {
+      success: Object.keys(byStore).length > 0,
+      accountName: meJson.name || pages[0]?.name,
+      pagesMatched: Object.keys(byStore).length,
+      byStore,
+      ...(Object.keys(byStore).length === 0
+        ? { error: `Fetched ${pages.length} Page(s), but none matched Philadelphia store addresses.` }
+        : {}),
+    };
+  } catch (err) {
+    return {
+      success: false,
+      pagesMatched: 0,
+      byStore: {},
+      error: err instanceof Error ? err.message : "Meta Graph network error",
+    };
+  }
+}
+
+export interface LiveTrustpilotResult {
+  success: boolean;
+  displayName?: string;
+  rating?: number;
+  reviewsCount?: number;
+  url?: string;
+  error?: string;
+}
+
+/**
+ * Fetch live Trustpilot Business Unit summary for smartfonedoctor.com via Trustpilot API.
+ */
+export async function fetchTrustpilotLive(
+  apiKey: string,
+  domain: string = "smartfonedoctor.com"
+): Promise<LiveTrustpilotResult> {
+  const cleanKey = apiKey.trim();
+  if (!cleanKey) {
+    return { success: false, error: "Missing Trustpilot API key" };
+  }
+
+  try {
+    const res = await fetch(
+      `https://api.trustpilot.com/v1/business-units/find?name=${encodeURIComponent(domain)}&apikey=${encodeURIComponent(cleanKey)}`,
+      { cache: "no-store", signal: AbortSignal.timeout(8000) }
+    );
+    const json = (await res.json().catch(() => ({}))) as {
+      id?: string;
+      displayName?: string;
+      identifyingName?: string;
+      score?: { trustScore?: number };
+      numberOfReviews?: { total?: number };
+      fault?: { faultstring?: string };
+      message?: string;
+    };
+
+    if (!res.ok || !json.id) {
+      return {
+        success: false,
+        error:
+          json.fault?.faultstring ||
+          json.message ||
+          `Trustpilot HTTP ${res.status}`,
+      };
+    }
+
+    const slug = json.identifyingName || domain;
+    return {
+      success: true,
+      displayName: json.displayName || domain,
+      rating: json.score?.trustScore,
+      reviewsCount: json.numberOfReviews?.total,
+      url: `https://www.trustpilot.com/review/${slug}`,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Trustpilot network error",
+    };
+  }
+}
+
+export interface LiveDataForSeoResult {
+  success: boolean;
+  totalFound: number;
+  byStore: Record<
+    number,
+    {
+      napMatch: number;
+      rating: number | null;
+      reviewsCount?: number;
+      url: string;
+    }
+  >;
+  error?: string;
+}
+
+/**
+ * Query DataForSEO Business Listings API using `login:password` (or base64 Basic token).
+ */
+export async function fetchDataForSeoListingsLive(
+  credentials: string
+): Promise<LiveDataForSeoResult> {
+  const clean = credentials.trim();
+  if (!clean) {
+    return { success: false, totalFound: 0, byStore: {}, error: "Missing DataForSEO credentials" };
+  }
+
+  const basicToken = clean.includes(":")
+    ? Buffer.from(clean).toString("base64")
+    : clean;
+
+  try {
+    const res = await fetch(
+      "https://api.dataforseo.com/v3/business_data/business_listings/search/live",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${basicToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify([
+          {
+            title: "Smart Fone Doctor",
+            location_coordinate: "39.9596,-75.2255,20",
+            limit: 15,
+          },
+        ]),
+        cache: "no-store",
+        signal: AbortSignal.timeout(10000),
+      }
+    );
+
+    const json = (await res.json().catch(() => ({}))) as {
+      status_code?: number;
+      status_message?: string;
+      tasks?: Array<{
+        status_code?: number;
+        status_message?: string;
+        result?: Array<{
+          total_count?: number;
+          items?: Array<{
+            title?: string;
+            address?: string;
+            phone?: string;
+            url?: string;
+            check_url?: string;
+            rating?: { value?: number; votes_count?: number };
+          }>;
+        }>;
+      }>;
+    };
+
+    if (!res.ok || (json.status_code && json.status_code >= 40000)) {
+      return {
+        success: false,
+        totalFound: 0,
+        byStore: {},
+        error: json.status_message || `DataForSEO HTTP ${res.status}`,
+      };
+    }
+
+    const task = json.tasks?.[0];
+    if (task?.status_code && task.status_code >= 40000) {
+      return {
+        success: false,
+        totalFound: 0,
+        byStore: {},
+        error: task.status_message || `DataForSEO task error ${task.status_code}`,
+      };
+    }
+
+    const items = task?.result?.[0]?.items || [];
+    const byStore: LiveDataForSeoResult["byStore"] = {};
+    for (const [sidStr, store] of Object.entries(PHILLY_STORES)) {
+      const sid = Number(sidStr);
+      const hit = items.find((item) =>
+        (item.address || "").toLowerCase().includes(store.streetNumber)
+      );
+      if (hit) {
+        byStore[sid] = {
+          napMatch: computeNapMatch(hit.address, hit.phone, store),
+          rating: hit.rating?.value ?? null,
+          reviewsCount: hit.rating?.votes_count,
+          url: hit.url || hit.check_url || "",
+        };
+      }
+    }
+
+    return {
+      success: true,
+      totalFound: items.length,
+      byStore,
+      ...(items.length === 0
+        ? { error: "DataForSEO returned 0 matching Smart Fone Doctor listings in Philadelphia." }
+        : {}),
+    };
+  } catch (err) {
+    return {
+      success: false,
+      totalFound: 0,
+      byStore: {},
+      error: err instanceof Error ? err.message : "DataForSEO network error",
+    };
+  }
+}
+
+/**
+ * Verify Google Business Profile OAuth Access Token against My Business Account Management API.
+ */
+export async function verifyGbpOAuthLive(accessToken: string): Promise<{
+  ok: boolean;
+  accountCount: number;
+  locationsMatched: number;
+  byStore: Record<number, { napMatch: number; url: string; mapsUri?: string }>;
+  error?: string;
+}> {
+  try {
+    const acctRes = await fetch(
+      "https://mybusinessaccountmanagement.googleapis.com/v1/accounts",
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        cache: "no-store",
+        signal: AbortSignal.timeout(8000),
+      }
+    );
+
+    const acctJson = (await acctRes.json().catch(() => ({}))) as {
+      accounts?: Array<{ name?: string; accountName?: string }>;
+      error?: { message?: string };
+    };
+
+    if (!acctRes.ok || acctJson.error) {
+      return {
+        ok: false,
+        accountCount: 0,
+        locationsMatched: 0,
+        byStore: {},
+        error: acctJson.error?.message || `GBP OAuth HTTP ${acctRes.status}`,
+      };
+    }
+
+    const accounts = acctJson.accounts || [];
+    const byStore: Record<number, { napMatch: number; url: string; mapsUri?: string }> = {};
+
+    for (const acct of accounts.slice(0, 3)) {
+      if (!acct.name) continue;
+      const locRes = await fetch(
+        `https://mybusinessbusinessinformation.googleapis.com/v1/${acct.name}/locations?readMask=name,title,storefrontAddress,phoneNumbers,metadata`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          cache: "no-store",
+          signal: AbortSignal.timeout(8000),
+        }
+      ).catch(() => null);
+
+      if (!locRes?.ok) continue;
+      const locJson = (await locRes.json().catch(() => ({}))) as {
+        locations?: Array<{
+          title?: string;
+          storefrontAddress?: { addressLines?: string[]; locality?: string };
+          phoneNumbers?: { primaryPhone?: string };
+          metadata?: { mapsUri?: string };
+        }>;
+      };
+
+      for (const loc of locJson.locations || []) {
+        const addr = loc.storefrontAddress?.addressLines?.join(", ") || "";
+        for (const [sidStr, store] of Object.entries(PHILLY_STORES)) {
+          const sid = Number(sidStr);
+          if (addr.toLowerCase().includes(store.streetNumber)) {
+            byStore[sid] = {
+              napMatch: computeNapMatch(
+                `${addr}, ${loc.storefrontAddress?.locality || "Philadelphia"}`,
+                loc.phoneNumbers?.primaryPhone,
+                store
+              ),
+              url: loc.metadata?.mapsUri || "https://business.google.com",
+              mapsUri: loc.metadata?.mapsUri,
+            };
+          }
+        }
+      }
+    }
+
+    return {
+      ok: true,
+      accountCount: accounts.length,
+      locationsMatched: Object.keys(byStore).length,
+      byStore,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      accountCount: 0,
+      locationsMatched: 0,
+      byStore: {},
+      error: err instanceof Error ? err.message : "GBP OAuth network error",
+    };
+  }
+}
+
+/**
+ * Verify Apple Business Connect API token against the live endpoint.
+ */
+export async function verifyAppleConnectLive(accessToken: string): Promise<{
+  ok: boolean;
+  locationsCount: number;
+  error?: string;
+}> {
+  try {
+    const res = await fetch("https://api.businessconnect.apple.com/v1/companies", {
+      headers: {
+        Authorization: `Bearer ${accessToken.trim()}`,
+        Accept: "application/json",
+      },
+      cache: "no-store",
+      signal: AbortSignal.timeout(8000),
+    });
+
+    const json = (await res.json().catch(() => ({}))) as {
+      data?: unknown[];
+      errors?: Array<{ detail?: string; title?: string }>;
+    };
+
+    if (!res.ok) {
+      return {
+        ok: false,
+        locationsCount: 0,
+        error:
+          json.errors?.[0]?.detail ||
+          json.errors?.[0]?.title ||
+          `Apple Business Connect HTTP ${res.status}`,
+      };
+    }
+
+    return {
+      ok: true,
+      locationsCount: Array.isArray(json.data) ? json.data.length : 0,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      locationsCount: 0,
+      error: err instanceof Error ? err.message : "Apple Business Connect network error",
+    };
+  }
+}
+
+/**
+ * Verify Bing / Azure Maps Places API key via live HTTP location query.
+ */
+export async function verifyBingPlacesKeyLive(apiKey: string): Promise<{
+  ok: boolean;
+  locationsMatched: number;
+  error?: string;
+}> {
+  const cleanKey = apiKey.trim();
+  if (!cleanKey) {
+    return { ok: false, locationsMatched: 0, error: "Missing Bing API key" };
+  }
+
+  try {
+    let matched = 0;
+    let lastErr: string | undefined;
+
+    for (const store of Object.values(PHILLY_STORES)) {
+      const res = await fetch(
+        `https://dev.virtualearth.net/REST/v1/Locations?query=${encodeURIComponent(
+          store.address
+        )}&key=${encodeURIComponent(cleanKey)}`,
+        { cache: "no-store", signal: AbortSignal.timeout(6000) }
+      );
+      const json = (await res.json().catch(() => ({}))) as {
+        statusCode?: number;
+        errorDetails?: string[];
+        resourceSets?: Array<{ estimatedTotal?: number }>;
+      };
+
+      if (!res.ok || (json.statusCode && json.statusCode >= 400)) {
+        lastErr = json.errorDetails?.[0] || `Bing API HTTP ${res.status}`;
+        continue;
+      }
+      if ((json.resourceSets?.[0]?.estimatedTotal ?? 0) > 0) {
+        matched += 1;
+      }
+    }
+
+    return {
+      ok: matched > 0,
+      locationsMatched: matched,
+      ...(matched === 0 ? { error: lastErr || "Bing Places check returned 0 matches." } : {}),
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      locationsMatched: 0,
+      error: err instanceof Error ? err.message : "Bing API network error",
+    };
+  }
+}
+
+/**
+ * Check HTTP reachability of a claimed directory listing URL.
+ */
+export async function checkUrlReachableLive(url: string): Promise<{
+  reachable: boolean;
+  status: number;
+  error?: string;
+}> {
+  const cleanUrl = url.trim();
+  if (!/^https?:\/\//i.test(cleanUrl)) {
+    return { reachable: false, status: 0, error: "Invalid URL scheme" };
+  }
+
+  try {
+    let res = await fetch(cleanUrl, {
+      method: "HEAD",
+      redirect: "follow",
+      cache: "no-store",
+      signal: AbortSignal.timeout(5000),
+      headers: { "User-Agent": "SmartFoneDoctor-Verifier/1.0" },
+    });
+
+    if (res.status === 405 || res.status === 403) {
+      res = await fetch(cleanUrl, {
+        method: "GET",
+        redirect: "follow",
+        cache: "no-store",
+        signal: AbortSignal.timeout(5000),
+        headers: { "User-Agent": "SmartFoneDoctor-Verifier/1.0" },
+      });
+    }
+
+    return {
+      reachable: res.status >= 200 && res.status < 400,
+      status: res.status,
+    };
+  } catch (err) {
+    return {
+      reachable: false,
+      status: 0,
+      error: err instanceof Error ? err.message : "Network timeout",
     };
   }
 }

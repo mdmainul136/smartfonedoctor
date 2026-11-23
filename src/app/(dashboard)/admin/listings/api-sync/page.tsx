@@ -1,89 +1,225 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useStoreContext } from "@/lib/storeContext";
 import { useListings, ApiConnector } from "@/lib/listingsContext";
+import { getApiSyncLogsAction } from "@/actions/thirdPartyApis";
 import ListingsNav from "@/components/Dashboard/ListingsNav";
-import { ExternalLink, RefreshCw, X, Check } from "lucide-react";
+import {
+  ExternalLink,
+  RefreshCw,
+  X,
+  Check,
+  AlertTriangle,
+  KeyRound,
+  Activity,
+} from "lucide-react";
+
+interface SyncLogItem {
+  id: string;
+  connectorId: string;
+  connectorName: string;
+  action: string;
+  status: string;
+  itemsSynced: number;
+  message: string | null;
+  createdAt: string;
+}
+
+interface BannerState {
+  tone: "success" | "warning" | "error";
+  text: string;
+}
 
 export default function ListingsApiSyncPage() {
   const { stores } = useStoreContext();
-  const { connectors, pullFromApi, toggleConnector } = useListings();
+  const { connectors, isLoading, pullFromApi, toggleConnector } = useListings();
 
   const [syncingId, setSyncingId] = useState<string | null>(null);
   const [syncingAll, setSyncingAll] = useState(false);
-  const [lastSyncedBanner, setLastSyncedBanner] = useState<string | null>(null);
+  const [banner, setBanner] = useState<BannerState | null>(null);
+  const [syncLogs, setSyncLogs] = useState<SyncLogItem[]>([]);
+
+  const [activeConnector, setActiveConnector] = useState<ApiConnector | null>(null);
+  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [accountLabelInput, setAccountLabelInput] = useState("");
+  const [isSavingConfig, setIsSavingConfig] = useState(false);
+
+  const loadSyncLogs = useCallback(async () => {
+    const res = await getApiSyncLogsAction();
+    if (res.success && Array.isArray(res.logs)) {
+      setSyncLogs(res.logs as SyncLogItem[]);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadSyncLogs();
+  }, [loadSyncLogs]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const oauthState = params.get("oauth");
     const oauthErr = params.get("oauth_error");
     if (oauthState === "connected") {
-      setLastSyncedBanner(
-        "Google Business Profile OAuth 2.0 connected and refresh token saved to PostgreSQL."
-      );
+      setBanner({
+        tone: "success",
+        text: "Google Business Profile OAuth 2.0 connected and token saved to PostgreSQL.",
+      });
       window.history.replaceState({}, "", window.location.pathname);
     } else if (oauthErr) {
-      setLastSyncedBanner(`Google OAuth notice: ${oauthErr}`);
+      setBanner({
+        tone: "error",
+        text: `Google OAuth error: ${oauthErr}`,
+      });
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, []);
 
-  const [activeConnector, setActiveConnector] = useState<ApiConnector | null>(
-    null
-  );
-  const [apiKeyInput, setApiKeyInput] = useState("");
-  const [accountLabelInput, setAccountLabelInput] = useState("");
-
   const connectedCount = connectors.filter((c) => c.connected).length;
+  const oauthConnectors = connectors.filter((c) => c.authType === "OAuth 2.0");
+  const oauthConnectedCount = oauthConnectors.filter((c) => c.connected).length;
+  const apiKeyConnectors = connectors.filter((c) => c.authType === "API Key");
+  const apiKeyConnectedCount = apiKeyConnectors.filter((c) => c.connected).length;
+  const successLogsCount = syncLogs.filter(
+    (l) => l.status.toLowerCase() === "success"
+  ).length;
+  const alertLogsCount = syncLogs.length - successLogsCount;
 
-  const handlePullSingle = (conn: ApiConnector) => {
+  const handlePullSingle = async (conn: ApiConnector) => {
     setSyncingId(conn.id);
-    setTimeout(() => {
-      pullFromApi(conn.id);
-      setSyncingId(null);
-      setLastSyncedBanner(
-        `Synced ${conn.name} across all 3 Philadelphia locations.`
-      );
-    }, 600);
+    const res = await pullFromApi(conn.id);
+    await loadSyncLogs();
+    setSyncingId(null);
+
+    if (res.success) {
+      setBanner({
+        tone: "success",
+        text: res.message || `Synced ${conn.name} via live API.`,
+      });
+    } else if (res.needsApiKey) {
+      setBanner({
+        tone: "warning",
+        text:
+          res.error ||
+          `No credentials configured for ${conn.name}. Click Configure to add a real API key or OAuth token.`,
+      });
+    } else {
+      setBanner({
+        tone: "error",
+        text: res.error || `Live API pull failed for ${conn.name}.`,
+      });
+    }
   };
 
-  const handlePullAll = () => {
+  const handlePullAll = async () => {
+    const readyConnectors = connectors.filter((c) => c.connected);
+    if (readyConnectors.length === 0) {
+      setBanner({
+        tone: "warning",
+        text: "No API providers are configured yet. Click Configure on a provider to save a real API key or OAuth token before pulling.",
+      });
+      return;
+    }
+
     setSyncingAll(true);
-    setTimeout(() => {
-      connectors
-        .filter((c) => c.connected)
-        .forEach((c) => pullFromApi(c.id));
-      setSyncingAll(false);
-      setLastSyncedBanner(
-        "All connected APIs pulled and updated active directory listings."
-      );
-    }, 800);
+    let succeeded = 0;
+    let failed = 0;
+    let lastError = "";
+
+    for (const c of readyConnectors) {
+      const res = await pullFromApi(c.id);
+      if (res.success) succeeded += 1;
+      else {
+        failed += 1;
+        lastError = res.error || lastError;
+      }
+    }
+
+    await loadSyncLogs();
+    setSyncingAll(false);
+
+    if (failed === 0) {
+      setBanner({
+        tone: "success",
+        text: `Pulled live data from ${succeeded} configured API provider(s).`,
+      });
+    } else {
+      setBanner({
+        tone: succeeded > 0 ? "warning" : "error",
+        text: `Pulled ${succeeded} provider(s); ${failed} failed${
+          lastError ? `: ${lastError}` : "."
+        }`,
+      });
+    }
   };
 
   const openConfigModal = (conn: ApiConnector) => {
     setActiveConnector(conn);
-    setAccountLabelInput(conn.accountLabel);
-    setApiKeyInput("••••••••••••••••••••••••••••••••");
+    setAccountLabelInput(conn.connected ? conn.accountLabel : "");
+    setApiKeyInput("");
   };
 
-  const handleSaveConfig = (e: React.FormEvent) => {
+  const handleSaveConfig = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeConnector) return;
-    const cleanKey =
-      apiKeyInput && !apiKeyInput.includes("••") ? apiKeyInput.trim() : undefined;
-    toggleConnector(
-      activeConnector.id,
-      accountLabelInput.trim() || "Connected via API token",
-      cleanKey,
-      true
-    );
-    pullFromApi(activeConnector.id);
-    setLastSyncedBanner(
-      `${activeConnector.name} credentials saved to database and all 3 Philadelphia store locations synced.`
-    );
+    setIsSavingConfig(true);
+
+    const cleanKey = apiKeyInput.trim() || undefined;
+    const cleanLabel = accountLabelInput.trim() || undefined;
+    const saveRes = await toggleConnector(activeConnector.id, cleanLabel, cleanKey, true);
+
+    if (!saveRes.success) {
+      setIsSavingConfig(false);
+      setBanner({
+        tone: "warning",
+        text: saveRes.error || `Enter a valid API key or token for ${activeConnector.name}.`,
+      });
+      return;
+    }
+
+    const pullRes = await pullFromApi(activeConnector.id);
+    await loadSyncLogs();
+    setIsSavingConfig(false);
+    const targetName = activeConnector.name;
     setActiveConnector(null);
+
+    if (pullRes.success) {
+      setBanner({
+        tone: "success",
+        text:
+          pullRes.message ||
+          `${targetName} credentials saved and live data pulled from API.`,
+      });
+    } else {
+      setBanner({
+        tone: "warning",
+        text: `Credentials saved for ${targetName}, but live verification returned: ${
+          pullRes.error || "API error"
+        }`,
+      });
+    }
   };
+
+  const handleDisconnect = async () => {
+    if (!activeConnector) return;
+    setIsSavingConfig(true);
+    const name = activeConnector.name;
+    await toggleConnector(activeConnector.id, undefined, undefined, false);
+    await loadSyncLogs();
+    setIsSavingConfig(false);
+    setActiveConnector(null);
+    setBanner({
+      tone: "warning",
+      text: `Disconnected and cleared saved credentials for ${name}.`,
+    });
+  };
+
+  const bannerClasses =
+    banner?.tone === "success"
+      ? "bg-[#dcfae5] text-[#04250e] border border-[#bbf7d0]"
+      : banner?.tone === "warning"
+      ? "bg-[#fffbeb] text-[#92400e] border border-[#fde68a]"
+      : "bg-[#ffedea] text-[#831c1e] border border-[#fecaca]";
 
   return (
     <div className="flex-1 min-w-0 w-full px-4 sm:px-6 py-5 flex flex-col gap-4 overflow-x-hidden">
@@ -95,33 +231,45 @@ export default function ListingsApiSyncPage() {
               API &amp; automated citation sync
             </h1>
             <p className="text-[14px] text-[#5f6368] mt-1">
-              {connectedCount} of {connectors.length} providers connected · Apple Business Connect requires OAuth setup for 2 Lancaster Ave branches
+              {isLoading
+                ? "Loading live connector status from PostgreSQL…"
+                : connectedCount === 0
+                ? `0 of ${connectors.length} providers configured · Add a real API key or OAuth token to enable live syncing`
+                : `${connectedCount} of ${connectors.length} providers configured with live credentials · Scoped to ${stores.length} Philadelphia locations`}
             </p>
           </div>
 
           <button
             type="button"
-            onClick={handlePullAll}
-            disabled={syncingAll}
+            onClick={() => void handlePullAll()}
+            disabled={syncingAll || isLoading}
             className="h-[32px] self-start sm:self-auto shrink-0 px-3.5 rounded-[6px] bg-[#1d1f20] hover:bg-[#111111] text-white text-[13px] font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-60"
           >
             <RefreshCw
               className={`w-3.5 h-3.5 ${syncingAll ? "animate-spin" : ""}`}
               aria-hidden="true"
             />
-            <span>{syncingAll ? "Pulling APIs…" : "Pull all APIs"}</span>
+            <span>{syncingAll ? "Pulling live APIs…" : "Pull connected APIs"}</span>
           </button>
         </div>
 
         <ListingsNav />
       </div>
 
-      {lastSyncedBanner && (
-        <div className="bg-[#dcfae5] text-[#04250e] rounded-[6px] px-4 py-2.5 flex items-center justify-between gap-3 text-[13px]">
-          <span className="font-medium">{lastSyncedBanner}</span>
+      {banner && (
+        <div
+          role="status"
+          className={`${bannerClasses} rounded-[6px] px-4 py-2.5 flex items-center justify-between gap-3 text-[13px]`}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            {banner.tone !== "success" && (
+              <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
+            )}
+            <span className="font-medium">{banner.text}</span>
+          </div>
           <button
             type="button"
-            onClick={() => setLastSyncedBanner(null)}
+            onClick={() => setBanner(null)}
             aria-label="Dismiss notice"
             className="p-0.5 hover:opacity-75 cursor-pointer shrink-0"
           >
@@ -130,10 +278,10 @@ export default function ListingsApiSyncPage() {
         </div>
       )}
 
-      {/* 2. DIVIDED SUMMARY STRIP (2x2 on mobile/tablet, 4-col on lg+) */}
+      {/* 2. DIVIDED SUMMARY STRIP (Real DB counts only) */}
       <div className="bg-white border border-[#e8e8e8] rounded-[8px] grid grid-cols-2 lg:grid-cols-4">
         <div className="p-3.5 sm:p-4 flex flex-col justify-between border-b lg:border-b-0 border-r border-[#eaeaea]">
-          <span className="text-[12px] text-[#5f6368]">Connected APIs</span>
+          <span className="text-[12px] text-[#5f6368]">Configured APIs</span>
           <div className="mt-1.5 flex items-baseline gap-1.5">
             <span className="text-[24px] sm:text-[28px] font-semibold text-[#111111] tabular-nums leading-none">
               {connectedCount}
@@ -145,43 +293,45 @@ export default function ListingsApiSyncPage() {
         </div>
 
         <div className="p-3.5 sm:p-4 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-[#eaeaea]">
-          <span className="text-[12px] text-[#5f6368]">Bi-directional OAuth</span>
+          <span className="text-[12px] text-[#5f6368]">OAuth providers</span>
           <div className="mt-1.5 flex items-baseline gap-1.5">
             <span className="text-[22px] sm:text-[24px] font-normal text-[#111111] tabular-nums leading-none">
-              3
+              {oauthConnectedCount}
             </span>
-            <span className="text-[12px] text-[#5f6368] truncate">
-              Google, Meta, Apple
+            <span className="text-[12px] text-[#5f6368] truncate tabular-nums">
+              /{oauthConnectors.length} connected
             </span>
           </div>
         </div>
 
         <div className="p-3.5 sm:p-4 flex flex-col justify-between border-r border-[#eaeaea]">
-          <span className="text-[12px] text-[#5f6368]">Read-only pull APIs</span>
+          <span className="text-[12px] text-[#5f6368]">API key providers</span>
           <div className="mt-1.5 flex items-baseline gap-1.5">
             <span className="text-[22px] sm:text-[24px] font-normal text-[#111111] tabular-nums leading-none">
-              2
+              {apiKeyConnectedCount}
             </span>
-            <span className="text-[12px] text-[#5f6368] truncate">
-              Yelp Fusion, Trustpilot
+            <span className="text-[12px] text-[#5f6368] truncate tabular-nums">
+              /{apiKeyConnectors.length} configured
             </span>
           </div>
         </div>
 
         <div className="p-3.5 sm:p-4 flex flex-col justify-between">
-          <span className="text-[12px] text-[#5f6368]">Citation audit crawler</span>
+          <span className="text-[12px] text-[#5f6368]">Recorded sync logs</span>
           <div className="mt-1.5 flex items-baseline gap-1.5">
             <span className="text-[22px] sm:text-[24px] font-normal text-[#111111] tabular-nums leading-none">
-              30+
+              {syncLogs.length}
             </span>
-            <span className="text-[12px] text-[#5f6368] truncate">
-              via DataForSEO
+            <span className="text-[12px] text-[#5f6368] truncate tabular-nums">
+              {syncLogs.length === 0
+                ? "no runs yet"
+                : `${successLogsCount} ok · ${alertLogsCount} alert(s)`}
             </span>
           </div>
         </div>
       </div>
 
-      {/* 3. API CONNECTORS LIST / TABLE (5 columns on lg+ that always fit 100% of width, stacked rows below lg) */}
+      {/* 3. API CONNECTORS LIST / TABLE */}
       <section
         aria-label="API connectors and directory sync"
         className="bg-white border border-[#e8e8e8] rounded-[8px] overflow-hidden"
@@ -191,7 +341,7 @@ export default function ListingsApiSyncPage() {
             Directory API connectors ({connectors.length})
           </h2>
           <span className="text-[12px] text-[#5f6368]">
-            Scoped to 3 Philadelphia locations
+            Scoped to {stores.length} Philadelphia locations
           </span>
         </div>
 
@@ -217,7 +367,7 @@ export default function ListingsApiSyncPage() {
                         : "bg-[#fffbeb] text-[#92400e] border border-[#fde68a]"
                     }`}
                   >
-                    {conn.connected ? "Connected" : "Setup needed"}
+                    {conn.connected ? "Connected" : "Not configured"}
                   </span>
                 </div>
 
@@ -239,9 +389,9 @@ export default function ListingsApiSyncPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => handlePullSingle(conn)}
+                      onClick={() => void handlePullSingle(conn)}
                       disabled={isSyncing}
-                      className="h-[28px] px-2.5 rounded-[5px] bg-[#1d1f20] text-white text-[13px] font-medium cursor-pointer"
+                      className="h-[28px] px-2.5 rounded-[5px] bg-[#1d1f20] text-white text-[13px] font-medium cursor-pointer disabled:opacity-60"
                     >
                       {isSyncing ? "Pulling…" : "Pull"}
                     </button>
@@ -252,7 +402,7 @@ export default function ListingsApiSyncPage() {
           })}
         </div>
 
-        {/* Desktop Table (lg+): 5 balanced columns — never clips right-most Action column */}
+        {/* Desktop Table (lg+) */}
         <div className="hidden lg:block w-full">
           <table className="w-full table-fixed text-left border-collapse">
             <thead>
@@ -299,13 +449,13 @@ export default function ListingsApiSyncPage() {
                     <td className="px-4 py-2.5">
                       <div className="flex flex-col items-start gap-0.5">
                         <span
-                          className={`h-[20px] px-2 rounded-[4px] inline-flex items-center text-[12px] font-medium whitespace-nowrap ${
+                          className={`h-[20px] px-2 rounded-[4px] inline-flex items-center gap-1 text-[12px] font-medium whitespace-nowrap ${
                             conn.connected
                               ? "bg-[#dcfae5] text-[#04250e]"
                               : "bg-[#fffbeb] text-[#92400e] border border-[#fde68a]"
                           }`}
                         >
-                          {conn.connected ? "Connected" : "Setup needed"}
+                          <span>{conn.connected ? "Connected" : "Not configured"}</span>
                         </span>
                         <span className="text-[12px] text-[#6b6b6b] truncate">
                           {conn.lastPulled}
@@ -329,14 +479,12 @@ export default function ListingsApiSyncPage() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => handlePullSingle(conn)}
+                          onClick={() => void handlePullSingle(conn)}
                           disabled={isSyncing}
                           className="h-[28px] px-2.5 rounded-[5px] bg-[#1d1f20] hover:bg-[#111111] text-white text-[13px] font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-60"
                         >
                           <RefreshCw
-                            className={`w-3 h-3 ${
-                              isSyncing ? "animate-spin" : ""
-                            }`}
+                            className={`w-3 h-3 ${isSyncing ? "animate-spin" : ""}`}
                           />
                           <span>{isSyncing ? "Pulling…" : "Pull"}</span>
                         </button>
@@ -350,7 +498,70 @@ export default function ListingsApiSyncPage() {
         </div>
       </section>
 
-      {/* MODAL: CONFIGURE API CREDENTIALS & STORE LOCATION MAPPING */}
+      {/* 4. REAL SYNC LOGS FROM POSTGRESQL (api_sync_logs) */}
+      <section
+        aria-label="Recent live API sync history"
+        className="bg-white border border-[#e8e8e8] rounded-[8px] overflow-hidden"
+      >
+        <div className="px-4 py-3 border-b border-[#e5e7eb] flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Activity className="w-4 h-4 text-[#5f6368]" aria-hidden="true" />
+            <h2 className="text-[15px] font-semibold text-[#111111]">
+              Live API Sync History
+            </h2>
+          </div>
+          <span className="text-[12px] text-[#5f6368]">
+            Real HTTP &amp; configuration log ({syncLogs.length})
+          </span>
+        </div>
+
+        {syncLogs.length === 0 ? (
+          <div className="p-6 text-center text-[13px] text-[#5f6368]">
+            No API sync runs recorded yet. Configure a provider above and click{" "}
+            <strong className="text-[#111111]">Pull</strong> to verify live API responses.
+          </div>
+        ) : (
+          <div className="divide-y divide-[#f2f2f2]">
+            {syncLogs.slice(0, 12).map((log) => (
+              <div
+                key={log.id}
+                className="px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[13px]"
+              >
+                <div className="min-w-0 flex flex-col gap-0.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-[#111111]">
+                      {log.connectorName}
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-mono text-[11px]">
+                      {log.action}
+                    </span>
+                    <span
+                      className={`px-2 py-0.5 rounded text-[11px] font-medium ${
+                        log.status.toLowerCase() === "success"
+                          ? "bg-[#dcfae5] text-[#04250e]"
+                          : log.status.toLowerCase() === "warning"
+                          ? "bg-[#fffbeb] text-[#92400e]"
+                          : "bg-[#ffedea] text-[#831c1e]"
+                      }`}
+                    >
+                      {log.status}
+                    </span>
+                  </div>
+                  <p className="text-[12px] text-[#5f6368] truncate">
+                    {log.message || "—"}
+                  </p>
+                </div>
+                <div className="text-[12px] text-[#6b6b6b] tabular-nums shrink-0 sm:text-right">
+                  <div>{log.itemsSynced} item(s)</div>
+                  <div>{new Date(log.createdAt).toLocaleString()}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* MODAL: CONFIGURE REAL API CREDENTIALS */}
       {activeConnector && (
         <div
           role="dialog"
@@ -368,7 +579,8 @@ export default function ListingsApiSyncPage() {
                   {activeConnector.name}
                 </h2>
                 <p className="text-[12px] text-[#5f6368] mt-0.5">
-                  {activeConnector.provider} · {activeConnector.authType} · {activeConnector.endpointDoc}
+                  {activeConnector.provider} · {activeConnector.authType} ·{" "}
+                  {activeConnector.endpointDoc}
                 </p>
               </div>
               <button
@@ -382,31 +594,57 @@ export default function ListingsApiSyncPage() {
             </div>
 
             <form
-              onSubmit={handleSaveConfig}
+              onSubmit={(e) => void handleSaveConfig(e)}
               className="p-5 flex flex-col gap-4 text-[14px]"
             >
+              <div className="flex items-center justify-between gap-2 rounded-[6px] px-3 py-2 text-[12px] bg-[#f9f9f9] border border-[#e8e8e8]">
+                <span className="inline-flex items-center gap-1.5 text-[#5f6368]">
+                  <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
+                  Credential status:
+                </span>
+                <span
+                  className={`font-medium ${
+                    activeConnector.hasCredentials ? "text-[#247b50]" : "text-[#92400e]"
+                  }`}
+                >
+                  {activeConnector.hasCredentials
+                    ? `Saved (${activeConnector.credentialSource})`
+                    : "Not configured yet"}
+                </span>
+              </div>
+
               <div>
-                <label className="block text-[14px] font-medium text-[#111111] mb-2">
+                <label className="block text-[14px] font-medium text-[#111111] mb-1.5">
                   Account label / identifier
                 </label>
                 <input
                   type="text"
                   value={accountLabelInput}
                   onChange={(e) => setAccountLabelInput(e.target.value)}
+                  placeholder="e.g. SmartFoneDoctor Philly Production Key"
                   className="w-full h-[38px] px-3 rounded-[6px] border border-[#e5e7eb] bg-white text-[14px] text-[#111111] focus:outline-none focus:border-[#111111]"
                 />
               </div>
 
               <div>
-                <label className="block text-[14px] font-medium text-[#111111] mb-2">
-                  {activeConnector.authType === "OAuth 2.0"
-                    ? "OAuth 2.0 access / API token"
+                <label className="block text-[14px] font-medium text-[#111111] mb-1.5">
+                  {activeConnector.id === "dataforseo-scanner"
+                    ? "DataForSEO credentials (login:password or Base64 token)"
+                    : activeConnector.authType === "OAuth 2.0"
+                    ? "OAuth 2.0 access token / Places API key"
                     : "API key / bearer secret"}
                 </label>
                 <input
                   type="password"
                   value={apiKeyInput}
                   onChange={(e) => setApiKeyInput(e.target.value)}
+                  placeholder={
+                    activeConnector.hasCredentials
+                      ? "Leave blank to keep existing key, or paste new key to replace"
+                      : activeConnector.id === "dataforseo-scanner"
+                      ? "email@domain.com:api_password"
+                      : "Paste real API key or OAuth token"
+                  }
                   className="w-full h-[38px] px-3 rounded-[6px] border border-[#e5e7eb] bg-white text-[14px] text-[#111111] font-mono focus:outline-none focus:border-[#111111]"
                 />
                 {activeConnector.id === "google-gbp" && (
@@ -427,38 +665,43 @@ export default function ListingsApiSyncPage() {
 
               <div className="p-3.5 rounded-[6px] bg-[#f9f9f9] border border-[#e8e8e8] flex flex-col gap-2 text-[13px]">
                 <span className="text-[12px] text-[#5f6368]">
-                  Philadelphia store location IDs ({stores.length} branches)
+                  Target store locations ({stores.length} branches)
                 </span>
-                {stores.map((st, idx) => (
-                  <div
-                    key={st.id}
-                    className="flex items-center justify-between gap-2 py-1 border-b last:border-b-0 border-[#eaeaea]"
-                  >
-                    <div className="min-w-0">
-                      <div className="font-medium text-[#111111] truncate">
-                        {st.name.replace("SmartFoneDoctor - ", "")}
+                {stores.map((st, idx) => {
+                  const matched = activeConnector.locationsMatched > idx;
+                  return (
+                    <div
+                      key={st.id}
+                      className="flex items-center justify-between gap-2 py-1 border-b last:border-b-0 border-[#eaeaea]"
+                    >
+                      <div className="min-w-0">
+                        <div className="font-medium text-[#111111] truncate">
+                          {st.name.replace("SmartFoneDoctor - ", "")}
+                        </div>
+                        <div className="text-[12px] text-[#5f6368] truncate">
+                          {st.address}, {st.cityStateZip}
+                        </div>
                       </div>
-                      <div className="text-[12px] text-[#5f6368] truncate">
-                        {st.address}, {st.cityStateZip}
-                      </div>
+                      <span
+                        className={`inline-flex items-center gap-1 text-[12px] shrink-0 ${
+                          matched ? "text-[#247b50] font-medium" : "text-[#6b6b6b]"
+                        }`}
+                      >
+                        {matched && <Check className="w-3.5 h-3.5" />}
+                        {matched ? "Matched" : "Pending pull"}
+                      </span>
                     </div>
-                    <span className="inline-flex items-center gap-1 font-mono text-[12px] text-[#111111] shrink-0">
-                      <Check className="w-3.5 h-3.5 text-[#247b50]" />
-                      loc_phl_0{idx + 1}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#f2f2f2]">
-                {activeConnector.connected ? (
+                {activeConnector.connected || activeConnector.hasCredentials ? (
                   <button
                     type="button"
-                    onClick={() => {
-                      toggleConnector(activeConnector.id);
-                      setActiveConnector(null);
-                    }}
-                    className="h-[32px] px-3 rounded-[6px] border border-[#ffedea] bg-[#ffedea] text-[#831c1e] text-[13px] font-medium cursor-pointer"
+                    disabled={isSavingConfig}
+                    onClick={() => void handleDisconnect()}
+                    className="h-[32px] px-3 rounded-[6px] border border-[#ffedea] bg-[#ffedea] text-[#831c1e] text-[13px] font-medium cursor-pointer disabled:opacity-60"
                   >
                     Disconnect
                   </button>
@@ -476,9 +719,10 @@ export default function ListingsApiSyncPage() {
                   </button>
                   <button
                     type="submit"
-                    className="h-[32px] px-3.5 rounded-[6px] bg-[#1d1f20] hover:bg-[#111111] text-white text-[13px] font-medium cursor-pointer"
+                    disabled={isSavingConfig}
+                    className="h-[32px] px-3.5 rounded-[6px] bg-[#1d1f20] hover:bg-[#111111] text-white text-[13px] font-medium cursor-pointer disabled:opacity-60"
                   >
-                    Save &amp; pull locations
+                    {isSavingConfig ? "Verifying…" : "Save & pull live"}
                   </button>
                 </div>
               </div>

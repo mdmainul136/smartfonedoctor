@@ -59,11 +59,32 @@ export interface ApiConnector {
     | "Automated Citation Audit";
   authType: "OAuth 2.0" | "API Key" | "Google Sync";
   connected: boolean;
+  hasCredentials?: boolean;
+  credentialSource?: "database" | "env" | "none";
   accountLabel: string;
   lastPulled: string;
   directoriesCovered: string[];
   locationsMatched: number;
   endpointDoc: string;
+}
+
+function createUnverifiedEntry(): StoreListingEntry {
+  return {
+    status: "Missing",
+    napMatch: 0,
+    rating: null,
+    url: "",
+    lastSynced: "Never",
+    issue: "Not yet synced — connect API or verify manually",
+  };
+}
+
+export function createUnverifiedStores(): Record<number, StoreListingEntry> {
+  return {
+    1: createUnverifiedEntry(),
+    2: createUnverifiedEntry(),
+    3: createUnverifiedEntry(),
+  };
 }
 
 export const INITIAL_DIRECTORIES: DirectoryListing[] = [
@@ -77,32 +98,7 @@ export const INITIAL_DIRECTORIES: DirectoryListing[] = [
     syncMode: "Official API",
     claimPortalUrl: "https://business.google.com",
     apiProviderId: "google-gbp",
-    stores: {
-      1: {
-        status: "Synced",
-        napMatch: 100,
-        rating: 4.8,
-        reviewsCount: 50,
-        url: "https://share.google/gTlyWLewR88ToAdJQ",
-        lastSynced: "10 mins ago",
-      },
-      2: {
-        status: "Synced",
-        napMatch: 100,
-        rating: 4.7,
-        reviewsCount: 89,
-        url: "https://maps.google.com/?q=4016+Lancaster+Ave,+Philadelphia,+PA+19104",
-        lastSynced: "10 mins ago",
-      },
-      3: {
-        status: "Synced",
-        napMatch: 98,
-        rating: 4.6,
-        reviewsCount: 61,
-        url: "https://maps.google.com/?q=4060+Lancaster+Ave,+Philadelphia,+PA+19104",
-        lastSynced: "10 mins ago",
-      },
-    },
+    stores: createUnverifiedStores(),
   },
   {
     id: "yelp",
@@ -114,33 +110,7 @@ export const INITIAL_DIRECTORIES: DirectoryListing[] = [
     syncMode: "Official API",
     claimPortalUrl: "https://biz.yelp.com",
     apiProviderId: "yelp-fusion",
-    stores: {
-      1: {
-        status: "Synced",
-        napMatch: 100,
-        rating: 4.5,
-        reviewsCount: 38,
-        url: "https://www.yelp.com",
-        lastSynced: "1 hour ago",
-      },
-      2: {
-        status: "Synced",
-        napMatch: 100,
-        rating: 4.4,
-        reviewsCount: 24,
-        url: "https://www.yelp.com",
-        lastSynced: "1 hour ago",
-      },
-      3: {
-        status: "Mismatch",
-        napMatch: 75,
-        rating: 4.3,
-        reviewsCount: 19,
-        url: "https://www.yelp.com",
-        lastSynced: "1 hour ago",
-        issue: "Saturday closing time shows 6:00 PM instead of 7:00 PM",
-      },
-    },
+    stores: createUnverifiedStores(),
   },
   {
     id: "apple",
@@ -152,31 +122,7 @@ export const INITIAL_DIRECTORIES: DirectoryListing[] = [
     syncMode: "Official API",
     claimPortalUrl: "https://businessconnect.apple.com",
     apiProviderId: "apple-connect",
-    stores: {
-      1: {
-        status: "Synced",
-        napMatch: 100,
-        rating: 4.7,
-        reviewsCount: 31,
-        url: "https://maps.apple.com",
-        lastSynced: "2 hours ago",
-      },
-      2: {
-        status: "Mismatch",
-        napMatch: 78,
-        rating: null,
-        url: "https://maps.apple.com",
-        lastSynced: "2 hours ago",
-        issue: "Phone number formatted without primary local area code match",
-      },
-      3: {
-        status: "Missing",
-        napMatch: 0,
-        rating: null,
-        url: "",
-        issue: "Location not claimed on Apple Business Connect",
-      },
-    },
+    stores: createUnverifiedStores(),
   },
   {
     id: "bing",
@@ -188,31 +134,7 @@ export const INITIAL_DIRECTORIES: DirectoryListing[] = [
     syncMode: "Google Auto-Sync",
     claimPortalUrl: "https://www.bingplaces.com",
     apiProviderId: "bing-sync",
-    stores: {
-      1: {
-        status: "Synced",
-        napMatch: 100,
-        rating: 4.8,
-        reviewsCount: 50,
-        url: "https://www.bing.com/maps",
-        lastSynced: "Today",
-      },
-      2: {
-        status: "Synced",
-        napMatch: 96,
-        rating: 4.6,
-        reviewsCount: 42,
-        url: "https://www.bing.com/maps",
-        lastSynced: "Today",
-      },
-      3: {
-        status: "Missing",
-        napMatch: 0,
-        rating: null,
-        url: "",
-        issue: "Enable 'Import from Google Business Profile' in Bing Places",
-      },
-    },
+    stores: createUnverifiedStores(),
   },
   {
     id: "facebook",
@@ -224,32 +146,7 @@ export const INITIAL_DIRECTORIES: DirectoryListing[] = [
     syncMode: "Official API",
     claimPortalUrl: "https://business.facebook.com",
     apiProviderId: "facebook-graph",
-    stores: {
-      1: {
-        status: "Synced",
-        napMatch: 100,
-        rating: 4.9,
-        reviewsCount: 64,
-        url: "https://facebook.com",
-        lastSynced: "30 mins ago",
-      },
-      2: {
-        status: "Synced",
-        napMatch: 100,
-        rating: 4.7,
-        reviewsCount: 41,
-        url: "https://facebook.com",
-        lastSynced: "30 mins ago",
-      },
-      3: {
-        status: "Mismatch",
-        napMatch: 80,
-        rating: null,
-        url: "https://facebook.com",
-        lastSynced: "30 mins ago",
-        issue: "Website URL points to generic root instead of location page",
-      },
-    },
+    stores: createUnverifiedStores(),
   },
   {
     id: "ezlocal",
@@ -261,32 +158,7 @@ export const INITIAL_DIRECTORIES: DirectoryListing[] = [
     syncMode: "DataForSEO Audit",
     claimPortalUrl: "https://ezlocal.com",
     apiProviderId: "dataforseo-scanner",
-    stores: {
-      1: {
-        status: "Synced",
-        napMatch: 100,
-        rating: 4.8,
-        reviewsCount: 50,
-        url: "https://ezlink.ai/smartfonedoctor/review",
-        lastSynced: "Yesterday",
-      },
-      2: {
-        status: "Synced",
-        napMatch: 95,
-        rating: 4.6,
-        reviewsCount: 28,
-        url: "https://ezlocal.com",
-        lastSynced: "Yesterday",
-      },
-      3: {
-        status: "Synced",
-        napMatch: 95,
-        rating: 4.5,
-        reviewsCount: 18,
-        url: "https://ezlocal.com",
-        lastSynced: "Yesterday",
-      },
-    },
+    stores: createUnverifiedStores(),
   },
   {
     id: "trustpilot",
@@ -298,32 +170,7 @@ export const INITIAL_DIRECTORIES: DirectoryListing[] = [
     syncMode: "Official API",
     claimPortalUrl: "https://business.trustpilot.com",
     apiProviderId: "trustpilot-api",
-    stores: {
-      1: {
-        status: "Synced",
-        napMatch: 100,
-        rating: 4.7,
-        reviewsCount: 29,
-        url: "https://www.trustpilot.com",
-        lastSynced: "3 hours ago",
-      },
-      2: {
-        status: "Synced",
-        napMatch: 100,
-        rating: 4.7,
-        reviewsCount: 29,
-        url: "https://www.trustpilot.com",
-        lastSynced: "3 hours ago",
-      },
-      3: {
-        status: "Synced",
-        napMatch: 100,
-        rating: 4.7,
-        reviewsCount: 29,
-        url: "https://www.trustpilot.com",
-        lastSynced: "3 hours ago",
-      },
-    },
+    stores: createUnverifiedStores(),
   },
   {
     id: "yellowpages",
@@ -335,31 +182,7 @@ export const INITIAL_DIRECTORIES: DirectoryListing[] = [
     syncMode: "DataForSEO Audit",
     claimPortalUrl: "https://adsolutions.yp.com",
     apiProviderId: "dataforseo-scanner",
-    stores: {
-      1: {
-        status: "Mismatch",
-        napMatch: 72,
-        rating: 4.5,
-        reviewsCount: 14,
-        url: "https://www.yellowpages.com",
-        lastSynced: "Yesterday",
-        issue: "Address missing 'Fl 2nd' floor designation",
-      },
-      2: {
-        status: "Synced",
-        napMatch: 95,
-        rating: null,
-        url: "https://www.yellowpages.com",
-        lastSynced: "Yesterday",
-      },
-      3: {
-        status: "Missing",
-        napMatch: 0,
-        rating: null,
-        url: "",
-        issue: "Unclaimed directory listing on YP.com",
-      },
-    },
+    stores: createUnverifiedStores(),
   },
   {
     id: "hotfrog",
@@ -370,29 +193,7 @@ export const INITIAL_DIRECTORIES: DirectoryListing[] = [
     authority: 74,
     syncMode: "Manual Claim",
     claimPortalUrl: "https://www.hotfrog.com",
-    stores: {
-      1: {
-        status: "Synced",
-        napMatch: 96,
-        rating: null,
-        url: "https://www.hotfrog.com",
-        lastSynced: "3 days ago",
-      },
-      2: {
-        status: "Missing",
-        napMatch: 0,
-        rating: null,
-        url: "",
-        issue: "Profile not submitted yet",
-      },
-      3: {
-        status: "Missing",
-        napMatch: 0,
-        rating: null,
-        url: "",
-        issue: "Profile not submitted yet",
-      },
-    },
+    stores: createUnverifiedStores(),
   },
   {
     id: "g2",
@@ -403,30 +204,7 @@ export const INITIAL_DIRECTORIES: DirectoryListing[] = [
     authority: 90,
     syncMode: "Official API",
     claimPortalUrl: "https://sell.g2.com",
-    stores: {
-      1: {
-        status: "Synced",
-        napMatch: 100,
-        rating: 4.8,
-        reviewsCount: 11,
-        url: "https://www.g2.com",
-        lastSynced: "2 days ago",
-      },
-      2: {
-        status: "Missing",
-        napMatch: 0,
-        rating: null,
-        url: "",
-        issue: "Not listed for this branch",
-      },
-      3: {
-        status: "Missing",
-        napMatch: 0,
-        rating: null,
-        url: "",
-        issue: "Not listed for this branch",
-      },
-    },
+    stores: createUnverifiedStores(),
   },
   {
     id: "nextdoor",
@@ -437,33 +215,7 @@ export const INITIAL_DIRECTORIES: DirectoryListing[] = [
     authority: 89,
     syncMode: "Manual Claim",
     claimPortalUrl: "https://business.nextdoor.com",
-    stores: {
-      1: {
-        status: "Synced",
-        napMatch: 100,
-        rating: 4.9,
-        reviewsCount: 33,
-        url: "https://nextdoor.com",
-        lastSynced: "5 days ago",
-      },
-      2: {
-        status: "Mismatch",
-        napMatch: 82,
-        rating: 4.7,
-        reviewsCount: 19,
-        url: "https://nextdoor.com",
-        lastSynced: "5 days ago",
-        issue: "Store name written as 'Smart Fone Dr' instead of 'Smart Fone Doctor'",
-      },
-      3: {
-        status: "Synced",
-        napMatch: 100,
-        rating: 4.8,
-        reviewsCount: 15,
-        url: "https://nextdoor.com",
-        lastSynced: "5 days ago",
-      },
-    },
+    stores: createUnverifiedStores(),
   },
 ];
 
@@ -631,11 +383,13 @@ export const INITIAL_API_CONNECTORS: ApiConnector[] = [
     provider: "Google Cloud OAuth 2.0",
     capability: "Read & Write (Bi-directional)",
     authType: "OAuth 2.0",
-    connected: true,
-    accountLabel: "smartfonedoctor.philly@gmail.com (3 locations)",
-    lastPulled: "10 mins ago",
+    connected: false,
+    hasCredentials: false,
+    credentialSource: "none",
+    accountLabel: "Not configured",
+    lastPulled: "Never",
     directoriesCovered: ["Google Business Profile", "Google Maps", "Google Search Local Pack"],
-    locationsMatched: 3,
+    locationsMatched: 0,
     endpointDoc: "mybusinessbusinessinformation.googleapis.com/v1",
   },
   {
@@ -644,11 +398,13 @@ export const INITIAL_API_CONNECTORS: ApiConnector[] = [
     provider: "Yelp Developer Portal",
     capability: "Read-Only (Pull Stats & NAP)",
     authType: "API Key",
-    connected: true,
-    accountLabel: "Fusion Key ••••94A2 (3 Philly stores matched)",
-    lastPulled: "1 hour ago",
+    connected: false,
+    hasCredentials: false,
+    credentialSource: "none",
+    accountLabel: "Not configured",
+    lastPulled: "Never",
     directoriesCovered: ["Yelp for Business"],
-    locationsMatched: 3,
+    locationsMatched: 0,
     endpointDoc: "api.yelp.com/v3/businesses/matches",
   },
   {
@@ -657,12 +413,14 @@ export const INITIAL_API_CONNECTORS: ApiConnector[] = [
     provider: "Meta Business Suite",
     capability: "Read & Write (Bi-directional)",
     authType: "OAuth 2.0",
-    connected: true,
-    accountLabel: "Smart Fone Doctor Business Portfolio",
-    lastPulled: "30 mins ago",
+    connected: false,
+    hasCredentials: false,
+    credentialSource: "none",
+    accountLabel: "Not configured",
+    lastPulled: "Never",
     directoriesCovered: ["Facebook Business Page", "Instagram Map Tag"],
-    locationsMatched: 3,
-    endpointDoc: "graph.facebook.com/v19.0/{page-id}",
+    locationsMatched: 0,
+    endpointDoc: "graph.facebook.com/v20.0/{page-id}",
   },
   {
     id: "apple-connect",
@@ -671,10 +429,12 @@ export const INITIAL_API_CONNECTORS: ApiConnector[] = [
     capability: "Read & Write (Bi-directional)",
     authType: "OAuth 2.0",
     connected: false,
-    accountLabel: "Not connected (1 of 3 locations claimed manually)",
+    hasCredentials: false,
+    credentialSource: "none",
+    accountLabel: "Not configured",
     lastPulled: "Never",
     directoriesCovered: ["Apple Maps", "Siri Local Search", "Apple Wallet Place Card"],
-    locationsMatched: 1,
+    locationsMatched: 0,
     endpointDoc: "api.businessconnect.apple.com/v1/locations",
   },
   {
@@ -683,11 +443,13 @@ export const INITIAL_API_CONNECTORS: ApiConnector[] = [
     provider: "Microsoft Bing Places",
     capability: "Auto-Import from Google",
     authType: "Google Sync",
-    connected: true,
-    accountLabel: "Linked to Google Business Profile OAuth",
-    lastPulled: "Today",
+    connected: false,
+    hasCredentials: false,
+    credentialSource: "none",
+    accountLabel: "Not configured",
+    lastPulled: "Never",
     directoriesCovered: ["Bing Places", "DuckDuckGo Maps", "Yahoo Local Feed"],
-    locationsMatched: 2,
+    locationsMatched: 0,
     endpointDoc: "bingplaces.com/Dashboard/GoogleImport",
   },
   {
@@ -696,11 +458,13 @@ export const INITIAL_API_CONNECTORS: ApiConnector[] = [
     provider: "Trustpilot Business",
     capability: "Read-Only (Pull Stats & NAP)",
     authType: "API Key",
-    connected: true,
-    accountLabel: "Domain: smartfonedoctor.com",
-    lastPulled: "3 hours ago",
+    connected: false,
+    hasCredentials: false,
+    credentialSource: "none",
+    accountLabel: "Not configured",
+    lastPulled: "Never",
     directoriesCovered: ["Trustpilot"],
-    locationsMatched: 3,
+    locationsMatched: 0,
     endpointDoc: "api.trustpilot.com/v1/business-units",
   },
   {
@@ -709,9 +473,11 @@ export const INITIAL_API_CONNECTORS: ApiConnector[] = [
     provider: "DataForSEO Business Data API",
     capability: "Automated Citation Audit",
     authType: "API Key",
-    connected: true,
-    accountLabel: "Scanner Active · Audits 30+ directories weekly",
-    lastPulled: "Yesterday",
+    connected: false,
+    hasCredentials: false,
+    credentialSource: "none",
+    accountLabel: "Not configured",
+    lastPulled: "Never",
     directoriesCovered: [
       "EZlocal",
       "YellowPages",
@@ -721,7 +487,7 @@ export const INITIAL_API_CONNECTORS: ApiConnector[] = [
       "Manta",
       "Superpages",
     ],
-    locationsMatched: 3,
+    locationsMatched: 0,
     endpointDoc: "api.dataforseo.com/v3/business_data/business_listings",
   },
 ];

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import {
   INITIAL_DIRECTORIES,
   INITIAL_API_CONNECTORS,
@@ -35,9 +35,21 @@ export {
   type ApiConnector,
 };
 
+export interface ListingsActionResult {
+  success: boolean;
+  needsApiKey?: boolean;
+  liveSynced?: boolean;
+  newReviewsAdded?: number;
+  message?: string;
+  error?: string;
+  connector?: ApiConnector;
+}
+
 interface ListingsContextValue {
   directories: DirectoryListing[];
   connectors: ApiConnector[];
+  isLoading: boolean;
+  refreshListings: () => Promise<void>;
   updateStoreEntry: (dirId: string, storeId: number, entry: StoreListingEntry) => void;
   addFromCatalog: (
     item: CatalogDirectoryItem,
@@ -45,39 +57,45 @@ interface ListingsContextValue {
     initialStatus?: ListingStatus
   ) => void;
   addCustomDirectory: (dir: DirectoryListing) => void;
-  pullFromApi: (connectorId: string) => void;
+  pullFromApi: (connectorId: string) => Promise<ListingsActionResult>;
   toggleConnector: (
     connectorId: string,
     accountLabel?: string,
     apiKey?: string,
     forceConnected?: boolean
-  ) => void;
-  auditAllNap: (storeId?: number) => void;
+  ) => Promise<ListingsActionResult>;
+  auditAllNap: (storeId?: number) => Promise<ListingsActionResult>;
 }
 
 const ListingsContext = createContext<ListingsContextValue | null>(null);
 
 export function ListingsProvider({ children }: { children: React.ReactNode }) {
-  const [directories, setDirectories] = useState<DirectoryListing[]>(INITIAL_DIRECTORIES);
-  const [connectors, setConnectors] = useState<ApiConnector[]>(INITIAL_API_CONNECTORS);
+  const [directories, setDirectories] = useState<DirectoryListing[]>([]);
+  const [connectors, setConnectors] = useState<ApiConnector[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const refreshListings = useCallback(async () => {
+    try {
+      const [dirsRes, connsRes] = await Promise.all([
+        getDirectoryListingsAction(),
+        getApiConnectorsAction(),
+      ]);
+      if (dirsRes.success) {
+        setDirectories(dirsRes.directories);
+      }
+      if (connsRes.success) {
+        setConnectors(connsRes.connectors);
+      }
+    } catch {
+      // Keep existing state on transient error
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    let active = true;
-    void Promise.all([getDirectoryListingsAction(), getApiConnectorsAction()])
-      .then(([dirsRes, connsRes]) => {
-        if (!active) return;
-        if (dirsRes.success && dirsRes.directories.length > 0) {
-          setDirectories(dirsRes.directories);
-        }
-        if (connsRes.success && connsRes.connectors.length > 0) {
-          setConnectors(connsRes.connectors);
-        }
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, []);
+    void refreshListings();
+  }, [refreshListings]);
 
   const updateStoreEntry = (dirId: string, storeId: number, entry: StoreListingEntry) => {
     let updatedDir: DirectoryListing | undefined;
@@ -103,6 +121,7 @@ export function ListingsProvider({ children }: { children: React.ReactNode }) {
     targetStoreIds: number[],
     initialStatus: ListingStatus = "Missing"
   ) => {
+    const nowLabel = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" });
     const existing = directories.find((d) => d.id === item.id);
     if (existing) {
       const updatedStores = { ...existing.stores };
@@ -113,10 +132,10 @@ export function ListingsProvider({ children }: { children: React.ReactNode }) {
             napMatch: initialStatus === "Synced" ? 100 : 0,
             rating: null,
             url: initialStatus === "Synced" ? item.claimPortalUrl : "",
-            lastSynced: "Just added",
+            lastSynced: initialStatus === "Synced" ? `Added (${nowLabel})` : "Never",
             issue:
               initialStatus === "Missing"
-                ? `Added from catalog — ready to claim on ${item.name}`
+                ? `Added from catalog — claim ${item.name} profile`
                 : undefined,
           };
         }
@@ -127,41 +146,19 @@ export function ListingsProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const storesMap: Record<number, StoreListingEntry> = {
-      1: {
-        status: targetStoreIds.includes(1) ? initialStatus : "Missing",
-        napMatch: targetStoreIds.includes(1) && initialStatus === "Synced" ? 100 : 0,
+    const storesMap: Record<number, StoreListingEntry> = {};
+    [1, 2, 3].forEach((sid) => {
+      const active = targetStoreIds.includes(sid) && initialStatus === "Synced";
+      storesMap[sid] = {
+        status: targetStoreIds.includes(sid) ? initialStatus : "Missing",
+        napMatch: active ? 100 : 0,
         rating: null,
-        url: targetStoreIds.includes(1) && initialStatus === "Synced" ? item.claimPortalUrl : "",
-        lastSynced: "Just added",
+        url: active ? item.claimPortalUrl : "",
+        lastSynced: active ? `Added (${nowLabel})` : "Never",
         issue:
-          initialStatus === "Missing"
-            ? `Added from catalog — claim ${item.name} profile`
-            : undefined,
-      },
-      2: {
-        status: targetStoreIds.includes(2) ? initialStatus : "Missing",
-        napMatch: targetStoreIds.includes(2) && initialStatus === "Synced" ? 100 : 0,
-        rating: null,
-        url: targetStoreIds.includes(2) && initialStatus === "Synced" ? item.claimPortalUrl : "",
-        lastSynced: "Just added",
-        issue:
-          initialStatus === "Missing"
-            ? `Added from catalog — claim ${item.name} profile`
-            : undefined,
-      },
-      3: {
-        status: targetStoreIds.includes(3) ? initialStatus : "Missing",
-        napMatch: targetStoreIds.includes(3) && initialStatus === "Synced" ? 100 : 0,
-        rating: null,
-        url: targetStoreIds.includes(3) && initialStatus === "Synced" ? item.claimPortalUrl : "",
-        lastSynced: "Just added",
-        issue:
-          initialStatus === "Missing"
-            ? `Added from catalog — claim ${item.name} profile`
-            : undefined,
-      },
-    };
+          !active ? `Added from catalog — claim ${item.name} profile` : undefined,
+      };
+    });
 
     const newDir: DirectoryListing = {
       id: item.id,
@@ -185,62 +182,29 @@ export function ListingsProvider({ children }: { children: React.ReactNode }) {
     void upsertDirectoryListingAction(dir);
   };
 
-  const pullFromApi = (connectorId: string) => {
-    setConnectors((prev) =>
-      prev.map((c) =>
-        c.id === connectorId
-          ? { ...c, connected: true, lastPulled: "Just now", locationsMatched: 3 }
-          : c
-      )
-    );
-
-    setDirectories((prevDirs) =>
-      prevDirs.map((d) => {
-        if (d.apiProviderId !== connectorId) return d;
-        const updatedStores: Record<number, StoreListingEntry> = {};
-        [1, 2, 3].forEach((sid) => {
-          const prev = d.stores[sid];
-          if (
-            connectorId === "google-gbp" ||
-            connectorId === "facebook-graph" ||
-            connectorId === "bing-sync" ||
-            connectorId === "apple-connect"
-          ) {
-            updatedStores[sid] = {
-              ...prev,
-              status: "Synced",
-              napMatch: 100,
-              url: prev.url || d.claimPortalUrl,
-              lastSynced: "Just now via API",
-              issue: undefined,
-            };
-          } else {
-            updatedStores[sid] = {
-              ...prev,
-              lastSynced: "Just now via API",
-            };
-          }
-        });
-        return { ...d, stores: updatedStores };
-      })
-    );
-
-    void triggerApiPullAction(connectorId)
-      .then(() => getDirectoryListingsAction())
-      .then((res) => {
-        if (res.success && res.directories.length > 0) {
-          setDirectories(res.directories);
-        }
-      })
-      .catch(() => {});
+  const pullFromApi = async (connectorId: string): Promise<ListingsActionResult> => {
+    const res = await triggerApiPullAction(connectorId);
+    await refreshListings();
+    return {
+      success: res.success,
+      needsApiKey: res.needsApiKey,
+      liveSynced: res.liveSynced,
+      newReviewsAdded: res.newReviewsAdded,
+      error: res.error,
+      warning: res.warningMessage,
+      connector: res.connector,
+      message: res.success
+        ? `Live API pull completed for ${res.connector?.name || connectorId} (${res.connector?.locationsMatched ?? 0} location(s) matched).`
+        : res.error,
+    } as ListingsActionResult;
   };
 
-  const toggleConnector = (
+  const toggleConnector = async (
     connectorId: string,
     accountLabel?: string,
     apiKey?: string,
     forceConnected?: boolean
-  ) => {
+  ): Promise<ListingsActionResult> => {
     const existing = connectors.find((c) => c.id === connectorId);
     const nextConnected =
       forceConnected !== undefined
@@ -249,44 +213,31 @@ export function ListingsProvider({ children }: { children: React.ReactNode }) {
         ? !existing.connected
         : true;
 
-    setConnectors((prev) =>
-      prev.map((c) => {
-        if (c.id !== connectorId) return c;
-        return {
-          ...c,
-          connected: nextConnected,
-          lastPulled: nextConnected ? "Just connected" : "Disconnected",
-          accountLabel:
-            accountLabel ||
-            (nextConnected ? c.accountLabel || "Connected via API Token" : "Not connected"),
-        };
-      })
-    );
-
-    void toggleConnectorStatusAction({
+    const res = await toggleConnectorStatusAction({
       id: connectorId,
       connected: nextConnected,
       accountLabel,
       apiKey,
     });
+
+    await refreshListings();
+
+    return {
+      success: Boolean(res.success),
+      needsApiKey: (res as { needsApiKey?: boolean }).needsApiKey,
+      error: res.error,
+      connector: res.connector,
+    };
   };
 
-  const auditAllNap = (storeId?: number) => {
-    setDirectories((prev) =>
-      prev.map((d) => {
-        const updatedStores = { ...d.stores };
-        [1, 2, 3].forEach((sid) => {
-          if (!storeId || storeId === sid) {
-            updatedStores[sid] = {
-              ...updatedStores[sid],
-              lastSynced: "Scanned just now",
-            };
-          }
-        });
-        return { ...d, stores: updatedStores };
-      })
-    );
-    void auditAllDirectoriesNapAction(storeId);
+  const auditAllNap = async (storeId?: number): Promise<ListingsActionResult> => {
+    const res = await auditAllDirectoriesNapAction(storeId);
+    await refreshListings();
+    return {
+      success: res.success,
+      message: res.message,
+      error: res.error,
+    };
   };
 
   return (
@@ -294,6 +245,8 @@ export function ListingsProvider({ children }: { children: React.ReactNode }) {
       value={{
         directories,
         connectors,
+        isLoading,
+        refreshListings,
         updateStoreEntry,
         addFromCatalog,
         addCustomDirectory,

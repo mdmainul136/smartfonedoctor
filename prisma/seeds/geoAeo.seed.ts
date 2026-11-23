@@ -103,7 +103,7 @@ const PROMPTS = [
     intent: "Walk-in screen repair",
     category: "Screen repair",
     expectedCitation: "SmartFoneDoctor 52nd St",
-    verifiedStatus: "Cited",
+    verifiedStatus: "Not Probed",
     storeId: 1,
   },
   {
@@ -111,7 +111,7 @@ const PROMPTS = [
     intent: "University & commuter repair",
     category: "Screen repair",
     expectedCitation: "SmartFoneDoctor University City",
-    verifiedStatus: "Cited",
+    verifiedStatus: "Not Probed",
     storeId: 2,
   },
   {
@@ -119,7 +119,7 @@ const PROMPTS = [
     intent: "Console micro-soldering",
     category: "Console HDMI",
     expectedCitation: "SmartFoneDoctor Flagship",
-    verifiedStatus: "Cited",
+    verifiedStatus: "Not Probed",
     storeId: 1,
   },
   {
@@ -127,7 +127,7 @@ const PROMPTS = [
     intent: "Battery price comparison",
     category: "Battery & port",
     expectedCitation: "SmartFoneDoctor Lancaster Express",
-    verifiedStatus: "Cited",
+    verifiedStatus: "Not Probed",
     storeId: 3,
   },
   {
@@ -135,7 +135,7 @@ const PROMPTS = [
     intent: "Saturday 7:00 PM close check",
     category: "Open hours",
     expectedCitation: "SmartFoneDoctor (All Locations)",
-    verifiedStatus: "Cited",
+    verifiedStatus: "Not Probed",
     storeId: 1,
   },
   {
@@ -143,15 +143,15 @@ const PROMPTS = [
     intent: "Express walk-in turnaround",
     category: "Battery & port",
     expectedCitation: "SmartFoneDoctor",
-    verifiedStatus: "Cited",
+    verifiedStatus: "Not Probed",
     storeId: 2,
   },
 ];
 
 export async function seedGeoAeo() {
-  console.log("🌱 [Seeder] Seeding AEO (Answer Engine) & GEO (Generative Engine) Data...");
+  console.log("🌱 [Seeder] Seeding AEO (Answer Engine) & GEO (Generative Engine) Data (non-destructive)...");
 
-  // 1. Seed Geo Neighborhoods
+  // 1. Seed Geo Neighborhoods (create only if missing so admin edits persist)
   for (const n of NEIGHBORHOODS) {
     const existing = await prisma.geoNeighborhood.findFirst({
       where: { name: n.name, storeId: n.storeId },
@@ -159,16 +159,10 @@ export async function seedGeoAeo() {
     if (!existing) {
       await prisma.geoNeighborhood.create({ data: n });
       console.log(`  ✓ Created GEO Neighborhood: "${n.name}" [${n.type}]`);
-    } else {
-      await prisma.geoNeighborhood.update({
-        where: { id: existing.id },
-        data: n,
-      });
-      console.log(`  ✓ Updated GEO Neighborhood: "${n.name}"`);
     }
   }
 
-  // 2. Seed AEO Brand Truth Guardrails
+  // 2. Seed AEO Brand Truth Guardrails (create only if missing)
   for (const g of GUARDRAILS) {
     const existing = await prisma.aeoBrandGuardrail.findFirst({
       where: { topic: g.topic },
@@ -176,16 +170,10 @@ export async function seedGeoAeo() {
     if (!existing) {
       await prisma.aeoBrandGuardrail.create({ data: g });
       console.log(`  ✓ Created AEO Guardrail: "${g.topic}" (${g.status})`);
-    } else {
-      await prisma.aeoBrandGuardrail.update({
-        where: { id: existing.id },
-        data: g,
-      });
-      console.log(`  ✓ Updated AEO Guardrail: "${g.topic}"`);
     }
   }
 
-  // 3. Seed AEO Simulated Prompts
+  // 3. Seed AEO Prompts cleanly as "Not Probed" and reset legacy unprobed mock "Cited" status
   for (const p of PROMPTS) {
     const existing = await prisma.aeoSimulatedPrompt.findFirst({
       where: { queryTemplate: p.queryTemplate },
@@ -193,33 +181,22 @@ export async function seedGeoAeo() {
     if (!existing) {
       await prisma.aeoSimulatedPrompt.create({ data: p });
       console.log(`  ✓ Created AEO Prompt: "${p.queryTemplate.slice(0, 45)}..."`);
-    } else {
+    } else if (
+      existing.verifiedStatus === "Cited" &&
+      !existing.expectedCitation?.includes("Live")
+    ) {
       await prisma.aeoSimulatedPrompt.update({
         where: { id: existing.id },
-        data: p,
+        data: { verifiedStatus: "Not Probed" },
       });
-      console.log(`  ✓ Updated AEO Prompt: "${p.queryTemplate.slice(0, 45)}..."`);
+      console.log(`  ✓ Reset unprobed prompt status: "${p.queryTemplate.slice(0, 45)}..."`);
     }
   }
 
-  // 4. Seed Knowledge Graph Entity (only include real verified external IDs; avoid placeholders)
+  // 4. Seed Knowledge Graph Entity only if missing (preserve admin edits)
   await prisma.knowledgeGraphEntity.upsert({
     where: { id: "sfd_knowledge_entity" },
-    update: {
-      entityName: "SmartFoneDoctor",
-      legalName: "SmartFoneDoctor LLC",
-      entityType: "LocalBusiness",
-      wikidataId: null,
-      googleKnowledgeGraphId: null,
-      sameAsUrls: [
-        "https://maps.google.com/?cid=15243892090",
-        "https://www.yelp.com/biz/smart-fone-doctor-philadelphia",
-        "https://www.bbb.org/us/pa/philadelphia/profile/cell-phone-repair/smartfonedoctor",
-        "https://facebook.com/smartfonedoctorphilly",
-      ],
-      primaryTopic: "Consumer Electronics Repair Service",
-      jurisdiction: "Philadelphia, Pennsylvania, United States",
-    },
+    update: {},
     create: {
       id: "sfd_knowledge_entity",
       entityName: "SmartFoneDoctor",
@@ -237,9 +214,9 @@ export async function seedGeoAeo() {
       jurisdiction: "Philadelphia, Pennsylvania, United States",
     },
   });
-  console.log(`  ✓ Synced Knowledge Graph Entity (clean sameAs links, no placeholder IDs)`);
+  console.log(`  ✓ Ensured Knowledge Graph Entity exists`);
 
-  console.log("✅ [Seeder] AEO & GEO seeded successfully.");
+  console.log("✅ [Seeder] AEO & GEO synced safely.");
 }
 
 // Allow independent CLI execution: npx tsx prisma/seeds/geoAeo.seed.ts

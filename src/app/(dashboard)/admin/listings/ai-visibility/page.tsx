@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback, Fragment } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useStoreContext } from "@/lib/storeContext";
 import { useListings, CATALOG_DIRECTORIES } from "@/lib/listingsContext";
@@ -11,12 +11,17 @@ import {
   getAeoBrandGuardrailsAction,
   upsertAeoBrandGuardrailAction,
   deleteAeoBrandGuardrailAction,
+  getAeoSimulatedPromptsAction,
+  upsertAeoSimulatedPromptAction,
+  deleteAeoSimulatedPromptAction,
   getKnowledgeGraphEntityAction,
   updateKnowledgeGraphEntityAction,
   probeLiveAiVisibilityAction,
-  LiveAiProbeResult,
+  runLiveVisibilityAuditAction,
+  type LiveAiProbeResult,
+  type LiveVisibilityAuditResult,
 } from "@/actions/geoAeo";
-import { getGmbPostsAction, GmbPostItem } from "@/actions/localSeo";
+import { getGmbPostsAction, type GmbPostItem } from "@/actions/localSeo";
 import {
   RefreshCw,
   Check,
@@ -24,18 +29,11 @@ import {
   X,
   Plus,
   Sparkles,
-  ChevronDown,
-  ArrowRight,
   CheckCircle2,
   AlertCircle,
   Trash2,
-  Send,
   ExternalLink,
-  Layers,
-  MessageSquare,
-  Globe,
-  Database,
-  Sliders,
+  AlertTriangle,
 } from "lucide-react";
 
 type AiTab = "overview" | "neighborhoods" | "schema-crawlers" | "guardrails";
@@ -49,71 +47,8 @@ interface GeoNeighborhood {
   radius: string;
   zipCodes: string[];
   keyLandmarks: string[];
-  status: "Active" | "Indexed";
+  status: string;
 }
-
-const INITIAL_NEIGHBORHOODS: GeoNeighborhood[] = [
-  {
-    id: "geo-1",
-    storeId: 1,
-    name: "52nd St Commercial Corridor",
-    type: "Commercial Corridor",
-    radius: "2.5 mi",
-    zipCodes: ["19139", "19143"],
-    keyLandmarks: ["52nd St Market-Frankford El Station", "Malcolm X Park", "Cobbs Creek Parkway"],
-    status: "Indexed",
-  },
-  {
-    id: "geo-2",
-    storeId: 1,
-    name: "Cobbs Creek & Cedar Park",
-    type: "Neighborhood",
-    radius: "2.0 mi",
-    zipCodes: ["19139", "19143"],
-    keyLandmarks: ["Baltimore Ave", "Cedar Park Commercials"],
-    status: "Active",
-  },
-  {
-    id: "geo-3",
-    storeId: 2,
-    name: "University City & Drexel University",
-    type: "Campus",
-    radius: "2.0 mi",
-    zipCodes: ["19104"],
-    keyLandmarks: ["Drexel Main Building", "Drexel Rec Center", "30th St Station Corridor"],
-    status: "Indexed",
-  },
-  {
-    id: "geo-4",
-    storeId: 2,
-    name: "University of Pennsylvania (UPenn)",
-    type: "Campus",
-    radius: "2.0 mi",
-    zipCodes: ["19104"],
-    keyLandmarks: ["Franklin Field", "Penn Bookstore", "Locust Walk"],
-    status: "Indexed",
-  },
-  {
-    id: "geo-5",
-    storeId: 3,
-    name: "West Powelton & Lancaster Ave",
-    type: "Transit Hub",
-    radius: "2.0 mi",
-    zipCodes: ["19104", "19131"],
-    keyLandmarks: ["SEPTA Route 10 Trolley", "Lancaster Ave Commercial Strip"],
-    status: "Indexed",
-  },
-  {
-    id: "geo-6",
-    storeId: 3,
-    name: "Penn Presbyterian Medical Center",
-    type: "Neighborhood",
-    radius: "1.5 mi",
-    zipCodes: ["19104"],
-    keyLandmarks: ["Penn Presbyterian Hospital", "Market St West"],
-    status: "Active",
-  },
-];
 
 interface BrandTruthGuardrail {
   id: string;
@@ -121,101 +56,18 @@ interface BrandTruthGuardrail {
   claim: string;
   canonicalAnswer: string;
   sourcesVerified: string[];
-  status: "Verified on Site" | "Published to llms.txt";
+  status: string;
 }
 
-const INITIAL_GUARDRAILS: BrandTruthGuardrail[] = [
-  {
-    id: "g1",
-    topic: "Walk-in Turnaround",
-    claim: "Are repairs walk-in or is appointment required?",
-    canonicalAnswer: "All 3 locations accept walk-ins with no appointment required. iPhone & Samsung screen repairs take 25–30 minutes.",
-    sourcesVerified: ["Google Business Profile", "Website Header", "llms.txt"],
-    status: "Published to llms.txt",
-  },
-  {
-    id: "g2",
-    topic: "Repair Warranty",
-    claim: "What warranty covers repairs?",
-    canonicalAnswer: "All repairs include a standard 90-day parts and labor warranty valid across all 3 Philadelphia stores.",
-    sourcesVerified: ["Service Agreement", "Customer Receipt QR", "llms.txt"],
-    status: "Published to llms.txt",
-  },
-  {
-    id: "g3",
-    topic: "Parts Quality",
-    claim: "Are replacement screens OEM-grade?",
-    canonicalAnswer: "Smart Fone Doctor uses OEM-spec OLED and premium LCD displays with TrueTone and multi-touch calibration.",
-    sourcesVerified: ["Inventory Specs", "Website Service Pages"],
-    status: "Verified on Site",
-  },
-  {
-    id: "g4",
-    topic: "Console HDMI Micro-soldering",
-    claim: "Can PS5 & Xbox HDMI ports be fixed same-day?",
-    canonicalAnswer: "Yes, in-house micro-soldering bench technicians repair PS5, Xbox Series X, and Switch HDMI ports same-day.",
-    sourcesVerified: ["Service Catalog", "Yelp Services", "llms.txt"],
-    status: "Published to llms.txt",
-  },
-  {
-    id: "g5",
-    topic: "Operating Hours & Saturday",
-    claim: "Is the repair shop open on weekends?",
-    canonicalAnswer: "Open Monday through Saturday from 10:00 AM to 7:00 PM. Closed Sunday.",
-    sourcesVerified: ["GBP", "Apple Business", "Bing Places"],
-    status: "Published to llms.txt",
-  },
-];
-
-interface SimulatedPrompt {
+interface TrackedPrompt {
   id: string;
   queryTemplate: string;
   intent: string;
-  category: "Screen repair" | "Console HDMI" | "Battery & port" | "Open hours";
-  storeId?: number;
+  category: string;
+  expectedCitation: string;
+  verifiedStatus: string;
+  storeId?: number | null;
 }
-
-const INITIAL_PROMPTS: SimulatedPrompt[] = [
-  {
-    id: "p1",
-    queryTemplate: "Best same-day iPhone 15 Pro screen repair near {landmark}",
-    intent: "Walk-in screen repair",
-    category: "Screen repair",
-  },
-  {
-    id: "p2",
-    queryTemplate: "Walk-in cell phone & MacBook repair near {neighborhood}",
-    intent: "University & commuter repair",
-    category: "Screen repair",
-  },
-  {
-    id: "p3",
-    queryTemplate: "Fast PS5 & Xbox HDMI port repair near {street}",
-    intent: "Console micro-soldering",
-    category: "Console HDMI",
-  },
-  {
-    id: "p4",
-    queryTemplate:
-      "Affordable Samsung Galaxy S24 battery replacement in Philadelphia {zip}",
-    intent: "Battery price comparison",
-    category: "Battery & port",
-  },
-  {
-    id: "p5",
-    queryTemplate:
-      "Phone repair shop open Saturday evening near {neighborhood}",
-    intent: "Saturday 7:00 PM close check",
-    category: "Open hours",
-  },
-  {
-    id: "p6",
-    queryTemplate:
-      "30-minute iPad & USB-C charging port repair without appointment in {neighborhood}",
-    intent: "Express walk-in turnaround",
-    category: "Battery & port",
-  },
-];
 
 const STORE_GEO_CONTEXT: Record<
   number,
@@ -241,57 +93,56 @@ const STORE_GEO_CONTEXT: Record<
   },
 };
 
+const CORE_AI_BOTS = [
+  "GPTBot",
+  "OAI-SearchBot",
+  "PerplexityBot",
+  "ClaudeBot",
+  "Google-Extended",
+  "Applebot-Extended",
+];
+
 export default function AiVisibilityPage() {
-  const { stores, selectedStoreId, selectedStore, isAllStores } =
-    useStoreContext();
-  const { directories, updateStoreEntry, pullFromApi } = useListings();
+  const { stores, selectedStoreId, selectedStore, isAllStores } = useStoreContext();
+  const { directories, connectors, isLoading: listingsLoading } = useListings();
   const storeShortName = selectedStore.name.replace("SmartFoneDoctor - ", "");
 
   const [activeTab, setActiveTab] = useState<AiTab>("overview");
-  const [activeArtifact, setActiveArtifact] =
-    useState<StudioArtifact>("jsonld");
+  const [activeArtifact, setActiveArtifact] = useState<StudioArtifact>("jsonld");
   const [promptCategory, setPromptCategory] = useState<string>("All");
   const [isScanning, setIsScanning] = useState(false);
-  const [schemaDeployed, setSchemaDeployed] = useState(false);
-  const [entityBioSynced, setEntityBioSynced] = useState<
-    Record<number, boolean>
-  >({
-    1: true,
-    2: false,
-    3: false,
-  });
-  const [prompts, setPrompts] = useState<SimulatedPrompt[]>(INITIAL_PROMPTS);
-  const [newPromptText, setNewPromptText] = useState("");
-  const [expandedPromptId, setExpandedPromptId] = useState<string | null>("p1");
-  const [noticeBanner, setNoticeBanner] = useState<string | null>(null);
+  const [noticeBanner, setNoticeBanner] = useState<{
+    tone: "success" | "warning" | "error";
+    text: string;
+  } | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  // ── Broad GEO & AEO State (PostgreSQL DB-First) ────────────────
-  const [neighborhoods, setNeighborhoods] =
-    useState<GeoNeighborhood[]>(INITIAL_NEIGHBORHOODS);
-  const [guardrails, setGuardrails] =
-    useState<BrandTruthGuardrail[]>(INITIAL_GUARDRAILS);
+  // Live audited site & DB telemetry
+  const [audit, setAudit] = useState<LiveVisibilityAuditResult | null>(null);
+  const [isLoadingDb, setIsLoadingDb] = useState(true);
+
+  // Real PostgreSQL GEO & AEO state
+  const [neighborhoods, setNeighborhoods] = useState<GeoNeighborhood[]>([]);
+  const [guardrails, setGuardrails] = useState<BrandTruthGuardrail[]>([]);
+  const [prompts, setPrompts] = useState<TrackedPrompt[]>([]);
   const [gmbPosts, setGmbPosts] = useState<GmbPostItem[]>([]);
-  const [kgEntity, setKgEntity] = useState<{
-    wikidataId?: string | null;
-    googleKnowledgeGraphId?: string | null;
-    sameAsUrls?: string[];
-    primaryTopic?: string;
-  } | null>(null);
+  const [newPromptText, setNewPromptText] = useState("");
+  const [isAddingPrompt, setIsAddingPrompt] = useState(false);
 
   // Live AI Probe state
   const [probeQuery, setProbeQuery] = useState(
-    "Best same-day iPhone 15 Pro screen repair near 52nd St"
+    "Best same-day iPhone 15 Pro screen repair near 52nd St Philadelphia"
   );
   const [probeResult, setProbeResult] = useState<LiveAiProbeResult | null>(null);
   const [isProbing, setIsProbing] = useState(false);
 
   // Knowledge Graph Editor state
-  const [kgWikidata, setKgWikidata] = useState("Q115862892");
-  const [kgGoogleId, setKgGoogleId] = useState("kg:/g/11s0_smartfonedoctor");
+  const [kgWikidata, setKgWikidata] = useState("");
+  const [kgGoogleId, setKgGoogleId] = useState("");
   const [kgSameAsText, setKgSameAsText] = useState("");
   const [isSavingKg, setIsSavingKg] = useState(false);
 
+  // Neighborhood Add Form
   const [showNeighborForm, setShowNeighborForm] = useState(false);
   const [newNeighborName, setNewNeighborName] = useState("");
   const [newNeighborType, setNewNeighborType] =
@@ -300,60 +151,305 @@ export default function AiVisibilityPage() {
   const [newNeighborZips, setNewNeighborZips] = useState("");
   const [newNeighborLandmarks, setNewNeighborLandmarks] = useState("");
 
-  // Load live GEO, AEO, GMB Posts, and Knowledge Graph from PostgreSQL
+  // Guardrail Add Form
+  const [showGuardForm, setShowGuardForm] = useState(false);
+  const [newGuardTopic, setNewGuardTopic] = useState("");
+  const [newGuardClaim, setNewGuardClaim] = useState("");
+  const [newGuardAnswer, setNewGuardAnswer] = useState("");
+  const [newGuardSources, setNewGuardSources] = useState("Website, llms.txt");
+
+  const runLiveAudit = useCallback(async (showBanner: boolean) => {
+    setIsScanning(true);
+    const res = await runLiveVisibilityAuditAction();
+    setAudit(res);
+    setIsScanning(false);
+
+    if (showBanner) {
+      if (!res.success) {
+        setNoticeBanner({
+          tone: "error",
+          text: res.error || "Live site audit failed.",
+        });
+      } else {
+        const techPassed = [
+          res.robots.ok && res.robots.allowedBots.length >= 4,
+          res.sitemap.ok && res.sitemap.urlCount > 0,
+          res.llmsTxt.ok,
+          res.llmsFullTxt.ok,
+          res.schema.ok,
+        ].filter(Boolean).length;
+        setNoticeBanner({
+          tone: techPassed >= 4 ? "success" : "warning",
+          text: `Live audit complete (${new Date(res.checkedAt).toLocaleTimeString()}): ${techPassed}/5 site crawler & schema checks passed · ${res.sitemap.urlCount} sitemap URLs detected.`,
+        });
+      }
+    }
+  }, []);
+
   useEffect(() => {
-    async function loadDbData() {
-      const [neighRes, guardRes, gmbRes, kgRes] = await Promise.all([
+    async function loadAllData() {
+      const [neighRes, guardRes, promptRes, gmbRes, kgRes] = await Promise.all([
         getGeoNeighborhoodsAction(),
         getAeoBrandGuardrailsAction(),
+        getAeoSimulatedPromptsAction(),
         getGmbPostsAction(),
         getKnowledgeGraphEntityAction(),
       ]);
-      if (neighRes.success && neighRes.neighborhoods && neighRes.neighborhoods.length > 0) {
+
+      if (neighRes.success && neighRes.neighborhoods) {
         setNeighborhoods(neighRes.neighborhoods as GeoNeighborhood[]);
       }
-      if (guardRes.success && guardRes.guardrails && guardRes.guardrails.length > 0) {
+      if (guardRes.success && guardRes.guardrails) {
         setGuardrails(guardRes.guardrails as BrandTruthGuardrail[]);
+      }
+      if (promptRes.success && promptRes.prompts) {
+        setPrompts(promptRes.prompts as TrackedPrompt[]);
       }
       if (gmbRes.success && gmbRes.posts) {
         setGmbPosts(gmbRes.posts);
       }
       if (kgRes.success && kgRes.entity) {
-        setKgEntity(kgRes.entity);
-        setKgWikidata(kgRes.entity.wikidataId || "Q115862892");
-        setKgGoogleId(kgRes.entity.googleKnowledgeGraphId || "kg:/g/11s0_smartfonedoctor");
+        setKgWikidata(kgRes.entity.wikidataId || "");
+        setKgGoogleId(kgRes.entity.googleKnowledgeGraphId || "");
         setKgSameAsText((kgRes.entity.sameAsUrls || []).join("\n"));
       }
+      setIsLoadingDb(false);
     }
-    loadDbData();
-  }, []);
 
-  const handleRunLiveProbe = async (customQ?: string) => {
+    void loadAllData();
+    void runLiveAudit(false);
+  }, [runLiveAudit]);
+
+  const connectedApiCount = useMemo(
+    () => connectors.filter((c) => c.connected).length,
+    [connectors]
+  );
+
+  const gbpConnected = useMemo(
+    () => Boolean(connectors.find((c) => c.id === "google-gbp")?.connected),
+    [connectors]
+  );
+
+  const listingMetrics = useMemo(() => {
+    const entries = isAllStores
+      ? directories.flatMap((d) => stores.map((st) => d.stores[st.id]))
+      : directories.map((d) => d.stores[selectedStoreId]);
+
+    const total = entries.length;
+    const synced = entries.filter((e) => e?.status === "Synced").length;
+    const mismatch = entries.filter((e) => e?.status === "Mismatch").length;
+    const missing = entries.filter((e) => !e || e.status === "Missing").length;
+    return { total, synced, mismatch, missing };
+  }, [directories, stores, isAllStores, selectedStoreId]);
+
+  const getDirScore = useCallback(
+    (dirId: string, storeId?: number) => {
+      const dir = directories.find((d) => d.id === dirId);
+      if (!dir) return { score: 0, status: "Missing" as const };
+      if (storeId) {
+        const entry = dir.stores[storeId];
+        return { score: entry?.napMatch ?? 0, status: entry?.status ?? ("Missing" as const) };
+      }
+      const vals = stores.map((st) => dir.stores[st.id]?.napMatch ?? 0);
+      const avg = vals.length
+        ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length)
+        : 0;
+      const anySynced = stores.some((st) => dir.stores[st.id]?.status === "Synced");
+      return {
+        score: avg,
+        status: anySynced ? ("Synced" as const) : ("Missing" as const),
+      };
+    },
+    [directories, stores]
+  );
+
+  const techChecks = useMemo(() => {
+    const robotsOk = Boolean(audit?.robots.ok && audit.robots.allowedBots.length >= 4);
+    const sitemapOk = Boolean(audit?.sitemap.ok && audit.sitemap.urlCount > 10);
+    const llmsOk = Boolean(audit?.llmsTxt.ok && audit?.llmsFullTxt.ok);
+    const schemaOk = Boolean(
+      audit?.schema.ok &&
+        (audit.schema.types.includes("LocalBusiness") ||
+          audit.schema.types.includes("ElectronicsStore"))
+    );
+    const hasAiKey = Boolean(
+      audit?.aiProviders.geminiConfigured || audit?.aiProviders.openaiConfigured
+    );
+
+    const passedTechCount = [robotsOk, sitemapOk, llmsOk, audit?.llmsFullTxt.ok ?? false, schemaOk].filter(
+      Boolean
+    ).length;
+
+    return {
+      robotsOk,
+      sitemapOk,
+      llmsOk,
+      schemaOk,
+      hasAiKey,
+      passedTechCount,
+      totalTechCount: 5,
+    };
+  }, [audit]);
+
+  const checklistItems = useMemo(() => {
+    return [
+      {
+        id: "robots",
+        title: "AI crawler permissions in /robots.txt",
+        detail: audit
+          ? audit.robots.ok
+            ? `HTTP ${audit.robots.status} · ${audit.robots.allowedBots.length}/${CORE_AI_BOTS.length} bots allowed`
+            : `HTTP ${audit.robots.status || "Failed"} fetching /robots.txt`
+          : "Checking live /robots.txt…",
+        engine: "All AI Crawlers",
+        badge: audit?.robots.ok ? `HTTP ${audit.robots.status}` : "Unverified",
+        passed: techChecks.robotsOk,
+        actionLabel: "View robots.txt",
+        onClick: () => {
+          setActiveArtifact("robots");
+          setActiveTab("schema-crawlers");
+        },
+      },
+      {
+        id: "llms",
+        title: "Markdown AI manifests (/llms.txt & /llms-full.txt)",
+        detail: audit
+          ? audit.llmsTxt.ok
+            ? `/llms.txt ${audit.llmsTxt.bytes.toLocaleString()} B · /llms-full.txt ${audit.llmsFullTxt.bytes.toLocaleString()} B`
+            : "Failed to fetch live /llms.txt"
+          : "Checking live /llms.txt…",
+        engine: "LLMs & Agents",
+        badge: audit?.llmsTxt.ok ? `HTTP ${audit.llmsTxt.status}` : "Unverified",
+        passed: techChecks.llmsOk,
+        actionLabel: "View /llms.txt",
+        onClick: () => {
+          setActiveArtifact("llms");
+          setActiveTab("schema-crawlers");
+        },
+      },
+      {
+        id: "sitemap",
+        title: "Dynamic XML sitemap coverage (/sitemap.xml)",
+        detail: audit
+          ? audit.sitemap.ok
+            ? `${audit.sitemap.urlCount} live URLs indexed from PostgreSQL`
+            : `HTTP ${audit.sitemap.status || "Error"} fetching sitemap`
+          : "Checking live /sitemap.xml…",
+        engine: "Search & RAG",
+        badge: audit ? `${audit.sitemap.urlCount} URLs` : "Checking…",
+        passed: techChecks.sitemapOk,
+        href: "/sitemap.xml",
+        actionLabel: "Open sitemap",
+      },
+      {
+        id: "schema",
+        title: "Structured JSON-LD LocalBusiness / ElectronicsStore",
+        detail: audit
+          ? audit.schema.ok
+            ? `Detected ${audit.schema.types.join(", ")}`
+            : "No structured JSON-LD detected on live pages"
+          : "Inspecting live JSON-LD…",
+        engine: "Google & Rich Results",
+        badge: `${audit?.schema.types.length ?? 0} types`,
+        passed: techChecks.schemaOk,
+        actionLabel: "Inspect JSON-LD",
+        onClick: () => {
+          setActiveArtifact("jsonld");
+          setActiveTab("schema-crawlers");
+        },
+      },
+      {
+        id: "apis",
+        title: "External directory API credentials & citation sync",
+        detail: `${connectedApiCount}/${connectors.length} providers configured · ${listingMetrics.synced}/${listingMetrics.total} store citations synced`,
+        engine: "Directories",
+        badge:
+          connectedApiCount > 0
+            ? `${connectedApiCount} connected`
+            : "0 configured",
+        passed: connectedApiCount > 0 && listingMetrics.synced > 0,
+        href: "/admin/listings/api-sync",
+        actionLabel: connectedApiCount > 0 ? "Manage APIs" : "Connect APIs",
+      },
+      {
+        id: "ai-key",
+        title: "Live AI citation probe API key (Gemini or OpenAI)",
+        detail: techChecks.hasAiKey
+          ? `Configured (${
+              audit?.aiProviders.geminiConfigured ? "Gemini " : ""
+            }${audit?.aiProviders.openaiConfigured ? "OpenAI" : ""})`
+          : "Add GEMINI_API_KEY or OPENAI_API_KEY in Settings for live prompt testing",
+        engine: "Gemini / ChatGPT",
+        badge: techChecks.hasAiKey ? "API Ready" : "Key Needed",
+        passed: techChecks.hasAiKey,
+        href: "/admin/settings",
+        actionLabel: techChecks.hasAiKey ? "Settings" : "Add API Key",
+      },
+    ];
+  }, [audit, techChecks, connectedApiCount, connectors.length, listingMetrics]);
+
+  const passedChecklistCount = checklistItems.filter((c) => c.passed).length;
+
+  const handleRunLiveProbe = async (customQ?: string, promptRecordId?: string) => {
     const q = customQ || probeQuery;
     if (!q.trim()) return;
     setIsProbing(true);
     const targetStoreId = isAllStores ? 1 : selectedStoreId;
-    const res = await probeLiveAiVisibilityAction(q.trim(), targetStoreId);
+    const res = await probeLiveAiVisibilityAction(q.trim(), targetStoreId, promptRecordId);
+    setProbeResult(res);
+
+    if (res.success && promptRecordId) {
+      setPrompts((prev) =>
+        prev.map((p) =>
+          p.id === promptRecordId
+            ? {
+                ...p,
+                verifiedStatus: res.cited ? "Cited" : "Not Cited",
+                expectedCitation: `Live API (${res.engine})`,
+              }
+            : p
+        )
+      );
+    }
+
     if (res.success) {
-      setProbeResult(res);
-      setNoticeBanner(`Live AI Probe completed: SmartFoneDoctor cited as ${res.citationRank}.`);
+      setNoticeBanner({
+        tone: res.cited ? "success" : "warning",
+        text: `Live probe (${res.engine}): SmartFoneDoctor ${
+          res.cited ? "was CITED in response." : "was NOT cited in this unprimed query."
+        }`,
+      });
     } else {
-      setNoticeBanner(res.error || "Live probe evaluation failed.");
+      setNoticeBanner({
+        tone: res.needsApiKey ? "warning" : "error",
+        text: res.error || "Live AI probe failed.",
+      });
     }
     setIsProbing(false);
   };
 
   const handleSaveKgEntity = async () => {
     setIsSavingKg(true);
-    const urls = kgSameAsText.split("\n").map((s) => s.trim()).filter(Boolean);
+    const urls = kgSameAsText
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean);
     const res = await updateKnowledgeGraphEntityAction({
       wikidataId: kgWikidata.trim(),
       googleKnowledgeGraphId: kgGoogleId.trim(),
       sameAsUrls: urls,
     });
-    if (res.success && res.entity) {
-      setKgEntity(res.entity);
-      setNoticeBanner("Updated Knowledge Graph identifiers (Wikidata & Google KG).");
+    if (res.success) {
+      setNoticeBanner({
+        tone: "success",
+        text: "Updated Knowledge Graph identifiers & sameAs links in PostgreSQL.",
+      });
+      void runLiveAudit(false);
+    } else {
+      setNoticeBanner({
+        tone: "error",
+        text: res.error || "Failed to update Knowledge Graph entity.",
+      });
     }
     setIsSavingKg(false);
   };
@@ -361,8 +457,14 @@ export default function AiVisibilityPage() {
   const handleAddNeighborhood = async () => {
     if (!newNeighborName.trim()) return;
     const storeTargetId = isAllStores ? 1 : selectedStoreId;
-    const zips = newNeighborZips.split(",").map((s) => s.trim()).filter(Boolean);
-    const landmarks = newNeighborLandmarks.split(",").map((s) => s.trim()).filter(Boolean);
+    const zips = newNeighborZips
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const landmarks = newNeighborLandmarks
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
 
     const res = await upsertGeoNeighborhoodAction({
       storeId: storeTargetId,
@@ -380,7 +482,10 @@ export default function AiVisibilityPage() {
       setNewNeighborZips("");
       setNewNeighborLandmarks("");
       setShowNeighborForm(false);
-      setNoticeBanner(`Saved ${res.neighborhood.name} to geo-fencing targets.`);
+      setNoticeBanner({
+        tone: "success",
+        text: `Saved "${res.neighborhood.name}" to PostgreSQL geo-targets.`,
+      });
     }
   };
 
@@ -388,18 +493,18 @@ export default function AiVisibilityPage() {
     const target = neighborhoods.find((n) => n.id === id);
     setNeighborhoods((prev) => prev.filter((n) => n.id !== id));
     await deleteGeoNeighborhoodAction(id);
-    setNoticeBanner(`Removed ${target?.name ?? "geo-target"} from active targets.`);
+    setNoticeBanner({
+      tone: "warning",
+      text: `Removed "${target?.name ?? "geo-target"}" from active targets.`,
+    });
   };
-
-  const [showGuardForm, setShowGuardForm] = useState(false);
-  const [newGuardTopic, setNewGuardTopic] = useState("");
-  const [newGuardClaim, setNewGuardClaim] = useState("");
-  const [newGuardAnswer, setNewGuardAnswer] = useState("");
-  const [newGuardSources, setNewGuardSources] = useState("Website, llms.txt");
 
   const handleAddGuardrail = async () => {
     if (!newGuardTopic.trim() || !newGuardClaim.trim() || !newGuardAnswer.trim()) return;
-    const sources = newGuardSources.split(",").map((s) => s.trim()).filter(Boolean);
+    const sources = newGuardSources
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
 
     const res = await upsertAeoBrandGuardrailAction({
       topic: newGuardTopic.trim(),
@@ -415,7 +520,10 @@ export default function AiVisibilityPage() {
       setNewGuardClaim("");
       setNewGuardAnswer("");
       setShowGuardForm(false);
-      setNoticeBanner(`Published truth guardrail "${res.guardrail.topic}" to AI knowledge graph.`);
+      setNoticeBanner({
+        tone: "success",
+        text: `Published truth guardrail "${res.guardrail.topic}" to PostgreSQL & /llms.txt.`,
+      });
     }
   };
 
@@ -423,277 +531,36 @@ export default function AiVisibilityPage() {
     const target = guardrails.find((g) => g.id === id);
     setGuardrails((prev) => prev.filter((g) => g.id !== id));
     await deleteAeoBrandGuardrailAction(id);
-    setNoticeBanner(`Removed guardrail "${target?.topic ?? "fact"}".`);
+    setNoticeBanner({
+      tone: "warning",
+      text: `Removed guardrail "${target?.topic ?? "fact"}".`,
+    });
   };
 
-  const getDirScore = useCallback((dirId: string, storeId?: number) => {
-    const dir = directories.find((d) => d.id === dirId);
-    if (!dir) return 0;
-    if (storeId) {
-      return dir.stores[storeId]?.napMatch ?? 0;
-    }
-    const vals = stores.map((st) => dir.stores[st.id]?.napMatch ?? 0);
-    return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
-  }, [directories, stores]);
-
-  const scores = useMemo(() => {
-    const scopeStoreId = isAllStores ? undefined : selectedStoreId;
-
-    const gmb = getDirScore("gmb", scopeStoreId);
-    const bing = getDirScore("bing", scopeStoreId);
-    const yelp = getDirScore("yelp", scopeStoreId);
-    const apple = getDirScore("apple", scopeStoreId);
-    const trustpilot = getDirScore("trustpilot", scopeStoreId);
-    const ezlocal = getDirScore("ezlocal", scopeStoreId);
-    const yp = getDirScore("yellowpages", scopeStoreId);
-    const nextdoor = getDirScore("nextdoor", scopeStoreId);
-
-    const schemaBonus = schemaDeployed ? 8 : 0;
-    const bioBonus = (
-      scopeStoreId
-        ? entityBioSynced[scopeStoreId]
-        : stores.every((s) => entityBioSynced[s.id])
-    )
-      ? 5
-      : 0;
-
-    const chatgpt = Math.min(
-      100,
-      Math.round(
-        bing * 0.45 + yelp * 0.3 + ezlocal * 0.15 + trustpilot * 0.1
-      ) + schemaBonus
-    );
-
-    const googleAi = Math.min(
-      100,
-      Math.round(gmb * 0.5 + yp * 0.2 + ezlocal * 0.15 + trustpilot * 0.15) +
-      bioBonus
-    );
-
-    const perplexity = Math.min(
-      100,
-      Math.round(
-        yelp * 0.35 + gmb * 0.3 + trustpilot * 0.2 + nextdoor * 0.15
-      ) + schemaBonus
-    );
-
-    const appleSiri = Math.min(
-      100,
-      Math.round(apple * 0.65 + yelp * 0.35) + bioBonus
-    );
-
-    const overall = Math.round(
-      (chatgpt + googleAi + perplexity + appleSiri) / 4
-    );
-
-    return { overall, chatgpt, googleAi, perplexity, appleSiri };
-  }, [
-    getDirScore,
-    stores,
-    isAllStores,
-    selectedStoreId,
-    schemaDeployed,
-    entityBioSynced,
-  ]);
-
-  const agentActions = useMemo(() => {
-    const targetStoreIds = isAllStores ? [1, 2, 3] : [selectedStoreId];
-    const list: {
-      id: string;
-      title: string;
-      targetEngine: string;
-      rootCause: string;
-      impactBadge: string;
-      status: "Pending" | "Completed";
-      actionLabel: string;
-      onExecute: () => void;
-    }[] = [];
-
-    const bingMissingStores = targetStoreIds.filter(
-      (sid) =>
-        directories.find((d) => d.id === "bing")?.stores[sid]?.status !==
-        "Synced"
-    );
-    const yelpDriftStores = targetStoreIds.filter(
-      (sid) =>
-        directories.find((d) => d.id === "yelp")?.stores[sid]?.status !==
-        "Synced"
-    );
-
-    if (bingMissingStores.length > 0 || yelpDriftStores.length > 0) {
-      list.push({
-        id: "fix-chatgpt-index",
-        title: "Sync Bing Places & fix Yelp Saturday closing hour",
-        targetEngine: "ChatGPT Search",
-        rootCause: "Bing unclaimed · Yelp shows 6:00 PM instead of 7:00 PM",
-        impactBadge: "+24 pts",
-        status: "Pending",
-        actionLabel: "Auto-fix",
-        onExecute: () => {
-          pullFromApi("bing-sync");
-          targetStoreIds.forEach((sid) => {
-            const yelpDir = directories.find((d) => d.id === "yelp");
-            if (yelpDir) {
-              updateStoreEntry("yelp", sid, {
-                ...yelpDir.stores[sid],
-                status: "Synced",
-                napMatch: 100,
-                lastSynced: "Fixed by AI agent",
-                issue: undefined,
-              });
-            }
-          });
-          setNoticeBanner(
-            "Synced Bing Places and aligned Yelp Saturday hours to 7:00 PM."
-          );
-        },
-      });
-    } else {
-      list.push({
-        id: "fix-chatgpt-index",
-        title: "Bing Places & Yelp hours aligned",
-        targetEngine: "ChatGPT Search",
-        rootCause: "100% NAP & 7:00 PM Saturday closing verified",
-        impactBadge: "+24 pts active",
-        status: "Completed",
-        actionLabel: "Synced",
-        onExecute: () => { },
-      });
-    }
-
-    const appleDriftStores = targetStoreIds.filter(
-      (sid) =>
-        directories.find((d) => d.id === "apple")?.stores[sid]?.status !==
-        "Synced"
-    );
-    if (appleDriftStores.length > 0) {
-      list.push({
-        id: "fix-apple-siri",
-        title: "Push store coordinates & phone to Apple Business Connect",
-        targetEngine: "Apple Siri & Maps",
-        rootCause: "Place card missing verified +1 (215) 598-2090 pin",
-        impactBadge: "+28 pts",
-        status: "Pending",
-        actionLabel: "Auto-fix",
-        onExecute: () => {
-          pullFromApi("apple-connect");
-          setNoticeBanner(
-            "Pushed canonical store coordinates and phone numbers to Apple Business Connect."
-          );
-        },
-      });
-    } else {
-      list.push({
-        id: "fix-apple-siri",
-        title: "Apple Business Connect place cards verified",
-        targetEngine: "Apple Siri & Maps",
-        rootCause: "iOS voice search & Apple Maps pins active",
-        impactBadge: "+28 pts active",
-        status: "Completed",
-        actionLabel: "Synced",
-        onExecute: () => { },
-      });
-    }
-
-    list.push({
-      id: "deploy-schema-llms",
-      title: "Publish RepairShop JSON-LD & /llms.txt knowledge graph",
-      targetEngine: "All AI Crawlers",
-      rootCause: schemaDeployed
-        ? "sameAs graph & /llms.txt active on site"
-        : "Links Google, Yelp, Bing & Trustpilot URLs in sameAs schema",
-      impactBadge: "+8 pts",
-      status: schemaDeployed ? "Completed" : "Pending",
-      actionLabel: schemaDeployed ? "View code" : "Deploy schema",
-      onExecute: () => {
-        setSchemaDeployed(true);
-        setActiveArtifact("jsonld");
-        setActiveTab("schema-crawlers");
-      },
-    });
-
-    const bioDone = isAllStores
-      ? stores.every((s) => entityBioSynced[s.id])
-      : !!entityBioSynced[selectedStoreId];
-    list.push({
-      id: "sync-entity-bio",
-      title: "Seed neighborhood & 30-min repair entities into bios",
-      targetEngine: "Gemini & Perplexity",
-      rootCause: bioDone
-        ? "UPenn, Drexel, 52nd St & PS5 HDMI entities synced"
-        : "Adds University City, UPenn, Drexel & 30-min OEM screen terms",
-      impactBadge: "+6 pts",
-      status: bioDone ? "Completed" : "Pending",
-      actionLabel: bioDone ? "View guardrails" : "Sync guardrails",
-      onExecute: () => {
-        setActiveTab("guardrails");
-      },
-    });
-
-    return list;
-  }, [
-    directories,
-    stores,
-    isAllStores,
-    selectedStoreId,
-    schemaDeployed,
-    entityBioSynced,
-    pullFromApi,
-    updateStoreEntry,
-  ]);
-
-  const pendingCount = agentActions.filter(
-    (a) => a.status === "Pending"
-  ).length;
-
-  const handleRunAllFixes = () => {
-    pullFromApi("bing-sync");
-    pullFromApi("apple-connect");
-    [1, 2, 3].forEach((sid) => {
-      const yelpDir = directories.find((d) => d.id === "yelp");
-      if (yelpDir) {
-        updateStoreEntry("yelp", sid, {
-          ...yelpDir.stores[sid],
-          status: "Synced",
-          napMatch: 100,
-          lastSynced: "Fixed by AI agent",
-          issue: undefined,
-        });
-      }
-    });
-    setSchemaDeployed(true);
-    setEntityBioSynced({ 1: true, 2: true, 3: true });
-    setNoticeBanner(
-      "All 4 autonomous GEO fixes applied. AI visibility score updated across all engines."
-    );
-  };
-
-  const handleRunScan = () => {
-    setIsScanning(true);
-    setTimeout(() => {
-      setIsScanning(false);
-      setNoticeBanner(
-        "Completed live citation check across ChatGPT Search, Google AI Overviews, Perplexity, and Apple Siri."
-      );
-    }, 600);
-  };
-
-  const handleAddPrompt = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveCustomPrompt = async () => {
     if (!newPromptText.trim()) return;
-    const newId = `custom-${Date.now()}`;
-    setPrompts((prev) => [
-      {
-        id: newId,
-        queryTemplate: newPromptText.trim(),
-        intent: "Custom prompt test",
-        category: "Screen repair",
-        storeId: selectedStoreId,
-      },
-      ...prev,
-    ]);
-    setExpandedPromptId(newId);
-    setNewPromptText("");
+    setIsAddingPrompt(true);
+    const res = await upsertAeoSimulatedPromptAction({
+      queryTemplate: newPromptText.trim(),
+      intent: "Custom buyer query",
+      category: promptCategory === "All" ? "Screen repair" : promptCategory,
+      verifiedStatus: "Not Probed",
+      storeId: isAllStores ? 1 : selectedStoreId,
+    });
+    if (res.success && res.prompt) {
+      setPrompts((prev) => [res.prompt as TrackedPrompt, ...prev]);
+      setNewPromptText("");
+      setNoticeBanner({
+        tone: "success",
+        text: "Saved search prompt to PostgreSQL for live citation tracking.",
+      });
+    }
+    setIsAddingPrompt(false);
+  };
+
+  const handleDeletePrompt = async (id: string) => {
+    setPrompts((prev) => prev.filter((p) => p.id !== id));
+    await deleteAeoSimulatedPromptAction(id);
   };
 
   const resolvedPrompts = useMemo(() => {
@@ -701,10 +568,8 @@ export default function AiVisibilityPage() {
       const effectiveStoreId = isAllStores
         ? p.storeId ?? ((index % 3) + 1)
         : p.storeId ?? selectedStoreId;
-      const geo =
-        STORE_GEO_CONTEXT[effectiveStoreId] ?? STORE_GEO_CONTEXT[1];
-      const storeObj =
-        stores.find((s) => s.id === effectiveStoreId) ?? stores[0];
+      const geo = STORE_GEO_CONTEXT[effectiveStoreId] ?? STORE_GEO_CONTEXT[1];
+      const storeObj = stores.find((s) => s.id === effectiveStoreId) ?? stores[0];
       const query = p.queryTemplate
         .replace("{landmark}", geo.landmark)
         .replace("{neighborhood}", geo.neighborhood)
@@ -715,7 +580,6 @@ export default function AiVisibilityPage() {
         ...p,
         effectiveStoreId,
         storeObj,
-        storeLabel: storeObj.name.replace("SmartFoneDoctor - ", ""),
         query,
       };
     });
@@ -726,10 +590,20 @@ export default function AiVisibilityPage() {
     return resolvedPrompts.filter((p) => p.category === promptCategory);
   }, [resolvedPrompts, promptCategory]);
 
-  const generatedJsonLd = useMemo(() => {
-    const sameAsUrls = directories
-      .map((d) => d.stores[selectedStoreId]?.url)
-      .filter(Boolean);
+  const unclaimedCatalogTargets = useMemo(() => {
+    return CATALOG_DIRECTORIES.filter(
+      (cat) => !directories.some((d) => d.id === cat.id)
+    ).slice(0, 3);
+  }, [directories]);
+
+  const fallbackJsonLd = useMemo(() => {
+    const sameAsUrls = [
+      ...directories.map((d) => d.stores[selectedStoreId]?.url).filter(Boolean),
+      ...kgSameAsText
+        .split("\n")
+        .map((s) => s.trim())
+        .filter(Boolean),
+    ];
     return JSON.stringify(
       {
         "@context": "https://schema.org",
@@ -746,59 +620,18 @@ export default function AiVisibilityPage() {
           addressCountry: "US",
         },
         telephone: selectedStore.phone,
-        openingHours: "Mo-Sa 10:00-19:00",
-        priceRange: "$$",
-        sameAs: sameAsUrls,
+        sameAs: Array.from(new Set(sameAsUrls)),
       },
       null,
       2
     );
-  }, [directories, selectedStore, selectedStoreId]);
+  }, [directories, selectedStore, selectedStoreId, kgSameAsText]);
 
-  const generatedLlmsTxt = useMemo(() => {
-    return `# Smart Fone Doctor — Official Philadelphia Locations & Services
-> Certified same-day cell phone, iPhone, Samsung, iPad, MacBook, and gaming console (PS5/Xbox HDMI) repair shops in Philadelphia, PA.
-
-## Verified Store Locations
-${stores
-        .map(
-          (s) =>
-            `- **${s.name.replace("SmartFoneDoctor - ", "")}**: ${s.address}, ${s.cityStateZip
-            } | Phone: ${s.phone} | Hours: ${s.businessHours}`
-        )
-        .join("\n")}
-
-## Core Turnaround & Warranty
-- iPhone & Samsung screen replacement: 25–30 minutes (walk-in, no appointment required)
-- Battery & charging port replacement: 30 minutes
-- PS5, Xbox & Nintendo Switch HDMI micro-soldering: Same-day service
-- 90-day warranty on parts and labor`;
-  }, [stores]);
-
-  const generatedRobotsTxt = useMemo(() => {
-    return `# AI Crawlers & Search Engine Directives for Smart Fone Doctor Philadelphia
-User-agent: GPTBot
-Allow: /
-Allow: /llms.txt
-Allow: /llms-full.txt
-
-User-agent: OAI-SearchBot
-Allow: /
-
-User-agent: Google-Extended
-Allow: /
-
-User-agent: Applebot-Extended
-Allow: /
-
-User-agent: PerplexityBot
-Allow: /
-
-User-agent: ClaudeBot
-Allow: /
-
-Sitemap: https://smartfonedoctor.com/sitemap.xml`;
-  }, []);
+  const displayedJsonLd = audit?.schema.sampleJsonLd || fallbackJsonLd;
+  const displayedLlmsTxt =
+    audit?.llmsTxt.content || "Click 'Re-verify Live Site' to inspect live /llms.txt content.";
+  const displayedRobotsTxt =
+    audit?.robots.content || "Click 'Re-verify Live Site' to inspect live /robots.txt directives.";
 
   const copyCode = (key: string, text: string) => {
     navigator.clipboard?.writeText(text);
@@ -808,7 +641,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
 
   return (
     <div className="flex-1 min-w-0 w-full px-4 sm:px-6 py-6 flex flex-col gap-6 overflow-x-hidden antialiased">
-      {/* 1. MATERIAL 3 HERO HEADER (SmartFoneDoctor Brand Teal & Elevated Surface) */}
+      {/* 1. HERO HEADER */}
       <div className="rounded-3xl bg-white p-5 sm:p-7 border border-teal-100/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-5">
         <div className="flex items-center gap-3.5">
           <div className="w-11 h-11 rounded-2xl bg-[#009691] text-white flex items-center justify-center shadow-md shadow-[#009691]/25 shrink-0">
@@ -824,7 +657,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-600 font-medium mt-0.5">
-              How the business appears in search engines and AI answers.
+              Live HTTP crawler checks, PostgreSQL GEO/AEO telemetry, and real LLM citation probing.
             </p>
           </div>
         </div>
@@ -839,7 +672,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
 
           <button
             type="button"
-            onClick={handleRunScan}
+            onClick={() => void runLiveAudit(true)}
             disabled={isScanning}
             className="h-9 px-4 rounded-xl bg-[#009691] hover:bg-[#00827d] text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm shadow-[#009691]/25 transition-all cursor-pointer disabled:opacity-60"
           >
@@ -847,18 +680,18 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
               className={`w-3.5 h-3.5 ${isScanning ? "animate-spin" : ""}`}
               aria-hidden="true"
             />
-            <span>{isScanning ? "Checking…" : "Run Live Audit"}</span>
+            <span>{isScanning ? "Auditing live site…" : "Run Live Audit"}</span>
           </button>
         </div>
       </div>
 
-      {/* Material 3 Segmented Navigation Tabs */}
+      {/* Navigation Tabs */}
       <div className="bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200/60 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
         {[
           {
             key: "overview" as AiTab,
-            label: "Multi-Engine Index",
-            count: pendingCount,
+            label: "Live Audit & Probes",
+            count: checklistItems.length - passedChecklistCount,
           },
           {
             key: "neighborhoods" as AiTab,
@@ -884,18 +717,20 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
               key={tab.key}
               type="button"
               onClick={() => setActiveTab(tab.key)}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-[13px] font-semibold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${isActive
+              className={`px-4 py-2 rounded-xl text-xs sm:text-[13px] font-semibold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
+                isActive
                   ? "bg-white text-[#009691] shadow-xs"
                   : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
-                }`}
+              }`}
             >
               <span>{tab.label}</span>
               {tab.count !== undefined && tab.count > 0 && (
                 <span
-                  className={`text-[11px] font-mono px-2 py-0.5 rounded-full ${isActive
+                  className={`text-[11px] font-mono px-2 py-0.5 rounded-full ${
+                    isActive
                       ? "bg-teal-50 text-[#009691] border border-teal-200/60 font-semibold"
                       : "bg-slate-200 text-slate-700"
-                    }`}
+                  }`}
                 >
                   {tab.count}
                 </span>
@@ -909,299 +744,333 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
         <div
           role="status"
           aria-live="polite"
-          className="bg-teal-50 border border-teal-200 text-[#009691] font-medium rounded-xl px-4 py-2.5 flex items-center justify-between gap-3 text-xs shadow-xs"
+          className={`font-medium rounded-xl px-4 py-2.5 flex items-center justify-between gap-3 text-xs shadow-xs border ${
+            noticeBanner.tone === "success"
+              ? "bg-teal-50 border-teal-200 text-[#009691]"
+              : noticeBanner.tone === "warning"
+              ? "bg-amber-50 border-amber-200 text-amber-800"
+              : "bg-rose-50 border-rose-200 text-rose-800"
+          }`}
         >
-          <span>{noticeBanner}</span>
+          <span>{noticeBanner.text}</span>
           <button
             type="button"
             onClick={() => setNoticeBanner(null)}
             aria-label="Dismiss notice"
-            className="p-1 hover:bg-teal-100 rounded-md cursor-pointer shrink-0"
+            className="p-1 rounded-md cursor-pointer shrink-0 hover:opacity-75"
           >
             <X className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
         </div>
       )}
 
-      {/* 2. MATERIAL 3 LAYERED METRIC SURFACES */}
+      {/* 2. REAL METRIC SURFACES */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
-          <span className="text-xs font-medium text-slate-500">Google Search &amp; Maps</span>
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs flex flex-col justify-between">
+          <span className="text-xs font-medium text-slate-500">Live Crawler Readiness</span>
           <div className="flex items-baseline gap-2 mt-2">
             <span className="text-2xl font-bold text-slate-900 tabular-nums leading-none">
-              {scores.googleAi}%
+              {audit ? `${techChecks.passedTechCount}/${techChecks.totalTechCount}` : "—"}
             </span>
-            <span className="text-xs font-semibold text-[#009691] bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200/60">
-              verified
+            <span
+              className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
+                techChecks.passedTechCount === techChecks.totalTechCount
+                  ? "text-[#009691] bg-teal-50 border-teal-200/60"
+                  : "text-amber-800 bg-amber-50 border-amber-200"
+              }`}
+            >
+              {audit
+                ? techChecks.passedTechCount === techChecks.totalTechCount
+                  ? "HTTP Verified"
+                  : "Needs Check"
+                : "Auditing…"}
             </span>
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
-          <span className="text-xs font-medium text-slate-500">Apple Maps &amp; Siri</span>
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs flex flex-col justify-between">
+          <span className="text-xs font-medium text-slate-500">Sitemap &amp; /llms.txt</span>
           <div className="flex items-baseline gap-2 mt-2">
             <span className="text-2xl font-bold text-slate-900 tabular-nums leading-none">
-              {scores.appleSiri}%
+              {audit ? `${audit.sitemap.urlCount}` : "—"}
             </span>
-            <span className="text-xs font-semibold text-[#009691] bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200/60">
-              coordinates
+            <span
+              className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
+                audit?.llmsTxt.ok
+                  ? "text-[#009691] bg-teal-50 border-teal-200/60"
+                  : "text-amber-800 bg-amber-50 border-amber-200"
+              }`}
+            >
+              {audit
+                ? audit.llmsTxt.ok
+                  ? "URLs · llms.txt OK"
+                  : `llms HTTP ${audit.llmsTxt.status || 0}`
+                : "Auditing…"}
             </span>
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
-          <span className="text-xs font-medium text-slate-500">Bing &amp; Windows Search</span>
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs flex flex-col justify-between">
+          <span className="text-xs font-medium text-slate-500">Directory API Sync</span>
           <div className="flex items-baseline gap-2 mt-2">
             <span className="text-2xl font-bold text-slate-900 tabular-nums leading-none">
-              {scores.chatgpt}%
+              {listingsLoading ? "—" : `${connectedApiCount}/${connectors.length}`}
             </span>
-            <span className="text-xs font-semibold text-[#009691] bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200/60">
-              hours synced
+            <span
+              className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
+                connectedApiCount > 0
+                  ? "text-[#009691] bg-teal-50 border-teal-200/60"
+                  : "text-amber-800 bg-amber-50 border-amber-200"
+              }`}
+            >
+              {listingsLoading
+                ? "Loading…"
+                : `${listingMetrics.synced}/${listingMetrics.total} synced`}
             </span>
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
-          <span className="text-xs font-medium text-slate-500">Schema &amp; Structured Data</span>
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs flex flex-col justify-between">
+          <span className="text-xs font-medium text-slate-500">Schema &amp; Live AI Probe</span>
           <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-xl font-bold text-[#009691] leading-none">
-              Active
+            <span className="text-xl font-bold text-[#009691] leading-none tabular-nums">
+              {audit ? `${audit.schema.types.length} JSON-LD` : "Checking…"}
             </span>
-            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
-              LocalBusiness
+            <span
+              className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
+                techChecks.hasAiKey
+                  ? "text-emerald-700 bg-emerald-50 border-emerald-200/60"
+                  : "text-amber-800 bg-amber-50 border-amber-200"
+              }`}
+            >
+              {techChecks.hasAiKey ? "Probe API Ready" : "API Key Needed"}
             </span>
           </div>
         </div>
       </div>
 
       {/* ===================================================================
-          TAB 1: OVERVIEW & AUTO-FIXES (Material 3 Cards & Brand Teal Accents)
+          TAB 1: LIVE AUDIT & PROBES
       =================================================================== */}
       {activeTab === "overview" && (
         <div className="flex flex-col gap-6">
-          {/* A. DIRECTORY ALIGNMENT CHECKLIST */}
+          {/* A. LIVE TECHNICAL & API READINESS CHECKLIST */}
           <section
-            aria-label="Directory alignment queue"
+            aria-label="Live technical and API readiness checklist"
             className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs"
           >
             <div className="px-5 py-3.5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 bg-slate-50/50">
               <div className="flex items-center gap-2.5">
                 <h2 className="text-sm font-bold text-slate-900">
-                  Directory Alignment Checklist
+                  Live Visibility &amp; Readiness Checklist
                 </h2>
                 <span className="text-xs text-slate-500 tabular-nums font-medium">
-                  · {4 - pendingCount} of 4 verified
+                  · {passedChecklistCount} of {checklistItems.length} verified
                 </span>
               </div>
 
-              {pendingCount > 0 && (
-                <button
-                  type="button"
-                  onClick={handleRunAllFixes}
-                  className="h-7 px-3.5 rounded-xl bg-[#009691] hover:bg-[#00827d] text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs shadow-[#009691]/20 transition-all cursor-pointer"
-                >
-                  <span>Sync all ({pendingCount})</span>
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => void runLiveAudit(true)}
+                disabled={isScanning}
+                className="h-7 px-3.5 rounded-xl bg-[#009691] hover:bg-[#00827d] text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs shadow-[#009691]/20 transition-all cursor-pointer disabled:opacity-60"
+              >
+                <RefreshCw className={`w-3 h-3 ${isScanning ? "animate-spin" : ""}`} />
+                <span>Re-verify Live</span>
+              </button>
             </div>
 
             <div className="divide-y divide-slate-100">
-              {agentActions.map((act) => {
-                const isDone = act.status === "Completed";
-                return (
-                  <div
-                    key={act.id}
-                    className="px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/70 transition-colors"
-                  >
-                    <div className="flex items-start sm:items-center gap-3 min-w-0">
-                      {isDone ? (
-                        <CheckCircle2
-                          className="w-4 h-4 text-[#009691] shrink-0 mt-0.5 sm:mt-0"
-                          aria-hidden="true"
-                        />
-                      ) : (
-                        <AlertCircle
-                          className="w-4 h-4 text-amber-500 shrink-0 mt-0.5 sm:mt-0"
-                          aria-hidden="true"
-                        />
-                      )}
+              {checklistItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/70 transition-colors"
+                >
+                  <div className="flex items-start sm:items-center gap-3 min-w-0">
+                    {item.passed ? (
+                      <CheckCircle2
+                        className="w-4 h-4 text-[#009691] shrink-0 mt-0.5 sm:mt-0"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <AlertCircle
+                        className="w-4 h-4 text-amber-500 shrink-0 mt-0.5 sm:mt-0"
+                        aria-hidden="true"
+                      />
+                    )}
 
-                      <div className="min-w-0 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2.5">
-                        <span
-                          className={`text-sm font-medium truncate ${isDone ? "text-slate-600" : "text-slate-900 font-semibold"
-                            }`}
-                        >
-                          {act.title}
-                        </span>
-                        <span className="hidden sm:inline text-slate-300">
-                          ·
-                        </span>
-                        <span className="text-xs text-slate-500 truncate">
-                          {act.rootCause}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-end gap-2 shrink-0 pl-7 sm:pl-0">
-                      <span className="px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[11px] font-medium">
-                        {act.targetEngine}
-                      </span>
-
+                    <div className="min-w-0 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2.5">
                       <span
-                        className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold tabular-nums ${isDone
-                            ? "bg-teal-50 text-[#009691] border border-teal-200/60"
-                            : "bg-amber-50 text-amber-800 border border-amber-200"
-                          }`}
+                        className={`text-sm font-medium truncate ${
+                          item.passed ? "text-slate-700" : "text-slate-900 font-semibold"
+                        }`}
                       >
-                        {act.impactBadge}
+                        {item.title}
                       </span>
-
-                      {isDone &&
-                        act.id !== "deploy-schema-llms" &&
-                        act.id !== "sync-entity-bio" ? (
-                        <span className="h-7 px-3 rounded-lg text-[#009691] text-xs font-semibold inline-flex items-center gap-1">
-                          <Check className="w-3.5 h-3.5" aria-hidden="true" />
-                          <span>Done</span>
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={act.onExecute}
-                          className={`h-7 px-3.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition-all cursor-pointer ${isDone
-                              ? "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                              : "bg-[#009691] hover:bg-[#00827d] text-white shadow-xs shadow-[#009691]/20"
-                            }`}
-                        >
-                          <span>{act.actionLabel}</span>
-                        </button>
-                      )}
+                      <span className="hidden sm:inline text-slate-300">·</span>
+                      <span className="text-xs text-slate-500 truncate">{item.detail}</span>
                     </div>
                   </div>
-                );
-              })}
+
+                  <div className="flex items-center justify-end gap-2 shrink-0 pl-7 sm:pl-0">
+                    <span className="px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[11px] font-medium">
+                      {item.engine}
+                    </span>
+
+                    <span
+                      className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold tabular-nums ${
+                        item.passed
+                          ? "bg-teal-50 text-[#009691] border border-teal-200/60"
+                          : "bg-amber-50 text-amber-800 border border-amber-200"
+                      }`}
+                    >
+                      {item.badge}
+                    </span>
+
+                    {item.href ? (
+                      <Link
+                        href={item.href}
+                        target={item.href.endsWith(".xml") ? "_blank" : undefined}
+                        className="h-7 px-3.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-[#009691] inline-flex items-center gap-1 transition-colors"
+                      >
+                        <span>{item.actionLabel}</span>
+                      </Link>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={item.onClick}
+                        className="h-7 px-3.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-[#009691] inline-flex items-center gap-1 transition-colors cursor-pointer"
+                      >
+                        <span>{item.actionLabel}</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </section>
 
-          {/* B. 2-COLUMN VISUAL ANALYTICS: SHARE OF VOICE BARS + CITATION FEEDS */}
+          {/* B. 2-COLUMN LIVE SITE TELEMETRY + REAL DIRECTORY FEEDS */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-            {/* Left: Visual Bar Chart for Local Competitor Share of Voice */}
+            {/* Left: Live Site Crawler & Schema Telemetry */}
             <section
-              aria-label="Philadelphia competitor AI share of voice"
+              aria-label="Live site crawler and schema telemetry"
               className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs flex flex-col justify-between"
             >
               <div>
                 <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                   <div>
                     <h2 className="text-sm font-bold text-slate-900">
-                      Philadelphia Local Benchmarks
+                      Live Site Crawler &amp; Schema Telemetry
                     </h2>
                     <p className="text-xs text-slate-500 font-medium">
-                      Visibility index across local Philadelphia repair searches
+                      Real HTTP checks against {audit?.siteUrl || "smartfonedoctor.com"}
                     </p>
                   </div>
                   <button
                     type="button"
-                    onClick={() => setActiveTab("neighborhoods")}
-                    className="text-xs font-semibold text-[#009691] hover:underline inline-flex items-center gap-1 cursor-pointer shrink-0"
+                    onClick={() => setActiveTab("schema-crawlers")}
+                    className="text-xs font-semibold text-[#009691] hover:underline cursor-pointer shrink-0"
                   >
-                    <span>View geo-targets</span>
-                    <ArrowRight className="w-3 h-3" aria-hidden="true" />
+                    Inspect files →
                   </button>
                 </div>
 
                 <div className="p-5 flex flex-col gap-4">
-                  {[
-                    {
-                      shop: `Smart Fone Doctor (${isAllStores ? "3 Philly stores" : storeShortName
-                        })`,
-                      tag: "Your shop",
-                      pct: scores.overall,
-                      isSelf: true,
-                    },
-                    {
-                      shop: "iPhone Repair Philly — University City",
-                      tag: "0.8 mi away",
-                      pct: 84,
-                      isSelf: false,
-                    },
-                    {
-                      shop: "uBreakiFix by Asurion — Center City",
-                      tag: "2.1 mi away",
-                      pct: 79,
-                      isSelf: false,
-                    },
-                    {
-                      shop: "Mr Fix Cell Phone & Computer Repair",
-                      tag: "1.4 mi away",
-                      pct: 64,
-                      isSelf: false,
-                    },
-                    {
-                      shop: "Apple Store Walnut Street",
-                      tag: "2.3 mi away",
-                      pct: 52,
-                      isSelf: false,
-                    },
-                  ].map((item) => (
-                    <div key={item.shop} className="flex flex-col gap-1.5">
-                      <div className="flex items-center justify-between gap-2 text-xs sm:text-[13px]">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span
-                            className={`truncate ${item.isSelf
-                                ? "font-bold text-slate-900"
-                                : "font-medium text-slate-700"
-                              }`}
-                          >
-                            {item.shop}
-                          </span>
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-[11px] shrink-0 font-medium ${item.isSelf
-                                ? "bg-teal-50 text-[#009691] border border-teal-200/60 font-semibold"
-                                : "bg-slate-100 text-slate-500"
-                              }`}
-                          >
-                            {item.tag}
-                          </span>
-                        </div>
-                        <span
-                          className={`text-xs sm:text-[13px] tabular-nums shrink-0 ${item.isSelf
-                              ? "font-bold text-[#009691]"
-                              : "text-slate-500 font-medium"
-                            }`}
-                        >
-                          {item.pct}%
-                        </span>
-                      </div>
-
-                      <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all duration-300 ${item.isSelf
-                              ? "bg-[#009691]"
-                              : "bg-slate-300"
-                            }`}
-                          style={{ width: `${item.pct}%` }}
-                        />
+                  {/* Live Endpoints Status Grid */}
+                  <div className="grid grid-cols-2 gap-2.5 text-xs">
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <div className="text-slate-500 font-medium">/robots.txt</div>
+                      <div className="mt-1 font-bold text-slate-900 tabular-nums">
+                        {audit ? `HTTP ${audit.robots.status || "Err"}` : "Checking…"} ·{" "}
+                        {audit?.robots.allowedBots.length ?? 0} AI bots
                       </div>
                     </div>
-                  ))}
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <div className="text-slate-500 font-medium">/sitemap.xml</div>
+                      <div className="mt-1 font-bold text-slate-900 tabular-nums">
+                        {audit ? `HTTP ${audit.sitemap.status || "Err"}` : "Checking…"} ·{" "}
+                        {audit?.sitemap.urlCount ?? 0} URLs
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <div className="text-slate-500 font-medium">/llms.txt</div>
+                      <div className="mt-1 font-bold text-slate-900 tabular-nums">
+                        {audit ? `HTTP ${audit.llmsTxt.status || "Err"}` : "Checking…"} ·{" "}
+                        {audit?.llmsTxt.bytes.toLocaleString() ?? 0} B
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <div className="text-slate-500 font-medium">/llms-full.txt</div>
+                      <div className="mt-1 font-bold text-slate-900 tabular-nums">
+                        {audit ? `HTTP ${audit.llmsFullTxt.status || "Err"}` : "Checking…"} ·{" "}
+                        {audit?.llmsFullTxt.bytes.toLocaleString() ?? 0} B
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Allowed AI Bots */}
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wide text-slate-400 block mb-2">
+                      Permitted AI Crawlers in /robots.txt
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {CORE_AI_BOTS.map((bot) => {
+                        const allowed = audit?.robots.allowedBots.includes(bot);
+                        return (
+                          <span
+                            key={bot}
+                            className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
+                              allowed
+                                ? "bg-teal-50 text-[#009691] border-teal-200/60"
+                                : "bg-slate-50 text-slate-500 border-slate-200"
+                            }`}
+                          >
+                            {bot} {allowed ? "✓" : "—"}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Live JSON-LD Types */}
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wide text-slate-400 block mb-2">
+                      Live JSON-LD @type Schemas Detected
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {audit?.schema.types.length ? (
+                        audit.schema.types.map((t) => (
+                          <span
+                            key={t}
+                            className="px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/60 text-[11px] font-mono font-semibold"
+                          >
+                            {t}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-xs text-slate-500">
+                          {audit ? "No JSON-LD parsed from live response" : "Inspecting live HTML…"}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <div className="px-5 py-3 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
                 <span>
-                  {scores.overall >= 85
-                    ? "Smart Fone Doctor ranks #1 across Philadelphia AI engines"
-                    : "Syncing Bing Places & Apple Maps pushes your share above 88%"}
+                  DB Ground Truth: {neighborhoods.length} geo-targets · {guardrails.length} guardrails
                 </span>
-                <span className="font-bold text-[#009691] tabular-nums">
-                  Target: 90%+
+                <span className="font-mono text-[11px] text-slate-500">
+                  {audit ? new Date(audit.checkedAt).toLocaleTimeString() : "Pending"}
                 </span>
               </div>
             </section>
 
-            {/* Right: Directory Citation Feeds with Visual Health Bars */}
+            {/* Right: Real Directory Citation Feeds */}
             <section
-              aria-label="Directory citation feeds powering AI engines"
+              aria-label="Directory citation feeds from PostgreSQL"
               className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs flex flex-col justify-between"
             >
               <div>
@@ -1211,15 +1080,14 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                       Directory feeds powering AI
                     </h2>
                     <p className="text-xs text-slate-500 font-medium">
-                      Listing accuracy
+                      Real PostgreSQL NAP accuracy ({isAllStores ? "3-store avg" : storeShortName})
                     </p>
                   </div>
                   <Link
                     href="/admin/listings"
-                    className="text-xs font-semibold text-[#009691] hover:underline inline-flex items-center gap-1 shrink-0"
+                    className="text-xs font-semibold text-[#009691] hover:underline shrink-0"
                   >
-                    <span>All 11 directories</span>
-                    <ArrowRight className="w-3 h-3" aria-hidden="true" />
+                    All {directories.length} directories →
                   </Link>
                 </div>
 
@@ -1232,7 +1100,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                     },
                     {
                       id: "bing",
-                      label: "Bing Places for Business",
+                      label: "Bing Places",
                       feeds: ["ChatGPT Search", "Copilot"],
                     },
                     {
@@ -1246,12 +1114,12 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                       feeds: ["Apple Siri", "Spotlight"],
                     },
                     {
-                      id: "ezlocal",
-                      label: "EZlocal & Yellow Pages",
-                      feeds: ["Google AI", "Entity Graph"],
+                      id: "facebook",
+                      label: "Facebook Business Page",
+                      feeds: ["Meta AI"],
                     },
                   ].map((item) => {
-                    const score = getDirScore(
+                    const { score, status } = getDirScore(
                       item.id,
                       isAllStores ? undefined : selectedStoreId
                     );
@@ -1272,26 +1140,28 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                             ))}
                           </div>
                           <span
-                            className={`text-xs font-bold tabular-nums shrink-0 ${score >= 95
+                            className={`text-xs font-bold tabular-nums shrink-0 ${
+                              score >= 95
                                 ? "text-[#009691]"
                                 : score >= 70
-                                  ? "text-amber-700"
-                                  : "text-rose-700"
-                              }`}
+                                ? "text-amber-700"
+                                : "text-slate-500"
+                            }`}
                           >
-                            {score}% synced
+                            {score > 0 ? `${score}% (${status})` : "Not synced (0%)"}
                           </span>
                         </div>
 
                         <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
                           <div
-                            className={`h-full rounded-full transition-all duration-300 ${score >= 95
+                            className={`h-full rounded-full transition-all duration-300 ${
+                              score >= 95
                                 ? "bg-[#009691]"
                                 : score >= 70
-                                  ? "bg-amber-500"
-                                  : "bg-rose-500"
-                              }`}
-                            style={{ width: `${Math.max(score, 8)}%` }}
+                                ? "bg-amber-500"
+                                : "bg-slate-300"
+                            }`}
+                            style={{ width: `${score}%` }}
                           />
                         </div>
                       </div>
@@ -1301,7 +1171,9 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
               </div>
 
               <div className="px-5 py-3 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
-                <span>Connected via Google OAuth, Yelp Fusion &amp; Schema</span>
+                <span>
+                  {connectedApiCount} of {connectors.length} directory APIs configured
+                </span>
                 <Link
                   href="/admin/listings/api-sync"
                   className="font-semibold text-[#009691] hover:underline"
@@ -1312,9 +1184,8 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
             </section>
           </div>
 
-          {/* C. DYNAMIC GMB & DIRECTORY CATALOG CITATION FEEDS (Material 3 Surface) */}
+          {/* C. GMB AI FEED + CATALOG CITATION TARGETS */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-            {/* GMB Post Feeds */}
             <section
               aria-label="Google Business Profile AI signals"
               className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs flex flex-col justify-between"
@@ -1327,10 +1198,12 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                     </div>
                     <div>
                       <h2 className="text-sm font-bold text-slate-900">
-                        Google Business Profile (GMB) AI Feed
+                        Google Business Profile (GMB) Posts
                       </h2>
                       <p className="text-xs text-slate-500 font-medium">
-                        Live offers and turnaround updates ingested by Gemini &amp; AI Overviews
+                        {gbpConnected
+                          ? "Connected to Google Business Profile OAuth"
+                          : "Stored in PostgreSQL (connect GBP API for live push)"}
                       </p>
                     </div>
                   </div>
@@ -1344,9 +1217,13 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                 </div>
 
                 <div className="p-5 flex flex-col gap-3.5">
-                  {gmbPosts.length === 0 ? (
+                  {isLoadingDb ? (
                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 text-center text-xs text-slate-500 font-medium">
-                      Loading published GMB updates from database…
+                      Loading GMB posts from PostgreSQL…
+                    </div>
+                  ) : gmbPosts.length === 0 ? (
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 text-center text-xs text-slate-500 font-medium">
+                      No GMB posts found in PostgreSQL.
                     </div>
                   ) : (
                     gmbPosts.slice(0, 3).map((post) => (
@@ -1355,16 +1232,22 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                         className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors flex flex-col gap-2"
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-[#009691] border border-teal-200/60 uppercase tracking-wide">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-[#009691] border border-teal-200/60 uppercase tracking-wide shrink-0">
                               {post.type}
                             </span>
                             <span className="text-xs font-bold text-slate-900 truncate">
                               {post.title}
                             </span>
                           </div>
-                          <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60 shrink-0">
-                            Live on Google &amp; Gemini ✓
+                          <span
+                            className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border shrink-0 ${
+                              gbpConnected
+                                ? "text-emerald-700 bg-emerald-50 border-emerald-200/60"
+                                : "text-slate-600 bg-white border-slate-200"
+                            }`}
+                          >
+                            {gbpConnected ? "GBP Synced ✓" : "DB Stored"}
                           </span>
                         </div>
                         <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
@@ -1377,20 +1260,19 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
               </div>
 
               <div className="px-5 py-3 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
-                <span>Direct feed from Google Business Profile API</span>
+                <span>PostgreSQL gmb_posts ({gmbPosts.length} records)</span>
                 <Link
                   href="/admin/local-seo/posts"
-                  className="font-semibold text-[#009691] hover:underline inline-flex items-center gap-1"
+                  className="font-semibold text-[#009691] hover:underline"
                 >
-                  <span>View all {gmbPosts.length} posts</span>
-                  <ArrowRight className="w-3 h-3" />
+                  View all {gmbPosts.length} posts →
                 </Link>
               </div>
             </section>
 
-            {/* Catalog Citation Network */}
+            {/* Real Catalog Citation Coverage */}
             <section
-              aria-label="Directory Catalog Network"
+              aria-label="Directory Catalog Citation Coverage"
               className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs flex flex-col justify-between"
             >
               <div>
@@ -1401,10 +1283,10 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                     </div>
                     <div>
                       <h2 className="text-sm font-bold text-slate-900">
-                        Directory Catalog Citation Coverage
+                        Directory Catalog Coverage
                       </h2>
                       <p className="text-xs text-slate-500 font-medium">
-                        Directory listings
+                        Verified citations vs remaining catalog
                       </p>
                     </div>
                   </div>
@@ -1413,7 +1295,6 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                     className="h-7 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-[#009691] inline-flex items-center gap-1 shadow-xs transition-colors shrink-0"
                   >
                     <span>Browse Catalog</span>
-                    <ArrowRight className="w-3 h-3" />
                   </Link>
                 </div>
 
@@ -1421,44 +1302,46 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                   <div className="flex items-center justify-between p-3 rounded-xl bg-teal-50/70 border border-teal-100">
                     <div className="flex items-center gap-3">
                       <span className="text-2xl font-bold text-[#009691] tabular-nums">
-                        {directories.length}
+                        {listingMetrics.synced}
                       </span>
                       <div className="text-xs">
-                        <p className="font-bold text-slate-900">Active Verified Citations</p>
-                        <p className="text-slate-500 font-medium">Across all 3 Philadelphia store branches</p>
+                        <p className="font-bold text-slate-900">
+                          Verified Store Citations Synced
+                        </p>
+                        <p className="text-slate-500 font-medium">
+                          Out of {listingMetrics.total} tracked entries ({directories.length} directories)
+                        </p>
                       </div>
                     </div>
                     <span className="text-xs font-bold text-[#009691] bg-white px-2.5 py-1 rounded-full border border-teal-200/60">
-                      +{CATALOG_DIRECTORIES.length - directories.length} in Catalog
+                      {CATALOG_DIRECTORIES.length} in Catalog
                     </span>
                   </div>
 
                   <div className="flex flex-col gap-2">
                     <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
-                      Top Available Catalog Targets to Boost AI Trust
+                      Unadded High-Authority Catalog Directories
                     </span>
-                    {[
-                      { name: "Better Business Bureau (BBB)", da: 93, tier: "Tier 2", boost: "+8 pts" },
-                      { name: "YellowPages US", da: 88, tier: "Tier 2", boost: "+6 pts" },
-                      { name: "Foursquare & Citysearch", da: 86, tier: "Tier 2", boost: "+5 pts" },
-                    ].map((c) => (
+                    {unclaimedCatalogTargets.map((c) => (
                       <div
-                        key={c.name}
+                        key={c.id}
                         className="px-3.5 py-2.5 rounded-xl border border-slate-100 bg-slate-50/50 flex items-center justify-between text-xs"
                       >
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-slate-800">{c.name}</span>
-                          <span className="text-[10px] text-slate-400 font-mono">DA {c.da}</span>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="font-semibold text-slate-800 truncate">{c.name}</span>
+                          <span className="text-[10px] text-slate-400 font-mono shrink-0">
+                            DA {c.authority}
+                          </span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
-                            {c.boost}
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-[11px] font-medium text-slate-600 bg-white px-2 py-0.5 rounded-md border border-slate-200">
+                            {c.syncMode}
                           </span>
                           <Link
                             href="/admin/listings/catalog"
                             className="text-[#009691] hover:underline font-semibold text-xs"
                           >
-                            Claim →
+                            Add →
                           </Link>
                         </div>
                       </div>
@@ -1468,7 +1351,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
               </div>
 
               <div className="px-5 py-3 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
-                <span>Multi-engine AI visibility grows with each high-DA citation</span>
+                <span>Live citation status reflects actual DB &amp; API sync</span>
                 <Link
                   href="/admin/listings/catalog"
                   className="font-semibold text-[#009691] hover:underline"
@@ -1479,35 +1362,58 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
             </section>
           </div>
 
-          {/* D. INTERACTIVE LIVE AI CITATION PROBE & LOCAL QUERIES (Material 3 Studio) */}
+          {/* D. LIVE AI SEARCH PROBE (REAL GEMINI / OPENAI API ONLY) */}
           <section
-            aria-label="Interactive AI Citation Probe"
+            aria-label="Live AI Search Visibility Probe"
             className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs"
           >
             <div className="px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#fafafa]">
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <Sparkles className="w-4 h-4 text-[#009691]" />
                   <h2 className="text-sm font-bold text-slate-900">
-                    Live AI Search Probe &amp; Citation Simulator
+                    Live AI Search Visibility Probe
                   </h2>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
+                      techChecks.hasAiKey
+                        ? "bg-teal-50 text-[#009691] border-teal-200"
+                        : "bg-amber-50 text-amber-800 border-amber-200"
+                    }`}
+                  >
+                    {techChecks.hasAiKey
+                      ? `Live API Ready (${
+                          audit?.aiProviders.geminiConfigured ? "Gemini" : "OpenAI"
+                        })`
+                      : "API Key Required"}
+                  </span>
                 </div>
                 <p className="text-xs text-slate-500 font-medium mt-0.5">
-                  Test Philadelphia buyer queries live to verify how Google Gemini &amp; SearchGPT cite SmartFoneDoctor
+                  Sends real unprimed buyer queries to Google Gemini or OpenAI to verify organic SmartFoneDoctor citations.
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("neighborhoods")}
-                  className="h-8 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-[#009691] inline-flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors shadow-xs"
-                >
-                  <span>Manage geo-targets ({neighborhoods.length})</span>
-                  <ArrowRight className="w-3 h-3" />
-                </button>
-              </div>
+              <Link
+                href="/admin/settings"
+                className="h-8 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-[#009691] inline-flex items-center gap-1.5 shrink-0 transition-colors shadow-xs"
+              >
+                <span>Configure AI API Key</span>
+              </Link>
             </div>
+
+            {audit && !techChecks.hasAiKey && (
+              <div className="px-5 py-3 bg-amber-50/70 border-b border-amber-200/70 flex flex-wrap items-center justify-between gap-2 text-xs text-amber-900">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>
+                    No Gemini or OpenAI API key is configured. Add one in Settings (or `.env`) to run real probes — simulated fallback answers are disabled.
+                  </span>
+                </div>
+                <Link href="/admin/settings" className="font-bold underline shrink-0">
+                  Open AI Settings →
+                </Link>
+              </div>
+            )}
 
             {/* Probe Input & Trigger Bar */}
             <div className="p-5 border-b border-slate-100 bg-slate-50/30 flex flex-col gap-3">
@@ -1516,155 +1422,203 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                   type="text"
                   value={probeQuery}
                   onChange={(e) => setProbeQuery(e.target.value)}
-                  placeholder="Enter a prompt, e.g. Who does same-day iPhone 15 Pro screen repair near 52nd St?"
+                  placeholder="Enter a Philadelphia buyer query, e.g. Best same-day iPhone 15 Pro screen repair near 52nd St"
                   className="flex-1 h-10 px-3.5 rounded-xl border border-slate-200 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#009691]/20 focus:border-[#009691] shadow-2xs font-medium"
                 />
                 <button
                   type="button"
-                  onClick={() => handleRunLiveProbe()}
+                  onClick={() => void handleRunLiveProbe()}
                   disabled={isProbing}
                   className="h-10 px-5 rounded-xl bg-[#009691] hover:bg-[#00827d] text-white text-xs font-bold inline-flex items-center justify-center gap-2 shadow-xs shadow-[#009691]/25 transition-all cursor-pointer disabled:opacity-60 shrink-0"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${isProbing ? "animate-spin" : ""}`} />
-                  <span>{isProbing ? "Probing AI Engine…" : "Test with Gemini Live"}</span>
+                  <span>{isProbing ? "Querying Live AI…" : "Run Live Probe"}</span>
                 </button>
               </div>
 
-              {/* Preset prompt pills */}
-              <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                <span className="text-[11px] font-semibold text-slate-400 mr-1">Try preset:</span>
-                {[
-                  "Best same-day iPhone 15 Pro screen repair near 52nd St",
-                  "Who fixes PS5 HDMI ports same-day in Philadelphia?",
-                  "Is phone repair open Saturday till 7 PM in West Philly?",
-                  "Walk-in cell phone & MacBook repair near University City",
-                ].map((sample) => (
+              {/* Add Tracked Prompt Form + Category Filter */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {["All", "Screen repair", "Console HDMI", "Battery & port", "Open hours"].map(
+                    (cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setPromptCategory(cat)}
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors cursor-pointer ${
+                          promptCategory === cat
+                            ? "bg-[#009691] text-white border-[#009691]"
+                            : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    )
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={newPromptText}
+                    onChange={(e) => setNewPromptText(e.target.value)}
+                    placeholder="Track new prompt in DB…"
+                    className="h-8 px-3 rounded-lg border border-slate-200 text-xs bg-white focus:outline-none focus:border-[#009691]"
+                  />
                   <button
-                    key={sample}
                     type="button"
-                    onClick={() => {
-                      setProbeQuery(sample);
-                      handleRunLiveProbe(sample);
-                    }}
-                    className="px-2.5 py-1 rounded-full bg-white hover:bg-teal-50 border border-slate-200/80 hover:border-teal-200 text-[11px] text-slate-600 hover:text-[#009691] font-medium transition-colors cursor-pointer shadow-2xs"
+                    disabled={isAddingPrompt || !newPromptText.trim()}
+                    onClick={() => void handleSaveCustomPrompt()}
+                    className="h-8 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 cursor-pointer disabled:opacity-50"
                   >
-                    {sample}
+                    + Save Prompt
                   </button>
-                ))}
+                </div>
               </div>
             </div>
 
-            {/* Live Probe Result Box (When evaluated) */}
+            {/* Live Probe Result Box */}
             {probeResult && (
               <div className="p-5 border-b border-slate-100 bg-white flex flex-col gap-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#009691] text-white shadow-xs">
-                      {probeResult.citationRank}
-                    </span>
-                    <span className="text-xs font-semibold text-slate-700">
-                      Engine: <strong className="text-slate-900">{probeResult.engine}</strong>
-                    </span>
-                  </div>
-                  <span className="text-xs font-bold text-[#009691] bg-white px-3 py-1 rounded-full border border-teal-200 shadow-2xs">
-                    {Math.round(probeResult.confidenceScore * 100)}% Match · Verified at {probeResult.verifiedAt}
-                  </span>
-                </div>
-
-                <div className="p-4 rounded-xl bg-white border border-teal-100 shadow-2xs">
-                  <span className="text-[11px] font-bold uppercase tracking-wide text-slate-400 block mb-1">
-                    AI Response Preview (SmartFoneDoctor Cited):
-                  </span>
-                  <p className="text-xs sm:text-sm text-slate-800 font-medium leading-relaxed">
-                    &ldquo;{probeResult.generatedAnswer}&rdquo;
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-slate-500">
-                  <span className="font-semibold text-slate-700">Sources Ingested:</span>
-                  {probeResult.sourcesReferenced.map((src) => (
-                    <span
-                      key={src}
-                      className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[11px] font-medium text-slate-700 shadow-2xs"
-                    >
-                      {src}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* 3 Benchmark Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-100">
-              {resolvedPrompts.slice(0, 3).map((p) => {
-                const stBing =
-                  directories.find((d) => d.id === "bing")?.stores[
-                    p.effectiveStoreId
-                  ]?.status === "Synced";
-                const stApple =
-                  directories.find((d) => d.id === "apple")?.stores[
-                    p.effectiveStoreId
-                  ]?.status === "Synced";
-
-                return (
-                  <div
-                    key={p.id}
-                    className="p-5 flex flex-col justify-between gap-3.5 hover:bg-slate-50/50 transition-colors"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <span className="px-2.5 py-0.5 rounded-full bg-teal-50 text-[#009691] text-[11px] font-semibold border border-teal-200/60">
-                          {p.category}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setProbeQuery(p.query);
-                            handleRunLiveProbe(p.query);
-                          }}
-                          className="text-[11px] font-bold text-[#009691] hover:underline cursor-pointer"
+                {probeResult.success ? (
+                  <>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-xs font-bold shadow-xs ${
+                            probeResult.cited
+                              ? "bg-[#009691] text-white"
+                              : "bg-amber-100 text-amber-900"
+                          }`}
                         >
-                          Probe live →
-                        </button>
+                          {probeResult.citationRank}
+                        </span>
+                        <span className="text-xs font-semibold text-slate-700">
+                          Engine: <strong className="text-slate-900">{probeResult.engine}</strong>
+                        </span>
                       </div>
-                      <p className="text-sm font-semibold text-slate-900 mt-2.5 leading-snug">
-                        &ldquo;{p.query}&rdquo;
+                      <span className="text-xs font-medium text-slate-600 bg-slate-50 px-3 py-1 rounded-full border border-slate-200">
+                        Verified at {probeResult.verifiedAt}
+                      </span>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80">
+                      <span className="text-[11px] font-bold uppercase tracking-wide text-slate-400 block mb-1">
+                        Unprimed Live AI Response:
+                      </span>
+                      <p className="text-xs sm:text-sm text-slate-800 font-medium leading-relaxed whitespace-pre-wrap">
+                        {probeResult.generatedAnswer}
                       </p>
                     </div>
 
-                    <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-xs">
-                      <div className="flex flex-wrap items-center gap-1.5">
+                    {probeResult.sourcesReferenced.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-slate-500">
+                        <span className="font-semibold text-slate-700">Grounding Sources:</span>
+                        {probeResult.sourcesReferenced.map((src) => (
+                          <span
+                            key={src}
+                            className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[11px] font-medium text-slate-700"
+                          >
+                            {src}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center justify-between gap-3">
+                    <div>
+                      <strong className="block font-bold">{probeResult.citationRank}</strong>
+                      <span>{probeResult.error}</span>
+                    </div>
+                    {probeResult.needsApiKey && (
+                      <Link
+                        href="/admin/settings"
+                        className="h-8 px-3 rounded-lg bg-amber-900 text-white font-semibold inline-flex items-center shrink-0"
+                      >
+                        Configure Key
+                      </Link>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tracked Prompts Grid (PostgreSQL) */}
+            {filteredPrompts.length === 0 ? (
+              <div className="p-6 text-center text-xs text-slate-500">
+                {isLoadingDb
+                  ? "Loading tracked AI prompts from PostgreSQL…"
+                  : "No tracked prompts found for this filter."}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+                {filteredPrompts.slice(0, 6).map((p) => {
+                  const statusTone =
+                    p.verifiedStatus === "Cited"
+                      ? "bg-teal-50 text-[#009691] border-teal-200/60"
+                      : p.verifiedStatus === "Not Cited"
+                      ? "bg-rose-50 text-rose-700 border-rose-200/60"
+                      : "bg-slate-100 text-slate-600 border-slate-200";
+                  return (
+                    <div
+                      key={p.id}
+                      className="p-5 flex flex-col justify-between gap-3.5 hover:bg-slate-50/50 transition-colors"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="px-2.5 py-0.5 rounded-full bg-teal-50 text-[#009691] text-[11px] font-semibold border border-teal-200/60">
+                            {p.category}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setProbeQuery(p.query);
+                                void handleRunLiveProbe(p.query, p.id);
+                              }}
+                              className="text-[11px] font-bold text-[#009691] hover:underline cursor-pointer"
+                            >
+                              Probe live →
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void handleDeletePrompt(p.id)}
+                              aria-label="Delete tracked prompt"
+                              className="p-1 text-slate-400 hover:text-rose-600 cursor-pointer"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-sm font-semibold text-slate-900 mt-2.5 leading-snug">
+                          &ldquo;{p.query}&rdquo;
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-100 text-xs">
                         <span
-                          className={`px-2 py-0.5 rounded-md font-semibold text-[11px] ${stBing
-                              ? "bg-teal-50 text-[#009691] border border-teal-200/60"
-                              : "bg-rose-50 text-rose-700 border border-rose-200/60"
-                            }`}
+                          className={`px-2 py-0.5 rounded-md font-semibold text-[11px] border ${statusTone}`}
                         >
-                          ChatGPT: {stBing ? "#1" : "Unranked"}
+                          {p.verifiedStatus}
                         </span>
-                        <span className="px-2 py-0.5 rounded-md bg-teal-50 text-[#009691] border border-teal-200/60 font-semibold text-[11px]">
-                          Gemini: #1
-                        </span>
-                        <span
-                          className={`px-2 py-0.5 rounded-md font-semibold text-[11px] ${stApple
-                              ? "bg-teal-50 text-[#009691] border border-teal-200/60"
-                              : "bg-amber-50 text-amber-800 border border-amber-200/60"
-                            }`}
-                        >
-                          Siri: {stApple ? "#1" : "#2"}
+                        <span className="text-[11px] text-slate-500 truncate">
+                          {p.verifiedStatus === "Not Probed"
+                            ? p.intent
+                            : p.expectedCitation}
                         </span>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
         </div>
       )}
 
       {/* ===================================================================
-          TAB 2: MICRO-NEIGHBORHOODS & GEO-FENCES (Material 3 Surface)
+          TAB 2: MICRO-NEIGHBORHOODS & GEO-FENCES
       =================================================================== */}
       {activeTab === "neighborhoods" && (
         <section
@@ -1677,7 +1631,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                 Philadelphia Micro-Neighborhoods &amp; Campus Geo-Fences
               </h2>
               <p className="text-xs text-slate-500 font-medium">
-                Localized geographic anchor entities targeted for proximity ranking in Gemini, Apple Maps, and SearchGPT
+                Stored in PostgreSQL (`geo_neighborhoods`) and served dynamically in `/llms.txt`
               </p>
             </div>
             <button
@@ -1705,9 +1659,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                 <select
                   value={newNeighborType}
                   onChange={(e) =>
-                    setNewNeighborType(
-                      e.target.value as GeoNeighborhood["type"]
-                    )
+                    setNewNeighborType(e.target.value as GeoNeighborhood["type"])
                   }
                   className="h-9 px-3 rounded-xl border border-slate-200 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#009691]/20 focus:border-[#009691]"
                 >
@@ -1741,7 +1693,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                 />
                 <button
                   type="button"
-                  onClick={handleAddNeighborhood}
+                  onClick={() => void handleAddNeighborhood()}
                   className="h-9 px-4 rounded-xl bg-[#009691] hover:bg-[#00827d] text-white text-xs font-semibold cursor-pointer shadow-xs shadow-[#009691]/20 shrink-0 transition-all"
                 >
                   Save target
@@ -1767,55 +1719,57 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                 {(isAllStores
                   ? neighborhoods
                   : neighborhoods.filter((n) => n.storeId === selectedStoreId)
-                ).map((n) => (
-                  <tr key={n.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-3.5 px-5 font-bold text-slate-900">
-                      {n.name}
-                    </td>
-                    <td className="py-3.5 px-3">
-                      <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-medium">
-                        {n.type}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-3 text-slate-500 text-xs font-medium">
-                      {storeShortName}
-                    </td>
-                    <td className="py-3.5 px-3 font-mono text-xs text-slate-800 font-medium">
-                      {n.radius}
-                    </td>
-                    <td className="py-3.5 px-3">
-                      <div className="flex flex-wrap gap-1">
-                        {n.zipCodes.map((z) => (
-                          <span
-                            key={z}
-                            className="px-2 py-0.5 rounded-md bg-white border border-slate-200 font-mono text-[11px] text-slate-700 shadow-2xs"
-                          >
-                            {z}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-3 text-xs text-slate-500 max-w-[240px] truncate font-medium">
-                      {n.keyLandmarks.join(" · ")}
-                    </td>
-                    <td className="py-3.5 px-5 text-right">
-                      <div className="inline-flex items-center gap-2 justify-end">
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#009691] bg-teal-50 px-2.5 py-0.5 rounded-full border border-teal-200/60">
-                          <Check className="w-3 h-3" aria-hidden="true" />
-                          <span>{n.status}</span>
+                ).map((n) => {
+                  const stName =
+                    stores
+                      .find((s) => s.id === n.storeId)
+                      ?.name.replace("SmartFoneDoctor - ", "") || storeShortName;
+                  return (
+                    <tr key={n.id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-3.5 px-5 font-bold text-slate-900">{n.name}</td>
+                      <td className="py-3.5 px-3">
+                        <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-medium">
+                          {n.type}
                         </span>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteNeighborhood(n.id)}
-                          aria-label={`Delete ${n.name}`}
-                          className="p-1.5 hover:bg-rose-50 rounded-lg text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="py-3.5 px-3 text-slate-500 text-xs font-medium">{stName}</td>
+                      <td className="py-3.5 px-3 font-mono text-xs text-slate-800 font-medium">
+                        {n.radius}
+                      </td>
+                      <td className="py-3.5 px-3">
+                        <div className="flex flex-wrap gap-1">
+                          {n.zipCodes.map((z) => (
+                            <span
+                              key={z}
+                              className="px-2 py-0.5 rounded-md bg-white border border-slate-200 font-mono text-[11px] text-slate-700 shadow-2xs"
+                            >
+                              {z}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-3 text-xs text-slate-500 max-w-[240px] truncate font-medium">
+                        {n.keyLandmarks.join(" · ")}
+                      </td>
+                      <td className="py-3.5 px-5 text-right">
+                        <div className="inline-flex items-center gap-2 justify-end">
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#009691] bg-teal-50 px-2.5 py-0.5 rounded-full border border-teal-200/60">
+                            <Check className="w-3 h-3" aria-hidden="true" />
+                            <span>{n.status}</span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => void handleDeleteNeighborhood(n.id)}
+                            aria-label={`Delete ${n.name}`}
+                            className="p-1.5 hover:bg-rose-50 rounded-lg text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -1823,7 +1777,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
       )}
 
       {/* ===================================================================
-          TAB 3: SCHEMA & AI CRAWLER DIRECTIVES (Material 3 Tabs & Brand Teal)
+          TAB 3: SCHEMA & LIVE AI CRAWLER FILES
       =================================================================== */}
       {activeTab === "schema-crawlers" && (
         <section
@@ -1833,27 +1787,19 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
           <div className="px-5 py-3.5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
             <div className="flex flex-wrap items-center gap-2">
               {[
-                {
-                  id: "jsonld" as StudioArtifact,
-                  label: "1. RepairShop JSON-LD",
-                },
-                {
-                  id: "llms" as StudioArtifact,
-                  label: "2. /llms.txt Manifest",
-                },
-                {
-                  id: "robots" as StudioArtifact,
-                  label: "3. robots.txt AI Directives",
-                },
+                { id: "jsonld" as StudioArtifact, label: "1. Live JSON-LD Schema" },
+                { id: "llms" as StudioArtifact, label: "2. Live /llms.txt" },
+                { id: "robots" as StudioArtifact, label: "3. Live /robots.txt" },
               ].map((item) => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => setActiveArtifact(item.id)}
-                  className={`h-8 px-3.5 rounded-xl text-xs font-semibold cursor-pointer transition-all ${activeArtifact === item.id
+                  className={`h-8 px-3.5 rounded-xl text-xs font-semibold cursor-pointer transition-all ${
+                    activeArtifact === item.id
                       ? "bg-[#009691] text-white shadow-xs shadow-[#009691]/20"
                       : "bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
-                    }`}
+                  }`}
                 >
                   {item.label}
                 </button>
@@ -1863,15 +1809,12 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  setSchemaDeployed(true);
-                  setNoticeBanner(
-                    "Published latest JSON-LD graph, /llms.txt, and robots.txt crawler rules."
-                  );
-                }}
-                className="h-8 px-4 rounded-xl bg-[#009691] hover:bg-[#00827d] text-white text-xs font-semibold cursor-pointer transition-all shadow-xs shadow-[#009691]/20"
+                onClick={() => void runLiveAudit(true)}
+                disabled={isScanning}
+                className="h-8 px-4 rounded-xl bg-[#009691] hover:bg-[#00827d] text-white text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-all shadow-xs shadow-[#009691]/20 disabled:opacity-60"
               >
-                {schemaDeployed ? "Active on site ✓" : "Publish to site"}
+                <RefreshCw className={`w-3.5 h-3.5 ${isScanning ? "animate-spin" : ""}`} />
+                <span>{isScanning ? "Checking…" : "Re-verify Live Site"}</span>
               </button>
             </div>
           </div>
@@ -1881,15 +1824,17 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
                   <h3 className="text-sm font-bold text-slate-900">
-                    LocalBusiness / ElectronicsStore JSON-LD ({storeShortName})
+                    {audit?.schema.sampleJsonLd
+                      ? "Live JSON-LD Extracted from smartfonedoctor.com"
+                      : `Generated Store JSON-LD (${storeShortName})`}
                   </h3>
                   <p className="text-xs text-slate-500 font-medium">
-                    Embeds verified Google, Yelp, Bing, and Trustpilot URLs into a single sameAs knowledge graph
+                    Detected @types: {audit?.schema.types.join(", ") || "Pending live check"}
                   </p>
                 </div>
                 <button
                   type="button"
-                  onClick={() => copyCode("jsonld", generatedJsonLd)}
+                  onClick={() => copyCode("jsonld", displayedJsonLd)}
                   className="h-8 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-[#009691] inline-flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors self-start sm:self-auto"
                 >
                   {copiedKey === "jsonld" ? (
@@ -1905,8 +1850,8 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                   )}
                 </button>
               </div>
-              <pre className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-xs font-mono text-slate-800 overflow-x-auto leading-relaxed">
-                {generatedJsonLd}
+              <pre className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-xs font-mono text-slate-800 overflow-x-auto leading-relaxed max-h-[420px]">
+                {displayedJsonLd}
               </pre>
             </div>
           )}
@@ -1916,32 +1861,44 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
                   <h3 className="text-sm font-bold text-slate-900">
-                    Public /llms.txt manifest (All 3 Philadelphia stores)
+                    Live /llms.txt (HTTP {audit?.llmsTxt.status || "—"} ·{" "}
+                    {audit?.llmsTxt.bytes.toLocaleString() ?? 0} bytes)
                   </h3>
                   <p className="text-xs text-slate-500 font-medium">
-                    Machine-readable markdown file read by GPTBot, PerplexityBot, and ClaudeBot
+                    Fetched live from {audit?.siteUrl || "https://smartfonedoctor.com"}/llms.txt
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => copyCode("llms", generatedLlmsTxt)}
-                  className="h-8 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-[#009691] inline-flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors self-start sm:self-auto"
-                >
-                  {copiedKey === "llms" ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-[#009691]" aria-hidden="true" />
-                      <span className="text-[#009691]">Copied</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" />
-                      <span>Copy /llms.txt</span>
-                    </>
-                  )}
-                </button>
+                <div className="flex items-center gap-2 self-start sm:self-auto">
+                  <a
+                    href="/llms.txt"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="h-8 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 inline-flex items-center gap-1.5"
+                  >
+                    <span>Open live</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => copyCode("llms", displayedLlmsTxt)}
+                    className="h-8 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-[#009691] inline-flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors"
+                  >
+                    {copiedKey === "llms" ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-[#009691]" aria-hidden="true" />
+                        <span className="text-[#009691]">Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" />
+                        <span>Copy /llms.txt</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
-              <pre className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-xs font-mono text-slate-800 overflow-x-auto whitespace-pre-wrap leading-relaxed">
-                {generatedLlmsTxt}
+              <pre className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-xs font-mono text-slate-800 overflow-x-auto whitespace-pre-wrap leading-relaxed max-h-[420px]">
+                {displayedLlmsTxt}
               </pre>
             </div>
           )}
@@ -1951,100 +1908,105 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
                   <h3 className="text-sm font-bold text-slate-900">
-                    robots.txt AI Crawler Allow Directives
+                    Live /robots.txt (HTTP {audit?.robots.status || "—"})
                   </h3>
                   <p className="text-xs text-slate-500 font-medium">
-                    Explicit access permissions allowing AI engines to crawl pricing, hours, and repair capabilities
+                    Fetched live from {audit?.siteUrl || "https://smartfonedoctor.com"}/robots.txt
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => copyCode("robots", generatedRobotsTxt)}
-                  className="h-8 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-[#009691] inline-flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors self-start sm:self-auto"
-                >
-                  {copiedKey === "robots" ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-[#009691]" aria-hidden="true" />
-                      <span className="text-[#009691]">Copied</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" />
-                      <span>Copy robots.txt</span>
-                    </>
-                  )}
-                </button>
+                <div className="flex items-center gap-2 self-start sm:self-auto">
+                  <a
+                    href="/robots.txt"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="h-8 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 inline-flex items-center gap-1.5"
+                  >
+                    <span>Open live</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => copyCode("robots", displayedRobotsTxt)}
+                    className="h-8 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-[#009691] inline-flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors"
+                  >
+                    {copiedKey === "robots" ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-[#009691]" aria-hidden="true" />
+                        <span className="text-[#009691]">Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" />
+                        <span>Copy robots.txt</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
-              <pre className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-xs font-mono text-slate-800 overflow-x-auto whitespace-pre-wrap leading-relaxed">
-                {generatedRobotsTxt}
+              <pre className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-xs font-mono text-slate-800 overflow-x-auto whitespace-pre-wrap leading-relaxed max-h-[420px]">
+                {displayedRobotsTxt}
               </pre>
             </div>
           )}
 
-          {/* Knowledge Graph Entity Identifiers (Wikidata & Google Knowledge Graph) */}
+          {/* Knowledge Graph Entity Identifiers */}
           <div className="p-5 border-t border-slate-100 bg-slate-50/40 flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h3 className="text-sm font-bold text-slate-900">
-                  Global Knowledge Graph Entity Identifiers
+                  Knowledge Graph Entity Identifiers &amp; Canonical sameAs URLs
                 </h3>
                 <p className="text-xs text-slate-500 font-medium">
-                  Authoritative Wikidata Entity &amp; Google Knowledge Graph IDs cited in /llms.txt and schema.org sameAs graph
+                  Real verified Wikidata / Google Knowledge Graph IDs &amp; canonical business links served in /llms.txt and schema.org
                 </p>
               </div>
               <button
                 type="button"
-                onClick={handleSaveKgEntity}
+                onClick={() => void handleSaveKgEntity()}
                 disabled={isSavingKg}
                 className="h-8 px-4 rounded-xl bg-[#009691] hover:bg-[#00827d] text-white text-xs font-semibold cursor-pointer shadow-xs shadow-[#009691]/20 transition-all disabled:opacity-60 shrink-0 self-start sm:self-auto"
               >
-                {isSavingKg ? "Saving Entity…" : "Save Entity IDs"}
+                {isSavingKg ? "Saving…" : "Save Knowledge Graph"}
               </button>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Wikidata Entity ID
+                  Wikidata Entity ID (optional)
                 </label>
                 <input
                   type="text"
                   value={kgWikidata}
                   onChange={(e) => setKgWikidata(e.target.value)}
-                  placeholder="e.g. Q115862892"
+                  placeholder="Leave blank if no real Wikidata Q-ID exists yet"
                   className="w-full h-9 px-3 rounded-xl border border-slate-200 text-xs text-slate-800 bg-white font-mono focus:outline-none focus:ring-2 focus:ring-[#009691]/20 focus:border-[#009691]"
                 />
-                <span className="text-[11px] text-slate-400 mt-1 block">
-                  Citable on wikidata.org for LLM semantic graph retrieval
-                </span>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Google Knowledge Graph ID
+                  Google Knowledge Graph ID (optional)
                 </label>
                 <input
                   type="text"
                   value={kgGoogleId}
                   onChange={(e) => setKgGoogleId(e.target.value)}
-                  placeholder="e.g. kg:/g/11s0_smartfonedoctor"
+                  placeholder="Leave blank unless verified in Knowledge Graph Search API"
                   className="w-full h-9 px-3 rounded-xl border border-slate-200 text-xs text-slate-800 bg-white font-mono focus:outline-none focus:ring-2 focus:ring-[#009691]/20 focus:border-[#009691]"
                 />
-                <span className="text-[11px] text-slate-400 mt-1 block">
-                  Direct Google Knowledge Vault entity reference
-                </span>
               </div>
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Canonical SameAs URLs (One URL per line)
+                Canonical SameAs URLs (One verified URL per line)
               </label>
               <textarea
                 rows={3}
                 value={kgSameAsText}
                 onChange={(e) => setKgSameAsText(e.target.value)}
-                placeholder="https://maps.google.com/?cid=15243892090&#10;https://yelp.com/biz/smart-fone-doctor-philadelphia&#10;https://apple.com/maps/..."
+                placeholder="https://maps.google.com/?cid=...&#10;https://www.yelp.com/biz/..."
                 className="w-full p-3 rounded-xl border border-slate-200 text-xs text-slate-800 bg-white font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#009691]/20 focus:border-[#009691]"
               />
             </div>
@@ -2053,7 +2015,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
       )}
 
       {/* ===================================================================
-          TAB 4: BRAND TRUTH & ANTI-HALLUCINATION GUARDRAILS (Material 3)
+          TAB 4: BRAND TRUTH & ANTI-HALLUCINATION GUARDRAILS
       =================================================================== */}
       {activeTab === "guardrails" && (
         <section
@@ -2066,12 +2028,12 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                 Brand Truth &amp; Anti-Hallucination Guardrails
               </h2>
               <p className="text-xs text-slate-500 font-medium">
-                Canonical facts fed into /llms.txt and directory FAQs so AI engines never hallucinate prices or policies
+                Canonical facts stored in PostgreSQL (`aeo_brand_guardrails`) and published dynamically to /llms.txt
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <span className="text-xs text-slate-500 font-semibold hidden sm:inline">
-                {guardrails.length} canonical facts verified
+                {guardrails.length} canonical facts
               </span>
               <button
                 type="button"
@@ -2086,7 +2048,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
           {showGuardForm && (
             <div className="p-5 bg-slate-50/80 border-b border-slate-100 flex flex-col gap-3.5">
               <span className="text-xs font-bold text-slate-800">
-                Add new canonical truth fact (Anti-Hallucination)
+                Add new canonical truth fact
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -2148,7 +2110,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                 </button>
                 <button
                   type="button"
-                  onClick={handleAddGuardrail}
+                  onClick={() => void handleAddGuardrail()}
                   className="h-8 px-4 rounded-xl bg-[#009691] hover:bg-[#00827d] text-white text-xs font-semibold cursor-pointer shadow-xs shadow-[#009691]/20 transition-all"
                 >
                   Save guardrail
@@ -2159,12 +2121,13 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
 
           <div className="divide-y divide-slate-100">
             {guardrails.map((g) => (
-              <div key={g.id} className="p-5 flex flex-col gap-2 hover:bg-slate-50/60 transition-colors">
+              <div
+                key={g.id}
+                className="p-5 flex flex-col gap-2 hover:bg-slate-50/60 transition-colors"
+              >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-slate-900">
-                      {g.topic}
-                    </span>
+                    <span className="text-sm font-bold text-slate-900">{g.topic}</span>
                     <span className="px-2.5 py-0.5 rounded-full bg-teal-50 text-[#009691] text-[11px] font-semibold border border-teal-200/60">
                       {g.status}
                     </span>
@@ -2182,7 +2145,7 @@ Sitemap: https://smartfonedoctor.com/sitemap.xml`;
                     </div>
                     <button
                       type="button"
-                      onClick={() => handleDeleteGuardrail(g.id)}
+                      onClick={() => void handleDeleteGuardrail(g.id)}
                       aria-label={`Delete ${g.topic}`}
                       className="p-1.5 hover:bg-rose-50 rounded-lg text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
                     >
