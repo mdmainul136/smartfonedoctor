@@ -208,6 +208,15 @@ export default function SeoManagerPage() {
     const res = await updateSiteSeoSettingsAction(settings);
     setIsSaving(false);
     if (res.success) {
+      if (res.settings) {
+        setSettings((prev) => ({
+          ...prev,
+          googleSiteVerification: res.settings.googleSiteVerification || "",
+          bingSiteVerification: res.settings.bingSiteVerification || "",
+          pinterestVerification: res.settings.pinterestVerification || "",
+          facebookAppId: res.settings.facebookAppId || "",
+        }));
+      }
       setSavedToast("Global SEO settings saved and cached layouts invalidated!");
       setTimeout(() => setSavedToast(null), 4000);
     } else {

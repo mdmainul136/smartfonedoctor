@@ -95,13 +95,13 @@ export async function seedSeoMetadata() {
 
     await prisma.seoMetadata.upsert({
       where: { pageId: page.id },
-      update: seoData,
+      update: {},
       create: {
         pageId: page.id,
         ...seoData,
       },
     });
-    console.log(`  ✓ Synced enterprise SEO & AI metadata for page: "${page.name}"`);
+    console.log(`  ✓ Ensured SEO & AI metadata for page: "${page.name}"`);
   }
 
   // 2. Seed SEO Metadata for Blog Posts
@@ -183,32 +183,19 @@ export async function seedSeoMetadata() {
 
     await prisma.seoMetadata.upsert({
       where: { postId: post.id },
-      update: blogSeoData,
+      update: {},
       create: {
         postId: post.id,
         ...blogSeoData,
       },
     });
-    console.log(`  ✓ Synced enterprise SEO & AI metadata for blog: "${post.title}"`);
+    console.log(`  ✓ Ensured SEO & AI metadata for blog: "${post.title}"`);
   }
 
-  // 3. Seed Global Site SEO Settings
+  // 3. Seed Global Site SEO Settings (non-destructive: never overwrite verification tokens or admin edits)
   await prisma.siteSeoSettings.upsert({
     where: { id: "global_seo_settings" },
-    update: {
-      siteName: "SmartFoneDoctor",
-      titleSeparator: "|",
-      defaultMetaTitle: "SmartFoneDoctor | Fast & Reliable Phone & Electronics Repair in Philadelphia",
-      defaultMetaDescription: "Expert cell phone, iPhone, iPad, MacBook, computer, and gaming console repair in Philadelphia, PA. Fast 30-minute screen and battery replacement with warranty.",
-      defaultOgImage: "/logo-png.jpg",
-      googleSiteVerification: null,
-      bingSiteVerification: null,
-      twitterHandle: "@smartfonedoctor",
-      enableSitemap: true,
-      enableRobotsTxt: true,
-      enableLlmsTxt: true,
-      enableAiBots: true,
-    },
+    update: {},
     create: {
       id: "global_seo_settings",
       siteName: "SmartFoneDoctor",
@@ -216,8 +203,10 @@ export async function seedSeoMetadata() {
       defaultMetaTitle: "SmartFoneDoctor | Fast & Reliable Phone & Electronics Repair in Philadelphia",
       defaultMetaDescription: "Expert cell phone, iPhone, iPad, MacBook, computer, and gaming console repair in Philadelphia, PA. Fast 30-minute screen and battery replacement with warranty.",
       defaultOgImage: "/logo-png.jpg",
-      googleSiteVerification: null,
-      bingSiteVerification: null,
+      googleSiteVerification: process.env.GOOGLE_SITE_VERIFICATION || null,
+      bingSiteVerification: process.env.BING_SITE_VERIFICATION || null,
+      pinterestVerification: process.env.PINTEREST_SITE_VERIFICATION || null,
+      facebookAppId: process.env.FACEBOOK_APP_ID || null,
       twitterHandle: "@smartfonedoctor",
       enableSitemap: true,
       enableRobotsTxt: true,
@@ -225,9 +214,9 @@ export async function seedSeoMetadata() {
       enableAiBots: true,
     },
   });
-  console.log(`  ✓ Synced Global Site SEO Settings & Webmaster Tokens`);
+  console.log(`  ✓ Ensured Global Site SEO Settings (existing Webmaster tokens preserved)`);
 
-  // 4. Seed 301/302 Redirect Rules
+  // 4. Seed 301/302 Redirect Rules (create-if-missing only)
   const SAMPLE_REDIRECTS = [
     { sourceUrl: "/repair/iphone", targetUrl: "/repairs/iphone", statusCode: 301, notes: "Legacy slug migration" },
     { sourceUrl: "/repair/screen-replacement", targetUrl: "/repairs/iphone", statusCode: 301, notes: "Old WordPress landing page" },
@@ -238,12 +227,7 @@ export async function seedSeoMetadata() {
   for (const red of SAMPLE_REDIRECTS) {
     await prisma.urlRedirect.upsert({
       where: { sourceUrl: red.sourceUrl },
-      update: {
-        targetUrl: red.targetUrl,
-        statusCode: red.statusCode,
-        notes: red.notes,
-        isActive: true,
-      },
+      update: {},
       create: {
         sourceUrl: red.sourceUrl,
         targetUrl: red.targetUrl,
@@ -252,7 +236,7 @@ export async function seedSeoMetadata() {
         isActive: true,
       },
     });
-    console.log(`  ✓ Synced URL Redirect: ${red.sourceUrl} → ${red.targetUrl} [${red.statusCode}]`);
+    console.log(`  ✓ Ensured URL Redirect: ${red.sourceUrl} → ${red.targetUrl} [${red.statusCode}]`);
   }
 
   console.log("✅ [Seeder] Enterprise SEO & AI/LLM Metadata seeded successfully.");

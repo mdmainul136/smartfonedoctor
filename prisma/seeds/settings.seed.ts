@@ -47,7 +47,7 @@ export const INITIAL_STORE_BRANCHES = [
 export async function seedSettings() {
   console.log("🌱 [Seeder] Seeding Store Branches & Global App Settings...");
 
-  // 1. Seed Store Branches
+  // 1. Seed Store Branches (create-only if missing so admin edits persist)
   for (const branch of INITIAL_STORE_BRANCHES) {
     const existing = await prisma.storeBranch.findFirst({
       where: { name: branch.name },
@@ -58,16 +58,10 @@ export async function seedSettings() {
         data: branch,
       });
       console.log(`   ➕ Created Store Branch: "${branch.name}" [${branch.type}]`);
-    } else {
-      await prisma.storeBranch.update({
-        where: { id: existing.id },
-        data: branch,
-      });
-      console.log(`   🔄 Updated Store Branch: "${branch.name}"`);
     }
   }
 
-  // 2. Seed Global App & AI Settings
+  // 2. Seed Global App & AI Settings (never overwrite saved admin config)
   const existingConfig = await prisma.appSystemSettings.findUnique({
     where: { id: "global_config" },
   });
@@ -91,16 +85,7 @@ export async function seedSettings() {
     });
     console.log("   ➕ Created Global AppSystemSettings (AI keys & business config)");
   } else {
-    await prisma.appSystemSettings.update({
-      where: { id: "global_config" },
-      data: {
-        siteName: "SmartFone Doctor",
-        supportEmail: "support@smartfonedoctor.com",
-        supportPhone: "+1 (215) 598-2090",
-        headquarters: "33 S 52nd St, Philadelphia, PA 19139",
-      },
-    });
-    console.log("   🔄 Verified Global AppSystemSettings");
+    console.log("   ✓ Preserved existing Global AppSystemSettings");
   }
 
   console.log("✅ [Seeder] Settings seeded successfully.");

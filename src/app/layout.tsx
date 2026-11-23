@@ -23,6 +23,27 @@ async function getSeoSettings() {
   }
 }
 
+function resolveVerificationTokens(settings: Awaited<ReturnType<typeof getSeoSettings>>) {
+  return {
+    googleVerification:
+      cleanVerificationToken(settings?.googleSiteVerification) ||
+      cleanVerificationToken(process.env.GOOGLE_SITE_VERIFICATION) ||
+      undefined,
+    bingVerification:
+      cleanVerificationToken(settings?.bingSiteVerification) ||
+      cleanVerificationToken(process.env.BING_SITE_VERIFICATION) ||
+      undefined,
+    pinterestVerification:
+      cleanVerificationToken(settings?.pinterestVerification) ||
+      cleanVerificationToken(process.env.PINTEREST_SITE_VERIFICATION) ||
+      undefined,
+    facebookAppId:
+      cleanVerificationToken(settings?.facebookAppId) ||
+      cleanVerificationToken(process.env.FACEBOOK_APP_ID) ||
+      undefined,
+  };
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSeoSettings();
 
@@ -39,11 +60,13 @@ export async function generateMetadata(): Promise<Metadata> {
   const appleTouchIcon = settings?.appleTouchIcon || "/apple-touch-icon.png";
   const twitterHandle = settings?.twitterHandle || "@smartfonedoctor";
 
-  // Webmaster verification tokens from PostgreSQL (auto-sanitized)
-  const googleVerification = cleanVerificationToken(settings?.googleSiteVerification) || undefined;
-  const bingVerification = cleanVerificationToken(settings?.bingSiteVerification) || undefined;
-  const pinterestVerification = cleanVerificationToken(settings?.pinterestVerification) || undefined;
-  const facebookAppId = cleanVerificationToken(settings?.facebookAppId) || undefined;
+  // Webmaster verification tokens (PostgreSQL primary + .env fallback, auto-sanitized)
+  const {
+    googleVerification,
+    bingVerification,
+    pinterestVerification,
+    facebookAppId,
+  } = resolveVerificationTokens(settings);
 
   return {
     metadataBase: new URL(siteUrl),
@@ -141,6 +164,12 @@ export default async function RootLayout({
   const settings = await getSeoSettings();
   const faviconUrl = settings?.faviconUrl || "/favicon.ico";
   const appleTouchIcon = settings?.appleTouchIcon || "/apple-touch-icon.png";
+  const {
+    googleVerification,
+    bingVerification,
+    pinterestVerification,
+    facebookAppId,
+  } = resolveVerificationTokens(settings);
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -154,17 +183,17 @@ export default async function RootLayout({
         <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
         <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16" />
         <link rel="apple-touch-icon" href={appleTouchIcon} />
-        {cleanVerificationToken(settings?.googleSiteVerification) && (
-          <meta name="google-site-verification" content={cleanVerificationToken(settings?.googleSiteVerification)!} />
+        {googleVerification && (
+          <meta name="google-site-verification" content={googleVerification} />
         )}
-        {cleanVerificationToken(settings?.bingSiteVerification) && (
-          <meta name="msvalidate.01" content={cleanVerificationToken(settings?.bingSiteVerification)!} />
+        {bingVerification && (
+          <meta name="msvalidate.01" content={bingVerification} />
         )}
-        {cleanVerificationToken(settings?.pinterestVerification) && (
-          <meta name="p:domain_verify" content={cleanVerificationToken(settings?.pinterestVerification)!} />
+        {pinterestVerification && (
+          <meta name="p:domain_verify" content={pinterestVerification} />
         )}
-        {cleanVerificationToken(settings?.facebookAppId) && (
-          <meta property="fb:app_id" content={cleanVerificationToken(settings?.facebookAppId)!} />
+        {facebookAppId && (
+          <meta property="fb:app_id" content={facebookAppId} />
         )}
       </head>
       <body
