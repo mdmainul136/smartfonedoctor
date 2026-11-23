@@ -125,10 +125,16 @@ export default function AboutMap({ initialStores }: { initialStores?: StorePoint
       });
 
       // 100% Free OpenStreetMap raster tiles
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      const tileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
         subdomains: ["a", "b", "c"],
-      }).addTo(map);
+      });
+      tileLayer.on("tileloadstart", (e: { tile?: HTMLImageElement }) => {
+        if (e.tile && !e.tile.alt) {
+          e.tile.alt = "Philadelphia SmartFoneDoctor stores map tile";
+        }
+      });
+      tileLayer.addTo(map);
 
       // Custom Google Maps-style Pin with Store Logo inside
       const createTeardropPin = (store: StorePoint) => {

@@ -51,10 +51,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const titleSeparator = settings?.titleSeparator || "|";
   const titleDefault =
     settings?.defaultMetaTitle ||
-    "SmartFoneDoctor | Fast & Reliable Phone & Electronics Repair in Philadelphia";
+    "Phone & Electronics Repair in Philadelphia | SmartFoneDoctor";
   const description =
     settings?.defaultMetaDescription ||
-    "Expert cell phone, iPhone, iPad, MacBook, computer, and gaming console repair in Philadelphia, PA. Fast 30-minute screen and battery replacement with warranty.";
+    "Fast phone & electronics repair in Philadelphia for iPhone, iPad, MacBook & consoles. 30-min screen & battery repair with warranty.";
   const ogImage = settings?.defaultOgImage || settings?.logoUrl || "/logo-png.jpg";
   const faviconUrl = settings?.faviconUrl || "/favicon.ico";
   const appleTouchIcon = settings?.appleTouchIcon || "/apple-touch-icon.png";

@@ -16,10 +16,10 @@ export type HeroSectionProps = {
 };
 
 export const HERO_DEFAULTS: Required<HeroSectionProps> = {
-  badge: "Phone & computer repair in Philadelphia",
-  headline: "Fast, reliable repairs that keep your tech working when it matters.",
+  badge: "Phone & Electronics Repair in Philadelphia",
+  headline: "Fast Phone & Electronics Repair in Philadelphia",
   subtitle:
-    "Repair services for smartphones, tablets, computers and game consoles, backed by certified technicians and a 90-day free warranty.",
+    "Same-day phone & electronics repair in Philadelphia for smartphones, tablets, MacBooks, and game consoles — backed by certified technicians and a 90-day warranty.",
   ctaText: "Book your repair",
   ctaLink: "/schedule-repair",
   imageUrl: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1280&q=80",

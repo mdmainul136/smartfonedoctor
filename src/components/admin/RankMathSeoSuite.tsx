@@ -178,13 +178,14 @@ export default function RankMathSeoSuite({
     const titlePassed = titleExact || titleAllWords;
 
     // 2. Keyword in Slug
+    const isHomepage = slugLower === "" || slugLower === "home" || slugLower === "/";
     const slugClean = slugLower.replace(/[^a-z0-9]/g, "-");
     const slugExact =
       slugClean.includes(cleanKeyword.replace(/\s+/g, "-")) || slugLower.includes(cleanKeyword);
     const slugMatches = kwWords.some(
       (w) => slugLower === w || slugLower.includes(w) || w.includes(slugLower)
     );
-    const slugPassed = slugExact || slugMatches;
+    const slugPassed = isHomepage || slugExact || slugMatches;
 
     // 3. Keyword in Meta Description
     const excerptExact = excerptLower.includes(cleanKeyword);
@@ -224,7 +225,9 @@ export default function RankMathSeoSuite({
       {
         id: "kw-in-slug",
         label: "Focus Keyword in URL Slug",
-        description: slugExact
+        description: isHomepage
+          ? `Root homepage URL (/) — no sub-path slug needed.`
+          : slugExact
           ? `URL slug contains "${cleanKeyword}".`
           : slugMatches
           ? `URL path aligns with primary page entity ("${slugLower}").`
@@ -581,7 +584,7 @@ export default function RankMathSeoSuite({
                 }`}
               >
                 <div className="text-[11px] text-gray-500 font-mono truncate">
-                  smartfonedoctor.com/{slug || "page"}
+                  smartfonedoctor.com/{slug === "home" || slug === "/" ? "" : slug || "page"}
                 </div>
                 <div className="text-[13px] font-medium text-[#1a0dab] hover:underline cursor-pointer line-clamp-1">
                   {title || "Page Title Goes Here"}

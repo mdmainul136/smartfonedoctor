@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useRef } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import {
   Globe,
   Eye,
@@ -41,16 +41,67 @@ const PRESET_REPAIR_IMAGES = [
   },
 ];
 
+type ContentSnapshot = {
+  html: string;
+  images: string[];
+  words: number;
+};
+
+function countHtmlWords(html: string): number {
+  const text = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  return text ? text.split(/\s+/).filter(Boolean).length : 0;
+}
+
+function extractHtmlFromRoot(root: Element | null): ContentSnapshot {
+  if (!root) return { html: "", images: [], words: 0 };
+  const clone = root.cloneNode(true) as Element;
+  clone
+    .querySelectorAll("script, style, noscript, [data-puck-overlay], [data-puck-action-bar], [data-builder-hide]")
+    .forEach((n) => n.remove());
+
+  const images: string[] = [];
+  const seen = new Set<string>();
+  clone.querySelectorAll("img").forEach((img) => {
+    const src = img.getAttribute("src")?.trim();
+    if (!src || src.includes("tile.openstreetmap.org") || src.startsWith("data:")) return;
+    if (!seen.has(src)) {
+      seen.add(src);
+      images.push(src);
+    }
+  });
+
+  const html = clone.innerHTML || "";
+  const words = (clone.textContent || "").trim().split(/\s+/).filter(Boolean).length;
+  return { html, images, words };
+}
+
+function readPuckCanvasSnapshot(): ContentSnapshot {
+  if (typeof document === "undefined") return { html: "", images: [], words: 0 };
+  const iframe = document.querySelector<HTMLIFrameElement>(
+    'iframe#preview-frame, iframe[data-puck-preview]'
+  );
+  const iframeBody = iframe?.contentDocument?.body ?? null;
+  if (iframeBody) {
+    return extractHtmlFromRoot(iframeBody);
+  }
+  const inlinePreview = document.querySelector("[data-puck-preview]");
+  return extractHtmlFromRoot(inlinePreview);
+}
+
 /**
- * Deeply walk Puck content tree to extract all text, headings, links,
+ * Deeply walk Puck content tree (including nested zones) to extract all text, headings, links,
  * and image URLs for rich SEO analysis and image syncing.
  */
 function extractPuckContentDetails(puckData?: PuckPageData): {
   html: string;
   images: string[];
 } {
-  const blocks = puckData?.content;
-  if (!Array.isArray(blocks) || blocks.length === 0) {
+  const topBlocks = Array.isArray(puckData?.content) ? puckData.content : [];
+  const zoneBlocks = puckData?.zones
+    ? Object.values(puckData.zones).flatMap((z) => (Array.isArray(z) ? z : []))
+    : [];
+  const blocks = [...topBlocks, ...zoneBlocks];
+  if (blocks.length === 0) {
     return { html: "", images: [] };
   }
 
@@ -77,13 +128,26 @@ function extractPuckContentDetails(puckData?: PuckPageData): {
     if (typeof props.headline === "string" && props.headline) {
       parts.push(`<h2>${props.headline}</h2>`);
     }
+    if (typeof props.title === "string" && props.title) {
+      const tag = blockType === "HeroBlock" ? "h1" : "h2";
+      parts.push(`<${tag}>${props.title}</${tag}>`);
+    }
     if (typeof props.subheading === "string" && props.subheading) {
       parts.push(`<p>${props.subheading}</p>`);
+    }
+    if (typeof props.subtitle === "string" && props.subtitle) {
+      parts.push(`<p>${props.subtitle}</p>`);
     }
     if (typeof props.text === "string" && props.text) {
       const tag =
         blockType === "HeadingBlock" ? (typeof props.tag === "string" ? props.tag : "h2") : "p";
       parts.push(`<${tag}>${props.text}</${tag}>`);
+    }
+    if (typeof props.body === "string" && props.body) {
+      parts.push(`<p>${props.body}</p>`);
+    }
+    if (typeof props.content === "string" && props.content) {
+      parts.push(props.content);
     }
     if (typeof props.badgeText === "string" && props.badgeText) {
       parts.push(`<span>${props.badgeText}</span>`);
@@ -100,9 +164,21 @@ function extractPuckContentDetails(puckData?: PuckPageData): {
       const label = typeof props.ctaText === "string" ? props.ctaText : "Click Here";
       parts.push(`<a href="${props.ctaLink}">${label}</a>`);
     }
+    if (typeof props.ctaHref === "string" && props.ctaHref) {
+      const label = typeof props.ctaText === "string" ? props.ctaText : "Click Here";
+      parts.push(`<a href="${props.ctaHref}">${label}</a>`);
+    }
     if (typeof props.buttonLink === "string" && props.buttonLink) {
       const label = typeof props.buttonText === "string" ? props.buttonText : "Learn More";
       parts.push(`<a href="${props.buttonLink}">${label}</a>`);
+    }
+    if (typeof props.buttonHref === "string" && props.buttonHref) {
+      const label = typeof props.buttonText === "string" ? props.buttonText : "Learn More";
+      parts.push(`<a href="${props.buttonHref}">${label}</a>`);
+    }
+    if (typeof props.href === "string" && props.href) {
+      const label = typeof props.label === "string" ? props.label : "Link";
+      parts.push(`<a href="${props.href}">${label}</a>`);
     }
     if (typeof props.link === "string" && props.link) {
       parts.push(`<a href="${props.link}">Link</a>`);
@@ -123,7 +199,7 @@ function extractPuckContentDetails(puckData?: PuckPageData): {
       parts.push(`<img src="${props.bgImage}" alt="Background image" />`);
     }
 
-    // Nested arrays (items, steps, features, tabs, cards, etc.)
+    // Nested arrays (items, steps, features, tabs, cards, faqs, etc.)
     for (const key of Object.keys(props)) {
       const val = props[key];
       if (Array.isArray(val)) {
@@ -136,11 +212,17 @@ function extractPuckContentDetails(puckData?: PuckPageData): {
             if (typeof itemRec.heading === "string" && itemRec.heading) {
               parts.push(`<h3>${itemRec.heading}</h3>`);
             }
+            if (typeof itemRec.question === "string" && itemRec.question) {
+              parts.push(`<h3>${itemRec.question}</h3>`);
+            }
             if (typeof itemRec.name === "string" && itemRec.name) {
               parts.push(`<h4>${itemRec.name}</h4>`);
             }
             if (typeof itemRec.description === "string" && itemRec.description) {
               parts.push(`<p>${itemRec.description}</p>`);
+            }
+            if (typeof itemRec.answer === "string" && itemRec.answer) {
+              parts.push(`<p>${itemRec.answer}</p>`);
             }
             if (typeof itemRec.quote === "string" && itemRec.quote) {
               parts.push(`<blockquote>${itemRec.quote}</blockquote>`);
@@ -161,6 +243,9 @@ function extractPuckContentDetails(puckData?: PuckPageData): {
             }
             if (typeof itemRec.link === "string" && itemRec.link) {
               parts.push(`<a href="${itemRec.link}">${itemRec.title || "Link"}</a>`);
+            }
+            if (typeof itemRec.href === "string" && itemRec.href) {
+              parts.push(`<a href="${itemRec.href}">${itemRec.title || "Link"}</a>`);
             }
             if (typeof itemRec.url === "string" && itemRec.url) {
               parts.push(`<a href="${itemRec.url}">Link</a>`);
@@ -197,16 +282,81 @@ export default function PageSeoPanel({
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Extract full HTML and images from Puck editor state
+  const [canvasSnapshot, setCanvasSnapshot] = useState<ContentSnapshot>({
+    html: "",
+    images: [],
+    words: 0,
+  });
+  const [fetchedSnapshot, setFetchedSnapshot] = useState<ContentSnapshot>({
+    html: "",
+    images: [],
+    words: 0,
+  });
+
+  // Extract fallback HTML and images from Puck editor state
   const extracted = useMemo(() => {
     return extractPuckContentDetails(
       livePuckData || (page.puckData as unknown as PuckPageData | undefined)
     );
   }, [livePuckData, page.puckData]);
 
-  const liveContentHtml = useMemo(() => {
-    return extracted.html || page.contentHtml || page.heroSubtitle || "";
-  }, [extracted.html, page.contentHtml, page.heroSubtitle]);
+  // Live DOM snapshot from Puck preview iframe (captures coded SiteSectionBlock + nested zones)
+  useEffect(() => {
+    const updateFromCanvas = () => {
+      const snap = readPuckCanvasSnapshot();
+      if (snap.words > 0) {
+        setCanvasSnapshot(snap);
+      }
+    };
+    const fast = window.setTimeout(updateFromCanvas, 300);
+    const settled = window.setTimeout(updateFromCanvas, 900);
+    return () => {
+      window.clearTimeout(fast);
+      window.clearTimeout(settled);
+    };
+  }, [livePuckData, page.slug]);
+
+  // Live SSR page HTML snapshot when editing in PageSeoPanel (or before Puck canvas mounts)
+  useEffect(() => {
+    if (page.category === "Template" || !page.path) return;
+    let alive = true;
+    const url = page.status === "Published" ? page.path : `/preview/${page.slug}`;
+    fetch(url, { cache: "no-store" })
+      .then((res) => (res.ok ? res.text() : ""))
+      .then((raw) => {
+        if (!alive || !raw) return;
+        const doc = new DOMParser().parseFromString(raw, "text/html");
+        const snap = extractHtmlFromRoot(doc.querySelector("main") ?? doc.body);
+        if (snap.words > 0) {
+          setFetchedSnapshot(snap);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [page.category, page.path, page.slug, page.status, page.lastEdited]);
+
+  const { liveContentHtml, resolvedImages } = useMemo(() => {
+    const fallbackHtml = extracted.html || page.contentHtml || page.heroSubtitle || "";
+    const fallbackWords = countHtmlWords(fallbackHtml);
+
+    let html = fallbackHtml;
+    let snapImages: string[] = [];
+
+    if (canvasSnapshot.words >= 40) {
+      html = canvasSnapshot.html;
+      snapImages = canvasSnapshot.images;
+    } else if (fetchedSnapshot.words > fallbackWords) {
+      html = fetchedSnapshot.html;
+      snapImages = fetchedSnapshot.images;
+    }
+
+    return {
+      liveContentHtml: html,
+      resolvedImages: Array.from(new Set([...snapImages, ...extracted.images])),
+    };
+  }, [canvasSnapshot, fetchedSnapshot, extracted.html, extracted.images, page.contentHtml, page.heroSubtitle]);
 
   // Direct file upload handler
   const handleDirectUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -282,7 +432,7 @@ export default function PageSeoPanel({
           featuredImage={page.featuredImage}
           canonicalUrl={page.canonicalUrl || `https://smartfonedoctor.com${page.path}`}
           schemaType={page.schemaType}
-          pageImages={extracted.images}
+          pageImages={resolvedImages}
           compact={compact}
           onKeywordChange={(kw) => onChangeField("focusKeyword", kw)}
           onSchemaChange={(schema) => onChangeField("schemaType", schema)}

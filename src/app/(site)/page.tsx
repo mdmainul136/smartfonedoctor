@@ -5,6 +5,17 @@ import { getPublicFeaturedReviewsAction } from "@/actions/reviews";
 import type { ReviewContent } from "@/components/home/sectionContent";
 import HomePageClient from "@/components/site/HomePageClient";
 
+const OPTIMIZED_HOME_TITLE =
+  "Phone & Electronics Repair in Philadelphia | SmartFoneDoctor";
+const OPTIMIZED_HOME_DESC =
+  "Fast phone & electronics repair in Philadelphia for iPhone, iPad, MacBook & consoles. 30-min screen & battery repair with warranty.";
+const LEGACY_HOME_TITLES = new Set([
+  "Fast & Reliable Phone & Electronics Repair in Philadelphia",
+  "SmartFoneDoctor | Fast & Reliable Phone & Electronics Repair in Philadelphia",
+]);
+const LEGACY_HOME_DESC =
+  "Philadelphia's top-rated cell phone, iPhone, iPad, MacBook, and console repair shop. 30-minute screen and battery service with warranty.";
+
 /**
  * Dynamic metadata generator for the Homepage.
  * Pulls current Title, Meta Description, OpenGraph, Canonical, and Schema metadata.
@@ -12,13 +23,14 @@ import HomePageClient from "@/components/site/HomePageClient";
 export async function generateMetadata(): Promise<Metadata> {
   const page = await getCmsPage("/");
 
+  const rawTitle = page?.title?.trim() || "";
   const title =
-    page?.title ||
-    "SmartFoneDoctor | Fast & Reliable Phone & Electronics Repair in Philadelphia";
+    !rawTitle || LEGACY_HOME_TITLES.has(rawTitle) ? OPTIMIZED_HOME_TITLE : rawTitle;
+  const rawDesc = page?.metaDesc?.trim() || "";
   const description =
-    page?.metaDesc ||
-    page?.heroSubtitle ||
-    "Expert cell phone, iPhone, iPad, MacBook, computer, and gaming console repair in Philadelphia, PA. Fast 30-minute screen and battery replacement with warranty.";
+    !rawDesc || rawDesc === LEGACY_HOME_DESC
+      ? OPTIMIZED_HOME_DESC
+      : rawDesc;
   const canonicalUrl = page?.canonicalUrl || "https://smartfonedoctor.com/";
   const ogImage = page?.featuredImage || "/logo-png.jpg";
 

@@ -277,9 +277,9 @@ export default function Navbar({ nav: navFromDb, mega: megaFromDb }: { nav?: Nav
               {/* Col 1: Popular Devices */}
               <div className="pr-6 border-r border-neutral-200 flex flex-col justify-between">
                 <div>
-                  <h4 className="text-[15px] font-bold text-sfd-dark mb-4">
+                  <p className="text-[15px] font-bold text-sfd-dark mb-4">
                     Popular Devices
-                  </h4>
+                  </p>
                   <ul className="space-y-3.5 text-[14px] text-neutral-600">
                     {currentData.popularDevices.map((device) => (
                       <li key={device}>
@@ -305,9 +305,9 @@ export default function Navbar({ nav: navFromDb, mega: megaFromDb }: { nav?: Nav
               {/* Col 2: Common Issues */}
               <div className="px-6 border-r border-neutral-200 flex flex-col justify-between">
                 <div>
-                  <h4 className="text-[15px] font-bold text-sfd-dark mb-4">
+                  <p className="text-[15px] font-bold text-sfd-dark mb-4">
                     Common Issues
-                  </h4>
+                  </p>
                   <ul className="space-y-3.5 text-[14px] text-neutral-600">
                     {currentData.commonIssues.map((issue) => (
                       <li key={issue}>
@@ -333,9 +333,9 @@ export default function Navbar({ nav: navFromDb, mega: megaFromDb }: { nav?: Nav
               {/* Col 3: By Brand */}
               <div className="pl-6 flex flex-col justify-between">
                 <div>
-                  <h4 className="text-[15px] font-bold text-sfd-dark mb-4">
+                  <p className="text-[15px] font-bold text-sfd-dark mb-4">
                     By Brand
-                  </h4>
+                  </p>
                   <ul className="space-y-4">
                     {currentData.brands.map((brand) => (
                       <li key={brand.title}>
@@ -379,9 +379,9 @@ export default function Navbar({ nav: navFromDb, mega: megaFromDb }: { nav?: Nav
                 <MapPin className="w-6 h-6" />
               </div>
 
-              <h3 className="text-3xl font-normal text-sfd-dark leading-tight mb-3">
+              <p className="text-3xl font-normal text-sfd-dark leading-tight mb-3">
                 {menuConfig.ctaCard.title}
-              </h3>
+              </p>
 
               <p className="text-sm text-neutral-600 max-w-xs mb-6 leading-relaxed">
                 {menuConfig.ctaCard.description}

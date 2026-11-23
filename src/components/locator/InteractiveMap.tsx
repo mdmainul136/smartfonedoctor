@@ -256,10 +256,16 @@ export function InteractiveMap({
       });
 
       // 100% Free OpenStreetMap Raster Tiles
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      const tileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
         subdomains: ["a", "b", "c"],
-      }).addTo(map);
+      });
+      tileLayer.on("tileloadstart", (e: { tile?: HTMLImageElement }) => {
+        if (e.tile && !e.tile.alt) {
+          e.tile.alt = "Philadelphia repair store locator map tile";
+        }
+      });
+      tileLayer.addTo(map);
 
       mapInstanceRef.current = map;
 
