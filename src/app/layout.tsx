@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import prisma from "@/lib/prisma";
 import { cleanVerificationToken } from "@/lib/seoSanitize";
+import { normalizeTwitterHandle } from "@/components/site/SiteBrandContext";
 import "./globals.css";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://smartfonedoctor.com";
@@ -58,7 +59,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const ogImage = settings?.defaultOgImage || settings?.logoUrl || "/logo-png.jpg";
   const faviconUrl = settings?.faviconUrl || "/favicon.ico";
   const appleTouchIcon = settings?.appleTouchIcon || "/apple-touch-icon.png";
-  const twitterHandle = settings?.twitterHandle || "@smartfonedoctor";
+  const twitterHandle =
+    normalizeTwitterHandle(settings?.twitterHandle) || "@smartfonedoctor";
 
   // Webmaster verification tokens (PostgreSQL primary + .env fallback, auto-sanitized)
   const {
@@ -139,6 +141,7 @@ export async function generateMetadata(): Promise<Metadata> {
       card: "summary_large_image",
       title: titleDefault,
       description,
+      site: twitterHandle,
       creator: twitterHandle,
       images: [ogImage],
     },

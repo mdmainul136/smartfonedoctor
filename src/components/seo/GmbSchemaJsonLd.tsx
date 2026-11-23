@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { getGeoStoreByCode } from "@/lib/geoPages";
+import { twitterHandleToUrl } from "@/components/site/SiteBrandContext";
 
 export default async function GmbSchemaJsonLd() {
   try {
@@ -52,7 +53,7 @@ export default async function GmbSchemaJsonLd() {
       };
     });
 
-    const filteredSameAs = (
+    const baseSameAs = (
       entity?.sameAsUrls || [
         "https://maps.google.com/?cid=15243892090",
         "https://www.yelp.com/biz/smart-fone-doctor-philadelphia",
@@ -60,6 +61,18 @@ export default async function GmbSchemaJsonLd() {
         "https://facebook.com/smartfonedoctorphilly",
       ]
     ).filter((u) => !u.includes("wikidata.org/wiki/Q115862892"));
+
+    const socialSameAs = [
+      settings?.facebookUrl?.trim(),
+      settings?.instagramUrl?.trim(),
+      settings?.youtubeUrl?.trim(),
+      twitterHandleToUrl(settings?.twitterHandle),
+      settings?.gmbUrl?.trim(),
+    ].filter(Boolean) as string[];
+
+    const filteredSameAs = Array.from(new Set([...baseSameAs, ...socialSameAs]));
+    const mainMapUrl = settings?.gmbUrl?.trim() || "https://maps.google.com/?cid=15243892090";
+    const mainPhone = settings?.contactPhone?.trim() || "+1-215-598-2090";
 
     const schemaGraph = {
       "@context": "https://schema.org",
@@ -72,7 +85,7 @@ export default async function GmbSchemaJsonLd() {
           url: siteUrl,
           logo: `${siteUrl}/logo-png.jpg`,
           image: `${siteUrl}/logo-png.jpg`,
-          telephone: "+1-215-598-2090",
+          telephone: mainPhone,
           priceRange: "$$",
           currenciesAccepted: "USD",
           paymentAccepted: "Cash, Credit Card, Debit Card, Apple Pay, Google Pay, Contactless",
@@ -87,7 +100,7 @@ export default async function GmbSchemaJsonLd() {
             "19143",
           ],
           sameAs: filteredSameAs,
-          hasMap: "https://maps.google.com/?cid=15243892090",
+          hasMap: mainMapUrl,
           department: departments,
           hasOfferCatalog: {
             "@type": "OfferCatalog",

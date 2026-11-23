@@ -4,6 +4,8 @@ import { getCmsPage } from "@/actions/cmsPages";
 import { getPublicFeaturedReviewsAction } from "@/actions/reviews";
 import type { ReviewContent } from "@/components/home/sectionContent";
 import HomePageClient from "@/components/site/HomePageClient";
+import prisma from "@/lib/prisma";
+import { normalizeTwitterHandle } from "@/components/site/SiteBrandContext";
 
 const OPTIMIZED_HOME_TITLE =
   "Phone & Electronics Repair in Philadelphia | SmartFoneDoctor";
@@ -21,7 +23,15 @@ const LEGACY_HOME_DESC =
  * Pulls current Title, Meta Description, OpenGraph, Canonical, and Schema metadata.
  */
 export async function generateMetadata(): Promise<Metadata> {
-  const page = await getCmsPage("/");
+  const [page, seoSettings] = await Promise.all([
+    getCmsPage("/"),
+    prisma.siteSeoSettings
+      .findUnique({
+        where: { id: "global_seo_settings" },
+        select: { twitterHandle: true, defaultOgImage: true, siteName: true },
+      })
+      .catch(() => null),
+  ]);
 
   const rawTitle = page?.title?.trim() || "";
   const title =
@@ -32,7 +42,13 @@ export async function generateMetadata(): Promise<Metadata> {
       ? OPTIMIZED_HOME_DESC
       : rawDesc;
   const canonicalUrl = page?.canonicalUrl || "https://smartfonedoctor.com/";
-  const ogImage = page?.featuredImage || "/logo-png.jpg";
+  const ogImage =
+    page?.featuredImage?.trim() ||
+    seoSettings?.defaultOgImage?.trim() ||
+    "/logo-png.jpg";
+  const twitterHandle =
+    normalizeTwitterHandle(seoSettings?.twitterHandle) || "@smartfonedoctor";
+  const siteName = seoSettings?.siteName?.trim() || "SmartFoneDoctor";
 
   return {
     title: brandTitle(title),
@@ -49,7 +65,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title,
       description,
       url: canonicalUrl,
-      siteName: "SmartFoneDoctor",
+      siteName,
       type: "website",
       images: [
         {
@@ -64,6 +80,8 @@ export async function generateMetadata(): Promise<Metadata> {
       card: "summary_large_image",
       title,
       description,
+      site: twitterHandle,
+      creator: twitterHandle,
       images: [ogImage],
     },
     robots: {

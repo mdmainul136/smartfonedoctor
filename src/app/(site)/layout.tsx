@@ -7,16 +7,44 @@ import GmbSchemaJsonLd from "@/components/seo/GmbSchemaJsonLd";
 import { getMegaMenuAction, getNavMenuAction } from "@/actions/navMenu";
 import { GlobalBlocksProvider } from "@/components/site/GlobalBlocks";
 import { getGlobalBlockMap } from "@/lib/globalBlocks";
+import prisma from "@/lib/prisma";
+import {
+  DEFAULT_SITE_BRAND,
+  SiteBrandProvider,
+  type SiteBrandSettings,
+} from "@/components/site/SiteBrandContext";
 
 export default async function SiteLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Header menus from the database (Admin > Navigation & Menus, Mega Menu Builder).
-  const [navRes, megaRes, globalBlocks] = await Promise.all([getNavMenuAction(), getMegaMenuAction(), getGlobalBlockMap()]);
+  // Header menus & global brand SEO settings loaded on the server from DB.
+  const [navRes, megaRes, globalBlocks, seoSettings] = await Promise.all([
+    getNavMenuAction(),
+    getMegaMenuAction(),
+    getGlobalBlockMap(),
+    prisma.siteSeoSettings
+      .findUnique({ where: { id: "global_seo_settings" } })
+      .catch(() => null),
+  ]);
+
+  const brand: SiteBrandSettings = {
+    siteName: seoSettings?.siteName ?? DEFAULT_SITE_BRAND.siteName,
+    twitterHandle: seoSettings?.twitterHandle ?? DEFAULT_SITE_BRAND.twitterHandle,
+    facebookUrl: seoSettings?.facebookUrl ?? DEFAULT_SITE_BRAND.facebookUrl,
+    instagramUrl: seoSettings?.instagramUrl ?? DEFAULT_SITE_BRAND.instagramUrl,
+    youtubeUrl: seoSettings?.youtubeUrl ?? DEFAULT_SITE_BRAND.youtubeUrl,
+    googleMapsUrl: seoSettings?.gmbUrl ?? DEFAULT_SITE_BRAND.googleMapsUrl,
+    contactEmail: seoSettings?.contactEmail ?? DEFAULT_SITE_BRAND.contactEmail,
+    contactPhone: seoSettings?.contactPhone ?? DEFAULT_SITE_BRAND.contactPhone,
+    streetAddress: seoSettings?.streetAddress ?? DEFAULT_SITE_BRAND.streetAddress,
+    cityStateZip: seoSettings?.cityStateZip ?? DEFAULT_SITE_BRAND.cityStateZip,
+    businessHours: seoSettings?.businessHours ?? DEFAULT_SITE_BRAND.businessHours,
+  };
+
   return (
-    <>
+    <SiteBrandProvider value={brand}>
       <GmbSchemaJsonLd />
       <AnalyticsScripts />
       <TopBar topBar={navRes.menu.topBar} />
@@ -26,6 +54,6 @@ export default async function SiteLayout({
       </div>
       <UserWayWidget />
       <CookieYesIntegration />
-    </>
+    </SiteBrandProvider>
   );
 }
