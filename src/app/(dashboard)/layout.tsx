@@ -3,12 +3,18 @@ import Navbar from "@/components/Dashboard/Navbar";
 import Link from "next/link";
 import { StoreProvider } from "@/lib/storeContext";
 import SampleDataNotice from "@/components/Dashboard/SampleDataNotice";
+import { getCurrentAdminAction } from "@/actions/auth";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const admin = await getCurrentAdminAction();
+  const initialAdmin = admin
+    ? { name: admin.name, email: admin.email, avatarUrl: admin.avatarUrl }
+    : null;
+
   return (
     <StoreProvider>
       <div className="min-h-screen w-full flex bg-[#f9fafb] text-[#111111] antialiased">
@@ -43,7 +49,7 @@ export default function DashboardLayout({
         {/* Right Canvas Area */}
         <div className="flex-1 min-w-0 min-h-screen bg-[#f9fafb] flex flex-col">
           <div data-builder-hide>
-            <Navbar />
+            <Navbar initialAdmin={initialAdmin} />
           </div>
           <main data-builder-host className="flex-1 min-w-0 w-full flex flex-col pb-12">
             <SampleDataNotice />

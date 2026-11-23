@@ -256,6 +256,7 @@ export async function updateAdminProfileAction(data: {
 
     revalidatePath("/profile");
     revalidatePath("/admin");
+    revalidatePath("/", "layout");
 
     return {
       success: true,

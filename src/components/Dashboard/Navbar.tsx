@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useStoreContext } from "@/lib/storeContext";
@@ -12,7 +13,24 @@ import {
   Layers,
 } from "lucide-react";
 
-const Navbar = () => {
+export type NavbarAdminInfo = {
+  name: string;
+  email: string;
+  avatarUrl?: string | null;
+};
+
+function getInitials(name?: string | null): string {
+  const parts = (name ?? "").trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  }
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase();
+  }
+  return "AD";
+}
+
+const Navbar = ({ initialAdmin = null }: { initialAdmin?: NavbarAdminInfo | null }) => {
   const {
     stores,
     selectedStoreId,
@@ -21,9 +39,32 @@ const Navbar = () => {
     setSelectedStoreId,
     setIsAllStores,
   } = useStoreContext();
+  const [overrideAdmin, setOverrideAdmin] = useState<NavbarAdminInfo | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const onProfileUpdated = (e: Event) => {
+      const detail = (e as CustomEvent<NavbarAdminInfo>).detail;
+      if (detail?.name) {
+        setOverrideAdmin(detail);
+      }
+    };
+    window.addEventListener("sfd-admin-profile-updated", onProfileUpdated);
+    return () => window.removeEventListener("sfd-admin-profile-updated", onProfileUpdated);
+  }, []);
+
+  const admin =
+    overrideAdmin && (!initialAdmin || overrideAdmin.email === initialAdmin.email)
+      ? overrideAdmin
+      : initialAdmin;
+  const displayName = admin?.name?.trim() || "Admin";
+  const initials = getInitials(displayName);
+  const customAvatar =
+    admin?.avatarUrl && admin.avatarUrl.trim() && admin.avatarUrl.trim() !== "/avatar.png"
+      ? admin.avatarUrl.trim()
+      : null;
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -228,12 +269,25 @@ const Navbar = () => {
         <Link
           href="/profile"
           className="hidden sm:flex items-center gap-2 pl-2 border-l border-[#e8e8e8] hover:opacity-80 transition-opacity"
-          title="Admin Profile & Security Settings"
+          title={`${displayName} — Admin Profile & Security Settings`}
         >
-          <span className="w-6 h-6 rounded-full bg-teal-700 text-white text-[11px] font-semibold flex items-center justify-center">
-            DM
+          {customAvatar ? (
+            <Image
+              src={customAvatar}
+              alt={displayName}
+              width={24}
+              height={24}
+              unoptimized
+              className="w-6 h-6 rounded-full object-cover shrink-0 border border-[#e8e8e8]"
+            />
+          ) : (
+            <span className="w-6 h-6 rounded-full bg-teal-700 text-white text-[11px] font-semibold flex items-center justify-center shrink-0">
+              {initials}
+            </span>
+          )}
+          <span className="text-[13px] text-[#5f6368] hover:text-[#111111] max-w-[180px] truncate">
+            {displayName}
           </span>
-          <span className="text-[13px] text-[#5f6368] hover:text-[#111111]">Dr. Mike</span>
         </Link>
       </div>
     </header>

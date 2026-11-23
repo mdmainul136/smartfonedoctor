@@ -245,7 +245,6 @@ export function buildRobotsOutput(
     const metadataRobots: MetadataRoute.Robots = {
       rules: [blockedRule],
       ...(config.enableSitemap ? { sitemap: `${cleanBase}/sitemap.xml` } : {}),
-      host: cleanBase,
     };
     const previewText = [
       "# Standard Crawlers Disabled in Admin Settings",
@@ -254,7 +253,6 @@ export function buildRobotsOutput(
       config.enableSitemap
         ? `Sitemap: ${cleanBase}/sitemap.xml`
         : "# Sitemap disabled in Admin Settings",
-      `Host: ${cleanBase}`,
     ].join("\n");
 
     return { metadataRobots, previewText };
@@ -296,7 +294,6 @@ export function buildRobotsOutput(
   const metadataRobots: MetadataRoute.Robots = {
     rules: allRules,
     ...(config.enableSitemap ? { sitemap: `${cleanBase}/sitemap.xml` } : {}),
-    host: cleanBase,
   };
 
   const sections = [
@@ -321,8 +318,7 @@ export function buildRobotsOutput(
     "",
     config.enableSitemap
       ? `Sitemap: ${cleanBase}/sitemap.xml`
-      : "# Sitemap disabled in Admin Settings",
-    `Host: ${cleanBase}`
+      : "# Sitemap disabled in Admin Settings"
   );
 
   return {

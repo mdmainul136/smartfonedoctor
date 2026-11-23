@@ -89,6 +89,16 @@ export default function AdminProfileClient({ initialUser }: AdminProfileClientPr
       }
 
       setUser(res.data);
+      window.dispatchEvent(
+        new CustomEvent("sfd-admin-profile-updated", {
+          detail: {
+            name: res.data.name,
+            email: res.data.email,
+            avatarUrl: res.data.avatarUrl,
+          },
+        })
+      );
+      router.refresh();
       showNotification("success", res.message || "Profile details updated successfully.");
     });
   };

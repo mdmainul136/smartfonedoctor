@@ -60,19 +60,7 @@ export async function seedAdminUsers() {
       });
       console.log(`   ➕ Created Admin: ${user.name} (${user.email}) [Role: ${user.role}]`);
     } else {
-      await prisma.adminUser.update({
-        where: { email: user.email },
-        data: {
-          name: user.name,
-          role: user.role,
-          phone: user.phone,
-          address: user.address,
-          bio: user.bio,
-          department: user.department,
-          isActive: user.isActive,
-        },
-      });
-      console.log(`   🔄 Updated Admin Profile: ${user.name} (${user.email})`);
+      console.log(`   ✓ Preserved existing Admin Profile: ${existing.name} (${existing.email})`);
     }
   }
 
