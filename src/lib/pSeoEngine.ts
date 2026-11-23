@@ -7,7 +7,18 @@
 
 import { ServiceCMSData } from "@/data/servicesData";
 
-export interface PSeoDevice {
+import type { RepairDetailTabsData } from "./repairTabDefaults";
+
+export interface PSeoCustomMeta {
+  title?: string;
+  description?: string;
+  focusKeyword?: string;
+  keywords?: string[];
+  canonicalUrl?: string;
+  schemaType?: string;
+}
+
+export interface PSeoDevice extends RepairDetailTabsData {
   slug: string;
   name: string;
   category: "smartphone" | "tablet" | "computer" | "console";
@@ -17,6 +28,7 @@ export interface PSeoDevice {
   image: string;
   specs: string;
   releaseYear: number;
+  seo?: PSeoCustomMeta;
 }
 
 export interface PSeoIssue {
@@ -34,6 +46,7 @@ export interface PSeoIssue {
   toolsUsed: string[];
   faqs: { question: string; answer: string }[];
   blogArticleSlug?: string;
+  seo?: PSeoCustomMeta;
 }
 
 export interface PSeoPageData {
@@ -1015,6 +1028,94 @@ export function resolveIssue(
   return PSEO_ISSUES.find((i) => i.slug === mappedSlug);
 }
 
+export function renderPSeoTemplate(template: string, vars: Record<string, string>): string {
+  return template.replace(/\{([a-zA-Z0-9_]+)\}/g, (full, key: string) => {
+    const val = vars[key.toLowerCase()];
+    return val !== undefined ? val : full;
+  });
+}
+
+export function buildDeviceDefaultSeo(
+  device: Pick<PSeoDevice, "name" | "category" | "slug">
+): {
+  title: string;
+  description: string;
+  focusKeyword: string;
+  keywords: string[];
+  canonicalUrl: string;
+} {
+  const longTitle = `${device.name} Repair in Philadelphia | Same-Day 30 Mins`;
+  const title =
+    longTitle.length <= 60 ? longTitle : `${device.name} Repair Philadelphia | Same-Day`;
+  return {
+    title,
+    description: `Need same-day ${device.name} repair in Philadelphia? Screens, batteries, charging ports, and water damage. Walk in at 33 S 52nd St or book online!`,
+    focusKeyword: `${device.name} repair Philadelphia`,
+    keywords: [
+      `${device.name} repair Philadelphia`,
+      `fix ${device.name} screen`,
+      `${device.name} battery replacement`,
+      "phone repair 19139",
+    ],
+    canonicalUrl: `/repairs/${device.category}/${device.slug}`,
+  };
+}
+
+export function buildRepairIssueTemplateVars(
+  device: PSeoDevice,
+  issue: PSeoIssue
+): {
+  vars: Record<string, string>;
+  aftermarketPrice: number;
+  oemPrice: number;
+} {
+  const aftermarketPrice = issue.basePrice + (device.releaseYear >= 2024 ? 20 : 0);
+  const oemPrice = Math.round(aftermarketPrice * issue.oemPriceMultiplier);
+  return {
+    aftermarketPrice,
+    oemPrice,
+    vars: {
+      device: device.name,
+      brand: device.brand,
+      category: device.categoryName,
+      issue: issue.name,
+      shortname: issue.shortName,
+      price: `$${aftermarketPrice}`,
+      oemprice: `$${oemPrice}`,
+      turnaround: issue.turnaroundDisplay,
+    },
+  };
+}
+
+export function buildRepairIssueDefaultSeo(
+  device: PSeoDevice,
+  issue: PSeoIssue
+): {
+  title: string;
+  description: string;
+  focusKeyword: string;
+  keywords: string[];
+  canonicalUrl: string;
+} {
+  const { aftermarketPrice } = buildRepairIssueTemplateVars(device, issue);
+  const phillyShort = `${device.name} ${issue.shortName} Philly | From $${aftermarketPrice}`;
+  const compactTitle = `${device.name} ${issue.shortName} | From $${aftermarketPrice}`;
+  const rawTitle = phillyShort.length <= 60 ? phillyShort : compactTitle;
+  const title = rawTitle.length <= 60 ? rawTitle : `${rawTitle.slice(0, 57)}...`;
+  return {
+    title,
+    description: `Need fast ${device.name} ${issue.shortName.toLowerCase()} in Philadelphia? Done in ${issue.turnaroundDisplay} with 90-day warranty. Walk into 33 S 52nd St or book online today!`,
+    focusKeyword: `${device.name} ${issue.shortName} Philadelphia`,
+    keywords: [
+      `${device.name} ${issue.shortName} Philadelphia`,
+      `Fix ${device.name} ${issue.shortName}`,
+      `${device.name} repair near me`,
+      `Philadelphia ${issue.shortName} shop`,
+    ],
+    canonicalUrl: `/repairs/${device.category}/${device.slug}/${issue.slug}`,
+  };
+}
+
 export function buildPSeoPageData(
   categorySlug: string,
   deviceSlug: string,
@@ -1027,18 +1128,31 @@ export function buildPSeoPageData(
 
   if (!device || !issue) return null;
 
-  // Pricing calculations
-  const aftermarketPrice = issue.basePrice + (device.releaseYear >= 2024 ? 20 : 0);
-  const oemPrice = Math.round(aftermarketPrice * issue.oemPriceMultiplier);
+  // Pricing calculations & template tokens
+  const { vars, aftermarketPrice, oemPrice } = buildRepairIssueTemplateVars(device, issue);
+  const defaultSeo = buildRepairIssueDefaultSeo(device, issue);
+  const baseCanonicalUrl = `/repairs/${categorySlug}/${device.slug}/${issue.slug}`;
 
-  const canonicalUrl = `/repairs/${categorySlug}/${device.slug}/${issue.slug}`;
+  const customSeo = issue.seo;
+  const seoTitle = customSeo?.title?.trim()
+    ? renderPSeoTemplate(customSeo.title.trim(), vars)
+    : defaultSeo.title;
+  const metaDescription = customSeo?.description?.trim()
+    ? renderPSeoTemplate(customSeo.description.trim(), vars)
+    : defaultSeo.description;
+  const focusKeyword = customSeo?.focusKeyword?.trim()
+    ? renderPSeoTemplate(customSeo.focusKeyword.trim(), vars)
+    : defaultSeo.focusKeyword;
+  const customKeywords = customSeo?.keywords?.length
+    ? customSeo.keywords.map((k) => renderPSeoTemplate(k, vars).trim()).filter(Boolean)
+    : defaultSeo.keywords;
+  const focusKeywords = Array.from(
+    new Set([focusKeyword, ...customKeywords].map((k) => k.trim()).filter(Boolean))
+  );
+  const canonicalUrl = customSeo?.canonicalUrl?.trim()
+    ? renderPSeoTemplate(customSeo.canonicalUrl.trim(), vars)
+    : baseCanonicalUrl;
 
-  // SEO Titles & Metadata (keep seoTitle <= 60 chars to prevent SERP truncation)
-  const phillyShort = `${device.name} ${issue.shortName} Philly | From $${aftermarketPrice}`;
-  const compactTitle = `${device.name} ${issue.shortName} | From $${aftermarketPrice}`;
-  const rawTitle = phillyShort.length <= 60 ? phillyShort : compactTitle;
-  const seoTitle = rawTitle.length <= 60 ? rawTitle : `${rawTitle.slice(0, 57)}...`;
-  const metaDescription = `Need fast ${device.name} ${issue.shortName.toLowerCase()} in Philadelphia? Done in ${issue.turnaroundDisplay} with 90-day warranty. Walk into 33 S 52nd St or book online today!`;
   const answerCapsule = `SmartFoneDoctor repairs the ${device.name} ${issue.shortName.toLowerCase()} in Philadelphia starting at $${aftermarketPrice} ($${oemPrice} OEM tier) with a typical turnaround of ${issue.turnaroundDisplay}. Every repair includes a 90-day parts and labor warranty with walk-in service Mon–Sat 10:00 AM–7:00 PM at 33 S 52nd St, 4016 Lancaster Ave, and 4060 Lancaster Ave.`;
 
   // Schemas
@@ -1049,7 +1163,7 @@ export function buildPSeoPageData(
       { "@type": "ListItem", position: 1, name: "Home", item: "https://smartfonedoctor.com" },
       { "@type": "ListItem", position: 2, name: device.categoryName, item: `https://smartfonedoctor.com/repairs/${device.category}` },
       { "@type": "ListItem", position: 3, name: device.name, item: `https://smartfonedoctor.com/repairs/${device.category}/${device.slug}` },
-      { "@type": "ListItem", position: 4, name: issue.shortName, item: `https://smartfonedoctor.com${canonicalUrl}` },
+      { "@type": "ListItem", position: 4, name: issue.shortName, item: `https://smartfonedoctor.com${baseCanonicalUrl}` },
     ],
   };
 
@@ -1312,12 +1426,7 @@ export function buildPSeoPageData(
     seo: {
       title: seoTitle,
       metaDescription,
-      focusKeywords: [
-        `${device.name} ${issue.shortName} Philadelphia`,
-        `Fix ${device.name} ${issue.shortName}`,
-        `${device.name} repair near me`,
-        `Philadelphia ${issue.shortName} shop`,
-      ],
+      focusKeywords,
       canonicalUrl,
     },
     schemas: {
@@ -1354,6 +1463,14 @@ export function buildDeviceModelCMS(
   const { devices: PSEO_DEVICES, issues: PSEO_ISSUES } = catalog;
   const device = resolveDevice(deviceSlug, catalog);
   if (!device) return null;
+
+  const defaultSeo = buildDeviceDefaultSeo(device);
+  const customSeo = device.seo;
+  const seoTitle = customSeo?.title?.trim() || defaultSeo.title;
+  const seoDescription = customSeo?.description?.trim() || defaultSeo.description;
+  const seoKeywords = customSeo?.keywords?.length
+    ? customSeo.keywords.map((k) => k.trim()).filter(Boolean)
+    : defaultSeo.keywords;
 
   const relevantIssues = PSEO_ISSUES.filter(
     (i) => i.category === device.category || (device.category === "smartphone" && i.category === "smartphone")
@@ -1401,14 +1518,18 @@ export function buildDeviceModelCMS(
       },
     },
     seo: {
-      title: `${device.name} Repair in Philadelphia | Same-Day 30 Mins | SmartFoneDoctor`,
-      description: `Need same-day ${device.name} repair in Philadelphia? Screens, batteries, charging ports, and water damage. Walk in at 33 S 52nd St or book online!`,
-      keywords: [
-        `${device.name} repair Philadelphia`,
-        `fix ${device.name} screen`,
-        `${device.name} battery replacement`,
-        `phone repair 19139`,
-      ],
+      title: seoTitle,
+      description: seoDescription,
+      keywords: seoKeywords,
+      ...(customSeo?.focusKeyword?.trim() ? { focusKeyword: customSeo.focusKeyword.trim() } : {}),
+      ...(customSeo?.canonicalUrl?.trim() ? { canonicalUrl: customSeo.canonicalUrl.trim() } : {}),
+      ...(customSeo?.schemaType?.trim() ? { schemaType: customSeo.schemaType.trim() } : {}),
     },
+    ...(device.specifications ? { specifications: device.specifications } : {}),
+    ...(device.keyFeatures ? { keyFeatures: device.keyFeatures } : {}),
+    ...(device.whyChooseHeadline ? { whyChooseHeadline: device.whyChooseHeadline } : {}),
+    ...(device.whyChooseText ? { whyChooseText: device.whyChooseText } : {}),
+    ...(device.whyChooseStats ? { whyChooseStats: device.whyChooseStats } : {}),
+    ...(device.faqs ? { faqs: device.faqs } : {}),
   };
 }

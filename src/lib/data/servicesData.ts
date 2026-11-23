@@ -1,3 +1,5 @@
+import type { RepairDetailTabsData } from "@/lib/repairTabDefaults";
+
 export interface ServiceModel {
   id: string;
   title: string;
@@ -41,9 +43,12 @@ export interface ServiceSEO {
   title: string;
   description: string;
   keywords: string[];
+  focusKeyword?: string;
+  canonicalUrl?: string;
+  schemaType?: string;
 }
 
-export interface ServiceCMSData {
+export interface ServiceCMSData extends RepairDetailTabsData {
   categoryId: string; // e.g. "smartphone", "tablet", "computer", "console"
   categoryName: string; // e.g. "Smartphone Repair"
   serviceId: string; // e.g. "iphone-repair", "ipad-repair", "imac-repair"

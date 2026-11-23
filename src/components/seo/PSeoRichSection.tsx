@@ -148,9 +148,15 @@ export default function PSeoRichSection({
           )}
 
           {/* Navigation Pill Tabs */}
-          <div className="flex items-center gap-2 mt-6 border-b border-neutral-200 pb-3 overflow-x-auto">
+          <div
+            role="tablist"
+            aria-label="Repair specification sections"
+            className="flex items-center gap-2 mt-6 border-b border-neutral-200 pb-3 overflow-x-auto"
+          >
             <button
               type="button"
+              role="tab"
+              aria-selected={activeTab === "specs"}
               onClick={() => setActiveTab("specs")}
               className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer whitespace-nowrap ${
                 activeTab === "specs"
@@ -163,6 +169,8 @@ export default function PSeoRichSection({
             {keyFeatures && keyFeatures.length > 0 && (
               <button
                 type="button"
+                role="tab"
+                aria-selected={activeTab === "features"}
                 onClick={() => setActiveTab("features")}
                 className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer whitespace-nowrap ${
                   activeTab === "features"
@@ -175,6 +183,8 @@ export default function PSeoRichSection({
             )}
             <button
               type="button"
+              role="tab"
+              aria-selected={activeTab === "why"}
               onClick={() => setActiveTab("why")}
               className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer whitespace-nowrap ${
                 activeTab === "why"
@@ -186,6 +196,8 @@ export default function PSeoRichSection({
             </button>
             <button
               type="button"
+              role="tab"
+              aria-selected={activeTab === "faqs"}
               onClick={() => setActiveTab("faqs")}
               className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer whitespace-nowrap ${
                 activeTab === "faqs"
@@ -198,187 +210,212 @@ export default function PSeoRichSection({
           </div>
         </div>
 
-        {/* ── 1. TECHNICAL SPECIFICATIONS TABLE (E-Commerce Table Layout) ── */}
+        {/* ── TAB PANELS (All kept in SSR DOM for crawlers; interactive CSS toggle for users) ── */}
         <div className="space-y-10">
-          <div className="bg-white rounded-2xl border border-neutral-200 shadow-xs overflow-hidden">
-            <div className="bg-neutral-50 px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-bold text-neutral-900 flex items-center gap-2">
-                  <Wrench className="w-4 h-4 text-sfd-teal" />
-                  <span>Repair details</span>
-                </h3>
-                <p className="text-xs text-neutral-500 mt-0.5">
-                  Time, price, parts and warranty
-                </p>
+          {/* 1. TECHNICAL SPECIFICATIONS TABLE */}
+          <div
+            role="tabpanel"
+            aria-hidden={activeTab !== "specs"}
+            className={activeTab === "specs" ? "block" : "hidden"}
+          >
+            <div className="bg-white rounded-2xl border border-neutral-200 shadow-xs overflow-hidden">
+              <div className="bg-neutral-50 px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-bold text-neutral-900 flex items-center gap-2">
+                    <Wrench className="w-4 h-4 text-sfd-teal" />
+                    <span>Repair details</span>
+                  </h3>
+                  <p className="text-xs text-neutral-500 mt-0.5">
+                    Time, price, parts and warranty
+                  </p>
+                </div>
+                <span className="text-[11px] font-bold text-sfd-teal uppercase tracking-wider bg-white px-2.5 py-1 rounded-md border border-neutral-200">
+                  At a glance
+                </span>
               </div>
-              <span className="text-[11px] font-bold text-sfd-teal uppercase tracking-wider bg-white px-2.5 py-1 rounded-md border border-neutral-200">
-                At a glance
-              </span>
-            </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <tbody>
-                  {specifications.map((spec, idx) => (
-                    <tr
-                      key={spec.label}
-                      className={idx % 2 === 0 ? "bg-white" : "bg-neutral-50/60"}
-                    >
-                      <th
-                        scope="row"
-                        className="py-3 px-6 text-xs font-bold text-neutral-700 w-1/3 sm:w-1/4 border-b border-neutral-200/70"
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <tbody>
+                    {specifications.map((spec, idx) => (
+                      <tr
+                        key={`${spec.label}-${idx}`}
+                        className={idx % 2 === 0 ? "bg-white" : "bg-neutral-50/60"}
                       >
-                        {spec.label}
-                      </th>
-                      <td className="py-3 px-6 text-xs sm:text-sm text-neutral-900 border-b border-neutral-200/70 font-medium">
-                        {spec.value}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        <th
+                          scope="row"
+                          className="py-3 px-6 text-xs font-bold text-neutral-700 w-1/3 sm:w-1/4 border-b border-neutral-200/70"
+                        >
+                          {spec.label}
+                        </th>
+                        <td className="py-3 px-6 text-xs sm:text-sm text-neutral-900 border-b border-neutral-200/70 font-medium">
+                          {spec.value}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
           {/* ── 2. KEY FEATURES & CAPABILITIES ── */}
           {keyFeatures && keyFeatures.length > 0 && (
-            <div className="bg-[#fafbfc] rounded-2xl border border-neutral-200 p-6 sm:p-8">
-              <div className="flex items-center gap-2 mb-2">
-                <Cpu className="w-5 h-5 text-sfd-teal" />
-                <h3 className="text-lg sm:text-xl font-bold text-neutral-900">
-                  Key repair features
-                </h3>
-              </div>
-              <p className="text-xs sm:text-sm text-neutral-600 mb-6">
-                All repairs are done by certified technicians at our Philadelphia repair benches:
-              </p>
+            <div
+              role="tabpanel"
+              aria-hidden={activeTab !== "features"}
+              className={activeTab === "features" ? "block" : "hidden"}
+            >
+              <div className="bg-[#fafbfc] rounded-2xl border border-neutral-200 p-6 sm:p-8">
+                <div className="flex items-center gap-2 mb-2">
+                  <Cpu className="w-5 h-5 text-sfd-teal" />
+                  <h3 className="text-lg sm:text-xl font-bold text-neutral-900">
+                    Key repair features
+                  </h3>
+                </div>
+                <p className="text-xs sm:text-sm text-neutral-600 mb-6">
+                  All repairs are done by certified technicians at our Philadelphia repair benches:
+                </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {keyFeatures.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="bg-white p-5 rounded-xl border border-neutral-200/90 shadow-2xs flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-6 h-6 rounded-full bg-sfd-teal/10 text-sfd-teal flex items-center justify-center shrink-0">
-                          <Check className="w-3.5 h-3.5" />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {keyFeatures.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-white p-5 rounded-xl border border-neutral-200/90 shadow-2xs flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-6 h-6 rounded-full bg-sfd-teal/10 text-sfd-teal flex items-center justify-center shrink-0">
+                            <Check className="w-3.5 h-3.5" />
+                          </div>
+                          <h4 className="text-sm font-bold text-neutral-900 leading-snug">
+                            {item.title}
+                          </h4>
                         </div>
-                        <h4 className="text-sm font-bold text-neutral-900 leading-snug">
-                          {item.title}
-                        </h4>
+                        <p className="text-xs text-neutral-600 leading-relaxed pl-8">
+                          {item.desc}
+                        </p>
                       </div>
-                      <p className="text-xs text-neutral-600 leading-relaxed pl-8">
-                        {item.desc}
-                      </p>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           )}
 
           {/* ── 3. WHY CHOOSE SMARTFONEDOCTOR IN PHILADELPHIA ── */}
-          <div className="bg-white rounded-2xl border border-neutral-200 p-6 sm:p-8 shadow-xs">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-              <div className="lg:col-span-8 space-y-4">
-                <span className="text-[11px] font-bold uppercase tracking-widest text-sfd-teal block">
-                  Philadelphia&apos;s Independent Repair Authority
-                </span>
-                <h3 className="text-xl sm:text-2xl font-extrabold text-neutral-900 tracking-tight">
-                  {whyChooseHeadline}
-                </h3>
-                <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
-                  {whyChooseText}
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-                  {stats.map((st, i) => (
-                    <div key={i} className="p-4 rounded-xl bg-neutral-50 border border-neutral-200">
-                      <div className="text-2xl font-black text-neutral-900">{st.value}</div>
-                      <div className="text-xs text-neutral-500 mt-1 font-medium">{st.label}</div>
-                    </div>
-                  ))}
+          <div
+            role="tabpanel"
+            aria-hidden={activeTab !== "why"}
+            className={activeTab === "why" ? "block" : "hidden"}
+          >
+            <div className="bg-white rounded-2xl border border-neutral-200 p-6 sm:p-8 shadow-xs">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                <div className="lg:col-span-8 space-y-4">
+                  <span className="text-[11px] font-bold uppercase tracking-widest text-sfd-teal block">
+                    Philadelphia&apos;s Independent Repair Authority
+                  </span>
+                  <h3 className="text-xl sm:text-2xl font-extrabold text-neutral-900 tracking-tight">
+                    {whyChooseHeadline}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
+                    {whyChooseText}
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                    {stats.map((st, i) => (
+                      <div key={i} className="p-4 rounded-xl bg-neutral-50 border border-neutral-200">
+                        <div className="text-2xl font-black text-neutral-900">{st.value}</div>
+                        <div className="text-xs text-neutral-500 mt-1 font-medium">{st.label}</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              <div className="lg:col-span-4 bg-[#1d1c1a] text-white p-6 rounded-2xl space-y-4 shadow-md">
-                <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-wider">
-                  <Award className="w-4 h-4" />
-                  <span>WISE Certified Shop</span>
-                </div>
-                <h4 className="text-base font-bold text-white">
-                  Visit Our West Philly Flagship
-                </h4>
-                <p className="text-xs text-neutral-300 leading-relaxed">
-                  33 S 52nd St, Philadelphia, PA 19139<br />
-                  Right by 52nd St Market-Frankford Subway Station.
-                </p>
-                <div className="pt-2 border-t border-neutral-700/60 flex items-center justify-between text-xs text-neutral-400">
-                  <span>Mon–Sat: 10am–7pm</span>
-                  <span>Sun: 11am–5pm</span>
-                </div>
-                <div className="space-y-2 pt-1">
-                  <Link
-                    href={bookingUrl}
-                    className="block w-full text-center py-2.5 rounded-xl bg-sfd-teal hover:bg-[#007f7b] text-white text-xs font-bold uppercase tracking-wider transition shadow-xs"
-                  >
-                    {bookingCtaText}
-                  </Link>
-                  <a
-                    href="tel:+12155982090"
-                    className="block w-full text-center py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold uppercase tracking-wider transition"
-                  >
-                    Call (215) 598-2090
-                  </a>
+                <div className="lg:col-span-4 bg-[#1d1c1a] text-white p-6 rounded-2xl space-y-4 shadow-md">
+                  <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-wider">
+                    <Award className="w-4 h-4" />
+                    <span>WISE Certified Shop</span>
+                  </div>
+                  <h4 className="text-base font-bold text-white">
+                    Visit Our West Philly Flagship
+                  </h4>
+                  <p className="text-xs text-neutral-300 leading-relaxed">
+                    33 S 52nd St, Philadelphia, PA 19139<br />
+                    Right by 52nd St Market-Frankford Subway Station.
+                  </p>
+                  <div className="pt-2 border-t border-neutral-700/60 flex items-center justify-between text-xs text-neutral-400">
+                    <span>Mon–Sat: 10am–7pm</span>
+                    <span>Sun: Closed</span>
+                  </div>
+                  <div className="space-y-2 pt-1">
+                    <Link
+                      href={bookingUrl}
+                      className="block w-full text-center py-2.5 rounded-xl bg-sfd-teal hover:bg-[#007f7b] text-white text-xs font-bold uppercase tracking-wider transition shadow-xs"
+                    >
+                      {bookingCtaText}
+                    </Link>
+                    <a
+                      href="tel:+12155982090"
+                      className="block w-full text-center py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold uppercase tracking-wider transition"
+                    >
+                      Call (215) 598-2090
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* ── 4. FREQUENTLY ASKED QUESTIONS (ACCORDION) ── */}
-          <div className="bg-white rounded-2xl border border-neutral-200 p-6 sm:p-8 shadow-xs">
-            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-widest text-sfd-teal block mb-1">
-                  Got Questions? We Have Answers
+          <div
+            role="tabpanel"
+            aria-hidden={activeTab !== "faqs"}
+            className={activeTab === "faqs" ? "block" : "hidden"}
+          >
+            <div className="bg-white rounded-2xl border border-neutral-200 p-6 sm:p-8 shadow-xs">
+              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-widest text-sfd-teal block mb-1">
+                    Got Questions? We Have Answers
+                  </span>
+                  <h3 className="text-lg sm:text-xl font-bold text-neutral-900">
+                    Frequently Asked Questions
+                  </h3>
+                </div>
+                <span className="text-xs font-semibold text-neutral-500 bg-neutral-100 px-3 py-1 rounded-full border border-neutral-200">
+                  {faqs.length} Answers
                 </span>
-                <h3 className="text-lg sm:text-xl font-bold text-neutral-900">
-                  Frequently Asked Questions
-                </h3>
               </div>
-              <span className="text-xs font-semibold text-neutral-500 bg-neutral-100 px-3 py-1 rounded-full border border-neutral-200">
-                {faqs.length} Answers
-              </span>
-            </div>
 
-            <div className="space-y-3 mt-6">
-              {faqs.map((faq, idx) => {
-                const isOpen = openFaq === idx;
-                return (
-                  <div
-                    key={idx}
-                    className="border border-neutral-200 rounded-xl overflow-hidden transition-colors"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setOpenFaq(isOpen ? null : idx)}
-                      className="w-full flex items-center justify-between p-4 sm:p-5 text-left font-bold text-sm text-neutral-900 bg-neutral-50/60 hover:bg-neutral-100/70 transition-colors cursor-pointer"
+              <div className="space-y-3 mt-6">
+                {faqs.map((faq, idx) => {
+                  const isOpen = openFaq === idx;
+                  return (
+                    <div
+                      key={idx}
+                      className="border border-neutral-200 rounded-xl overflow-hidden transition-colors"
                     >
-                      <span className="pr-4">{faq.question}</span>
-                      <ChevronDown
-                        className={`w-4 h-4 text-neutral-500 shrink-0 transition-transform duration-200 ${
-                          isOpen ? "rotate-180" : ""
-                        }`}
-                      />
-                    </button>
-                    {isOpen && (
-                      <div className="p-4 sm:p-5 text-xs sm:text-sm text-neutral-700 leading-relaxed bg-white border-t border-neutral-200">
-                        {faq.answer}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                      <button
+                        type="button"
+                        onClick={() => setOpenFaq(isOpen ? null : idx)}
+                        className="w-full flex items-center justify-between p-4 sm:p-5 text-left font-bold text-sm text-neutral-900 bg-neutral-50/60 hover:bg-neutral-100/70 transition-colors cursor-pointer"
+                      >
+                        <span className="pr-4">{faq.question}</span>
+                        <ChevronDown
+                          className={`w-4 h-4 text-neutral-500 shrink-0 transition-transform duration-200 ${
+                            isOpen ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+                      {isOpen && (
+                        <div className="p-4 sm:p-5 text-xs sm:text-sm text-neutral-700 leading-relaxed bg-white border-t border-neutral-200">
+                          {faq.answer}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
 

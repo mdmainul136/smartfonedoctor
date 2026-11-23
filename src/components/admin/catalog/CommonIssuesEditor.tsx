@@ -7,6 +7,17 @@ import MediaModal from "@/components/admin/MediaModal";
 import { getCommonIssuesAdminAction, saveCommonIssuesAction } from "@/actions/commonIssues";
 import type { CommonIssueDetail, IssueSection } from "@/data/commonIssuesData";
 import { CATEGORY_OPTIONS, CatalogShell, LinesField, areaCls, inputCls, labelCls, toSlug } from "./CatalogShell";
+import CatalogSeoEditor from "./CatalogSeoEditor";
+import RepairTabsEditor from "./RepairTabsEditor";
+import { buildCommonIssueContentHtml } from "@/lib/catalogSeoHtml";
+import {
+  DEFAULT_WHY_CHOOSE_HEADLINE,
+  DEFAULT_WHY_CHOOSE_STATS,
+  DEFAULT_WHY_CHOOSE_TEXT,
+  getDefaultIssueFaqs,
+  getDefaultIssueFeatures,
+  getDefaultIssueSpecs,
+} from "@/lib/repairTabDefaults";
 
 /** Common-issue articles: /common-issues/<category>/<slug>. */
 export default function CommonIssuesEditor() {
@@ -226,27 +237,47 @@ export default function CommonIssuesEditor() {
               </div>
             </div>
 
-            <label className={`${labelCls} sm:col-span-2`}>
-              SEO title
-              <input value={i.seo.title} onChange={(e) => update(index, { seo: { ...i.seo, title: e.target.value } })} className={inputCls} />
-            </label>
-            <label className={`${labelCls} sm:col-span-2`}>
-              SEO description
-              <textarea
-                rows={2}
-                value={i.seo.description}
-                onChange={(e) => update(index, { seo: { ...i.seo, description: e.target.value } })}
-                className={areaCls}
-              />
-            </label>
-            <label className={`${labelCls} sm:col-span-2`}>
-              Keywords (comma separated)
-              <input
-                value={i.seo.keywords.join(", ")}
-                onChange={(e) => update(index, { seo: { ...i.seo, keywords: e.target.value.split(",") } })}
-                className={inputCls}
-              />
-            </label>
+            <CatalogSeoEditor
+              key={isNew ? `new-issue-${index}` : `issue-${i.slug}`}
+              value={i.seo}
+              defaults={{
+                title: `${i.title || "Common Issue"} | SmartFoneDoctor`,
+                description: i.leadText || "",
+                focusKeyword: i.seo.focusKeyword || i.seo.keywords?.[0] || i.title || "",
+                keywords: i.seo.keywords ?? [],
+                canonicalUrl: `/common-issues/${i.category}/${i.slug || "issue"}`,
+                schemaType: "TechArticle",
+              }}
+              contentHtml={buildCommonIssueContentHtml(i)}
+              livePath={!isNew && i.slug ? `/common-issues/${i.category}/${i.slug}` : null}
+              urlSlug={`common-issues/${i.category}/${i.slug || "issue"}`}
+              featuredImage={i.image}
+              onFeaturedImageChange={(url) => update(index, { image: url })}
+              onChange={(nextSeo) =>
+                update(index, {
+                  seo: {
+                    title: nextSeo.title ?? "",
+                    description: nextSeo.description ?? "",
+                    keywords: nextSeo.keywords ?? [],
+                    ...(nextSeo.focusKeyword !== undefined ? { focusKeyword: nextSeo.focusKeyword } : {}),
+                    ...(nextSeo.canonicalUrl !== undefined ? { canonicalUrl: nextSeo.canonicalUrl } : {}),
+                    ...(nextSeo.schemaType !== undefined ? { schemaType: nextSeo.schemaType } : {}),
+                  },
+                })
+              }
+            />
+            <RepairTabsEditor
+              value={i}
+              onChange={(patch) => update(index, patch)}
+              defaults={{
+                specifications: getDefaultIssueSpecs(i.title || "Hardware Repair", i.categoryName || "Smartphone"),
+                keyFeatures: getDefaultIssueFeatures(),
+                whyChooseHeadline: DEFAULT_WHY_CHOOSE_HEADLINE,
+                whyChooseText: DEFAULT_WHY_CHOOSE_TEXT,
+                whyChooseStats: DEFAULT_WHY_CHOOSE_STATS,
+                faqs: getDefaultIssueFaqs(i.title || "Hardware Repair"),
+              }}
+            />
           </div>
         )}
       />

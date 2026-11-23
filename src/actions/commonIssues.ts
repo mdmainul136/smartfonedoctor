@@ -7,6 +7,7 @@ import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/adminGuard";
 import { COMMON_ISSUES_STORE_ID, getCommonIssues } from "@/lib/commonIssuesStore";
 import type { CommonIssueDetail } from "@/data/commonIssuesData";
+import { sanitizeRepairTabsData } from "@/lib/repairTabDefaults";
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const CATEGORIES = ["smartphone", "tablet", "computer", "console"];
@@ -49,7 +50,11 @@ export async function saveCommonIssuesAction(issues: CommonIssueDetail[]): Promi
         title: i.seo?.title?.trim() || `${i.title} | SmartFoneDoctor`,
         description: i.seo?.description?.trim() || i.leadText,
         keywords: (i.seo?.keywords ?? []).map((k) => k.trim()).filter(Boolean),
+        ...(i.seo?.focusKeyword?.trim() ? { focusKeyword: i.seo.focusKeyword.trim() } : {}),
+        ...(i.seo?.canonicalUrl?.trim() ? { canonicalUrl: i.seo.canonicalUrl.trim() } : {}),
+        ...(i.seo?.schemaType?.trim() ? { schemaType: i.seo.schemaType.trim() } : {}),
       },
+      ...sanitizeRepairTabsData(i),
     }));
     await prisma.taxonomyStore.upsert({
       where: { id: COMMON_ISSUES_STORE_ID },
@@ -58,6 +63,8 @@ export async function saveCommonIssuesAction(issues: CommonIssueDetail[]): Promi
     });
     revalidatePath("/common-issues", "layout");
     revalidatePath("/admin/common-issues");
+    revalidatePath("/llms.txt");
+    revalidatePath("/llms-full.txt");
     return { success: true };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "Could not save common issues" };

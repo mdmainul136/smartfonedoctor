@@ -5,8 +5,19 @@ import Image from "next/image";
 import { FolderOpen, Lock } from "lucide-react";
 import MediaModal from "@/components/admin/MediaModal";
 import { getRepairCatalogAction, saveCatalogDevicesAction } from "@/actions/repairCatalog";
-import type { PSeoDevice } from "@/lib/pSeoEngine";
+import { buildDeviceDefaultSeo, type PSeoDevice, type PSeoIssue } from "@/lib/pSeoEngine";
+import { buildDeviceModelContentHtml } from "@/lib/catalogSeoHtml";
 import { CATEGORY_OPTIONS, CatalogShell, inputCls, labelCls, toSlug } from "./CatalogShell";
+import CatalogSeoEditor from "./CatalogSeoEditor";
+import RepairTabsEditor from "./RepairTabsEditor";
+import {
+  DEFAULT_WHY_CHOOSE_HEADLINE,
+  DEFAULT_WHY_CHOOSE_STATS,
+  DEFAULT_WHY_CHOOSE_TEXT,
+  getDefaultServiceFaqs,
+  getDefaultServiceFeatures,
+  getDefaultServiceSpecs,
+} from "@/lib/repairTabDefaults";
 
 const CATEGORY_NAME: Record<string, string> = {
   smartphone: "Smartphone Repair",
@@ -25,6 +36,7 @@ export default function DevicesEditor() {
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [mediaFor, setMediaFor] = useState<number | null>(null);
   const [repairCounts, setRepairCounts] = useState<Record<string, number>>({});
+  const [issues, setIssues] = useState<PSeoIssue[]>([]);
 
   useEffect(() => {
     getRepairCatalogAction().then((res) => {
@@ -33,6 +45,7 @@ export default function DevicesEditor() {
         return;
       }
       setDevices(res.catalog.devices);
+      setIssues(res.catalog.issues);
       setSavedSlugs(new Set(res.catalog.devices.map((d) => d.slug)));
       const counts: Record<string, number> = {};
       for (const i of res.catalog.issues) counts[i.category] = (counts[i.category] || 0) + 1;
@@ -205,6 +218,40 @@ export default function DevicesEditor() {
                 </div>
               </div>
             </div>
+            <CatalogSeoEditor
+              key={isNew ? `new-device-${index}` : `device-${d.category}-${d.slug}`}
+              value={d.seo ?? {}}
+              defaults={{
+                ...buildDeviceDefaultSeo(d),
+                schemaType: "LocalBusiness",
+              }}
+              contentHtml={buildDeviceModelContentHtml(
+                d,
+                issues.filter((iss) => iss.category === d.category)
+              )}
+              livePath={!isNew && d.slug ? `/repairs/${d.category}/${d.slug}` : null}
+              urlSlug={`repairs/${d.category}/${d.slug || "device"}`}
+              featuredImage={d.image}
+              onFeaturedImageChange={(url) => update(index, { image: url })}
+              onChange={(nextSeo) => update(index, { seo: nextSeo })}
+              allowResetToAuto={true}
+            />
+            <RepairTabsEditor
+              value={d}
+              onChange={(patch) => update(index, patch)}
+              defaults={{
+                specifications: getDefaultServiceSpecs(
+                  `${d.name || "Device"} Repair`,
+                  d.categoryName || "Smartphone Repair",
+                  d.name ? [d.name] : []
+                ),
+                keyFeatures: getDefaultServiceFeatures(`${d.name || "Device"} Repair`),
+                whyChooseHeadline: DEFAULT_WHY_CHOOSE_HEADLINE,
+                whyChooseText: DEFAULT_WHY_CHOOSE_TEXT,
+                whyChooseStats: DEFAULT_WHY_CHOOSE_STATS,
+                faqs: getDefaultServiceFaqs(`${d.name || "Device"} Repair`),
+              }}
+            />
             <p className="sm:col-span-2 text-[12px] text-gray-500 bg-gray-50 rounded-[6px] px-3 py-2">
               Pages: <code>/repairs/{d.category}/{d.slug || "…"}</code> and {repairCounts[d.category] ?? 0} repair page(s) under it.
             </p>

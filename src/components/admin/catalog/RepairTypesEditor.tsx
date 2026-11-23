@@ -3,8 +3,33 @@
 import { useEffect, useState } from "react";
 import { Lock } from "lucide-react";
 import { getRepairCatalogAction, saveCatalogRepairsAction } from "@/actions/repairCatalog";
-import type { PSeoDevice, PSeoIssue } from "@/lib/pSeoEngine";
+import {
+  buildRepairIssueDefaultSeo,
+  buildRepairIssueTemplateVars,
+  renderPSeoTemplate,
+  type PSeoDevice,
+  type PSeoIssue,
+} from "@/lib/pSeoEngine";
+import { buildRepairTypeContentHtml } from "@/lib/catalogSeoHtml";
 import { CATEGORY_OPTIONS, CatalogShell, LinesField, PairsField, inputCls, labelCls, toSlug } from "./CatalogShell";
+import CatalogSeoEditor from "./CatalogSeoEditor";
+
+const CATEGORY_FALLBACK_NAME: Record<string, string> = {
+  smartphone: "Smartphone Repair",
+  tablet: "Tablet Repair",
+  computer: "Computer Repair",
+  console: "Console Repair",
+};
+
+const REPAIR_TEMPLATE_TOKENS = [
+  { token: "{device}", label: "Device" },
+  { token: "{shortName}", label: "Short Name" },
+  { token: "{issue}", label: "Repair Name" },
+  { token: "{price}", label: "Price" },
+  { token: "{oemPrice}", label: "OEM Price" },
+  { token: "{turnaround}", label: "Turnaround" },
+  { token: "{brand}", label: "Brand" },
+];
 
 /**
  * Repair types of the repair catalog (screen, battery, charging port…). Each one
@@ -107,6 +132,37 @@ export default function RepairTypesEditor() {
       )}
       renderForm={(i, index, isNew) => {
         const count = devices.filter((d) => d.category === i.category).length;
+        const sample = sampleDevice(i.category);
+        const categoryName = CATEGORY_FALLBACK_NAME[i.category] || "Smartphone Repair";
+        const previewDevice: PSeoDevice = sample ?? {
+          slug: "device",
+          name: `${categoryName.replace(" Repair", "")} Device`,
+          category: i.category,
+          categoryName,
+          brand: "Apple",
+          brandSlug: "apple",
+          image: "",
+          specs: "",
+          releaseYear: 2024,
+        };
+        const defaultSeo = buildRepairIssueDefaultSeo(previewDevice, i);
+        const { vars } = buildRepairIssueTemplateVars(previewDevice, i);
+        const customSeo = i.seo;
+        const resolvedPreview = {
+          title: customSeo?.title?.trim()
+            ? renderPSeoTemplate(customSeo.title.trim(), vars)
+            : defaultSeo.title,
+          description: customSeo?.description?.trim()
+            ? renderPSeoTemplate(customSeo.description.trim(), vars)
+            : defaultSeo.description,
+          focusKeyword: customSeo?.focusKeyword?.trim()
+            ? renderPSeoTemplate(customSeo.focusKeyword.trim(), vars)
+            : defaultSeo.focusKeyword,
+          canonicalUrl: customSeo?.canonicalUrl?.trim()
+            ? renderPSeoTemplate(customSeo.canonicalUrl.trim(), vars)
+            : defaultSeo.canonicalUrl,
+          sampleLabel: sample ? sample.name : `Sample ${i.category} device`,
+        };
         return (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <label className={labelCls}>
@@ -220,6 +276,31 @@ export default function RepairTypesEditor() {
                 l2="Answer"
               />
             </div>
+            <CatalogSeoEditor
+              key={isNew ? `new-repair-${index}` : `repair-${i.category}-${i.slug}`}
+              heading="pSEO Title, Meta Template & Live Content Checker"
+              value={i.seo ?? {}}
+              defaults={{
+                ...defaultSeo,
+                schemaType: "HowTo",
+              }}
+              resolvedPreview={resolvedPreview}
+              templateTokens={REPAIR_TEMPLATE_TOKENS}
+              contentHtml={buildRepairTypeContentHtml(i, sample)}
+              livePath={
+                !isNew && sample && i.slug
+                  ? `/repairs/${i.category}/${sample.slug}/${i.slug}`
+                  : null
+              }
+              urlSlug={
+                sample
+                  ? `repairs/${i.category}/${sample.slug}/${i.slug || "repair"}`
+                  : `repairs/${i.category}/device/${i.slug || "repair"}`
+              }
+              featuredImage={sample?.image}
+              onChange={(nextSeo) => update(index, { seo: nextSeo })}
+              allowResetToAuto={true}
+            />
             <p className="sm:col-span-2 text-[12px] text-gray-500 bg-gray-50 rounded-[6px] px-3 py-2">
               Makes {count} page(s): <code>/repairs/{i.category}/&lt;device&gt;/{i.slug || "…"}</code>
             </p>

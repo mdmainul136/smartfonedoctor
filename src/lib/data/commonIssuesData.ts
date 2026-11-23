@@ -1,3 +1,5 @@
+import type { RepairDetailTabsData } from "@/lib/repairTabDefaults";
+
 export interface IssueSection {
   heading: string;
   paragraphs: string[];
@@ -5,7 +7,7 @@ export interface IssueSection {
   ordered?: boolean;
 }
 
-export interface CommonIssueDetail {
+export interface CommonIssueDetail extends RepairDetailTabsData {
   slug: string;
   category: "smartphone" | "computer" | "tablet" | "console";
   categoryName: string;
@@ -18,6 +20,9 @@ export interface CommonIssueDetail {
     title: string;
     description: string;
     keywords: string[];
+    focusKeyword?: string;
+    canonicalUrl?: string;
+    schemaType?: string;
   };
 }
 

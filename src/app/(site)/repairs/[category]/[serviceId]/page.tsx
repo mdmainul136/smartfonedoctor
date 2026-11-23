@@ -46,12 +46,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   }
 
+  const keywords = Array.from(
+    new Set([service.seo.focusKeyword, ...(service.seo.keywords ?? [])].map((k) => k?.trim()).filter(Boolean) as string[])
+  );
+
   return {
     title: brandTitle(service.seo.title),
     description: service.seo.description,
-    keywords: service.seo.keywords,
+    keywords,
+    alternates: {
+      canonical: service.seo.canonicalUrl?.trim() || `/repairs/${category}/${serviceId}`,
+    },
     openGraph: {
-      title: `${service.serviceName} | SmartFoneDoctor Philadelphia`,
+      title: service.seo.title || `${service.serviceName} | SmartFoneDoctor Philadelphia`,
       description: service.seo.description,
       images: [service.heroImage],
     },

@@ -121,6 +121,15 @@ model SiteSeoSettings {
   enableRobotsTxt        Boolean  @default(true)
   enableLlmsTxt          Boolean  @default(true)
   enableAiBots           Boolean  @default(true)
+  enableAiTrainingBots   Boolean  @default(true)
+  robotsAllowPaths       String[] @default([])
+  robotsDisallowPaths    String[] @default(["/list/", "/profile/"])
+  robotsCustomRules      String?  @db.Text
+  sitemapIncludeUrls     String[] @default([])
+  sitemapExcludePaths    String[] @default([])
+  llmsCustomSummary      String?  @db.Text
+  llmsCustomSections     String?  @db.Text
+  llmsExcludePaths       String[] @default([])
   updatedAt              DateTime @updatedAt
 
   @@map("site_seo_settings")

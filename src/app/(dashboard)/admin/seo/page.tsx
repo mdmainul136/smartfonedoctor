@@ -47,6 +47,13 @@ import {
   type SiteSeoSettingsInput,
 } from "@/actions/seo";
 import { cleanVerificationToken } from "@/lib/seoSanitize";
+import {
+  buildRobotsOutput,
+  parsePathList,
+  AI_SEARCH_BOTS,
+  AI_TRAINING_BOTS,
+  PROTECTED_DISALLOW_PATHS,
+} from "@/lib/seoCrawlerConfig";
 
 type SeoTab = "general" | "redirects" | "verification" | "crawlers" | "schema";
 
@@ -110,7 +117,23 @@ export default function SeoManagerPage() {
     enableRobotsTxt: true,
     enableLlmsTxt: true,
     enableAiBots: true,
+    enableAiTrainingBots: true,
+    robotsAllowPaths: [],
+    robotsDisallowPaths: ["/list/", "/profile/"],
+    robotsCustomRules: "",
+    sitemapIncludeUrls: [],
+    sitemapExcludePaths: [],
+    llmsCustomSummary: "",
+    llmsCustomSections: "",
+    llmsExcludePaths: [],
   });
+
+  // Textarea string buffers so newline typing feels natural while live preview updates cleanly
+  const [robotsAllowText, setRobotsAllowText] = useState("");
+  const [robotsDisallowText, setRobotsDisallowText] = useState("/list/\n/profile/");
+  const [sitemapIncludeText, setSitemapIncludeText] = useState("");
+  const [sitemapExcludeText, setSitemapExcludeText] = useState("");
+  const [llmsExcludeText, setLlmsExcludeText] = useState("");
 
   // Redirects state
   const [redirects, setRedirects] = useState<RedirectItem[]>([]);
@@ -171,7 +194,21 @@ export default function SeoManagerPage() {
           enableRobotsTxt: settingsRes.settings.enableRobotsTxt,
           enableLlmsTxt: settingsRes.settings.enableLlmsTxt,
           enableAiBots: settingsRes.settings.enableAiBots,
+          enableAiTrainingBots: settingsRes.settings.enableAiTrainingBots ?? true,
+          robotsAllowPaths: settingsRes.settings.robotsAllowPaths ?? [],
+          robotsDisallowPaths: settingsRes.settings.robotsDisallowPaths ?? ["/list/", "/profile/"],
+          robotsCustomRules: settingsRes.settings.robotsCustomRules ?? "",
+          sitemapIncludeUrls: settingsRes.settings.sitemapIncludeUrls ?? [],
+          sitemapExcludePaths: settingsRes.settings.sitemapExcludePaths ?? [],
+          llmsCustomSummary: settingsRes.settings.llmsCustomSummary ?? "",
+          llmsCustomSections: settingsRes.settings.llmsCustomSections ?? "",
+          llmsExcludePaths: settingsRes.settings.llmsExcludePaths ?? [],
         });
+        setRobotsAllowText((settingsRes.settings.robotsAllowPaths ?? []).join("\n"));
+        setRobotsDisallowText((settingsRes.settings.robotsDisallowPaths ?? ["/list/", "/profile/"]).join("\n"));
+        setSitemapIncludeText((settingsRes.settings.sitemapIncludeUrls ?? []).join("\n"));
+        setSitemapExcludeText((settingsRes.settings.sitemapExcludePaths ?? []).join("\n"));
+        setLlmsExcludeText((settingsRes.settings.llmsExcludePaths ?? []).join("\n"));
       }
 
       if (redirectsRes.success && redirectsRes.redirects) {
@@ -205,7 +242,15 @@ export default function SeoManagerPage() {
 
   const handleSaveSettings = async () => {
     setIsSaving(true);
-    const res = await updateSiteSeoSettingsAction(settings);
+    const payload: SiteSeoSettingsInput = {
+      ...settings,
+      robotsAllowPaths: parsePathList(robotsAllowText),
+      robotsDisallowPaths: parsePathList(robotsDisallowText),
+      sitemapIncludeUrls: parsePathList(sitemapIncludeText),
+      sitemapExcludePaths: parsePathList(sitemapExcludeText),
+      llmsExcludePaths: parsePathList(llmsExcludeText),
+    };
+    const res = await updateSiteSeoSettingsAction(payload);
     setIsSaving(false);
     if (res.success) {
       if (res.settings) {
@@ -215,9 +260,22 @@ export default function SeoManagerPage() {
           bingSiteVerification: res.settings.bingSiteVerification || "",
           pinterestVerification: res.settings.pinterestVerification || "",
           facebookAppId: res.settings.facebookAppId || "",
+          robotsAllowPaths: res.settings.robotsAllowPaths ?? [],
+          robotsDisallowPaths: res.settings.robotsDisallowPaths ?? [],
+          robotsCustomRules: res.settings.robotsCustomRules ?? "",
+          sitemapIncludeUrls: res.settings.sitemapIncludeUrls ?? [],
+          sitemapExcludePaths: res.settings.sitemapExcludePaths ?? [],
+          llmsCustomSummary: res.settings.llmsCustomSummary ?? "",
+          llmsCustomSections: res.settings.llmsCustomSections ?? "",
+          llmsExcludePaths: res.settings.llmsExcludePaths ?? [],
         }));
+        setRobotsAllowText((res.settings.robotsAllowPaths ?? []).join("\n"));
+        setRobotsDisallowText((res.settings.robotsDisallowPaths ?? []).join("\n"));
+        setSitemapIncludeText((res.settings.sitemapIncludeUrls ?? []).join("\n"));
+        setSitemapExcludeText((res.settings.sitemapExcludePaths ?? []).join("\n"));
+        setLlmsExcludeText((res.settings.llmsExcludePaths ?? []).join("\n"));
       }
-      setSavedToast("Global SEO settings saved and cached layouts invalidated!");
+      setSavedToast("Global SEO settings, crawler rules, sitemap overrides & llms.txt saved!");
       setTimeout(() => setSavedToast(null), 4000);
     } else {
       alert("Error saving settings: " + (res.error || "Please check server logs"));
@@ -1286,17 +1344,19 @@ export default function SeoManagerPage() {
         </div>
       )}
 
-      {/* TAB 4: ROBOTS & SITEMAP */}
+      {/* TAB 4: ROBOTS, SITEMAP & LLMS.TXT HYBRID CONTROLS */}
       {activeTab === "crawlers" && (
         <div className="bg-white border border-gray-200 rounded-lg p-5 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4">
             <div>
-              <h3 className="text-sm font-semibold text-gray-900">Robots.txt, Sitemap &amp; AI Crawler Controls</h3>
+              <h3 className="text-sm font-semibold text-gray-900">
+                Robots.txt, Sitemap &amp; AI Crawler Controls (Auto + Include/Exclude)
+              </h3>
               <p className="text-xs text-gray-500 mt-0.5">
-                Which search engines and AI crawlers may visit the site, and the sitemap.
+                Auto-generated from live PostgreSQL routes with persistent manual Include/Exclude overrides and protected admin rules.
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Link
                 href="/robots.txt"
                 target="_blank"
@@ -1311,6 +1371,22 @@ export default function SeoManagerPage() {
                 className="h-8 px-3 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-xs font-medium text-gray-700 inline-flex items-center gap-1.5 transition-colors"
               >
                 <span>Live sitemap.xml</span>
+                <ExternalLink className="w-3 h-3 text-gray-400" />
+              </Link>
+              <Link
+                href="/llms.txt"
+                target="_blank"
+                className="h-8 px-3 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-xs font-medium text-gray-700 inline-flex items-center gap-1.5 transition-colors"
+              >
+                <span>Live llms.txt</span>
+                <ExternalLink className="w-3 h-3 text-gray-400" />
+              </Link>
+              <Link
+                href="/llms-full.txt"
+                target="_blank"
+                className="h-8 px-3 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-xs font-medium text-gray-700 inline-flex items-center gap-1.5 transition-colors"
+              >
+                <span>Live llms-full.txt</span>
                 <ExternalLink className="w-3 h-3 text-gray-400" />
               </Link>
             </div>
@@ -1338,31 +1414,50 @@ export default function SeoManagerPage() {
                 />
               </div>
               <div className="text-[11px] text-gray-600 bg-white p-2.5 rounded-lg border border-gray-200 font-mono">
-                {settings.enableRobotsTxt ? "User-agent: *\nAllow: /\nDisallow: /admin/" : "User-agent: *\nDisallow: / (ALL CRAWLERS BLOCKED)"}
+                {settings.enableRobotsTxt
+                  ? "User-agent: * | Protected: /admin/, /api/admin/"
+                  : "User-agent: * | Disallow: / (ALL CRAWLERS BLOCKED)"}
               </div>
             </div>
 
-            {/* 2. AI & LLM Search Crawlers */}
+            {/* 2. AI Search vs AI Training Split Controls */}
             <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/70 space-y-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1.5">
-                    <Bot className="w-4 h-4 text-purple-600" />
-                    <h4 className="text-xs font-bold text-gray-900">AI crawlers</h4>
-                  </div>
-                  <p className="text-xs text-gray-600 leading-relaxed">
-                    Allow GPTBot, ClaudeBot, PerplexityBot, and Applebot to index content for AI Overviews and chat citations.
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={settings.enableAiBots}
-                  onChange={(e) => setSettings({ ...settings, enableAiBots: e.target.checked })}
-                  className="w-4 h-4 text-[#009691] rounded accent-[#009691] mt-0.5 cursor-pointer"
-                />
+              <div className="flex items-center gap-1.5">
+                <Bot className="w-4 h-4 text-purple-600" />
+                <h4 className="text-xs font-bold text-gray-900">AI Search vs Model Training Crawlers</h4>
               </div>
-              <div className="text-[11px] text-gray-600 bg-white p-2.5 rounded-lg border border-gray-200 font-mono">
-                {settings.enableAiBots ? "User-agent: GPTBot, ClaudeBot, PerplexityBot...\nAllow: / (AI search citations active)" : "User-agent: GPTBot, ClaudeBot, PerplexityBot...\nDisallow: / (AI crawlers blocked)"}
+              <div className="space-y-2.5 text-xs">
+                <label className="flex items-start justify-between gap-3 p-2 rounded-lg bg-white border border-gray-200 cursor-pointer">
+                  <div>
+                    <div className="font-semibold text-gray-800">AI Search &amp; Citations</div>
+                    <div className="text-[11px] text-gray-500 mt-0.5">
+                      {AI_SEARCH_BOTS.join(", ")}
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={settings.enableAiBots}
+                    onChange={(e) => setSettings({ ...settings, enableAiBots: e.target.checked })}
+                    className="w-4 h-4 text-[#009691] rounded accent-[#009691] mt-0.5 cursor-pointer"
+                  />
+                </label>
+
+                <label className="flex items-start justify-between gap-3 p-2 rounded-lg bg-white border border-gray-200 cursor-pointer">
+                  <div>
+                    <div className="font-semibold text-gray-800">AI Model Training Scrapers</div>
+                    <div className="text-[11px] text-gray-500 mt-0.5">
+                      {AI_TRAINING_BOTS.join(", ")}
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={settings.enableAiTrainingBots ?? true}
+                    onChange={(e) =>
+                      setSettings({ ...settings, enableAiTrainingBots: e.target.checked })
+                    }
+                    className="w-4 h-4 text-[#009691] rounded accent-[#009691] mt-0.5 cursor-pointer"
+                  />
+                </label>
               </div>
             </div>
 
@@ -1375,7 +1470,7 @@ export default function SeoManagerPage() {
                     <h4 className="text-xs font-bold text-gray-900">Dynamic XML Sitemap</h4>
                   </div>
                   <p className="text-xs text-gray-600 leading-relaxed">
-                    Automatically generates dynamic sitemap containing all published CMS pages, blogs, and core services.
+                    Auto-includes Published CMS pages, blogs, catalog devices, repairs, neighborhoods + your custom Include/Exclude overrides below.
                   </p>
                 </div>
                 <input
@@ -1400,10 +1495,10 @@ export default function SeoManagerPage() {
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5">
                     <Sparkles className="w-4 h-4 text-amber-600" />
-                    <h4 className="text-xs font-bold text-gray-900">llms.txt (site summary for AI tools)</h4>
+                    <h4 className="text-xs font-bold text-gray-900">llms.txt &amp; llms-full.txt (AI Knowledge Files)</h4>
                   </div>
                   <p className="text-xs text-gray-600 leading-relaxed">
-                    Provides clean, low-token Markdown knowledge files for Answer Engines and autonomous AI agent lookup.
+                    Auto-synced from stores, AEO guardrails, repair prices &amp; guides, plus your custom summary/sections below.
                   </p>
                 </div>
                 <input
@@ -1423,56 +1518,233 @@ export default function SeoManagerPage() {
             </div>
           </div>
 
-          {/* Live Robots.txt Code Preview */}
+          {/* PANEL 1: ROBOTS.TXT INCLUDE / EXCLUDE & CUSTOM DIRECTIVES */}
+          <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/40 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h4 className="text-xs font-bold text-gray-900">
+                  robots.txt Include (Allow) / Exclude (Disallow) Paths
+                </h4>
+                <p className="text-[11px] text-gray-500 mt-0.5">
+                  One path per line (e.g. <code>/private-offer/</code>). Changes apply live to <code>/robots.txt</code> without redeploying.
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[11px] font-medium text-gray-500">Locked Disallow:</span>
+                {PROTECTED_DISALLOW_PATHS.map((p) => (
+                  <span
+                    key={p}
+                    className="px-2 py-0.5 rounded bg-slate-200 text-slate-700 font-mono text-[11px] font-semibold"
+                  >
+                    {p}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Extra Allow Paths (Include)
+                </label>
+                <textarea
+                  rows={3}
+                  value={robotsAllowText}
+                  onChange={(e) => {
+                    setRobotsAllowText(e.target.value);
+                    setSettings((prev) => ({
+                      ...prev,
+                      robotsAllowPaths: parsePathList(e.target.value),
+                    }));
+                  }}
+                  placeholder={"/special-landing\n/api/public-catalog"}
+                  className="w-full p-2.5 rounded-lg border border-gray-300 bg-white text-xs font-mono focus:outline-none focus:border-[#009691]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Custom Disallow Paths (Exclude)
+                </label>
+                <textarea
+                  rows={3}
+                  value={robotsDisallowText}
+                  onChange={(e) => {
+                    setRobotsDisallowText(e.target.value);
+                    setSettings((prev) => ({
+                      ...prev,
+                      robotsDisallowPaths: parsePathList(e.target.value),
+                    }));
+                  }}
+                  placeholder={"/list/\n/profile/\n/thank-you"}
+                  className="w-full p-2.5 rounded-lg border border-gray-300 bg-white text-xs font-mono focus:outline-none focus:border-[#009691]"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                Extra Custom Directives (Advanced — optional User-agent blocks)
+              </label>
+              <textarea
+                rows={3}
+                value={settings.robotsCustomRules || ""}
+                onChange={(e) => setSettings({ ...settings, robotsCustomRules: e.target.value })}
+                placeholder={"User-agent: Bingbot\nCrawl-delay: 2\nDisallow: /temp-promo/"}
+                className="w-full p-2.5 rounded-lg border border-gray-300 bg-white text-xs font-mono focus:outline-none focus:border-[#009691]"
+              />
+            </div>
+          </div>
+
+          {/* PANEL 2: SITEMAP INCLUDE / EXCLUDE OVERRIDES */}
+          <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/40 space-y-3">
+            <div>
+              <h4 className="text-xs font-bold text-gray-900">
+                sitemap.xml Manual Include &amp; Exclude Overrides
+              </h4>
+              <p className="text-[11px] text-gray-500 mt-0.5">
+                CMS pages, blog posts, catalog models/repairs &amp; neighborhoods are included automatically. Use these boxes for custom Next.js feature routes or exclusions.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Custom Include URLs / Paths (Add new feature routes)
+                </label>
+                <textarea
+                  rows={3}
+                  value={sitemapIncludeText}
+                  onChange={(e) => {
+                    setSitemapIncludeText(e.target.value);
+                    setSettings((prev) => ({
+                      ...prev,
+                      sitemapIncludeUrls: parsePathList(e.target.value),
+                    }));
+                  }}
+                  placeholder={"/trade-in\n/corporate-repair"}
+                  className="w-full p-2.5 rounded-lg border border-gray-300 bg-white text-xs font-mono focus:outline-none focus:border-[#009691]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Exclude Paths from Sitemap (supports <code>*</code> prefix e.g. <code>/promo/*</code>)
+                </label>
+                <textarea
+                  rows={3}
+                  value={sitemapExcludeText}
+                  onChange={(e) => {
+                    setSitemapExcludeText(e.target.value);
+                    setSettings((prev) => ({
+                      ...prev,
+                      sitemapExcludePaths: parsePathList(e.target.value),
+                    }));
+                  }}
+                  placeholder={"/thank-you\n/test-page"}
+                  className="w-full p-2.5 rounded-lg border border-gray-300 bg-white text-xs font-mono focus:outline-none focus:border-[#009691]"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* PANEL 3: LLMS.TXT & LLMS-FULL.TXT CUSTOMIZATION */}
+          <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/40 space-y-4">
+            <div>
+              <h4 className="text-xs font-bold text-gray-900">
+                llms.txt &amp; llms-full.txt Content Controls &amp; Exclusions
+              </h4>
+              <p className="text-[11px] text-gray-500 mt-0.5">
+                Customize the top AI summary, append new feature sections in Markdown, or exclude paths from both LLM knowledge files.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                Custom Brand Intro / AI Summary (leave blank to use default intro)
+              </label>
+              <textarea
+                rows={2}
+                value={settings.llmsCustomSummary || ""}
+                onChange={(e) => setSettings({ ...settings, llmsCustomSummary: e.target.value })}
+                placeholder="SmartFoneDoctor provides fast, walk-in smartphone, laptop, and gaming console repairs across 3 West Philadelphia locations with a 90-day warranty."
+                className="w-full p-2.5 rounded-lg border border-gray-300 bg-white text-xs focus:outline-none focus:border-[#009691]"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Extra Custom Markdown Sections / Feature Links (Include)
+                </label>
+                <textarea
+                  rows={4}
+                  value={settings.llmsCustomSections || ""}
+                  onChange={(e) => setSettings({ ...settings, llmsCustomSections: e.target.value })}
+                  placeholder={"## Trade-In & Business Accounts\n- [Device Buyback Program](https://smartfonedoctor.com/trade-in): Instant quotes for iPhones and MacBooks."}
+                  className="w-full p-2.5 rounded-lg border border-gray-300 bg-white text-xs font-mono focus:outline-none focus:border-[#009691]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Exclude Paths from llms.txt &amp; llms-full.txt
+                </label>
+                <textarea
+                  rows={4}
+                  value={llmsExcludeText}
+                  onChange={(e) => {
+                    setLlmsExcludeText(e.target.value);
+                    setSettings((prev) => ({
+                      ...prev,
+                      llmsExcludePaths: parsePathList(e.target.value),
+                    }));
+                  }}
+                  placeholder={"/california-supply-chain-act\n/blog/old-draft"}
+                  className="w-full p-2.5 rounded-lg border border-gray-300 bg-white text-xs font-mono focus:outline-none focus:border-[#009691]"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Live Robots.txt Preview (100% synced with src/app/robots.ts) */}
           <div className="space-y-2 pt-2 border-t border-gray-100">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">
-                Live Robots.txt Simulator Preview
+                Live Robots.txt Output Preview
               </span>
               <span className="text-[11px] text-gray-400">
-                Auto-updated based on your configuration above
+                Generated using the exact shared engine powering /robots.txt
               </span>
             </div>
-            <pre className="bg-gray-900 text-gray-100 p-4 rounded-xl text-xs font-mono leading-relaxed overflow-x-auto whitespace-pre border border-gray-800">
-              {settings.enableRobotsTxt
-                ? `User-agent: *
-Allow: /
-Disallow: /admin/
-Disallow: /api/admin/
-Disallow: /list/
-Disallow: /profile/
-
-${settings.enableAiBots
-                  ? `# AI Search Crawlers (Allowed for Citations)
-User-agent: GPTBot
-User-agent: ChatGPT-User
-User-agent: PerplexityBot
-User-agent: ClaudeBot
-User-agent: Claude-Web
-User-agent: Google-Extended
-User-agent: Applebot-Extended
-Allow: /
-Disallow: /admin/`
-                  : `# AI Search Crawlers (Blocked)
-User-agent: GPTBot
-User-agent: ChatGPT-User
-User-agent: PerplexityBot
-User-agent: ClaudeBot
-User-agent: Claude-Web
-User-agent: Google-Extended
-User-agent: Applebot-Extended
-Disallow: /`
-                }
-
-${settings.enableSitemap ? `Sitemap: https://smartfonedoctor.com/sitemap.xml` : `# Sitemap disabled in settings`}
-Host: https://smartfonedoctor.com`
-                : `# Standard Crawlers Disabled
-User-agent: *
-Disallow: /
-
-${settings.enableSitemap ? `Sitemap: https://smartfonedoctor.com/sitemap.xml` : ""}
-Host: https://smartfonedoctor.com`}
+            <pre className="bg-gray-900 text-gray-100 p-4 rounded-xl text-xs font-mono leading-relaxed overflow-x-auto whitespace-pre border border-gray-800 max-h-[380px]">
+              {
+                buildRobotsOutput(
+                  {
+                    enableRobotsTxt: settings.enableRobotsTxt,
+                    enableAiBots: settings.enableAiBots,
+                    enableAiTrainingBots: settings.enableAiTrainingBots ?? true,
+                    enableSitemap: settings.enableSitemap,
+                    robotsAllowPaths: settings.robotsAllowPaths,
+                    robotsDisallowPaths: settings.robotsDisallowPaths,
+                    robotsCustomRules: settings.robotsCustomRules,
+                  },
+                  "https://smartfonedoctor.com"
+                ).previewText
+              }
             </pre>
+          </div>
+
+          <div className="flex justify-end pt-2 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={handleSaveSettings}
+              disabled={isSaving}
+              className="h-9 px-4 rounded-lg bg-[#009691] hover:bg-[#007f7b] text-white text-xs font-medium inline-flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>{isSaving ? "Saving..." : "Save Crawler & Sitemap Rules"}</span>
+            </button>
           </div>
         </div>
       )}

@@ -8,7 +8,29 @@ import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/adminGuard";
 import { CATALOG_DEVICES_ID, CATALOG_REPAIRS_ID, getRepairCatalog } from "@/lib/repairCatalog";
-import type { PSeoDevice, PSeoIssue, RepairCatalog } from "@/lib/pSeoEngine";
+import type { PSeoCustomMeta, PSeoDevice, PSeoIssue, RepairCatalog } from "@/lib/pSeoEngine";
+import { sanitizeRepairTabsData } from "@/lib/repairTabDefaults";
+
+function sanitizeCustomMeta(seo?: PSeoCustomMeta): PSeoCustomMeta | undefined {
+  if (!seo) return undefined;
+  const title = seo.title?.trim() || undefined;
+  const description = seo.description?.trim() || undefined;
+  const focusKeyword = seo.focusKeyword?.trim() || undefined;
+  const keywords = seo.keywords?.map((k) => k.trim()).filter(Boolean);
+  const canonicalUrl = seo.canonicalUrl?.trim() || undefined;
+  const schemaType = seo.schemaType?.trim() || undefined;
+
+  const clean: PSeoCustomMeta = {
+    ...(title ? { title } : {}),
+    ...(description ? { description } : {}),
+    ...(focusKeyword ? { focusKeyword } : {}),
+    ...(keywords && keywords.length > 0 ? { keywords } : {}),
+    ...(canonicalUrl ? { canonicalUrl } : {}),
+    ...(schemaType ? { schemaType } : {}),
+  };
+
+  return Object.keys(clean).length > 0 ? clean : undefined;
+}
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const CATEGORIES = ["smartphone", "tablet", "computer", "console"];
@@ -48,6 +70,9 @@ async function save(id: string, data: unknown[]) {
   revalidatePath("/schedule-repair");
   revalidatePath("/admin/device-models");
   revalidatePath("/admin/repair-types");
+  revalidatePath("/sitemap.xml");
+  revalidatePath("/llms.txt");
+  revalidatePath("/llms-full.txt");
 }
 
 export async function saveCatalogDevicesAction(devices: PSeoDevice[]): Promise<Result> {
@@ -59,11 +84,18 @@ export async function saveCatalogDevicesAction(devices: PSeoDevice[]): Promise<R
       if (!d.brand?.trim()) return { success: false, error: `"${d.name}": brand is required.` };
       if (!d.image?.trim()) return { success: false, error: `"${d.name}": add a photo.` };
     }
-    const clean = devices.map((d) => ({
-      ...d,
-      brandSlug: d.brandSlug?.trim() || d.brand.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-      releaseYear: Number(d.releaseYear) || new Date().getFullYear(),
-    }));
+    const clean = devices.map((d) => {
+      const seo = sanitizeCustomMeta(d.seo);
+      const { seo: _dropSeo, ...rest } = d;
+      void _dropSeo;
+      return {
+        ...rest,
+        brandSlug: d.brandSlug?.trim() || d.brand.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+        releaseYear: Number(d.releaseYear) || new Date().getFullYear(),
+        ...(seo ? { seo } : {}),
+        ...sanitizeRepairTabsData(d),
+      };
+    });
     await save(CATALOG_DEVICES_ID, clean);
     return { success: true };
   } catch (err) {
@@ -81,17 +113,23 @@ export async function saveCatalogRepairsAction(issues: PSeoIssue[]): Promise<Res
       if (!(Number(i.oemPriceMultiplier) >= 1))
         return { success: false, error: `"${i.name}": the OEM price multiplier must be 1 or more.` };
     }
-    const clean = issues.map((i) => ({
-      ...i,
-      shortName: i.shortName?.trim() || i.name,
-      basePrice: Number(i.basePrice),
-      oemPriceMultiplier: Number(i.oemPriceMultiplier),
-      turnaroundMinutes: Number(i.turnaroundMinutes) || 30,
-      symptoms: (i.symptoms ?? []).filter((x) => x.trim()),
-      toolsUsed: (i.toolsUsed ?? []).filter((x) => x.trim()),
-      benchProcedures: (i.benchProcedures ?? []).filter((x) => x.title.trim() || x.desc.trim()),
-      faqs: (i.faqs ?? []).filter((x) => x.question.trim() && x.answer.trim()),
-    }));
+    const clean = issues.map((i) => {
+      const seo = sanitizeCustomMeta(i.seo);
+      const { seo: _dropSeo, ...rest } = i;
+      void _dropSeo;
+      return {
+        ...rest,
+        shortName: i.shortName?.trim() || i.name,
+        basePrice: Number(i.basePrice),
+        oemPriceMultiplier: Number(i.oemPriceMultiplier),
+        turnaroundMinutes: Number(i.turnaroundMinutes) || 30,
+        symptoms: (i.symptoms ?? []).filter((x) => x.trim()),
+        toolsUsed: (i.toolsUsed ?? []).filter((x) => x.trim()),
+        benchProcedures: (i.benchProcedures ?? []).filter((x) => x.title.trim() || x.desc.trim()),
+        faqs: (i.faqs ?? []).filter((x) => x.question.trim() && x.answer.trim()),
+        ...(seo ? { seo } : {}),
+      };
+    });
     await save(CATALOG_REPAIRS_ID, clean);
     return { success: true };
   } catch (err) {

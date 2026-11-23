@@ -17,6 +17,14 @@ import {
 import Footer from "@/components/layout/Footer";
 import type { CommonIssueDetail } from "@/data/commonIssuesData";
 import PSeoRichSection from "@/components/seo/PSeoRichSection";
+import {
+  DEFAULT_WHY_CHOOSE_HEADLINE,
+  DEFAULT_WHY_CHOOSE_STATS,
+  DEFAULT_WHY_CHOOSE_TEXT,
+  getDefaultIssueFaqs,
+  getDefaultIssueFeatures,
+  getDefaultIssueSpecs,
+} from "@/lib/repairTabDefaults";
 
 interface Props {
   issue: CommonIssueDetail;
@@ -233,68 +241,36 @@ export default function IssueArticleClient({ issue, relatedIssues, withFooter = 
 
         </div>
 
-        {/* 3.5. Automated Technical Specifications & pSEO Bench Overview */}
+        {/* 3.5. Database-driven Technical Specifications & Interactive Tabs */}
         <div className="mb-14">
           <PSeoRichSection
             title={`${issue.title}: repair details`}
             subtitle={`Time, price, parts and warranty for ${issue.title} at our Philadelphia stores.`}
             badge="At a glance"
-            specifications={[
-              { label: "Hardware Issue", value: issue.title },
-              { label: "Category", value: issue.categoryName },
-              { label: "Typical repair time", value: "20–45 minutes, same day" },
-              { label: "Diagnosis", value: "Free" },
-              { label: "Parts", value: "Original (OEM) or high-quality replacement parts" },
-              { label: "Warranty", value: "90 days on parts and labor" },
-              { label: "Your data", value: "We don't erase your data" },
-              { label: "Technicians", value: "WISE Level 2 and IPC-A-610 certified" },
-              { label: "Main store", value: "33 S 52nd St, Philadelphia, PA 19139" },
-              { label: "Walk-in Policy", value: "Walk-ins welcome, no appointment needed" },
-            ]}
-            keyFeatures={[
-              {
-                title: "Rapid 30-Minute Turnaround",
-                desc: "Most hardware issues are evaluated and repaired same-day within 30 to 45 minutes while you wait.",
-              },
-              {
-                title: "Zero Data Loss Guarantee",
-                desc: "We perform hardware surgery without formatting your device. Your photos, messages, apps, and credentials stay safe.",
-              },
-              {
-                title: "In-House Micro-Soldering Bench",
-                desc: "Advanced stereo microscopes and soldering stations to repair broken traces, blown diodes, and torn pads.",
-              },
-              {
-                title: "Comprehensive 90-Day Warranty",
-                desc: "All installed replacement parts and technician labor are backed by our 90-day peace-of-mind warranty.",
-              },
-              {
-                title: "Honest Upfront Estimates",
-                desc: "Free comprehensive diagnosis before you spend a penny. No surprise bench fees or diagnostic charges.",
-              },
-              {
-                title: "Certified Philadelphia Lab",
-                desc: "Clean ESD-safe bench with specialized calibration tools right in West Philadelphia.",
-              },
-            ]}
-            faqs={[
-              {
-                question: `How much does ${issue.title.toLowerCase()} cost in Philadelphia?`,
-                answer: `Diagnostic inspection for ${issue.title.toLowerCase()} is always free at SmartFoneDoctor. Depending on your exact device model, repair costs typically start from $69 with all parts and labor included.`,
-              },
-              {
-                question: `Can I walk in to have my device repaired for this issue?`,
-                answer: `Yes! Walk-ins are welcome daily at our 33 S 52nd St flagship location in West Philadelphia and our Lancaster Ave stores. No prior appointment is required.`,
-              },
-              {
-                question: `Will my data or photos be erased during this repair?`,
-                answer: `No. We never reset or wipe devices during standard hardware repairs. All your personal data, apps, and photos remain completely intact.`,
-              },
-              {
-                question: `How long does this repair take?`,
-                answer: `Most repairs for this issue take between 20 and 45 minutes. You can relax in our waiting lounge or pick up your device later the same day.`,
-              },
-            ]}
+            specifications={
+              issue.specifications?.length
+                ? issue.specifications
+                : getDefaultIssueSpecs(issue.title, issue.categoryName)
+            }
+            keyFeatures={
+              issue.keyFeatures?.length
+                ? issue.keyFeatures
+                : getDefaultIssueFeatures()
+            }
+            whyChooseHeadline={
+              issue.whyChooseHeadline || DEFAULT_WHY_CHOOSE_HEADLINE
+            }
+            whyChooseText={issue.whyChooseText || DEFAULT_WHY_CHOOSE_TEXT}
+            stats={
+              issue.whyChooseStats?.length
+                ? issue.whyChooseStats
+                : DEFAULT_WHY_CHOOSE_STATS
+            }
+            faqs={
+              issue.faqs?.length
+                ? issue.faqs
+                : getDefaultIssueFaqs(issue.title)
+            }
             bookingUrl={`/schedule-repair?issue=${encodeURIComponent(issue.slug)}`}
             bookingCtaText={`Book ${issue.title} Online`}
           />

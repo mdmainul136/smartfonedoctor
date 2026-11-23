@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { requireAdmin, requirePublisher } from "@/lib/adminGuard";
 import { revalidatePath } from "next/cache";
 import { cleanVerificationToken } from "@/lib/seoSanitize";
+import { parsePathList } from "@/lib/seoCrawlerConfig";
 
 export interface SiteSeoSettingsInput {
   siteName: string;
@@ -34,6 +35,15 @@ export interface SiteSeoSettingsInput {
   enableRobotsTxt: boolean;
   enableLlmsTxt: boolean;
   enableAiBots: boolean;
+  enableAiTrainingBots?: boolean;
+  robotsAllowPaths?: string[];
+  robotsDisallowPaths?: string[];
+  robotsCustomRules?: string;
+  sitemapIncludeUrls?: string[];
+  sitemapExcludePaths?: string[];
+  llmsCustomSummary?: string;
+  llmsCustomSections?: string;
+  llmsExcludePaths?: string[];
 }
 
 export interface UrlRedirectInput {
@@ -105,6 +115,22 @@ export async function updateSiteSeoSettingsAction(input: SiteSeoSettingsInput) {
     const cleanedBing = cleanVerificationToken(input.bingSiteVerification);
     const cleanedPinterest = cleanVerificationToken(input.pinterestVerification);
     const cleanedFacebook = cleanVerificationToken(input.facebookAppId);
+    const robotsAllowPaths = parsePathList(input.robotsAllowPaths);
+    const robotsDisallowPaths = parsePathList(input.robotsDisallowPaths);
+    const sitemapIncludeUrls = parsePathList(input.sitemapIncludeUrls);
+    const sitemapExcludePaths = parsePathList(input.sitemapExcludePaths);
+    const llmsExcludePaths = parsePathList(input.llmsExcludePaths);
+    const crawlerFields = {
+      enableAiTrainingBots: input.enableAiTrainingBots ?? true,
+      robotsAllowPaths,
+      robotsDisallowPaths,
+      robotsCustomRules: input.robotsCustomRules?.trim() || null,
+      sitemapIncludeUrls,
+      sitemapExcludePaths,
+      llmsCustomSummary: input.llmsCustomSummary?.trim() || null,
+      llmsCustomSections: input.llmsCustomSections?.trim() || null,
+      llmsExcludePaths,
+    };
 
     const updated = await prisma.siteSeoSettings.upsert({
       where: { id: "global_seo_settings" },
@@ -137,6 +163,7 @@ export async function updateSiteSeoSettingsAction(input: SiteSeoSettingsInput) {
         enableRobotsTxt: input.enableRobotsTxt,
         enableLlmsTxt: input.enableLlmsTxt,
         enableAiBots: input.enableAiBots,
+        ...crawlerFields,
       },
       create: {
         id: "global_seo_settings",
@@ -168,6 +195,7 @@ export async function updateSiteSeoSettingsAction(input: SiteSeoSettingsInput) {
         enableRobotsTxt: input.enableRobotsTxt,
         enableLlmsTxt: input.enableLlmsTxt,
         enableAiBots: input.enableAiBots,
+        ...crawlerFields,
       },
     });
 
