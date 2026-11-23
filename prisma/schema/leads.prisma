@@ -14,6 +14,9 @@ model Lead {
   source                        enum_leads_source?              @default(website_form)
   est_value                     Decimal?                        @default(99) @db.Decimal
   notes                         String?                         @db.VarChar
+  ga_client_id                  String?                         @db.VarChar
+  meta_fbp                      String?                         @db.VarChar
+  meta_fbc                      String?                         @db.VarChar
   updated_at                    DateTime                        @default(now()) @db.Timestamptz(3)
   created_at                    DateTime                        @default(now()) @db.Timestamptz(3)
   payload_locked_documents_rels payload_locked_documents_rels[]

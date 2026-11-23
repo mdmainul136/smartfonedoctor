@@ -45,6 +45,17 @@ model AppSystemSettings {
   emailNotifications Boolean  @default(true)
   smsNotifications   Boolean  @default(false)
 
+  // Analytics, Tag Manager & DataLayer Tracking
+  gtmContainerId      String?
+  ga4MeasurementId    String?
+  metaPixelId         String?
+  clarityProjectId    String?
+  metaCapiAccessToken String?  @db.Text
+  metaTestEventCode   String?
+  ga4ApiSecret        String?
+  enableDataLayer     Boolean  @default(true)
+  enableDebugEvents   Boolean  @default(false)
+
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }

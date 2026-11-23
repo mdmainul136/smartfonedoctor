@@ -24,6 +24,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import type { PSeoPageData } from "@/lib/pSeoEngine";
+import { trackRepairTierSelect } from "@/lib/analyticsDataLayer";
 
 interface Props {
   data: PSeoPageData;
@@ -33,6 +34,16 @@ export default function DeviceIssueClient({ data }: Props) {
   const { device, issue, pricing, siblingRepairs, siblingDevices, relatedBlogGuides, neighborhoods, answerCapsule } = data;
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [selectedTier, setSelectedTier] = useState<"aftermarket" | "oem">("aftermarket");
+
+  const handleSelectTier = (tier: "aftermarket" | "oem") => {
+    setSelectedTier(tier);
+    trackRepairTierSelect({
+      device: device.name,
+      issue: issue.shortName,
+      tier,
+      price: tier === "oem" ? pricing.oem : pricing.aftermarket,
+    });
+  };
 
   const categoryHeroSummary: Record<PSeoPageData["device"]["category"], string> = {
     smartphone: `Certified bench technician repair for your ${device.name}. We restore factory display brightness, touch response, battery health, and sealing with tested parts in Philadelphia.`,
@@ -337,7 +348,7 @@ export default function DeviceIssueClient({ data }: Props) {
                 
                 {/* Tier 1: Premium Aftermarket */}
                 <div
-                  onClick={() => setSelectedTier("aftermarket")}
+                  onClick={() => handleSelectTier("aftermarket")}
                   className={`p-5 rounded-2xl border-2 transition-all cursor-pointer relative ${
                     selectedTier === "aftermarket"
                       ? "border-sfd-teal bg-sfd-teal/5 shadow-sm"
@@ -376,7 +387,7 @@ export default function DeviceIssueClient({ data }: Props) {
 
                 {/* Tier 2: OEM Original */}
                 <div
-                  onClick={() => setSelectedTier("oem")}
+                  onClick={() => handleSelectTier("oem")}
                   className={`p-5 rounded-2xl border-2 transition-all cursor-pointer relative ${
                     selectedTier === "oem"
                       ? "border-sfd-teal bg-sfd-teal/5 shadow-sm"
@@ -509,6 +520,9 @@ export default function DeviceIssueClient({ data }: Props) {
                 {issue.faqs.map((faq, i) => (
                   <div key={i} className="border border-gray-200 rounded-xl overflow-hidden">
                     <button
+                      type="button"
+                      aria-expanded={openFaq === i}
+                      data-faq-trigger="true"
                       onClick={() => setOpenFaq(openFaq === i ? null : i)}
                       className="w-full flex items-center justify-between p-4 text-left font-bold text-sm text-gray-900 bg-gray-50/50 hover:bg-gray-100/50 transition-colors cursor-pointer"
                     >

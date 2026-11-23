@@ -4,6 +4,12 @@ import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/adminGuard";
 import { Prisma, enum_leads_store, enum_leads_status, enum_leads_source } from "@prisma/client";
+import {
+  extractAttributionCookies,
+  sendServerLeadConversion,
+  sendServerLeadLifecycleEvent,
+  type B2bLeadLifecycleEvent,
+} from "@/lib/serverAnalytics";
 
 export interface CreateLeadInput {
   customerName: string;
@@ -158,12 +164,15 @@ export async function submitLeadAction(input: CreateLeadInput): Promise<{
   success: boolean;
   leadId?: number;
   ticketNumber?: string;
+  eventId?: string;
   error?: string;
 }> {
   try {
     if (!input.customerName || !input.phone || !input.device || !input.issue) {
       return { success: false, error: "Missing required contact or device details" };
     }
+
+    const attribution = await extractAttributionCookies();
 
     const created = await prisma.lead.create({
       data: {
@@ -177,13 +186,29 @@ export async function submitLeadAction(input: CreateLeadInput): Promise<{
         source: mapSourceToEnum(input.source),
         est_value: input.estValue ? new Prisma.Decimal(input.estValue) : new Prisma.Decimal(99),
         notes: input.notes || null,
+        ga_client_id: attribution.gaClientId || null,
+        meta_fbp: attribution.fbp || null,
+        meta_fbc: attribution.fbc || null,
       },
     });
 
     revalidatePath("/admin/leads");
 
     const ticketNumber = `SFD-${10000 + created.id}`;
-    return { success: true, leadId: created.id, ticketNumber };
+    const eventId = `lead-${ticketNumber}`;
+
+    await sendServerLeadConversion({
+      eventId,
+      ticketNumber,
+      device: created.device,
+      issue: created.issue,
+      value: Number(created.est_value ?? 99),
+      email: created.email || undefined,
+      phone: created.phone,
+      customerName: created.customer_name,
+    });
+
+    return { success: true, leadId: created.id, ticketNumber, eventId };
   } catch (err) {
     console.error("[submitLeadAction] Error:", err);
     return {
@@ -235,6 +260,23 @@ export async function getLeadsAction(): Promise<{
   }
 }
 
+function mapLeadStatusToB2bEvent(
+  status?: enum_leads_status | null
+): B2bLeadLifecycleEvent | null {
+  switch (status) {
+    case enum_leads_status.contacted:
+      return "qualify_lead";
+    case enum_leads_status.scheduled:
+      return "working_lead";
+    case enum_leads_status.completed:
+      return "close_convert_lead";
+    case enum_leads_status.lost:
+      return "close_unconvert_lead";
+    default:
+      return null;
+  }
+}
+
 /** Server Action: Update lead status or details in PostgreSQL */
 export async function updateLeadAction(
   id: number,
@@ -248,16 +290,42 @@ export async function updateLeadAction(
   try {
     // Leads hold customers' names and phone numbers: admin only.
     await requireAdmin();
+    const existing = await prisma.lead.findUnique({
+      where: { id },
+      select: { status: true },
+    });
+
     const data: Prisma.LeadUpdateInput = {};
     if (updates.status) data.status = mapStatusToEnum(updates.status);
     if (updates.estValue !== undefined) data.est_value = new Prisma.Decimal(updates.estValue);
     if (updates.notes !== undefined) data.notes = updates.notes;
     if (updates.storeId !== undefined) data.store = mapStoreToEnum(updates.storeId);
 
-    await prisma.lead.update({
+    const updated = await prisma.lead.update({
       where: { id },
       data,
     });
+
+    if (updates.status && updated.status !== existing?.status) {
+      const lifecycleEvent = mapLeadStatusToB2bEvent(updated.status);
+      if (lifecycleEvent) {
+        await sendServerLeadLifecycleEvent({
+          eventName: lifecycleEvent,
+          ticketNumber: `SFD-${10000 + updated.id}`,
+          leadStatus: mapEnumToStatus(updated.status),
+          device: updated.device,
+          issue: updated.issue,
+          value: Number(updated.est_value ?? 99),
+          email: updated.email || undefined,
+          phone: updated.phone,
+          customerName: updated.customer_name,
+          reason: updated.notes?.trim() || undefined,
+          gaClientId: updated.ga_client_id || undefined,
+          fbp: updated.meta_fbp || undefined,
+          fbc: updated.meta_fbc || undefined,
+        });
+      }
+    }
 
     revalidatePath("/admin/leads");
     return { success: true };

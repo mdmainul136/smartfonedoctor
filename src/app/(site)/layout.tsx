@@ -19,13 +19,26 @@ export default async function SiteLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Header menus & global brand SEO settings loaded on the server from DB.
-  const [navRes, megaRes, globalBlocks, seoSettings] = await Promise.all([
+  // Header menus, global brand SEO settings, and analytics tracking loaded on the server from DB.
+  const [navRes, megaRes, globalBlocks, seoSettings, analyticsSettings] = await Promise.all([
     getNavMenuAction(),
     getMegaMenuAction(),
     getGlobalBlockMap(),
     prisma.siteSeoSettings
       .findUnique({ where: { id: "global_seo_settings" } })
+      .catch(() => null),
+    prisma.appSystemSettings
+      .findUnique({
+        where: { id: "global_config" },
+        select: {
+          gtmContainerId: true,
+          ga4MeasurementId: true,
+          metaPixelId: true,
+          clarityProjectId: true,
+          enableDataLayer: true,
+          enableDebugEvents: true,
+        },
+      })
       .catch(() => null),
   ]);
 
@@ -46,7 +59,7 @@ export default async function SiteLayout({
   return (
     <SiteBrandProvider value={brand}>
       <GmbSchemaJsonLd />
-      <AnalyticsScripts />
+      <AnalyticsScripts config={analyticsSettings ?? undefined} />
       <TopBar topBar={navRes.menu.topBar} />
       <Navbar nav={navRes.menu} mega={megaRes.menu} />
       <div className="flex-1 flex flex-col">

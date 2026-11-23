@@ -32,6 +32,7 @@ import {
   Store,
   ChevronRight,
   Image as ImageIcon,
+  BarChart3,
 } from "lucide-react";
 import MediaModal, { type SelectedMediaPayload } from "@/components/admin/MediaModal";
 
@@ -59,7 +60,7 @@ export default function SettingsPage() {
     isLoading: isStoresLoading,
   } = useStoreContext();
 
-  const [activeTab, setActiveTab] = useState<"stores" | "ai" | "general">("stores");
+  const [activeTab, setActiveTab] = useState<"stores" | "ai" | "analytics" | "general">("stores");
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
@@ -85,6 +86,15 @@ export default function SettingsPage() {
     openaiApiKey: "",
     emailNotifications: true,
     smsNotifications: true,
+    gtmContainerId: "",
+    ga4MeasurementId: "",
+    metaPixelId: "",
+    clarityProjectId: "",
+    metaCapiAccessToken: "",
+    metaTestEventCode: "",
+    ga4ApiSecret: "",
+    enableDataLayer: true,
+    enableDebugEvents: false,
   });
 
   const [isPending, startTransition] = useTransition();
@@ -178,11 +188,22 @@ export default function SettingsPage() {
         headquarters: systemSettings.headquarters,
         currency: systemSettings.currency,
         timezone: systemSettings.timezone,
+        logoUrl: systemSettings.logoUrl,
+        faviconUrl: systemSettings.faviconUrl,
         defaultAiProvider: systemSettings.defaultAiProvider,
         geminiApiKey: systemSettings.geminiApiKey,
         openaiApiKey: systemSettings.openaiApiKey,
         emailNotifications: systemSettings.emailNotifications,
         smsNotifications: systemSettings.smsNotifications,
+        gtmContainerId: systemSettings.gtmContainerId,
+        ga4MeasurementId: systemSettings.ga4MeasurementId,
+        metaPixelId: systemSettings.metaPixelId,
+        clarityProjectId: systemSettings.clarityProjectId,
+        metaCapiAccessToken: systemSettings.metaCapiAccessToken,
+        metaTestEventCode: systemSettings.metaTestEventCode,
+        ga4ApiSecret: systemSettings.ga4ApiSecret,
+        enableDataLayer: systemSettings.enableDataLayer,
+        enableDebugEvents: systemSettings.enableDebugEvents,
       });
 
       if (res.success && res.data) {
@@ -287,6 +308,19 @@ export default function SettingsPage() {
         >
           <Sparkles className="w-4 h-4 text-[#009691]" />
           <span>AI keys</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("analytics")}
+          className={`h-9 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer flex items-center gap-2 ${
+            activeTab === "analytics"
+              ? "bg-white text-[#009691] shadow-xs"
+              : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
+          }`}
+        >
+          <BarChart3 className="w-4 h-4 text-[#009691]" />
+          <span>Analytics &amp; Tag Manager</span>
         </button>
 
         <button
@@ -759,6 +793,285 @@ export default function SettingsPage() {
               >
                 {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 <span>Save AI Configuration</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* 4B. TAB: ANALYTICS, TAG MANAGER & DATALAYER */}
+      {activeTab === "analytics" && (
+        <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-xs max-w-3xl">
+          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4 mb-6">
+            <div>
+              <h2 className="text-base sm:text-lg font-bold text-slate-900">
+                Google Tag Manager, GA4 &amp; DataLayer
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Stored in PostgreSQL and injected across all public pages with Consent Mode v2 and live event tracking.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-1.5 text-[11px] font-semibold">
+              <span
+                className={`px-2.5 py-1 rounded-full border ${
+                  systemSettings.gtmContainerId?.trim()
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    : "bg-slate-50 text-slate-500 border-slate-200"
+                }`}
+              >
+                GTM {systemSettings.gtmContainerId?.trim() ? "On" : "Off"}
+              </span>
+              <span
+                className={`px-2.5 py-1 rounded-full border ${
+                  systemSettings.ga4MeasurementId?.trim()
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    : "bg-slate-50 text-slate-500 border-slate-200"
+                }`}
+              >
+                GA4 {systemSettings.ga4MeasurementId?.trim() ? "On" : "Off"}
+              </span>
+              <span
+                className={`px-2.5 py-1 rounded-full border ${
+                  systemSettings.metaPixelId?.trim()
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    : "bg-slate-50 text-slate-500 border-slate-200"
+                }`}
+              >
+                Pixel {systemSettings.metaPixelId?.trim() ? "On" : "Off"}
+              </span>
+              <span
+                className={`px-2.5 py-1 rounded-full border ${
+                  systemSettings.metaCapiAccessToken?.trim()
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    : "bg-slate-50 text-slate-500 border-slate-200"
+                }`}
+              >
+                CAPI {systemSettings.metaCapiAccessToken?.trim() ? "On" : "Off"}
+              </span>
+              <span
+                className={`px-2.5 py-1 rounded-full border ${
+                  systemSettings.clarityProjectId?.trim()
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    : "bg-slate-50 text-slate-500 border-slate-200"
+                }`}
+              >
+                Clarity {systemSettings.clarityProjectId?.trim() ? "On" : "Off"}
+              </span>
+              <span
+                className={`px-2.5 py-1 rounded-full border ${
+                  systemSettings.enableDataLayer !== false
+                    ? "bg-teal-50 text-[#009691] border-teal-200"
+                    : "bg-slate-50 text-slate-500 border-slate-200"
+                }`}
+              >
+                DataLayer {systemSettings.enableDataLayer !== false ? "Active" : "Paused"}
+              </span>
+            </div>
+          </div>
+
+          <form onSubmit={handleSaveSystemSettings} className="flex flex-col gap-5 text-xs sm:text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-slate-700">
+                  Google Tag Manager (GTM Container ID)
+                </label>
+                <input
+                  type="text"
+                  value={systemSettings.gtmContainerId || ""}
+                  onChange={(e) =>
+                    setSystemSettings((prev) => ({ ...prev, gtmContainerId: e.target.value }))
+                  }
+                  placeholder="GTM-XXXXXXX"
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 font-mono text-xs text-slate-900 focus:bg-white focus:border-[#009691] focus:ring-2 focus:ring-teal-100 outline-none transition-all"
+                />
+                <span className="text-[11px] text-slate-500">
+                  Loads GTM container + &lt;noscript&gt; fallback across all public pages.
+                </span>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-slate-700">
+                  Google Analytics 4 (Measurement ID)
+                </label>
+                <input
+                  type="text"
+                  value={systemSettings.ga4MeasurementId || ""}
+                  onChange={(e) =>
+                    setSystemSettings((prev) => ({ ...prev, ga4MeasurementId: e.target.value }))
+                  }
+                  placeholder="G-XXXXXXXXXX"
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 font-mono text-xs text-slate-900 focus:bg-white focus:border-[#009691] focus:ring-2 focus:ring-teal-100 outline-none transition-all"
+                />
+                <span className="text-[11px] text-slate-500">
+                  If GA4 is already configured inside your GTM container, leave blank to prevent duplicate pageviews.
+                </span>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-slate-700">
+                  Meta (Facebook) Pixel ID
+                </label>
+                <input
+                  type="text"
+                  value={systemSettings.metaPixelId || ""}
+                  onChange={(e) =>
+                    setSystemSettings((prev) => ({ ...prev, metaPixelId: e.target.value }))
+                  }
+                  placeholder="123456789012345"
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 font-mono text-xs text-slate-900 focus:bg-white focus:border-[#009691] focus:ring-2 focus:ring-teal-100 outline-none transition-all"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-slate-700">
+                  Microsoft Clarity Project ID
+                </label>
+                <input
+                  type="text"
+                  value={systemSettings.clarityProjectId || ""}
+                  onChange={(e) =>
+                    setSystemSettings((prev) => ({ ...prev, clarityProjectId: e.target.value }))
+                  }
+                  placeholder="abc123def4"
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 font-mono text-xs text-slate-900 focus:bg-white focus:border-[#009691] focus:ring-2 focus:ring-teal-100 outline-none transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-slate-100 flex flex-col gap-2.5">
+              <span className="text-xs font-bold text-slate-900">DataLayer Event Controls</span>
+              <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={systemSettings.enableDataLayer !== false}
+                  onChange={(e) =>
+                    setSystemSettings((prev) => ({
+                      ...prev,
+                      enableDataLayer: e.target.checked,
+                    }))
+                  }
+                  className="h-4 w-4 rounded border-slate-300 text-[#009691] focus:ring-[#009691]"
+                />
+                <span className="text-xs text-slate-700 font-medium">
+                  Enable structured window.dataLayer event tracking
+                </span>
+              </label>
+
+              <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={Boolean(systemSettings.enableDebugEvents)}
+                  onChange={(e) =>
+                    setSystemSettings((prev) => ({
+                      ...prev,
+                      enableDebugEvents: e.target.checked,
+                    }))
+                  }
+                  className="h-4 w-4 rounded border-slate-300 text-[#009691] focus:ring-[#009691]"
+                />
+                <span className="text-xs text-slate-700 font-medium">
+                  Log dataLayer events in browser console for QA
+                </span>
+              </label>
+            </div>
+
+            <div className="pt-4 border-t border-slate-100 space-y-3">
+              <div>
+                <span className="text-xs font-bold text-slate-900 block">
+                  Server-Side Conversions API (Optional — Ad-Blocker Proof)
+                </span>
+                <span className="text-[11px] text-slate-500">
+                  Fires verified server-side Lead conversions directly from PostgreSQL lead submission with event_id deduplication.
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5 sm:col-span-2">
+                  <label className="text-xs font-semibold text-slate-700">
+                    Meta Conversions API Access Token (CAPI)
+                  </label>
+                  <input
+                    type="password"
+                    value={systemSettings.metaCapiAccessToken || ""}
+                    onChange={(e) =>
+                      setSystemSettings((prev) => ({
+                        ...prev,
+                        metaCapiAccessToken: e.target.value,
+                      }))
+                    }
+                    placeholder="EAA..."
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 font-mono text-xs text-slate-900 focus:bg-white focus:border-[#009691] focus:ring-2 focus:ring-teal-100 outline-none transition-all"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-slate-700">
+                    Meta CAPI Test Event Code
+                  </label>
+                  <input
+                    type="text"
+                    value={systemSettings.metaTestEventCode || ""}
+                    onChange={(e) =>
+                      setSystemSettings((prev) => ({
+                        ...prev,
+                        metaTestEventCode: e.target.value,
+                      }))
+                    }
+                    placeholder="TEST12345"
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 font-mono text-xs text-slate-900 focus:bg-white focus:border-[#009691] focus:ring-2 focus:ring-teal-100 outline-none transition-all"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-slate-700">
+                    GA4 Measurement Protocol API Secret
+                  </label>
+                  <input
+                    type="password"
+                    value={systemSettings.ga4ApiSecret || ""}
+                    onChange={(e) =>
+                      setSystemSettings((prev) => ({
+                        ...prev,
+                        ga4ApiSecret: e.target.value,
+                      }))
+                    }
+                    placeholder="Optional server-side GA4 secret"
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 font-mono text-xs text-slate-900 focus:bg-white focus:border-[#009691] focus:ring-2 focus:ring-teal-100 outline-none transition-all"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-teal-100 bg-teal-50/40 p-4 space-y-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-teal-900 block">
+                Auto-Tracked Funnel Events (GA4 / GTM DataLayer ↔ Meta Pixel &amp; CAPI)
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11.5px] font-mono text-slate-700">
+                <div className="bg-white rounded-lg border border-teal-100 px-2.5 py-1.5">page_view ↔ PageView</div>
+                <div className="bg-white rounded-lg border border-teal-100 px-2.5 py-1.5">view_item ↔ ViewContent</div>
+                <div className="bg-white rounded-lg border border-teal-100 px-2.5 py-1.5">select_device / select_model (Step 1–2)</div>
+                <div className="bg-white rounded-lg border border-teal-100 px-2.5 py-1.5">add_to_cart ↔ AddToCart (Step 3)</div>
+                <div className="bg-white rounded-lg border border-teal-100 px-2.5 py-1.5">begin_checkout ↔ InitiateCheckout (Step 4)</div>
+                <div className="bg-white rounded-lg border border-teal-100 px-2.5 py-1.5">generate_lead ↔ Lead + Schedule + CAPI</div>
+                <div className="bg-white rounded-lg border border-teal-100 px-2.5 py-1.5">phone_click / email_click ↔ Contact</div>
+                <div className="bg-white rounded-lg border border-teal-100 px-2.5 py-1.5">directions_click ↔ FindLocation</div>
+                <div className="bg-white rounded-lg border border-teal-100 px-2.5 py-1.5">booking_cta_click ↔ Schedule</div>
+                <div className="bg-white rounded-lg border border-teal-100 px-2.5 py-1.5">search ↔ Search</div>
+                <div className="bg-white rounded-lg border border-teal-100 px-2.5 py-1.5">select_repair_tier / track_repair_status</div>
+                <div className="bg-white rounded-lg border border-teal-100 px-2.5 py-1.5">scroll_depth (50%, 90%) / faq_expand</div>
+                <div className="bg-white rounded-lg border border-teal-100 px-2.5 py-1.5">qualify_lead / working_lead (CRM Status)</div>
+                <div className="bg-white rounded-lg border border-teal-100 px-2.5 py-1.5">close_convert_lead ↔ Purchase / close_unconvert_lead</div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+              <button
+                type="submit"
+                disabled={isPending}
+                className="h-10 rounded-xl bg-[#009691] hover:bg-[#007f7b] px-6 text-xs sm:text-sm font-semibold text-white shadow-md shadow-[#009691]/25 transition-all focus:outline-none focus:ring-2 focus:ring-teal-600/40 disabled:opacity-50 inline-flex items-center gap-2 cursor-pointer"
+              >
+                {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                <span>Save Analytics &amp; Tag Manager</span>
               </button>
             </div>
           </form>

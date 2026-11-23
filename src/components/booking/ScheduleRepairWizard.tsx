@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, Suspense, useMemo } from "react";
+import React, { useState, useEffect, useRef, Suspense, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
@@ -21,6 +21,12 @@ import {
 } from "lucide-react";
 import { JsonLd, buildBreadcrumbSchema } from "@/lib/schema";
 import { submitLeadAction } from "@/actions/leads";
+import {
+  trackBookingCheckout,
+  trackBookingIssueSelect,
+  trackBookingLead,
+  trackBookingStep,
+} from "@/lib/analyticsDataLayer";
 
 export interface WizardStore {
   id: number;
@@ -289,6 +295,20 @@ export function ScheduleRepairWizard({ initialStores }: ScheduleRepairWizardProp
   // Step 3 Selections (Multi-select)
   const [selectedIssues, setSelectedIssues] = useState<string[]>(initialIssues);
 
+  const checkoutTrackedRef = useRef(false);
+  useEffect(() => {
+    if (!checkoutTrackedRef.current && currentStep === 4) {
+      checkoutTrackedRef.current = true;
+      trackBookingCheckout({
+        step: 4,
+        stepName: "contact_details",
+        device: `${selectedMake} ${selectedModel}`,
+        issue: selectedIssues.join(", ") || undefined,
+        value: 99,
+      });
+    }
+  }, [currentStep, selectedMake, selectedModel, selectedIssues]);
+
   // Step 4 Contact form
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -492,6 +512,12 @@ export function ScheduleRepairWizard({ initialStores }: ScheduleRepairWizardProp
                       key={device.id}
                       type="button"
                       onClick={() => {
+                        trackBookingStep({
+                          step: 1,
+                          eventName: "select_device",
+                          deviceCategory: device.id,
+                          deviceLabel: device.name,
+                        });
                         setSelectedDevice(device.id);
                         setCurrentStep(2);
                       }}
@@ -519,6 +545,12 @@ export function ScheduleRepairWizard({ initialStores }: ScheduleRepairWizardProp
                       key={device.id}
                       type="button"
                       onClick={() => {
+                        trackBookingStep({
+                          step: 1,
+                          eventName: "select_device",
+                          deviceCategory: device.id,
+                          deviceLabel: device.name,
+                        });
                         setSelectedDevice(device.id);
                         setCurrentStep(2);
                       }}
@@ -659,7 +691,16 @@ export function ScheduleRepairWizard({ initialStores }: ScheduleRepairWizardProp
 
                   <button
                     type="button"
-                    onClick={() => setCurrentStep(3)}
+                    onClick={() => {
+                      trackBookingStep({
+                        step: 2,
+                        eventName: "select_model",
+                        deviceCategory: selectedDevice,
+                        make: selectedMake,
+                        model: selectedModel,
+                      });
+                      setCurrentStep(3);
+                    }}
                     className="px-8 py-2.5 rounded-full bg-sfd-teal hover:bg-sfd-tealDark text-white text-[13.5px] font-medium shadow-xs hover:shadow transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
                   >
                     <span>Continue</span>
@@ -747,7 +788,18 @@ export function ScheduleRepairWizard({ initialStores }: ScheduleRepairWizardProp
                   <button
                     type="button"
                     disabled={selectedIssues.length === 0}
-                    onClick={() => setCurrentStep(4)}
+                    onClick={() => {
+                      const issueLabels = selectedIssues
+                        .map((id) => ISSUES_LIST.find((i) => i.id === id)?.name || id)
+                        .join(", ");
+                      trackBookingIssueSelect({
+                        device: `${selectedMake} ${selectedModel}`.trim(),
+                        issues: issueLabels,
+                        issueCount: selectedIssues.length,
+                        value: 99,
+                      });
+                      setCurrentStep(4);
+                    }}
                     className="px-8 py-2.5 rounded-full bg-sfd-teal hover:bg-sfd-tealDark disabled:opacity-50 text-white text-[13.5px] font-medium shadow-xs hover:shadow transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
                   >
                     <span>Continue</span>
@@ -794,6 +846,14 @@ export function ScheduleRepairWizard({ initialStores }: ScheduleRepairWizardProp
                     setIsSubmitting(false);
 
                     if (res.success && res.ticketNumber) {
+                      trackBookingLead({
+                        eventId: res.eventId,
+                        ticketNumber: res.ticketNumber,
+                        device: `${selectedMake} ${selectedModel}`,
+                        issue: issueLabels || "Hardware Diagnostic Intake",
+                        storeId: storeIdParam,
+                        value: 99,
+                      });
                       setConfirmedTicket(res.ticketNumber);
                       setCurrentStep(5);
                     } else {

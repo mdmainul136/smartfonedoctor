@@ -26,6 +26,7 @@ import Footer from "@/components/layout/Footer";
 import { JsonLd, buildBreadcrumbSchema } from "@/lib/schema";
 import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
 import { lookupRepairTicketAction } from "@/actions/leads";
+import { trackRepairStatusLookup } from "@/lib/analyticsDataLayer";
 
 interface TimelineStep {
   title: string;
@@ -147,12 +148,15 @@ export default function RepairStatusPage() {
     try {
       const res = await lookupRepairTicketAction(ticketId.trim(), lastName.trim() || undefined);
       if (res.success && res.ticket) {
+        trackRepairStatusLookup({ found: true, status: res.ticket.status });
         populateResult(res.ticket, lastName.trim() || res.ticket.customerName.split(" ").slice(-1)[0] || "Customer");
       } else {
         // Fallback for hardcoded demo ticket
         if (ticketId.toUpperCase().includes("84920")) {
+          trackRepairStatusLookup({ found: true, status: "In Progress" });
           handleFillDemoData();
         } else {
+          trackRepairStatusLookup({ found: false });
           setError(res.error || "No active repair ticket found with that ID. Please check your drop-off receipt.");
         }
       }

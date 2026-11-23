@@ -3,6 +3,12 @@
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { requireAdmin, requirePublisher } from "@/lib/adminGuard";
+import {
+  cleanClarityId,
+  cleanGa4Id,
+  cleanGtmId,
+  cleanMetaPixelId,
+} from "@/lib/analyticsDataLayer";
 
 export interface StoreBranchData {
   id: number;
@@ -35,6 +41,15 @@ export interface AppSystemSettingsData {
   openaiApiKey: string | null;
   emailNotifications: boolean;
   smsNotifications: boolean;
+  gtmContainerId?: string | null;
+  ga4MeasurementId?: string | null;
+  metaPixelId?: string | null;
+  clarityProjectId?: string | null;
+  metaCapiAccessToken?: string | null;
+  metaTestEventCode?: string | null;
+  ga4ApiSecret?: string | null;
+  enableDataLayer?: boolean;
+  enableDebugEvents?: boolean;
 }
 
 export type ActionResponse<T = unknown> = {
@@ -249,6 +264,51 @@ export async function updateAppSystemSettingsAction(
 ): Promise<ActionResponse<AppSystemSettingsData>> {
   try {
     await requirePublisher();
+
+    const gtmClean = data.gtmContainerId?.trim()
+      ? cleanGtmId(data.gtmContainerId)
+      : null;
+    if (data.gtmContainerId?.trim() && !gtmClean) {
+      return {
+        success: false,
+        error: "Invalid GTM Container ID (expected format like GTM-XXXXXXX).",
+      };
+    }
+
+    const ga4Clean = data.ga4MeasurementId?.trim()
+      ? cleanGa4Id(data.ga4MeasurementId)
+      : null;
+    if (data.ga4MeasurementId?.trim() && !ga4Clean) {
+      return {
+        success: false,
+        error: "Invalid GA4 Measurement ID (expected format like G-XXXXXXXXXX).",
+      };
+    }
+
+    const pixelClean = data.metaPixelId?.trim()
+      ? cleanMetaPixelId(data.metaPixelId)
+      : null;
+    if (data.metaPixelId?.trim() && !pixelClean) {
+      return {
+        success: false,
+        error: "Invalid Meta Pixel ID (expected 8–20 numeric digits).",
+      };
+    }
+
+    const clarityClean = data.clarityProjectId?.trim()
+      ? cleanClarityId(data.clarityProjectId)
+      : null;
+    if (data.clarityProjectId?.trim() && !clarityClean) {
+      return {
+        success: false,
+        error: "Invalid Microsoft Clarity Project ID (expected 6–32 alphanumeric characters).",
+      };
+    }
+
+    const metaCapiClean = data.metaCapiAccessToken?.trim() || null;
+    const metaTestClean = data.metaTestEventCode?.trim() || null;
+    const ga4SecretClean = data.ga4ApiSecret?.trim() || null;
+
     const updated = await prisma.appSystemSettings.upsert({
       where: { id: "global_config" },
       create: {
@@ -267,6 +327,15 @@ export async function updateAppSystemSettingsAction(
         openaiApiKey: data.openaiApiKey || null,
         emailNotifications: data.emailNotifications ?? true,
         smsNotifications: data.smsNotifications ?? false,
+        gtmContainerId: gtmClean,
+        ga4MeasurementId: ga4Clean,
+        metaPixelId: pixelClean,
+        clarityProjectId: clarityClean,
+        metaCapiAccessToken: metaCapiClean,
+        metaTestEventCode: metaTestClean,
+        ga4ApiSecret: ga4SecretClean,
+        enableDataLayer: data.enableDataLayer ?? true,
+        enableDebugEvents: data.enableDebugEvents ?? false,
       },
       update: {
         ...(data.siteName ? { siteName: data.siteName.trim() } : {}),
@@ -283,10 +352,20 @@ export async function updateAppSystemSettingsAction(
         ...(data.openaiApiKey !== undefined ? { openaiApiKey: data.openaiApiKey?.trim() || null } : {}),
         ...(data.emailNotifications !== undefined ? { emailNotifications: data.emailNotifications } : {}),
         ...(data.smsNotifications !== undefined ? { smsNotifications: data.smsNotifications } : {}),
+        ...(data.gtmContainerId !== undefined ? { gtmContainerId: gtmClean } : {}),
+        ...(data.ga4MeasurementId !== undefined ? { ga4MeasurementId: ga4Clean } : {}),
+        ...(data.metaPixelId !== undefined ? { metaPixelId: pixelClean } : {}),
+        ...(data.clarityProjectId !== undefined ? { clarityProjectId: clarityClean } : {}),
+        ...(data.metaCapiAccessToken !== undefined ? { metaCapiAccessToken: metaCapiClean } : {}),
+        ...(data.metaTestEventCode !== undefined ? { metaTestEventCode: metaTestClean } : {}),
+        ...(data.ga4ApiSecret !== undefined ? { ga4ApiSecret: ga4SecretClean } : {}),
+        ...(data.enableDataLayer !== undefined ? { enableDataLayer: data.enableDataLayer } : {}),
+        ...(data.enableDebugEvents !== undefined ? { enableDebugEvents: data.enableDebugEvents } : {}),
       },
     });
 
     revalidatePath("/settings");
+    revalidatePath("/", "layout");
 
     return {
       success: true,
