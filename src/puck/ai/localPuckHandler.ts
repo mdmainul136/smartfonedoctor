@@ -4,6 +4,7 @@ import {
   GEMINI_FLASH_FALLBACKS,
   discoverGeminiFlashModels,
   isGeminiModelUnavailableStatus,
+  shouldFallbackGeminiModel,
 } from "./geminiModels";
 
 export type LocalAiProvider = "gemini" | "openai";
@@ -287,6 +288,7 @@ async function requestGeminiModelJson(
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(25000),
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: systemPrompt }] },
       contents: [{ role: "user", parts: [{ text: userPrompt }] }],
@@ -320,11 +322,14 @@ async function callGeminiJson(
   const tried = new Set<string>();
   let lastError = "Gemini API request failed.";
   let hadUnavailableModel = false;
+  const maxAttempts = 4;
+  let attempts = 0;
 
-  for (let i = 0; i < queue.length; i++) {
+  for (let i = 0; i < queue.length && attempts < maxAttempts; i++) {
     const candidate = queue[i];
     if (tried.has(candidate)) continue;
     tried.add(candidate);
+    attempts++;
 
     const attempt = await requestGeminiModelJson(apiKey, candidate, systemPrompt, userPrompt);
     if (attempt.ok) {
@@ -332,22 +337,25 @@ async function callGeminiJson(
     }
 
     lastError = `Gemini API error (${attempt.status}): ${attempt.errText.slice(0, 240)}`;
-    if (!isGeminiModelUnavailableStatus(attempt.status, attempt.errText)) {
+    if (!shouldFallbackGeminiModel(attempt.status, attempt.errText)) {
       throw new Error(lastError);
     }
 
-    hadUnavailableModel = true;
-    // If all static fallbacks failed with model-unavailable, query ListModels once to self-heal.
-    if (i === queue.length - 1) {
-      const discovered = await discoverGeminiFlashModels(apiKey);
-      for (const m of discovered) {
-        if (!tried.has(m)) queue.push(m);
+    const isUnavailable = isGeminiModelUnavailableStatus(attempt.status, attempt.errText);
+    if (isUnavailable) {
+      hadUnavailableModel = true;
+      // Only query ListModels when a static model ID was actually unavailable/404
+      if (i === queue.length - 1) {
+        const discovered = await discoverGeminiFlashModels(apiKey);
+        for (const m of discovered) {
+          if (!tried.has(m)) queue.push(m);
+        }
       }
     }
   }
 
   throw new Error(
-    hadUnavailableModel ? lastError : "No compatible Gemini Flash model was available for this key."
+    hadUnavailableModel ? lastError : lastError || "No compatible Gemini Flash model was available for this key."
   );
 }
 

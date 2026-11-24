@@ -36,6 +36,7 @@ export default function PuckAiPanel({
   const [availableModels, setAvailableModels] = useState<Array<{ id: string; displayName: string }>>([]);
   const [selectedModel, setSelectedModel] = useState("");
   const [loadingModels, setLoadingModels] = useState(false);
+  const [modelsError, setModelsError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastSummary, setLastSummary] = useState<string | null>(null);
@@ -68,11 +69,13 @@ export default function PuckAiPanel({
 
   const activeSettingsKey =
     provider === "gemini" ? storedSettings.geminiApiKey : storedSettings.openaiApiKey;
-  const effectiveKey = customKey.trim() || activeSettingsKey || undefined;
+  const effectiveKey =
+    customKey.trim() || (!hasServerKey ? activeSettingsKey || undefined : undefined);
 
   const loadModels = useCallback(
     async (signal?: AbortSignal) => {
       setLoadingModels(true);
+      setModelsError(null);
       try {
         const res = await fetch(
           `${getBuilderHost().aiEndpoint}?models=1&provider=${encodeURIComponent(provider)}`,
@@ -81,15 +84,20 @@ export default function PuckAiPanel({
             signal,
           }
         );
-        if (!res.ok) return;
+        if (!res.ok) {
+          setModelsError("Could not load live models");
+          return;
+        }
         const data = (await res.json()) as {
           models?: Array<{ id: string; displayName: string }>;
         };
         if (Array.isArray(data.models)) {
           setAvailableModels(data.models);
         }
-      } catch {
-        // Ignore aborted or failed model list fetches; fallback runs server-side
+      } catch (err) {
+        if (!(err instanceof DOMException && err.name === "AbortError")) {
+          setModelsError("Could not load live models");
+        }
       } finally {
         if (!signal?.aborted) {
           setLoadingModels(false);
@@ -155,6 +163,40 @@ export default function PuckAiPanel({
     }
   };
 
+  const modelSelectorControl = (
+    <div className="flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-0.5 text-[11px]">
+      <span className="font-semibold text-gray-500">Model:</span>
+      <select
+        value={selectedModel}
+        onChange={(e) => setSelectedModel(e.target.value)}
+        className="max-w-[210px] bg-transparent text-[11px] font-medium text-gray-800 focus:outline-none cursor-pointer"
+        title={modelsError || "Select AI Model (loaded live from API)"}
+      >
+        <option value="">
+          {loadingModels
+            ? "Loading live models..."
+            : availableModels.length > 0
+            ? `Auto (${availableModels.length} live models)`
+            : `Auto (${provider === "gemini" ? "Latest Flash" : "gpt-4o-mini"})`}
+        </option>
+        {availableModels.map((m) => (
+          <option key={m.id} value={m.id}>
+            {m.displayName} ({m.id})
+          </option>
+        ))}
+      </select>
+      <button
+        type="button"
+        onClick={() => loadModels()}
+        disabled={loadingModels}
+        title="Refresh available models from API"
+        className="rounded p-0.5 text-gray-500 hover:bg-gray-100 hover:text-[#009691] disabled:opacity-50 cursor-pointer"
+      >
+        <RefreshCw className={`h-3 w-3 ${loadingModels ? "animate-spin" : ""}`} />
+      </button>
+    </div>
+  );
+
   return (
     <div className="border-b border-teal-200 bg-gradient-to-r from-teal-50/90 via-white to-slate-50 px-4 py-3">
       <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
@@ -173,32 +215,7 @@ export default function PuckAiPanel({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1 rounded-md border border-gray-200 bg-white px-1.5 py-0.5 text-[11px]">
-            <select
-              value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
-              className="max-w-[190px] bg-transparent text-[11px] font-medium text-gray-700 focus:outline-none cursor-pointer"
-              title="Select AI Model (loaded live from API)"
-            >
-              <option value="">
-                Auto ({provider === "gemini" ? "Latest Flash" : "gpt-4o-mini"})
-              </option>
-              {availableModels.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.displayName} ({m.id})
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              onClick={() => loadModels()}
-              disabled={loadingModels}
-              title="Refresh available models from API"
-              className="rounded p-0.5 text-gray-500 hover:bg-gray-100 hover:text-[#009691] disabled:opacity-50 cursor-pointer"
-            >
-              <RefreshCw className={`h-3 w-3 ${loadingModels ? "animate-spin" : ""}`} />
-            </button>
-          </div>
+          {modelSelectorControl}
 
           <div className="flex items-center rounded-md border border-gray-200 bg-white p-0.5 text-[11px]">
             <button
@@ -274,17 +291,22 @@ export default function PuckAiPanel({
             }}
             className="h-7 rounded border border-gray-300 bg-white px-2 text-xs font-medium text-gray-800"
           >
-            <option value="gemini">Google Gemini (Latest Flash)</option>
-            <option value="openai">OpenAI (gpt-4o-mini)</option>
+            <option value="gemini">Google Gemini</option>
+            <option value="openai">OpenAI</option>
           </select>
+          {modelSelectorControl}
           <input
             type="password"
+            name="puck-ai-override-key"
+            autoComplete="new-password"
+            data-lpignore="true"
+            data-1p-ignore="true"
             value={customKey}
             onChange={(e) => setCustomKey(e.target.value)}
             placeholder={
-              hasServerKey
-                ? "Optional: override .env key (in-memory only)"
-                : `Paste your ${provider === "gemini" ? "GEMINI_API_KEY" : "OPENAI_API_KEY"} (or set in .env.local)`
+              activeSettingsKey || hasServerKey
+                ? "Using Settings/Server key — paste here only to override"
+                : `Paste your ${provider === "gemini" ? "GEMINI_API_KEY" : "OPENAI_API_KEY"}`
             }
             className="h-7 flex-1 min-w-[220px] rounded border border-gray-300 px-2.5 text-xs text-gray-800 focus:border-[#009691] focus:outline-none"
           />

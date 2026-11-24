@@ -6,7 +6,7 @@ import { requireAdmin } from "@/lib/adminGuard";
 import {
   GEMINI_FLASH_FALLBACKS,
   discoverGeminiFlashModels,
-  isGeminiModelUnavailableStatus,
+  shouldFallbackGeminiModel,
 } from "@/puck/ai/geminiModels";
 
 export interface GeoNeighborhoodInput {
@@ -706,7 +706,7 @@ export async function probeLiveAiVisibilityAction(
 
           if (!response.ok) {
             lastGeminiError = data.error?.message || `Gemini HTTP ${response.status}`;
-            if (isGeminiModelUnavailableStatus(response.status, lastGeminiError)) {
+            if (shouldFallbackGeminiModel(response.status, lastGeminiError)) {
               sawUnavailableModel = true;
               break;
             }

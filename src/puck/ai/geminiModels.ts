@@ -26,6 +26,16 @@ export function isGeminiModelUnavailableStatus(status: number, bodyText: string)
   return false;
 }
 
+/**
+ * Returns true when an API failure is model-specific or transient capacity-related
+ * (404/400 deprecated, 503 high demand, 429 rate-limit, 500/502/504 gateway errors)
+ * so the router automatically fails over to the next active Gemini model.
+ */
+export function shouldFallbackGeminiModel(status: number, bodyText: string): boolean {
+  if (isGeminiModelUnavailableStatus(status, bodyText)) return true;
+  return status === 503 || status === 429 || status === 500 || status === 502 || status === 504;
+}
+
 function parseGeminiVersion(modelId: string): number {
   const m = modelId.match(/gemini-(\d+(?:\.\d+)?)/i);
   return m ? parseFloat(m[1]) : 0;

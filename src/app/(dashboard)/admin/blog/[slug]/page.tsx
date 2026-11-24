@@ -24,6 +24,8 @@ import {
   Sliders,
   FileCode,
   PenTool,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import {
   BlogArticle,
@@ -91,7 +93,62 @@ export default function BlogPostEditorPage({ params }: EditorPageProps) {
   });
 
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [isGeneratingSeo, setIsGeneratingSeo] = useState(false);
+  const [seoAiNotice, setSeoAiNotice] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
   const [categories, setCategories] = useState<BlogCategoryTaxonomy[]>(INITIAL_BLOG_CATEGORIES);
+
+  const handleAiAutoFillSeo = async () => {
+    if (isGeneratingSeo) return;
+    setIsGeneratingSeo(true);
+    setSeoAiNotice(null);
+    try {
+      const res = await fetch("/api/admin/seo-ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pageType: "blog",
+          path: `/blog/${article.slug || "guide"}`,
+          name: article.title,
+          currentTitle: article.seo.metaTitle || article.title,
+          currentDescription: article.seo.metaDescription || article.excerpt,
+          currentFocusKeyword: article.seo.focusKeyword,
+          contentText: article.contentHtml || article.sections.map((s) => `${s.heading} ${s.body}`).join(" "),
+        }),
+      });
+      const json = (await res.json()) as {
+        seo?: {
+          focusKeyword: string;
+          title: string;
+          metaDesc: string;
+          keywords: string[];
+        };
+        model?: string;
+        error?: string;
+      };
+      if (!res.ok || !json.seo) {
+        setSeoAiNotice({ tone: "err", text: json.error || "AI SEO generation failed." });
+        return;
+      }
+      setArticle((prev) => ({
+        ...prev,
+        tags: prev.tags.length > 0 ? prev.tags : json.seo!.keywords.slice(0, 5),
+        seo: {
+          ...prev.seo,
+          focusKeyword: json.seo!.focusKeyword,
+          metaTitle: json.seo!.title,
+          metaDescription: json.seo!.metaDesc,
+        },
+      }));
+      setSeoAiNotice({
+        tone: "ok",
+        text: `SEO auto-filled via ${json.model || "AI"} — click Save/Publish to apply.`,
+      });
+    } catch {
+      setSeoAiNotice({ tone: "err", text: "Network error contacting AI SEO endpoint." });
+    } finally {
+      setIsGeneratingSeo(false);
+    }
+  };
   // Categories live in the database (Admin > Guides & Blog > Categories).
   useEffect(() => {
     getTaxonomyAction<BlogCategoryTaxonomy>("blog-categories")
@@ -527,15 +584,37 @@ export default function BlogPostEditorPage({ params }: EditorPageProps) {
 
           {/* Card 2: Google SERP SEO Inspector (Shopify / WordPress Yoast Style) */}
           <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-2xs space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
                 <Globe className="w-3.5 h-3.5 text-[#00897b]" />
                 Google SERP SEO Preview
               </h3>
-              <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
-                Live Snippet
-              </span>
+              <button
+                type="button"
+                onClick={handleAiAutoFillSeo}
+                disabled={isGeneratingSeo}
+                className="h-7 px-2.5 rounded-md bg-[#00897b] hover:bg-[#00796b] disabled:opacity-60 text-white text-[11px] font-semibold inline-flex items-center gap-1 cursor-pointer"
+              >
+                {isGeneratingSeo ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Sparkles className="w-3 h-3" />
+                )}
+                <span>{isGeneratingSeo ? "Generating..." : "AI Auto-Fill"}</span>
+              </button>
             </div>
+
+            {seoAiNotice && (
+              <div
+                className={`rounded-md px-2.5 py-1.5 text-[11px] font-medium border ${
+                  seoAiNotice.tone === "ok"
+                    ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                    : "bg-red-50 text-red-700 border-red-200"
+                }`}
+              >
+                {seoAiNotice.text}
+              </div>
+            )}
 
             {/* Google Search Card Preview */}
             <div className="p-3.5 rounded-lg bg-[#f8f9fa] border border-gray-200 space-y-1">

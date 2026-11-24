@@ -9,8 +9,7 @@ import {
   Sparkles,
   Check,
   Trash2,
-  RefreshCw,
-  ExternalLink,
+  Loader2,
 } from "lucide-react";
 import type { CMSPage } from "@/lib/cmsData";
 import type { PuckPageData } from "@/puck/types";
@@ -280,6 +279,8 @@ export default function PageSeoPanel({
 }) {
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isGeneratingSeo, setIsGeneratingSeo] = useState(false);
+  const [seoAiNotice, setSeoAiNotice] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [canvasSnapshot, setCanvasSnapshot] = useState<ContentSnapshot>({
@@ -357,6 +358,58 @@ export default function PageSeoPanel({
       resolvedImages: Array.from(new Set([...snapImages, ...extracted.images])),
     };
   }, [canvasSnapshot, fetchedSnapshot, extracted.html, extracted.images, page.contentHtml, page.heroSubtitle]);
+
+  const handleAiAutoFillSeo = async () => {
+    if (isGeneratingSeo) return;
+    setIsGeneratingSeo(true);
+    setSeoAiNotice(null);
+    try {
+      const res = await fetch("/api/admin/seo-ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pageType: "page",
+          path: page.path,
+          name: page.name,
+          currentTitle: page.title,
+          currentDescription: page.metaDesc,
+          currentFocusKeyword: page.focusKeyword,
+          contentText: liveContentHtml,
+        }),
+      });
+      const json = (await res.json()) as {
+        success?: boolean;
+        seo?: {
+          focusKeyword: string;
+          title: string;
+          metaDesc: string;
+          keywords: string[];
+          schemaType: string;
+        };
+        model?: string;
+        error?: string;
+      };
+      if (!res.ok || !json.seo) {
+        setSeoAiNotice({ tone: "err", text: json.error || "AI SEO generation failed." });
+        return;
+      }
+      onChangeField("focusKeyword", json.seo.focusKeyword);
+      onChangeField("title", json.seo.title);
+      onChangeField("metaDesc", json.seo.metaDesc);
+      onChangeField("keywords", json.seo.keywords);
+      if (json.seo.schemaType) {
+        onChangeField("schemaType", json.seo.schemaType);
+      }
+      setSeoAiNotice({
+        tone: "ok",
+        text: `Auto-filled via ${json.model || "AI"} — click Save/Publish to apply.`,
+      });
+    } catch {
+      setSeoAiNotice({ tone: "err", text: "Network error contacting AI SEO endpoint." });
+    } finally {
+      setIsGeneratingSeo(false);
+    }
+  };
 
   // Direct file upload handler
   const handleDirectUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -478,12 +531,40 @@ export default function PageSeoPanel({
 
         {/* Google Search Listing */}
         <div className="bg-white border border-[#e8e8e8] rounded-[10px] p-3.5 shadow-2xs flex flex-col gap-3">
-          <div className="flex items-center gap-1.5 pb-2 border-b border-[#f2f2f2]">
-            <Globe className="w-3.5 h-3.5 text-[#009691]" />
-            <h3 className="text-[12px] font-bold text-[#111111] uppercase tracking-wider">
-              Google Search Listing
-            </h3>
+          <div className="flex items-center justify-between gap-2 pb-2 border-b border-[#f2f2f2]">
+            <div className="flex items-center gap-1.5">
+              <Globe className="w-3.5 h-3.5 text-[#009691]" />
+              <h3 className="text-[12px] font-bold text-[#111111] uppercase tracking-wider">
+                Google Search Listing
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={handleAiAutoFillSeo}
+              disabled={isGeneratingSeo}
+              className="h-[26px] px-2.5 rounded-[5px] bg-[#009691] hover:bg-[#007f7b] disabled:opacity-60 text-white text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs transition cursor-pointer"
+              title="Generate Focus Keyword, Title, Meta Description, Keywords & Schema with AI"
+            >
+              {isGeneratingSeo ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <Sparkles className="w-3 h-3" />
+              )}
+              <span>{isGeneratingSeo ? "Generating..." : "AI Auto-Fill"}</span>
+            </button>
           </div>
+
+          {seoAiNotice && (
+            <div
+              className={`rounded-[5px] px-2.5 py-1.5 text-[11px] font-medium border ${
+                seoAiNotice.tone === "ok"
+                  ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                  : "bg-red-50 text-red-700 border-red-200"
+              }`}
+            >
+              {seoAiNotice.text}
+            </div>
+          )}
 
           <div>
             <div className="flex items-center justify-between mb-1">

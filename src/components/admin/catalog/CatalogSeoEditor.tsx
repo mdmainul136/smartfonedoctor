@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Globe, RotateCcw, Sparkles } from "lucide-react";
+import { Globe, Loader2, RotateCcw, Sparkles } from "lucide-react";
 import LivePageSeoCheck from "@/components/admin/LivePageSeoCheck";
 import RankMathSeoSuite from "@/components/admin/RankMathSeoSuite";
 import { areaCls, inputCls } from "./CatalogShell";
@@ -77,6 +77,8 @@ export default function CatalogSeoEditor({
   heading = "SEO, Meta Tags & Live Content Checker",
 }: CatalogSeoEditorProps) {
   const [keywordsText, setKeywordsText] = useState(() => (value.keywords ?? []).join(", "));
+  const [isGeneratingSeo, setIsGeneratingSeo] = useState(false);
+  const [seoAiNotice, setSeoAiNotice] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
 
   const effectiveTitle = (resolvedPreview?.title ?? (value.title?.trim() || defaults.title)).trim();
   const effectiveDescription = (
@@ -110,7 +112,62 @@ export default function CatalogSeoEditor({
 
   const handleResetToAuto = () => {
     setKeywordsText("");
+    setSeoAiNotice(null);
     onChange({});
+  };
+
+  const handleAiAutoFillSeo = async () => {
+    if (isGeneratingSeo) return;
+    setIsGeneratingSeo(true);
+    setSeoAiNotice(null);
+    try {
+      const res = await fetch("/api/admin/seo-ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pageType: templateTokens?.length ? "repair-type" : "common-issue",
+          path: livePath || `/${urlSlug}`,
+          name: defaults.title,
+          currentTitle: effectiveTitle,
+          currentDescription: effectiveDescription,
+          currentFocusKeyword: effectiveFocusKeyword,
+          contentText: contentHtml,
+          templateTokens: templateTokens?.map((t) => t.token),
+        }),
+      });
+      const json = (await res.json()) as {
+        seo?: {
+          focusKeyword: string;
+          title: string;
+          metaDesc: string;
+          keywords: string[];
+          schemaType: string;
+        };
+        model?: string;
+        error?: string;
+      };
+      if (!res.ok || !json.seo) {
+        setSeoAiNotice({ tone: "err", text: json.error || "AI SEO generation failed." });
+        return;
+      }
+      setKeywordsText(json.seo.keywords.join(", "));
+      onChange({
+        ...value,
+        focusKeyword: json.seo.focusKeyword,
+        title: json.seo.title,
+        description: json.seo.metaDesc,
+        keywords: json.seo.keywords,
+        schemaType: json.seo.schemaType,
+      });
+      setSeoAiNotice({
+        tone: "ok",
+        text: `SEO fields auto-filled via ${json.model || "AI"} — click Save Changes to apply.`,
+      });
+    } catch {
+      setSeoAiNotice({ tone: "err", text: "Network error contacting AI SEO endpoint." });
+    } finally {
+      setIsGeneratingSeo(false);
+    }
   };
 
   return (
@@ -166,6 +223,20 @@ export default function CatalogSeoEditor({
             {wordCount} words
           </span>
 
+          <button
+            type="button"
+            onClick={handleAiAutoFillSeo}
+            disabled={isGeneratingSeo}
+            className="ml-1 px-2.5 py-0.5 rounded bg-sfd-teal hover:bg-[#007f7b] disabled:opacity-60 text-white text-[11px] font-semibold inline-flex items-center gap-1 cursor-pointer"
+          >
+            {isGeneratingSeo ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              <Sparkles className="w-3 h-3" />
+            )}
+            <span>{isGeneratingSeo ? "Generating..." : "AI Auto-Fill"}</span>
+          </button>
+
           {allowResetToAuto && hasCustomOverrides && (
             <button
               type="button"
@@ -179,6 +250,17 @@ export default function CatalogSeoEditor({
       </div>
 
       <div className="p-3.5 space-y-4">
+        {seoAiNotice && (
+          <div
+            className={`rounded-[6px] px-3 py-1.5 text-[11.5px] font-medium border ${
+              seoAiNotice.tone === "ok"
+                ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                : "bg-red-50 text-red-700 border-red-200"
+            }`}
+          >
+            {seoAiNotice.text}
+          </div>
+        )}
         {/* Optional pSEO Template Tokens Bar */}
         {templateTokens && templateTokens.length > 0 && (
           <div className="rounded-[6px] border border-teal-100 bg-teal-50/40 p-2.5 space-y-1.5">

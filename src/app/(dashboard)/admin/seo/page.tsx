@@ -34,6 +34,7 @@ import {
   Building2,
   ChevronRight,
   Image as ImageIcon,
+  Loader2,
 } from "lucide-react";
 import MediaModal, { type SelectedMediaPayload } from "@/components/admin/MediaModal";
 import {
@@ -73,7 +74,46 @@ export default function SeoManagerPage() {
   const [activeTab, setActiveTab] = useState<SeoTab>("general");
   const [copied, setCopied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isGeneratingGlobalSeo, setIsGeneratingGlobalSeo] = useState(false);
   const [savedToast, setSavedToast] = useState<string | null>(null);
+
+  const handleAiAutoFillGlobalSeo = async () => {
+    if (isGeneratingGlobalSeo) return;
+    setIsGeneratingGlobalSeo(true);
+    try {
+      const res = await fetch("/api/admin/seo-ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pageType: "global",
+          path: "/",
+          name: settings.siteName,
+          currentTitle: settings.defaultMetaTitle,
+          currentDescription: settings.defaultMetaDescription,
+        }),
+      });
+      const json = (await res.json()) as {
+        seo?: { title: string; metaDesc: string };
+        model?: string;
+        error?: string;
+      };
+      if (!res.ok || !json.seo) {
+        alert("AI SEO error: " + (json.error || "Could not generate global SEO"));
+        return;
+      }
+      setSettings((prev) => ({
+        ...prev,
+        defaultMetaTitle: json.seo!.title,
+        defaultMetaDescription: json.seo!.metaDesc,
+      }));
+      setSavedToast(`AI generated global SEO title & description (${json.model || "AI"}) — click Save to apply!`);
+      setTimeout(() => setSavedToast(null), 4000);
+    } catch {
+      alert("Network error reaching AI SEO endpoint.");
+    } finally {
+      setIsGeneratingGlobalSeo(false);
+    }
+  };
 
   // Schema Tab Interactive State (Switch, Edit, Improve)
   const [schemaScope, setSchemaScope] = useState<"all" | number>("all");
@@ -712,9 +752,24 @@ export default function SeoManagerPage() {
       {activeTab === "general" && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
           <div className="lg:col-span-8 bg-white border border-gray-200 rounded-xl p-5 shadow-2xs space-y-4">
-            <h3 className="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2">
-              Default SERP &amp; OpenGraph Fallbacks
-            </h3>
+            <div className="flex items-center justify-between gap-2 border-b border-gray-100 pb-2">
+              <h3 className="text-sm font-bold text-gray-900">
+                Default SERP &amp; OpenGraph Fallbacks
+              </h3>
+              <button
+                type="button"
+                onClick={handleAiAutoFillGlobalSeo}
+                disabled={isGeneratingGlobalSeo}
+                className="h-7 px-2.5 rounded-lg bg-[#009691] hover:bg-[#007f7b] disabled:opacity-60 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs transition cursor-pointer"
+              >
+                {isGeneratingGlobalSeo ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="w-3.5 h-3.5" />
+                )}
+                <span>{isGeneratingGlobalSeo ? "Generating..." : "AI Auto-Fill"}</span>
+              </button>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
