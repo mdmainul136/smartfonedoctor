@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useGetPuck } from "@puckeditor/core";
 import { usePuckSelect } from "./puckStore";
-import { Sparkles, X, Loader2, KeyRound, Wand2, Settings } from "lucide-react";
+import { Sparkles, X, Loader2, KeyRound, Wand2, Settings, RefreshCw } from "lucide-react";
 import type { PuckPageData } from "@/puck/types";
 import { BuilderLink, getBuilderHost, type AiSettings } from "../host";
 
@@ -33,6 +33,9 @@ export default function PuckAiPanel({
   const [customKey, setCustomKey] = useState("");
   const [showKeyInput, setShowKeyInput] = useState(false);
   const [hasServerKey, setHasServerKey] = useState<boolean | null>(null);
+  const [availableModels, setAvailableModels] = useState<Array<{ id: string; displayName: string }>>([]);
+  const [selectedModel, setSelectedModel] = useState("");
+  const [loadingModels, setLoadingModels] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastSummary, setLastSummary] = useState<string | null>(null);
@@ -67,6 +70,41 @@ export default function PuckAiPanel({
     provider === "gemini" ? storedSettings.geminiApiKey : storedSettings.openaiApiKey;
   const effectiveKey = customKey.trim() || activeSettingsKey || undefined;
 
+  const loadModels = useCallback(
+    async (signal?: AbortSignal) => {
+      setLoadingModels(true);
+      try {
+        const res = await fetch(
+          `${getBuilderHost().aiEndpoint}?models=1&provider=${encodeURIComponent(provider)}`,
+          {
+            headers: effectiveKey ? { "x-ai-api-key": effectiveKey } : undefined,
+            signal,
+          }
+        );
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          models?: Array<{ id: string; displayName: string }>;
+        };
+        if (Array.isArray(data.models)) {
+          setAvailableModels(data.models);
+        }
+      } catch {
+        // Ignore aborted or failed model list fetches; fallback runs server-side
+      } finally {
+        if (!signal?.aborted) {
+          setLoadingModels(false);
+        }
+      }
+    },
+    [provider, effectiveKey]
+  );
+
+  useEffect(() => {
+    const controller = new AbortController();
+    loadModels(controller.signal);
+    return () => controller.abort();
+  }, [loadModels]);
+
   const handleRunAi = async () => {
     if (!prompt.trim() || isLoading) return;
     setIsLoading(true);
@@ -81,6 +119,7 @@ export default function PuckAiPanel({
           prompt,
           mode,
           provider,
+          model: selectedModel || undefined,
           providerApiKey: effectiveKey,
           currentData:
             mode === "edit"
@@ -133,7 +172,34 @@ export default function PuckAiPanel({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1 rounded-md border border-gray-200 bg-white px-1.5 py-0.5 text-[11px]">
+            <select
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value)}
+              className="max-w-[190px] bg-transparent text-[11px] font-medium text-gray-700 focus:outline-none cursor-pointer"
+              title="Select AI Model (loaded live from API)"
+            >
+              <option value="">
+                Auto ({provider === "gemini" ? "Latest Flash" : "gpt-4o-mini"})
+              </option>
+              {availableModels.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.displayName} ({m.id})
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => loadModels()}
+              disabled={loadingModels}
+              title="Refresh available models from API"
+              className="rounded p-0.5 text-gray-500 hover:bg-gray-100 hover:text-[#009691] disabled:opacity-50 cursor-pointer"
+            >
+              <RefreshCw className={`h-3 w-3 ${loadingModels ? "animate-spin" : ""}`} />
+            </button>
+          </div>
+
           <div className="flex items-center rounded-md border border-gray-200 bg-white p-0.5 text-[11px]">
             <button
               type="button"
@@ -201,10 +267,14 @@ export default function PuckAiPanel({
         <div className="mb-2.5 flex flex-wrap items-center gap-2 rounded-md border border-gray-200 bg-white p-2 text-xs">
           <select
             value={provider}
-            onChange={(e) => setProvider(e.target.value as "gemini" | "openai")}
+            onChange={(e) => {
+              setProvider(e.target.value as "gemini" | "openai");
+              setSelectedModel("");
+              setAvailableModels([]);
+            }}
             className="h-7 rounded border border-gray-300 bg-white px-2 text-xs font-medium text-gray-800"
           >
-            <option value="gemini">Google Gemini (gemini-2.5-flash)</option>
+            <option value="gemini">Google Gemini (Latest Flash)</option>
             <option value="openai">OpenAI (gpt-4o-mini)</option>
           </select>
           <input

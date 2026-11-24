@@ -748,7 +748,7 @@ export default function SettingsPage() {
                 }
                 className="h-10 rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-xs sm:text-sm text-slate-900 focus:bg-white focus:border-[#009691] focus:ring-2 focus:ring-teal-100 outline-none transition-all"
               >
-                <option value="gemini">Google Gemini 2.5 Flash (Recommended - Native Multimodal)</option>
+                <option value="gemini">Google Gemini Flash (Recommended - Auto Latest)</option>
                 <option value="openai">OpenAI GPT-4o Mini (High Speed)</option>
               </select>
             </div>

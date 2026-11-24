@@ -1,4 +1,10 @@
 import type { PuckPageData } from "@/puck/types";
+import {
+  DEFAULT_GEMINI_FLASH_MODEL,
+  GEMINI_FLASH_FALLBACKS,
+  discoverGeminiFlashModels,
+  isGeminiModelUnavailableStatus,
+} from "./geminiModels";
 
 export type LocalAiProvider = "gemini" | "openai";
 
@@ -237,14 +243,14 @@ function resolveProviderAndKey(opts: LocalPuckAiOptions): {
     return {
       provider: "gemini",
       apiKey: geminiKey,
-      model: opts.model || "gemini-2.5-flash",
+      model: opts.model || DEFAULT_GEMINI_FLASH_MODEL,
     };
   }
   if (geminiKey) {
     return {
       provider: "gemini",
       apiKey: geminiKey,
-      model: opts.model || "gemini-2.5-flash",
+      model: opts.model || DEFAULT_GEMINI_FLASH_MODEL,
     };
   }
   if (openaiKey) {
@@ -259,7 +265,7 @@ function resolveProviderAndKey(opts: LocalPuckAiOptions): {
     return {
       provider: isSk ? "openai" : "gemini",
       apiKey: opts.providerApiKey.trim(),
-      model: opts.model || (isSk ? "gpt-4o-mini" : "gemini-2.5-flash"),
+      model: opts.model || (isSk ? "gpt-4o-mini" : DEFAULT_GEMINI_FLASH_MODEL),
     };
   }
 
@@ -268,12 +274,12 @@ function resolveProviderAndKey(opts: LocalPuckAiOptions): {
   );
 }
 
-async function callGeminiJson(
+async function requestGeminiModelJson(
   apiKey: string,
   model: string,
   systemPrompt: string,
   userPrompt: string
-): Promise<string> {
+): Promise<{ ok: true; text: string } | { ok: false; status: number; errText: string }> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
     model
   )}:generateContent?key=${encodeURIComponent(apiKey)}`;
@@ -293,7 +299,7 @@ async function callGeminiJson(
 
   if (!res.ok) {
     const errText = await res.text();
-    throw new Error(`Gemini API error (${res.status}): ${errText.slice(0, 240)}`);
+    return { ok: false, status: res.status, errText };
   }
 
   const json = (await res.json()) as {
@@ -301,7 +307,48 @@ async function callGeminiJson(
   };
   const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!text) throw new Error("Gemini returned an empty response.");
-  return text;
+  return { ok: true, text };
+}
+
+async function callGeminiJson(
+  apiKey: string,
+  requestedModel: string,
+  systemPrompt: string,
+  userPrompt: string
+): Promise<{ text: string; model: string }> {
+  const queue = Array.from(new Set([requestedModel, ...GEMINI_FLASH_FALLBACKS]));
+  const tried = new Set<string>();
+  let lastError = "Gemini API request failed.";
+  let hadUnavailableModel = false;
+
+  for (let i = 0; i < queue.length; i++) {
+    const candidate = queue[i];
+    if (tried.has(candidate)) continue;
+    tried.add(candidate);
+
+    const attempt = await requestGeminiModelJson(apiKey, candidate, systemPrompt, userPrompt);
+    if (attempt.ok) {
+      return { text: attempt.text, model: candidate };
+    }
+
+    lastError = `Gemini API error (${attempt.status}): ${attempt.errText.slice(0, 240)}`;
+    if (!isGeminiModelUnavailableStatus(attempt.status, attempt.errText)) {
+      throw new Error(lastError);
+    }
+
+    hadUnavailableModel = true;
+    // If all static fallbacks failed with model-unavailable, query ListModels once to self-heal.
+    if (i === queue.length - 1) {
+      const discovered = await discoverGeminiFlashModels(apiKey);
+      for (const m of discovered) {
+        if (!tried.has(m)) queue.push(m);
+      }
+    }
+  }
+
+  throw new Error(
+    hadUnavailableModel ? lastError : "No compatible Gemini Flash model was available for this key."
+  );
 }
 
 async function callOpenAiJson(
@@ -363,10 +410,15 @@ export async function localPuckHandler(
         )}\n\nUser Request:\n${opts.prompt}`
       : `Task: Generate a complete, conversion-focused Puck page JSON for the user's request.\n\nUser Request:\n${opts.prompt}`;
 
-  const rawText =
-    provider === "openai"
-      ? await callOpenAiJson(apiKey, model, systemPrompt, userPrompt)
-      : await callGeminiJson(apiKey, model, systemPrompt, userPrompt);
+  let rawText: string;
+  let resolvedModel = model;
+  if (provider === "openai") {
+    rawText = await callOpenAiJson(apiKey, model, systemPrompt, userPrompt);
+  } else {
+    const geminiResult = await callGeminiJson(apiKey, model, systemPrompt, userPrompt);
+    rawText = geminiResult.text;
+    resolvedModel = geminiResult.model;
+  }
 
   const parsed = extractJsonObject(rawText);
   const normalized = normalizePuckData(parsed.data ?? parsed);
@@ -382,7 +434,7 @@ export async function localPuckHandler(
         ? parsed.summary
         : `Generated ${normalized.content.length} Puck blocks.`,
     provider,
-    model,
+    model: resolvedModel,
   };
 }
 

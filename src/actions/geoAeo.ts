@@ -3,6 +3,11 @@
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/adminGuard";
+import {
+  GEMINI_FLASH_FALLBACKS,
+  discoverGeminiFlashModels,
+  isGeminiModelUnavailableStatus,
+} from "@/puck/ai/geminiModels";
 
 export interface GeoNeighborhoodInput {
   id?: string;
@@ -654,7 +659,14 @@ export async function probeLiveAiVisibilityAction(
 
     if (!preferOpenAi && geminiKey) {
       let lastGeminiError = "";
-      for (const model of ["gemini-2.5-flash", "gemini-2.0-flash"]) {
+      const modelQueue: string[] = [...GEMINI_FLASH_FALLBACKS];
+      const triedModels = new Set<string>();
+      for (let i = 0; i < modelQueue.length; i++) {
+        const model = modelQueue[i];
+        if (triedModels.has(model)) continue;
+        triedModels.add(model);
+        let sawUnavailableModel = false;
+
         for (const useSearchTool of [true, false]) {
           const payload: Record<string, unknown> = {
             contents: [{ role: "user", parts: [{ text: searchPrompt }] }],
@@ -694,6 +706,10 @@ export async function probeLiveAiVisibilityAction(
 
           if (!response.ok) {
             lastGeminiError = data.error?.message || `Gemini HTTP ${response.status}`;
+            if (isGeminiModelUnavailableStatus(response.status, lastGeminiError)) {
+              sawUnavailableModel = true;
+              break;
+            }
             continue;
           }
 
@@ -741,6 +757,13 @@ export async function probeLiveAiVisibilityAction(
             sourcesReferenced: groundingSources,
             verifiedAt: nowStr,
           };
+        }
+
+        if (sawUnavailableModel && i === modelQueue.length - 1) {
+          const discovered = await discoverGeminiFlashModels(geminiKey);
+          for (const dm of discovered) {
+            if (!triedModels.has(dm)) modelQueue.push(dm);
+          }
         }
       }
 
