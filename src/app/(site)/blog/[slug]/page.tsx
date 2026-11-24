@@ -14,6 +14,7 @@ import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
 import { RouteDataProvider } from "@/components/site/RouteDataContext";
 import { templateSlug } from "@/lib/cmsTemplates";
 import type { CMSPage } from "@/lib/cmsData";
+import { buildSocialMetadata } from "@/lib/seoSocial";
 
 /** A published CMS page that has a builder layout. */
 function usable(page: CMSPage | null): page is CMSPage {
@@ -56,29 +57,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     alternates: {
       canonical: `https://smartfonedoctor.com/blog/${article.slug}`,
     },
-    openGraph: {
+    ...buildSocialMetadata({
       title: metaTitle,
       description: metaDescription,
-      url: `https://smartfonedoctor.com/blog/${article.slug}`,
-      siteName: "SmartFoneDoctor",
-      images: [
-        {
-          url: article.featuredImage,
-          width: 1200,
-          height: 630,
-          alt: article.title,
-        },
-      ],
+      url: `/blog/${article.slug}`,
+      image: article.featuredImage,
+      imageAlt: article.title,
       type: "article",
       publishedTime: article.publishedAt,
       authors: [article.author.name],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: metaTitle,
-      description: metaDescription,
-      images: [article.featuredImage],
-    },
+    }),
   };
 }
 

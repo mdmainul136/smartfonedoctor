@@ -7,6 +7,7 @@ import ScheduleRepairPSeoContent from "@/components/booking/ScheduleRepairPSeoCo
 import { getStoreBranchesAction } from "@/actions/settings";
 import { resolveDevice } from "@/lib/pSeoEngine";
 import { getRepairCatalog } from "@/lib/repairCatalog";
+import { buildSocialMetadata } from "@/lib/seoSocial";
 
 interface PageProps {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -28,22 +29,40 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
     : "";
 
   if (deviceName) {
+    const title = `${deviceName} Repair in Philadelphia | Schedule Online | SmartFoneDoctor`;
+    const description = `Fast same-day ${deviceName} repair in Philadelphia, PA. Free upfront diagnostics, 90-day warranty, OEM-grade parts, and zero data loss. Walk-ins welcome at 33 S 52nd St.`;
+    const canonical = `/schedule-repair?device=${encodeURIComponent(query)}`;
     return {
-      title: brandTitle(`${deviceName} Repair in Philadelphia | Schedule Online | SmartFoneDoctor`),
-      description: `Fast same-day ${deviceName} repair in Philadelphia, PA. Free upfront diagnostics, 90-day warranty, OEM-grade parts, and zero data loss. Walk-ins welcome at 33 S 52nd St.`,
+      title: brandTitle(title),
+      description,
       alternates: {
-        canonical: `https://smartfonedoctor.com/schedule-repair?device=${encodeURIComponent(query)}`,
+        canonical: `https://smartfonedoctor.com${canonical}`,
       },
+      ...buildSocialMetadata({
+        title,
+        description,
+        url: canonical,
+        image: matchedDevice?.image,
+        type: "website",
+      }),
     };
   }
 
+  const defaultTitle = "Schedule a Repair | SmartFoneDoctor Philadelphia";
+  const defaultDesc =
+    "Schedule your phone, tablet, computer, or gaming console repair online. Instant quote, certified technicians, and reserved bench time at our Philadelphia locations.";
   return {
-    title: brandTitle("Schedule a Repair | SmartFoneDoctor Philadelphia"),
-    description:
-      "Schedule your phone, tablet, computer, or gaming console repair online. Instant quote, certified technicians, and reserved bench time at our Philadelphia locations.",
+    title: brandTitle(defaultTitle),
+    description: defaultDesc,
     alternates: {
       canonical: "https://smartfonedoctor.com/schedule-repair",
     },
+    ...buildSocialMetadata({
+      title: defaultTitle,
+      description: defaultDesc,
+      url: "/schedule-repair",
+      type: "website",
+    }),
   };
 }
 

@@ -84,6 +84,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title,
       description,
       images: [ogImage],
+      site: "@smartfonedoctor",
       creator: "@smartfonedoctor",
     },
     other: {

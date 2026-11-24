@@ -24,6 +24,7 @@ import { JsonLd, buildBreadcrumbSchema, buildFaqSchema } from "@/lib/schema";
 import { GEO_STORES, getGeoStoreBySlug, toNeighborhoodSlug } from "@/lib/geoPages";
 import { getRepairCatalog } from "@/lib/repairCatalog";
 import { getPublicFeaturedReviewsAction } from "@/actions/reviews";
+import { buildSocialMetadata } from "@/lib/seoSocial";
 
 interface StoreLocationPageProps {
   params: Promise<{ storeSlug: string }>;
@@ -54,12 +55,14 @@ export async function generateMetadata({ params }: StoreLocationPageProps): Prom
     alternates: {
       canonical: `/locations/${store.slug}`,
     },
-    openGraph: {
+    ...buildSocialMetadata({
       title,
       description,
-      url: `${SITE_URL}/locations/${store.slug}`,
-      images: [{ url: store.heroImage, width: 1200, height: 630, alt: store.name }],
-    },
+      url: `/locations/${store.slug}`,
+      image: store.heroImage,
+      imageAlt: store.name,
+      type: "website",
+    }),
   };
 }
 

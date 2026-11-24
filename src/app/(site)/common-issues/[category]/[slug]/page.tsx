@@ -11,6 +11,7 @@ import { getCommonIssues } from "@/lib/commonIssuesStore";
 import { pickLayout } from "@/lib/pickLayout";
 import { getDefaultIssueFaqs } from "@/lib/repairTabDefaults";
 import { JsonLd, SITE_URL, buildBreadcrumbSchema, buildFaqSchema } from "@/lib/schema";
+import { buildSocialMetadata } from "@/lib/seoSocial";
 
 interface PageProps {
   params: Promise<{
@@ -41,18 +42,25 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     new Set([issue.seo.focusKeyword, ...(issue.seo.keywords ?? [])].map((k) => k?.trim()).filter(Boolean) as string[])
   );
 
+  const ogTitle = issue.seo.title?.trim() || `${issue.title} | SmartFoneDoctor`;
+  const ogDescription = issue.seo.description?.trim() || issue.leadText;
+  const canonical = issue.seo.canonicalUrl?.trim() || `/common-issues/${category}/${slug}`;
+
   return {
     title: brandTitle(issue.seo.title),
-    description: issue.seo.description,
+    description: ogDescription,
     keywords,
     alternates: {
-      canonical: issue.seo.canonicalUrl?.trim() || `/common-issues/${category}/${slug}`,
+      canonical,
     },
-    openGraph: {
-      title: issue.seo.title || `${issue.title} | SmartFoneDoctor`,
-      description: issue.seo.description,
-      images: [issue.image],
-    },
+    ...buildSocialMetadata({
+      title: ogTitle,
+      description: ogDescription,
+      url: canonical,
+      image: issue.image,
+      imageAlt: issue.title,
+      type: "article",
+    }),
   };
 }
 

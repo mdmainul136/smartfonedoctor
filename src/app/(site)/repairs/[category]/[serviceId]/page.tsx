@@ -10,6 +10,7 @@ import Footer from "@/components/layout/Footer";
 import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
 import { RouteDataProvider } from "@/components/site/RouteDataContext";
 import { pickLayout } from "@/lib/pickLayout";
+import { buildSocialMetadata } from "@/lib/seoSocial";
 
 
 interface PageProps {
@@ -50,18 +51,25 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     new Set([service.seo.focusKeyword, ...(service.seo.keywords ?? [])].map((k) => k?.trim()).filter(Boolean) as string[])
   );
 
+  const ogTitle =
+    service.seo.title?.trim() || `${service.serviceName} | SmartFoneDoctor Philadelphia`;
+  const canonical = service.seo.canonicalUrl?.trim() || `/repairs/${category}/${serviceId}`;
+
   return {
     title: brandTitle(service.seo.title),
     description: service.seo.description,
     keywords,
     alternates: {
-      canonical: service.seo.canonicalUrl?.trim() || `/repairs/${category}/${serviceId}`,
+      canonical,
     },
-    openGraph: {
-      title: service.seo.title || `${service.serviceName} | SmartFoneDoctor Philadelphia`,
+    ...buildSocialMetadata({
+      title: ogTitle,
       description: service.seo.description,
-      images: [service.heroImage],
-    },
+      url: canonical,
+      image: service.heroImage,
+      imageAlt: service.serviceName,
+      type: "website",
+    }),
   };
 }
 

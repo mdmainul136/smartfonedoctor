@@ -89,6 +89,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       card: "summary_large_image",
       title,
       description,
+      site: "@smartfonedoctor",
+      creator: "@smartfonedoctor",
       images: [ogImage],
     },
     robots: {

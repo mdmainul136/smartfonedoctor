@@ -15,11 +15,22 @@ import {
   buildBreadcrumbSchema,
   buildMultiStoreSchema,
 } from "@/lib/schema";
+import { buildSocialMetadata } from "@/lib/seoSocial";
+
+const locatorTitle = "Book a Repair | SmartFoneDoctor Store Locator";
+const locatorDesc =
+  "Find your nearest SmartFoneDoctor store and book a fast, certified repair for your iPhone, smartphone, tablet, laptop, or gaming console.";
 
 export const metadata: Metadata = {
-  title: brandTitle("Book a Repair | SmartFoneDoctor Store Locator"),
-  description:
-    "Find your nearest SmartFoneDoctor store and book a fast, certified repair for your iPhone, smartphone, tablet, laptop, or gaming console.",
+  title: brandTitle(locatorTitle),
+  description: locatorDesc,
+  alternates: { canonical: "/locations/i/book-repair" },
+  ...buildSocialMetadata({
+    title: locatorTitle,
+    description: locatorDesc,
+    url: "/locations/i/book-repair",
+    type: "website",
+  }),
 };
 
 export const revalidate = 60;

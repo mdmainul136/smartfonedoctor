@@ -8,6 +8,7 @@ import { CategoryHub, type CategoryRouteData } from "@/components/repairs/Catego
 import { HUB_CATEGORIES, HUB_DEFAULTS, type HubCategory } from "@/components/repairs/categoryHubContent";
 import { getRepairCatalog } from "@/lib/repairCatalog";
 import { withCmsMetadata } from "@/lib/cmsMetadata";
+import { buildSocialMetadata } from "@/lib/seoSocial";
 import { brandTitle } from "@/lib/seoTitle";
 import type { CMSPage } from "@/lib/cmsData";
 
@@ -32,7 +33,14 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
     title: brandTitle(d.seoTitle),
     description: d.seoDescription,
     alternates: { canonical: `/repairs/${category}` },
-    openGraph: { title: d.seoTitle, description: d.seoDescription, images: [d.heroImage] },
+    ...buildSocialMetadata({
+      title: d.seoTitle,
+      description: d.seoDescription,
+      url: `/repairs/${category}`,
+      image: d.heroImage,
+      imageAlt: d.seoTitle,
+      type: "website",
+    }),
   });
 }
 

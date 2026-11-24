@@ -18,6 +18,7 @@ import { brandTitle } from "@/lib/seoTitle";
 import { JsonLd, buildBreadcrumbSchema } from "@/lib/schema";
 import { getGeoStoreById, toNeighborhoodSlug } from "@/lib/geoPages";
 import { getRepairCatalog } from "@/lib/repairCatalog";
+import { buildSocialMetadata } from "@/lib/seoSocial";
 
 interface AreaPageProps {
   params: Promise<{ slug: string }>;
@@ -62,6 +63,14 @@ export async function generateMetadata({ params }: AreaPageProps): Promise<Metad
     alternates: {
       canonical: `/locations/areas/${slug}`,
     },
+    ...buildSocialMetadata({
+      title,
+      description,
+      url: `/locations/areas/${slug}`,
+      image: store.heroImage,
+      imageAlt: `${hood.name} Device Repair`,
+      type: "website",
+    }),
   };
 }
 

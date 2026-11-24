@@ -11,6 +11,7 @@ import Footer from "@/components/layout/Footer";
 import CMSSectionRenderer from "@/components/site/CMSSectionRenderer";
 import { RouteDataProvider } from "@/components/site/RouteDataContext";
 import { pickLayout } from "@/lib/pickLayout";
+import { buildSocialMetadata } from "@/lib/seoSocial";
 
 
 interface PageProps {
@@ -62,19 +63,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     alternates: {
       canonical: data.seo.canonicalUrl,
     },
-    openGraph: {
+    ...buildSocialMetadata({
       title: data.seo.title,
       description: data.seo.metaDescription,
-      images: [
-        {
-          url: data.device.image,
-          width: 1200,
-          height: 630,
-          alt: `${data.device.name} ${data.issue.name}`,
-        },
-      ],
+      url: data.seo.canonicalUrl || `/repairs/${category}/${serviceId}/${issue}`,
+      image: data.device.image,
+      imageAlt: `${data.device.name} ${data.issue.name}`,
       type: "article",
-    },
+    }),
   };
 }
 
