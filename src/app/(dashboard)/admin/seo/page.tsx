@@ -429,6 +429,12 @@ export default function SeoManagerPage() {
       };
     }
 
+    const rawLogo = (settings.logoUrl || "/logo-png.jpg").trim();
+    const logoAbsUrl =
+      rawLogo.startsWith("http://") || rawLogo.startsWith("https://")
+        ? rawLogo
+        : `https://smartfonedoctor.com${rawLogo.startsWith("/") ? rawLogo : `/${rawLogo}`}`;
+
     // Single Store Standalone Schema
     if (activeStoreObj) {
       return {
@@ -436,6 +442,7 @@ export default function SeoManagerPage() {
         "@type": schemaType,
         "@id": `https://smartfonedoctor.com/#store-${activeStoreObj.id}`,
         name: activeStoreObj.name,
+        image: logoAbsUrl,
         telephone: activeStoreObj.phone,
         email: activeStoreObj.email,
         url: "https://smartfonedoctor.com",
@@ -481,6 +488,8 @@ export default function SeoManagerPage() {
       "@context": "https://schema.org",
       "@type": schemaType,
       name: settings.siteName || "SmartFoneDoctor",
+      logo: logoAbsUrl,
+      image: logoAbsUrl,
       telephone: "+1-215-598-2090",
       url: "https://smartfonedoctor.com",
       priceRange: "$$",
@@ -501,7 +510,9 @@ export default function SeoManagerPage() {
         "@type": schemaType,
         "@id": `https://smartfonedoctor.com/#store-${s.id}`,
         name: s.name,
+        image: logoAbsUrl,
         telephone: s.phone,
+        priceRange: "$$",
         address: {
           "@type": "PostalAddress",
           streetAddress: s.address,
