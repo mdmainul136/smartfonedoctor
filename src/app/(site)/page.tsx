@@ -5,7 +5,7 @@ import { getPublicFeaturedReviewsAction } from "@/actions/reviews";
 import type { ReviewContent } from "@/components/home/sectionContent";
 import HomePageClient from "@/components/site/HomePageClient";
 import prisma from "@/lib/prisma";
-import { normalizeTwitterHandle } from "@/components/site/SiteBrandContext";
+import { normalizeTwitterHandle } from "@/lib/siteBrand";
 
 const OPTIMIZED_HOME_TITLE =
   "Phone & Electronics Repair in Philadelphia | SmartFoneDoctor";

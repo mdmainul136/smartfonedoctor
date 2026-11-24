@@ -8,11 +8,8 @@ import { getMegaMenuAction, getNavMenuAction } from "@/actions/navMenu";
 import { GlobalBlocksProvider } from "@/components/site/GlobalBlocks";
 import { getGlobalBlockMap } from "@/lib/globalBlocks";
 import prisma from "@/lib/prisma";
-import {
-  DEFAULT_SITE_BRAND,
-  SiteBrandProvider,
-  type SiteBrandSettings,
-} from "@/components/site/SiteBrandContext";
+import { DEFAULT_SITE_BRAND, type SiteBrandSettings } from "@/lib/siteBrand";
+import { SiteBrandProvider } from "@/components/site/SiteBrandContext";
 
 export default async function SiteLayout({
   children,

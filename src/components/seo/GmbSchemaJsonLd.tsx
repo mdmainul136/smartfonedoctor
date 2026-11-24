@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import { getGeoStoreByCode } from "@/lib/geoPages";
-import { twitterHandleToUrl } from "@/components/site/SiteBrandContext";
+import { twitterHandleToUrl } from "@/lib/siteBrand";
 
 export default async function GmbSchemaJsonLd() {
   try {
