@@ -108,22 +108,33 @@ export async function POST(req: NextRequest) {
 
     const prompt = extractUserText(body.params?.message?.parts);
     const lower = prompt.toLowerCase();
+    const { device, issue } = detectDeviceAndIssue(prompt);
+    const isPricingOrRepairAsk =
+      Boolean(device || issue) ||
+      /\b(price|cost|how much|estimate|repair|fix|replace|screen|battery|hdmi|charging|water)\b/i.test(
+        lower
+      );
+    const isLocationAsk = /\b(location|locations|store|stores|address|hours|open|close|where|directions|52nd|lancaster|drexel|upenn|closest)\b/i.test(
+      lower
+    );
 
     let summaryText = "";
     let structuredData: unknown = null;
 
-    if (/\b(location|store|address|hour|where|philly|philadelphia|52nd|lancaster|drexel|upenn)\b/i.test(lower)) {
+    if (isLocationAsk && !isPricingOrRepairAsk) {
       const locs = await getAgentLocations();
       structuredData = locs;
       summaryText = `SmartFoneDoctor operates 3 Philadelphia walk-in repair shops (Mon–Sat 10 AM – 7 PM): ${locs.locations
         .map((l) => `${l.name} — ${l.address} (${l.phone})`)
         .join("; ")}. Book online at ${AGENT_BASE_URL}/schedule-repair.`;
-    } else if (/\b(warranty|guarantee|data|erase|wipe|diagnostic|appointment|walk-in|walk in)\b/i.test(lower)) {
+    } else if (
+      !isPricingOrRepairAsk &&
+      /\b(warranty|guarantee|data|erase|wipe|diagnostic|appointment|walk-in|walk in)\b/i.test(lower)
+    ) {
       const policy = getAgentWarrantyPolicy();
       structuredData = policy;
       summaryText = `${policy.brand}: ${policy.warrantyDays}-day parts & labor warranty, ${policy.diagnosticsFee}, ${policy.dataPrivacy} Walk-ins welcome ${policy.hours}.`;
     } else {
-      const { device, issue } = detectDeviceAndIssue(prompt);
       const catalogRes = await searchAgentRepairServices(device || undefined, issue || undefined);
       structuredData = catalogRes;
       const top = catalogRes.services.slice(0, 4);

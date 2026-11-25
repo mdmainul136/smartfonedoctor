@@ -67,28 +67,74 @@ export async function getAgentLocations(neighborhood?: string) {
   };
 }
 
+const DEVICE_QUERY_ALIASES: Record<string, string> = {
+  ps5: "playstation 5",
+  ps4: "playstation 4",
+  mbp: "macbook pro",
+  mba: "macbook air",
+  xbx: "xbox series x",
+  xbsx: "xbox series x",
+  switch: "nintendo switch",
+};
+
+const QUERY_FILLER_TOKENS = new Set([
+  "repair",
+  "fix",
+  "replacement",
+  "service",
+  "philadelphia",
+  "philly",
+  "screen",
+  "battery",
+  "hdmi",
+  "port",
+  "charging",
+]);
+
+function normalizeDeviceQueryVariants(raw: string): string[] {
+  const clean = raw.trim().toLowerCase();
+  if (!clean) return [];
+  const expanded = clean
+    .split(/\s+/)
+    .map((tok) => DEVICE_QUERY_ALIASES[tok] || tok)
+    .join(" ");
+  return Array.from(new Set([clean, expanded]));
+}
+
 export async function searchAgentRepairServices(device?: string, issue?: string) {
   const deviceQuery = (device || "").trim().toLowerCase();
   const issueQuery = (issue || "").trim().toLowerCase();
   const catalog = await getRepairCatalog();
 
+  const deviceVariants = normalizeDeviceQueryVariants(deviceQuery);
+  const deviceTokens = deviceVariants
+    .flatMap((v) => v.split(/\s+/))
+    .map((t) => t.trim())
+    .filter((t) => t.length >= 2 && !QUERY_FILLER_TOKENS.has(t));
+
   const matchedDevices = (
     deviceQuery
-      ? catalog.devices.filter((d) =>
-          `${d.name} ${d.brand} ${d.categoryName} ${d.slug}`
-            .toLowerCase()
-            .includes(deviceQuery)
-        )
+      ? catalog.devices.filter((d) => {
+          const hay = `${d.name} ${d.brand} ${d.categoryName} ${d.slug}`.toLowerCase();
+          if (deviceVariants.some((v) => hay.includes(v))) return true;
+          return deviceTokens.length > 0 && deviceTokens.every((t) => hay.includes(t));
+        })
       : catalog.devices
   ).slice(0, 12);
 
   const matchedCategories = new Set(matchedDevices.map((d) => d.category));
+  const issueTokens = issueQuery
+    .split(/\s+/)
+    .map((t) => t.trim())
+    .filter((t) => t.length >= 2);
 
   const matchedIssues = catalog.issues
     .filter((iss) => {
       if (matchedDevices.length > 0 && !matchedCategories.has(iss.category)) return false;
       if (!issueQuery) return true;
-      return `${iss.name} ${iss.shortName} ${iss.slug}`.toLowerCase().includes(issueQuery);
+      const hay = `${iss.name} ${iss.shortName} ${iss.slug} ${iss.symptoms.join(" ")}`.toLowerCase();
+      if (hay.includes(issueQuery)) return true;
+      return issueTokens.length > 0 && issueTokens.some((t) => hay.includes(t));
     })
     .slice(0, 16);
 
