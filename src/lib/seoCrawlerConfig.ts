@@ -34,6 +34,7 @@ export const DEFAULT_PUBLIC_AI_ALLOW_PATHS = [
   "/about",
   "/llms.txt",
   "/llms-full.txt",
+  "/.well-known/ard.json",
 ] as const;
 
 export interface RobotsCrawlerConfigInput {

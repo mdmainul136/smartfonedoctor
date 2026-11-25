@@ -820,6 +820,8 @@ export function ScheduleRepairWizard({ initialStores }: ScheduleRepairWizardProp
                 </p>
 
                 <form
+                  toolname="submit_repair_booking"
+                  tooldescription="Submit customer contact details to confirm a same-day device repair booking at SmartFoneDoctor Philadelphia."
                   onSubmit={async (e) => {
                     e.preventDefault();
                     if (!firstName || !lastName || !phone) return;
@@ -875,10 +877,13 @@ export function ScheduleRepairWizard({ initialStores }: ScheduleRepairWizardProp
                       </label>
                       <input
                         type="text"
+                        name="firstName"
                         required
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
                         placeholder="John"
+                        toolparamtitle="First Name"
+                        toolparamdescription="Customer first name for the repair booking."
                         className="w-full h-[46px] px-4 rounded-full border border-neutral-300 text-[13.5px] text-neutral-800 focus:outline-none focus:border-neutral-500"
                       />
                     </div>
@@ -889,10 +894,13 @@ export function ScheduleRepairWizard({ initialStores }: ScheduleRepairWizardProp
                       </label>
                       <input
                         type="text"
+                        name="lastName"
                         required
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
                         placeholder="Doe"
+                        toolparamtitle="Last Name"
+                        toolparamdescription="Customer last name for ticket lookup and pickup verification."
                         className="w-full h-[46px] px-4 rounded-full border border-neutral-300 text-[13.5px] text-neutral-800 focus:outline-none focus:border-neutral-500"
                       />
                     </div>
@@ -906,10 +914,13 @@ export function ScheduleRepairWizard({ initialStores }: ScheduleRepairWizardProp
                       </label>
                       <input
                         type="email"
+                        name="email"
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="email@example.com"
+                        toolparamtitle="Email Address"
+                        toolparamdescription="Customer email address for booking confirmation and repair updates."
                         className="w-full h-[46px] px-4 rounded-full border border-neutral-300 text-[13.5px] text-neutral-800 focus:outline-none focus:border-neutral-500"
                       />
                     </div>
@@ -920,10 +931,13 @@ export function ScheduleRepairWizard({ initialStores }: ScheduleRepairWizardProp
                       </label>
                       <input
                         type="tel"
+                        name="phone"
                         required
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         placeholder="+1 123 124 423"
+                        toolparamtitle="Mobile Number"
+                        toolparamdescription="US mobile phone number for SMS repair status notifications."
                         className="w-full h-[46px] px-4 rounded-full border border-neutral-300 text-[13.5px] text-neutral-800 focus:outline-none focus:border-neutral-500"
                       />
                     </div>
@@ -940,8 +954,11 @@ export function ScheduleRepairWizard({ initialStores }: ScheduleRepairWizardProp
                           <input
                             type="radio"
                             name="contactPref"
+                            value={method}
                             checked={contactPref === method}
                             onChange={() => setContactPref(method)}
+                            toolparamtitle="Preferred Contact Method"
+                            toolparamdescription="Choose whether technicians contact the customer by Call, Text, or Email."
                             className="text-sfd-teal focus:ring-sfd-teal"
                           />
                           <span>{method}</span>
@@ -955,8 +972,11 @@ export function ScheduleRepairWizard({ initialStores }: ScheduleRepairWizardProp
                     <label className="flex items-start gap-2.5 cursor-pointer">
                       <input
                         type="checkbox"
+                        name="marketingOptIn"
                         checked={marketingOptIn}
                         onChange={(e) => setMarketingOptIn(e.target.checked)}
+                        toolparamtitle="Marketing Opt-In"
+                        toolparamdescription="Optional consent to receive repair coupons and promotions via email."
                         className="mt-0.5 rounded text-sfd-teal focus:ring-sfd-teal"
                       />
                       <span className="text-[12.5px] text-neutral-800 font-medium">

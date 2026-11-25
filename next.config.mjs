@@ -38,12 +38,20 @@ const nextConfig = {
             key: 'Referrer-Policy',
             value: 'strict-origin-when-cross-origin',
           },
+          {
+            key: 'Link',
+            value: '</.well-known/ard.json>; rel="ard"',
+          },
         ],
       },
     ];
   },
   async rewrites() {
     return [
+      {
+        source: '/.well-known/ard.json',
+        destination: '/api/ard',
+      },
       {
         // "/:path*.md" does not capture the path, so every .md URL served the homepage.
         source: '/:mdPath(.*)\\.md',

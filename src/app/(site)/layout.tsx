@@ -2,6 +2,7 @@ import TopBar from "@/components/layout/TopBar";
 import Navbar from "@/components/layout/Navbar";
 import CookieYesIntegration from "@/components/compliance/CookieYesIntegration";
 import AnalyticsScripts from "@/components/analytics/AnalyticsScripts";
+import WebMcpProvider from "@/components/agent/WebMcpProvider";
 import UserWayWidget from "@/components/accessibility/UserWayWidget";
 import GmbSchemaJsonLd from "@/components/seo/GmbSchemaJsonLd";
 import { getMegaMenuAction, getNavMenuAction } from "@/actions/navMenu";
@@ -57,6 +58,7 @@ export default async function SiteLayout({
     <SiteBrandProvider value={brand}>
       <GmbSchemaJsonLd />
       <AnalyticsScripts config={analyticsSettings ?? undefined} />
+      <WebMcpProvider />
       <TopBar topBar={navRes.menu.topBar} />
       <Navbar nav={navRes.menu} mega={megaRes.menu} />
       <div className="flex-1 flex flex-col">

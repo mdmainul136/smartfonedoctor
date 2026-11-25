@@ -262,6 +262,8 @@ export default function CustomerQrReviewHubPage() {
             ) : (
               <form
                 onSubmit={handleShieldSubmit}
+                toolname="request_store_manager_callback"
+                tooldescription="Send private repair feedback directly to the SmartFoneDoctor Philadelphia store manager for a priority callback."
                 className="flex flex-col gap-3.5"
               >
                 <div className="p-3 rounded-[6px] bg-[#fffbeb] border border-[#fde68a] text-[12px] text-[#92400e]">
@@ -278,11 +280,14 @@ export default function CustomerQrReviewHubPage() {
                   </label>
                   <input
                     id="shield-phone"
+                    name="phone"
                     type="tel"
                     required
                     value={shieldPhone}
                     onChange={(e) => setShieldPhone(e.target.value)}
                     placeholder="(215) 555-0199"
+                    toolparamtitle="Callback Phone Number"
+                    toolparamdescription="Customer phone number where the Philadelphia store manager should call or text back."
                     className="w-full h-[36px] px-3 rounded-[6px] border border-[#d1d5db] text-[13px] focus:outline-none focus:border-[#111111]"
                   />
                 </div>
@@ -296,11 +301,14 @@ export default function CustomerQrReviewHubPage() {
                   </label>
                   <textarea
                     id="shield-note"
+                    name="feedback"
                     rows={3}
                     required
                     value={shieldMessage}
                     onChange={(e) => setShieldMessage(e.target.value)}
                     placeholder="e.g., Wait time was longer than 30 minutes..."
+                    toolparamtitle="Feedback Details"
+                    toolparamdescription="Summary of the customer issue or repair experience requiring manager follow-up."
                     className="w-full p-2.5 rounded-[6px] border border-[#d1d5db] text-[13px] focus:outline-none focus:border-[#111111]"
                   />
                 </div>

@@ -289,7 +289,12 @@ export default function RepairStatusPage() {
               </p>
 
               {/* Form Card */}
-              <form onSubmit={handleSubmit} className="w-full max-w-md flex flex-col gap-4">
+              <form
+                onSubmit={handleSubmit}
+                toolname="check_repair_status"
+                tooldescription="Look up the live bench status of a SmartFoneDoctor repair ticket using Ticket ID and Last Name."
+                className="w-full max-w-md flex flex-col gap-4"
+              >
                 {error && (
                   <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
@@ -304,10 +309,14 @@ export default function RepairStatusPage() {
                   </label>
                   <input
                     id="ticketId"
+                    name="ticketId"
                     type="text"
+                    required
                     value={ticketId}
                     onChange={(e) => setTicketId(e.target.value)}
                     placeholder="e.g. SFD-84920"
+                    toolparamtitle="Ticket ID"
+                    toolparamdescription="Repair ticket ID printed on receipt or SMS confirmation (e.g., SFD-84920)."
                     className="w-full px-4 py-3 rounded-xl bg-white border border-neutral-300 text-sm text-[#1d1c1a] placeholder:text-neutral-400 focus:outline-none focus:border-sfd-teal focus:ring-2 focus:ring-sfd-teal/20 transition shadow-xs"
                   />
                 </div>
@@ -319,10 +328,14 @@ export default function RepairStatusPage() {
                   </label>
                   <input
                     id="lastName"
+                    name="lastName"
                     type="text"
+                    required
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     placeholder="e.g. Smith"
+                    toolparamtitle="Last Name"
+                    toolparamdescription="Customer last name matching the repair ticket."
                     className="w-full px-4 py-3 rounded-xl bg-white border border-neutral-300 text-sm text-[#1d1c1a] placeholder:text-neutral-400 focus:outline-none focus:border-sfd-teal focus:ring-2 focus:ring-sfd-teal/20 transition shadow-xs"
                   />
                 </div>
