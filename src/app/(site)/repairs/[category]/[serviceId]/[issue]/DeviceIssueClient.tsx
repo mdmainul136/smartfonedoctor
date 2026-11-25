@@ -719,7 +719,7 @@ export default function DeviceIssueClient({ data }: Props) {
               <ul className="space-y-2 text-xs font-medium text-gray-700">
                 <li>
                   <Link
-                    href="/track"
+                    href="/repair-status"
                     className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 hover:text-sfd-teal transition-colors border border-gray-100"
                   >
                     <span className="flex items-center gap-2">

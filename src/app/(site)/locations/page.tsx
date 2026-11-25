@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
+import { permanentRedirect } from "next/navigation";
 
 export default function LocationsIndexPage() {
-  redirect("/locations/i/book-repair");
+  permanentRedirect("/locations/i/book-repair");
 }
-

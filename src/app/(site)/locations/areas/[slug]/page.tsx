@@ -55,7 +55,7 @@ export async function generateMetadata({ params }: AreaPageProps): Promise<Metad
 
   const description = `Same-day phone, tablet, laptop & console repair serving ${hood.name} (${hood.zipCodes.join(
     ", "
-  )}). Closest bench: ${store.streetAddress}, Philadelphia. 90-day warranty.`.slice(0, 160);
+  )}). Closest bench: ${store.streetAddress}, Philadelphia. 90-day warranty.`.slice(0, 152);
 
   return {
     title: brandTitle(title),

@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: StoreLocationPageProps): Prom
     candidate.length <= 60 ? candidate : `${store.shortName} | SmartFoneDoctor`;
   const description = `Visit ${store.streetAddress}, Philadelphia ${store.postalCode} (${store.hoursDisplay}). Walk-in phone, tablet, MacBook & console repair with a 90-day warranty.`.slice(
     0,
-    160
+    152
   );
 
   return {

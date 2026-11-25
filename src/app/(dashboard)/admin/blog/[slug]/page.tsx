@@ -410,6 +410,27 @@ export default function BlogPostEditorPage({ params }: EditorPageProps) {
               onChange={(html) => setArticle((prev) => ({ ...prev, contentHtml: html }))}
               placeholder="Write your in-depth technician repair guide, troubleshooting steps, and advice here..."
               minHeight="460px"
+              articleContext={{
+                title: article.title,
+                slug: article.slug,
+                category: article.categoryName,
+                focusKeyword: article.seo.focusKeyword,
+                excerpt: article.excerpt,
+              }}
+              onAiMetaSuggestion={(meta) => {
+                setArticle((prev) => ({
+                  ...prev,
+                  excerpt: prev.excerpt.trim() ? prev.excerpt : meta.excerpt || prev.excerpt,
+                  readTime: meta.readTime || prev.readTime,
+                  tags: prev.tags.length > 0 ? prev.tags : meta.tags || prev.tags,
+                  seo: {
+                    ...prev.seo,
+                    focusKeyword: prev.seo.focusKeyword?.trim()
+                      ? prev.seo.focusKeyword
+                      : meta.focusKeyword || prev.seo.focusKeyword,
+                  },
+                }));
+              }}
             />
           </div>
 

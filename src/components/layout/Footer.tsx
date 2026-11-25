@@ -77,7 +77,7 @@ export default function Footer() {
               <div className="space-y-2 text-[13px] text-neutral-300 pt-3 border-t border-neutral-800/80">
                 <div className="flex items-start gap-2.5">
                   <MapPin className="w-4 h-4 text-sfd-teal shrink-0 mt-0.5" />
-                  <Link href="/locations" className="hover:text-sfd-teal transition-colors">
+                  <Link href="/locations/i/book-repair" className="hover:text-sfd-teal transition-colors">
                     {addressLine}
                   </Link>
                 </div>
@@ -112,7 +112,7 @@ export default function Footer() {
               <h2 className={headingClass}>Information</h2>
               <ul className="space-y-1">
                 <li><Link href="/about" className={linkClass}>About Us</Link></li>
-                <li><Link href="/locations" className={linkClass}>Locations</Link></li>
+                <li><Link href="/locations/i/book-repair" className={linkClass}>Locations</Link></li>
                 <li><Link href="/common-issues" className={linkClass}>Common Issues</Link></li>
                 <li><Link href="/faq" className={linkClass}>FAQ</Link></li>
                 <li><Link href="/warranty" className={linkClass}>Warranty</Link></li>
@@ -135,7 +135,7 @@ export default function Footer() {
               {/* High-conversion CTA Button */}
               <div className="pt-2">
                 <Link
-                  href="/locations"
+                  href="/locations/i/book-repair"
                   className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-sfd-teal hover:bg-[#007e7a] text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-all cursor-pointer group active:scale-[0.99]"
                 >
                   <span>Get Free Estimate</span>

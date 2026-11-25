@@ -114,7 +114,7 @@ export function StoreLocator({
               </li>
               <li>&gt;</li>
               <li>
-                <Link href="/locations" className="hover:text-sfd-teal transition-colors">
+                <Link href="/locations/i/book-repair" className="hover:text-sfd-teal transition-colors">
                   Locations
                 </Link>
               </li>

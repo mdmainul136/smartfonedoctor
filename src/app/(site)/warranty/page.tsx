@@ -9,9 +9,9 @@ import { withCmsMetadata } from "@/lib/cmsMetadata";
 
 // Coded defaults; title, description and canonical can be changed in Admin > Pages > SEO.
 const baseMetadata: Metadata = {
-  title: brandTitle("Repair Warranty | 90-Day Parts & Labor Guarantee | SmartFoneDoctor"),
+  title: brandTitle("90-Day Repair Warranty | SmartFoneDoctor"),
   description:
-    "Every SmartFoneDoctor repair includes a 90-day warranty on parts and labor. HDMI port repairs carry a 6-month warranty. See what's covered and how to make a claim.",
+    "Every SmartFoneDoctor repair includes a 90-day warranty on parts and labor, plus a 6-month HDMI warranty. See what's covered and how to file a claim.",
   alternates: { canonical: "/warranty" },
 };
 

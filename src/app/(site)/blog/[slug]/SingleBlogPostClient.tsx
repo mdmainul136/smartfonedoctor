@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import {
   Clock,
@@ -103,16 +103,17 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
   const [copied, setCopied] = useState(false);
   const [tocItems, setTocItems] = useState<TOCItem[]>([]);
   const [activeId, setActiveId] = useState<string>("");
-  const [processedHtml, setProcessedHtml] = useState<string>("");
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const contentRef = useRef<HTMLDivElement>(null);
 
+  const processedHtml = useMemo(
+    () => (article.contentHtml ? injectHeadingIds(article.contentHtml) : ""),
+    [article.contentHtml]
+  );
+
   useEffect(() => {
-    if (article.contentHtml) {
-      const injected = injectHeadingIds(article.contentHtml);
-      setProcessedHtml(injected);
-      const items = extractTOC(injected);
-      setTocItems(items);
+    if (processedHtml) {
+      setTocItems(extractTOC(processedHtml));
     } else if (article.sections && article.sections.length > 0) {
       const items = article.sections.map((sec, i) => ({
         id: `toc-heading-${i}`,
@@ -120,8 +121,10 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
         level: 2,
       }));
       setTocItems(items);
+    } else {
+      setTocItems([]);
     }
-  }, [article]);
+  }, [processedHtml, article.sections]);
 
   useEffect(() => {
     if (!tocItems.length) return;
@@ -363,13 +366,18 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
           </section>
 
           {/* Main Rich HTML Content */}
-          <div
-            ref={contentRef}
-            className="sfd-article-prose space-y-4 text-base text-gray-700 leading-relaxed"
-            dangerouslySetInnerHTML={processedHtml ? { __html: processedHtml } : undefined}
-          >
-            {!processedHtml &&
-              article.sections.map((sec, idx) => (
+          {processedHtml ? (
+            <div
+              ref={contentRef}
+              className="sfd-article-prose space-y-4 text-base text-gray-700 leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: processedHtml }}
+            />
+          ) : (
+            <div
+              ref={contentRef}
+              className="sfd-article-prose space-y-4 text-base text-gray-700 leading-relaxed"
+            >
+              {article.sections.map((sec, idx) => (
                 <section key={sec.id || idx} id={`toc-heading-${idx}`} className="space-y-4 scroll-mt-24">
                   {sec.heading && (
                     <h2 className="text-xl sm:text-2xl font-bold text-[#1d1c1a] tracking-tight">
@@ -397,7 +405,8 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
                   )}
                 </section>
               ))}
-          </div>
+            </div>
+          )}
 
           {/* Connected Service CTA Banner */}
           {article.connectedService && (
@@ -521,7 +530,7 @@ export default function SingleBlogPostClient({ article, allArticles }: Props) {
             <p className="text-xs text-gray-500 leading-relaxed">
               SmartFoneDoctor provides same-day device repair to customers from{" "}
               {PHILLY_NEIGHBORHOODS.join(", ")} and surrounding areas.{" "}
-              <Link href="/locations" className="text-sfd-teal font-semibold hover:underline">
+              <Link href="/locations/i/book-repair" className="text-sfd-teal font-semibold hover:underline">
                 Find our locations →
               </Link>
             </p>

@@ -387,7 +387,7 @@ export function ScheduleRepairWizard({ initialStores }: ScheduleRepairWizardProp
 
           <div className="flex items-center gap-3 flex-wrap text-xs font-medium text-neutral-600">
             <Link
-              href="/track"
+              href="/repair-status"
               className="inline-flex items-center gap-1.5 hover:text-sfd-teal transition-colors bg-white px-3 py-1.5 rounded-lg border border-neutral-200/80 shadow-2xs"
             >
               <Activity className="w-3.5 h-3.5 text-sfd-teal" />

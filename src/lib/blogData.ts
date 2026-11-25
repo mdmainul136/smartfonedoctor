@@ -119,7 +119,7 @@ export const INITIAL_BLOG_ARTICLES: BlogArticle[] = [
       },
     ],
     seo: {
-      metaTitle: "When to Replace Your iPhone Battery: Cycles, Symptoms & Cost | SmartFoneDoctor",
+      metaTitle: "When to Replace Your iPhone Battery | SmartFoneDoctor",
       metaDescription: "Is your iPhone dying quickly or below 80% health? Learn the warning signs of failing lithium batteries and get same-day replacement in Philadelphia.",
       focusKeyword: "replace iphone battery",
       canonicalUrl: "/blog/iphone-battery-health-guide",

@@ -5,9 +5,9 @@ import { buildSocialMetadata } from "@/lib/seoSocial";
 import CommonIssuesClient from "./CommonIssuesClient";
 import { getCommonIssues } from "@/lib/commonIssuesStore";
 
-const issuesTitle = "Common Repair Issues & Troubleshooting | SmartFoneDoctor Philadelphia";
+const issuesTitle = "Common Repair Issues & Fixes | SmartFoneDoctor";
 const issuesDesc =
-  "Diagnose cracked screens, dead batteries, charging port faults, HDMI issues, water damage, and console problems for phones, tablets, laptops, and game consoles.";
+  "Diagnose cracked screens, dead batteries, charging ports, HDMI issues & water damage for phones, tablets, laptops & consoles in Philadelphia.";
 
 export const metadata: Metadata = {
   title: brandTitle(issuesTitle),

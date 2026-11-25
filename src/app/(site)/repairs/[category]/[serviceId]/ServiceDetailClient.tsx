@@ -230,7 +230,7 @@ export default function ServiceDetailClient({ service, withFooter = true }: Prop
           </div>
           <div className="flex items-center gap-3 flex-wrap text-xs font-semibold text-neutral-600">
             <Link
-              href="/track"
+              href="/repair-status"
               className="inline-flex items-center gap-1.5 hover:text-sfd-teal transition-colors px-3 py-1.5 rounded-lg bg-neutral-50 border border-neutral-200/60"
             >
               <Activity className="w-3.5 h-3.5 text-sfd-teal" />
@@ -315,7 +315,7 @@ export default function ServiceDetailClient({ service, withFooter = true }: Prop
               {filteredModels.map((item) => (
                 <Link
                   key={item.id}
-                  href={`/repairs/${service.categoryId}/${item.id}`}
+                  href={item.href || `/repairs/${service.categoryId}/${item.id}`}
                   className="group flex flex-col justify-between p-4 rounded-2xl bg-white border border-neutral-200 hover:border-sfd-teal/50 hover:shadow-lg transition-all duration-200"
                 >
                   <div className="relative w-full h-40 rounded-xl overflow-hidden bg-neutral-50 mb-3 flex items-center justify-center">
@@ -351,7 +351,7 @@ export default function ServiceDetailClient({ service, withFooter = true }: Prop
               {filteredIssues.map((item) => (
                 <Link
                   key={item.id}
-                  href={`/repairs/${service.categoryId}/${service.serviceId}/${item.id}`}
+                  href={item.href || `/repairs/${service.categoryId}/${service.serviceId}/${item.id}`}
                   className="group flex items-start gap-3.5 p-4 rounded-2xl bg-white border border-neutral-200 hover:border-sfd-teal/50 hover:shadow-md transition-all duration-200"
                 >
                   <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-neutral-100 shrink-0">

@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { permanentRedirect } from "next/navigation";
 
 export default function MacRepairAliasPage() {
-  redirect("/repairs/computer/imac-repair");
+  permanentRedirect("/repairs/computer/imac-repair");
 }

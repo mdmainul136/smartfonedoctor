@@ -6,6 +6,7 @@ export interface ServiceModel {
   specs?: string;
   image: string;
   turnaround: string;
+  href?: string;
 }
 
 export interface ServiceCommonIssue {
@@ -14,6 +15,7 @@ export interface ServiceCommonIssue {
   description: string;
   image: string;
   turnaround: string;
+  href?: string;
 }
 
 export interface ServiceFeatureCard {
@@ -81,28 +83,28 @@ export const SERVICES_CMS: ServiceCMSData[] = [
     modelsLabel: "All iPhone Repair Series",
     models: [
       {
-        id: "ip-16",
+        id: "iphone-16",
         title: "iPhone 16 Series",
         specs: "iPhone 16 Pro Max, 16 Pro, 16 Plus, iPhone 16",
         image: "https://images.unsplash.com/photo-1565849904461-04a58ad377e0?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 45 Mins",
       },
       {
-        id: "ip-15",
+        id: "iphone-15",
         title: "iPhone 15 Series",
         specs: "iPhone 15 Pro Max, 15 Pro, 15 Plus, iPhone 15",
         image: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 45 Mins",
       },
       {
-        id: "ip-14",
+        id: "iphone-14",
         title: "iPhone 14 Series",
         specs: "iPhone 14 Pro Max, 14 Pro, 14 Plus, iPhone 14",
         image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 45 Mins",
       },
       {
-        id: "ip-13",
+        id: "iphone-13",
         title: "iPhone 13 Series",
         specs: "iPhone 13 Pro Max, 13 Pro, 13 Mini, iPhone 13",
         image: "https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?w=400&auto=format&fit=crop&q=80",
@@ -114,6 +116,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         specs: "iPhone 12 Pro, 12 Mini, 11 Pro Max, iPhone 11",
         image: "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 30 Mins",
+        href: "/schedule-repair?device=smartphone&make=Apple&model=iPhone%2012",
       },
       {
         id: "ip-se",
@@ -121,6 +124,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         specs: "iPhone SE 3rd/2nd Gen, iPhone X/XR/XS Series",
         image: "https://images.unsplash.com/photo-1520333789090-1afc82db536a?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 30 Mins",
+        href: "/schedule-repair?device=smartphone&make=Apple&model=iPhone%20SE",
       },
     ],
     commonIssues: [
@@ -130,6 +134,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         description: "Replace shattered front glass and responsive OLED panels while preserving True Tone and Face ID.",
         image: "https://images.unsplash.com/photo-1565849904461-04a58ad377e0?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 45 Mins",
+        href: "/common-issues/smartphone/cracked-glass-replacement",
       },
       {
         id: "batt",
@@ -137,6 +142,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         description: "New lithium battery swap to fix low battery health alerts, random shutdowns, and rapid battery drops.",
         image: "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 30 Mins",
+        href: "/common-issues/smartphone/battery-replacement",
       },
       {
         id: "chrg",
@@ -144,6 +150,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         description: "Fix loose cables, lint buildup, or burnt connector pins preventing your iPhone from charging.",
         image: "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 45 Mins",
+        href: "/common-issues/smartphone/charging-port-replacement",
       },
       {
         id: "cam",
@@ -151,6 +158,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         description: "Restore crystal-clear photos and eliminate vibrating focus issues or shattered sapphire camera glass.",
         image: "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 30 Mins",
+        href: "/schedule-repair?device=smartphone&make=Apple&issue=camera",
       },
       {
         id: "backglass",
@@ -158,6 +166,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         description: "High-tech cold laser ablation to replace shattered back glass without damaging MagSafe wireless coils.",
         image: "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 60 Mins",
+        href: "/repairs/smartphone/iphone-16-pro/back-glass-repair",
       },
       {
         id: "water",
@@ -165,6 +174,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         description: "Deep chemical and ultrasonic cleaning to reverse liquid corrosion and save irreplaceable photos and data.",
         image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=400&auto=format&fit=crop&q=80",
         turnaround: "1–2 Business Days",
+        href: "/common-issues/smartphone/water-damaged-phone-repair",
       },
     ],
     featureCards: [
@@ -202,7 +212,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
       },
     },
     seo: {
-      title: "iPhone Repair in Philadelphia | Same-Day Screen & Battery Fix",
+      title: "iPhone Repair in Philadelphia | SmartFoneDoctor",
       description: "Expert iPhone screen replacement, battery repair, charging port, and liquid damage recovery in Philadelphia. 45-minute repairs backed by warranty.",
       keywords: ["iPhone Repair Philadelphia", "iPhone Screen Fix 19139", "iPhone Battery Swap", "Same Day iPhone Repair"],
     },
@@ -223,14 +233,14 @@ export const SERVICES_CMS: ServiceCMSData[] = [
     modelsLabel: "All iPad Tablet Repair Series",
     models: [
       {
-        id: "ipad-air",
+        id: "ipad-air-5",
         title: "iPad Air Series",
         specs: "iPad Air 11\" & 13\" (M2), Air 5, Air 4",
         image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 45 Mins",
       },
       {
-        id: "ipad-pro",
+        id: "ipad-pro-12-9",
         title: "iPad Pro Series",
         specs: "iPad Pro 11\" & 13\" (M4/M2), 12.9\" Pro",
         image: "https://images.unsplash.com/photo-1561154464-82e9adf32764?w=400&auto=format&fit=crop&q=80",
@@ -242,6 +252,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         specs: "iPad Mini 7 (A17 Pro), Mini 6, Mini 5",
         image: "https://images.unsplash.com/photo-1589739900243-4b52cd9b104e?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 45 Mins",
+        href: "/schedule-repair?device=tablet&make=Apple&model=iPad%20Mini",
       },
       {
         id: "ipad-std",
@@ -249,6 +260,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         specs: "iPad 10th Gen, 9th, 8th & 7th Gen",
         image: "https://images.unsplash.com/photo-1585770107532-367d890f7b48?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 45 Mins",
+        href: "/schedule-repair?device=tablet&make=Apple&model=iPad",
       },
     ],
     commonIssues: [
@@ -258,6 +270,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         description: "Replace broken top glass and responsive touch sensors while preserving vibrant LCD/Liquid Retina colors.",
         image: "https://images.unsplash.com/photo-1565849904461-04a58ad377e0?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 45 Mins",
+        href: "/common-issues/tablet/broken-tablet-screen",
       },
       {
         id: "battery",
@@ -265,6 +278,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         description: "High-capacity lithium battery installation to resolve rapid battery drain, random restarts, or swelling.",
         image: "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 60 Mins",
+        href: "/repairs/tablet/ipad-pro-12-9/battery-replacement",
       },
       {
         id: "charging",
@@ -272,6 +286,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         description: "Fix loose cables, slow charging, or burnt pins with precision micro-soldered replacement ports.",
         image: "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 45 Mins",
+        href: "/repairs/tablet/ipad-pro-12-9/charging-port-repair",
       },
       {
         id: "bent",
@@ -279,6 +294,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         description: "Precision CNC reshaping to realign warped aluminum enclosures so new screens seal flush.",
         image: "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 60 Mins",
+        href: "/schedule-repair?device=tablet&make=Apple&issue=other",
       },
       {
         id: "water",
@@ -286,6 +302,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         description: "Corrosion removal, logic board cleaning, and short-circuit diagnostics for spilled liquids.",
         image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=400&auto=format&fit=crop&q=80",
         turnaround: "1–2 Business Days",
+        href: "/common-issues/smartphone/water-damaged-phone-repair",
       },
       {
         id: "audio",
@@ -293,6 +310,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         description: "Fix crackling sound, muffled FaceTime microphone audio, and distorted volume output.",
         image: "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 30 Mins",
+        href: "/common-issues/smartphone/speaker-replacement",
       },
     ],
     partnerBanners: {
@@ -310,7 +328,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
       },
     },
     seo: {
-      title: "iPad & Tablet Repair in Philadelphia | Screens & Batteries",
+      title: "iPad & Tablet Repair Philadelphia | SmartFoneDoctor",
       description: "Fast, certified iPad Pro, Air, and Mini repair in Philadelphia. Screen replacements, battery fixes, and warranty-backed service.",
       keywords: ["iPad Repair Philadelphia", "iPad Screen Replacement", "iPad Battery Repair", "Tablet Repair 19139"],
     },
@@ -336,6 +354,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         specs: "27-inch 5K Retina (Space Gray, Intel Xeon)",
         image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • Diagnostics",
+        href: "/schedule-repair?device=computer&make=Apple&model=iMac%20Pro",
       },
       {
         id: "imac-24",
@@ -343,6 +362,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         specs: "4.5K Retina Display (Apple Silicon M1, M3, M4)",
         image: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 60 Mins",
+        href: "/schedule-repair?device=computer&make=Apple&model=iMac%2024",
       },
       {
         id: "imac-27",
@@ -350,6 +370,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         specs: "5K Retina Slim Aluminum Unibody All-in-One",
         image: "https://images.unsplash.com/photo-1547082299-de196ea013d6?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • Hardware Fix",
+        href: "/schedule-repair?device=computer&make=Apple&model=iMac%2027",
       },
     ],
     commonIssues: [
@@ -359,6 +380,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         description: "Fix cracked glass, distorted vertical lines, black screen of death, or damaged LCD flex cables.",
         image: "https://images.unsplash.com/photo-1565849904461-04a58ad377e0?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 60 Mins",
+        href: "/schedule-repair?device=computer&make=Apple&issue=screen",
       },
       {
         id: "ssd",
@@ -366,6 +388,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         description: "Upgrade slow mechanical hard drives or Fusion drives to fast NVMe SSDs with complete file transfer.",
         image: "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 1–2 Hours",
+        href: "/schedule-repair?device=computer&make=Apple&issue=other",
       },
       {
         id: "logicboard",
@@ -373,6 +396,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         description: "Component-level repairs for no-power symptoms, blown capacitors, shorted GPU/CPU power rails, and backlight ICs.",
         image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&auto=format&fit=crop&q=80",
         turnaround: "1–3 Business Days",
+        href: "/common-issues/computer/macbook-pro-logic-board-replacement",
       },
       {
         id: "liquid",
@@ -380,6 +404,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         description: "Emergency board treatment to neutralize sticky coffee, water, and wine spills before corrosion permanently damages circuits.",
         image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day Assessment",
+        href: "/common-issues/smartphone/water-damaged-phone-repair",
       },
       {
         id: "battery",
@@ -387,6 +412,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         description: "Fix loud buzzing fan noise, thermal shutdown, and faulty internal power supplies.",
         image: "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 45 Mins",
+        href: "/schedule-repair?device=computer&make=Apple&issue=power",
       },
     ],
     partnerBanners: {
@@ -404,7 +430,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
       },
     },
     seo: {
-      title: "iMac Repair in Philadelphia | Screens, SSD Upgrades & Logic Board",
+      title: "iMac Repair in Philadelphia | SmartFoneDoctor",
       description: "Professional iMac, iMac Pro, and desktop Mac repair in Philadelphia. Cracked screens, SSD upgrades, and liquid spill recovery with warranty.",
       keywords: ["iMac Repair Philadelphia", "iMac Screen Fix", "iMac SSD Upgrade 19139", "Apple Desktop Repair"],
     },
@@ -425,14 +451,14 @@ export const SERVICES_CMS: ServiceCMSData[] = [
     modelsLabel: "All MacBook Laptop Models",
     models: [
       {
-        id: "mb-pro",
+        id: "macbook-pro",
         title: "MacBook Pro Series",
         specs: "14\" & 16\" (M3/M2/M1 Pro/Max), 13\" Touch Bar",
         image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 45 Mins",
       },
       {
-        id: "mb-air",
+        id: "macbook-air",
         title: "MacBook Air Series",
         specs: "13\" & 15\" Liquid Retina (M1/M2/M3)",
         image: "https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=400&auto=format&fit=crop&q=80",
@@ -446,6 +472,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         description: "Complete top lid display swap resolving cracked glass, flexgate lines, and blank black screens.",
         image: "https://images.unsplash.com/photo-1565849904461-04a58ad377e0?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 60 Mins",
+        href: "/repairs/computer/macbook-pro/screen-repair",
       },
       {
         id: "battery",
@@ -453,6 +480,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         description: "Genuine capacity battery replacement to remove 'Service Recommended' warnings and prevent trackpad swelling.",
         image: "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 45 Mins",
+        href: "/repairs/computer/macbook-pro/battery-replacement",
       },
       {
         id: "keyboard",
@@ -460,6 +488,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         description: "Fix unresponsive keys, sticky spills, or broken haptic trackpad feedback.",
         image: "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 60 Mins",
+        href: "/common-issues/computer/macbook-pro-logic-board-replacement",
       },
     ],
     partnerBanners: {
@@ -477,7 +506,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
       },
     },
     seo: {
-      title: "MacBook Repair in Philadelphia | Screens, Batteries & Keyboards",
+      title: "MacBook Repair in Philadelphia | SmartFoneDoctor",
       description: "Same-day MacBook Pro and MacBook Air repair in Philadelphia. Battery replacements, Retina screens, and water damage recovery.",
       keywords: ["MacBook Repair Philadelphia", "MacBook Screen Fix", "MacBook Battery Replacement 19139"],
     },
@@ -498,7 +527,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
     modelsLabel: "All PlayStation Console Models",
     models: [
       {
-        id: "ps5",
+        id: "playstation-5",
         title: "PlayStation 5 (PS5 & PS5 Pro)",
         specs: "Standard Disc, Digital Edition, and PS5 Slim",
         image: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=400&auto=format&fit=crop&q=80",
@@ -510,6 +539,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         specs: "PS4 Original, PS4 Slim, and PS4 Pro 4K",
         image: "https://images.unsplash.com/photo-1507457379470-08b800bebc67?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 45 Mins",
+        href: "/schedule-repair?device=console&make=Sony&model=PlayStation%204",
       },
     ],
     commonIssues: [
@@ -519,6 +549,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         description: "Fix bent, pushed-in, or loose HDMI port pins causing 'No Signal' or black screen output on your TV.",
         image: "https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 60 Mins",
+        href: "/common-issues/console/hdmi-port-repair",
       },
       {
         id: "overheat",
@@ -526,6 +557,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         description: "Deep clean dust clogs and re-spread liquid metal thermal interface to prevent abrupt overheating shutdowns.",
         image: "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=400&auto=format&fit=crop&q=80",
         turnaround: "Same-Day • 45 Mins",
+        href: "/repairs/console/playstation-5/overheating-fan-repair",
       },
       {
         id: "power",
@@ -533,6 +565,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
         description: "Fix console not turning on, beep once and shutting down (Blue Light of Death), or power surge damage.",
         image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&auto=format&fit=crop&q=80",
         turnaround: "1–2 Business Days",
+        href: "/schedule-repair?device=console&make=Sony&model=PlayStation%205&issue=power",
       },
     ],
     partnerBanners: {
@@ -550,7 +583,7 @@ export const SERVICES_CMS: ServiceCMSData[] = [
       },
     },
     seo: {
-      title: "PlayStation & PS5 Repair in Philadelphia | HDMI Ports & Overheating Fix",
+      title: "PS5 & PlayStation Repair Philly | SmartFoneDoctor",
       description: "Same-day PS5 and PS4 HDMI port replacement, power supply fix, and disc drive repair in Philadelphia with warranty.",
       keywords: ["PS5 HDMI Port Repair Philadelphia", "PlayStation Repair 19139", "Console Repair Philadelphia"],
     },

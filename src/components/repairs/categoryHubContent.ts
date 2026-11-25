@@ -54,7 +54,7 @@ export const HUB_DEFAULTS: Record<HubCategory, Required<CategoryHubProps> & { na
     storeHeading: "Your tablet fix is closer than you think",
     storeIntro:
       "Walk in or book ahead at one of our Philadelphia stores. From cracked screens to charging problems, our technicians will get your tablet working again.",
-    seoTitle: "iPad & Tablet Repair in Philadelphia | SmartFoneDoctor",
+    seoTitle: "iPad & Tablet Repair Philly | SmartFoneDoctor",
     seoDescription:
       "Fast tablet repair in Philadelphia for iPad, Galaxy Tab, Pixel Tablet & Surface. Screen, battery, charging port and water damage with a 90-day warranty.",
   },
@@ -91,7 +91,7 @@ export const HUB_DEFAULTS: Record<HubCategory, Required<CategoryHubProps> & { na
     storeHeading: "Your phone fix is closer than you think",
     storeIntro:
       "Walk in or book ahead at one of our Philadelphia stores. From cracked screens to dead batteries, our technicians will get your phone working again.",
-    seoTitle: "Phone Repair in Philadelphia | iPhone, Samsung & Pixel",
+    seoTitle: "Phone Repair in Philadelphia | SmartFoneDoctor",
     seoDescription:
       "Same-day phone repair in Philadelphia for iPhone, Samsung Galaxy & Google Pixel. Screen, battery, charging port, back glass & water damage with 90-day warranty.",
   },
@@ -128,7 +128,7 @@ export const HUB_DEFAULTS: Record<HubCategory, Required<CategoryHubProps> & { na
     storeHeading: "Your computer fix is closer than you think",
     storeIntro:
       "Bring your laptop or iMac to one of our Philadelphia stores for a free diagnosis. We'll tell you what's wrong and what it costs before any work starts.",
-    seoTitle: "Computer & MacBook Repair Philadelphia | SmartFoneDoctor",
+    seoTitle: "MacBook & Computer Repair Philly | SmartFoneDoctor",
     seoDescription:
       "MacBook, iMac and Windows laptop repair in Philadelphia. Screens, batteries, keyboards, liquid damage and SSD upgrades with free diagnostics & 90-day warranty.",
   },
@@ -165,7 +165,7 @@ export const HUB_DEFAULTS: Record<HubCategory, Required<CategoryHubProps> & { na
     storeHeading: "Your console fix is closer than you think",
     storeIntro:
       "Drop off your console at one of our Philadelphia stores. Most HDMI port repairs are done the same or next day.",
-    seoTitle: "Game Console Repair Philadelphia | PS5, Xbox & Switch",
+    seoTitle: "PS5 & Console Repair Philly | SmartFoneDoctor",
     seoDescription:
       "PlayStation, Xbox and Nintendo Switch repair in Philadelphia: HDMI port micro-soldering, overheating, screens and charging ports, with a 90-day warranty.",
   },

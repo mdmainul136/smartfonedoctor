@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
+import { permanentRedirect } from "next/navigation";
 
 export default function CaliforniaSupplyChainActRedirect() {
-  redirect("/supply-chain");
+  permanentRedirect("/supply-chain");
 }
-

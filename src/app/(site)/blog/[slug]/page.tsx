@@ -16,6 +16,31 @@ import { templateSlug } from "@/lib/cmsTemplates";
 import type { CMSPage } from "@/lib/cmsData";
 import { buildSocialMetadata } from "@/lib/seoSocial";
 
+/** Extracts Q&A items from RichTextEditor `.sfd-faq-accordion` blocks for FAQPage JSON-LD. */
+function extractFaqsFromHtml(html?: string): Array<{ question: string; answer: string }> {
+  if (!html) return [];
+  const cleanText = (s: string) =>
+    s
+      .replace(/<[^>]*>/g, " ")
+      .replace(/&nbsp;/gi, " ")
+      .replace(/&amp;/gi, "&")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const items: Array<{ question: string; answer: string }> = [];
+  const regex =
+    /<details[^>]*class="[^"]*sfd-faq-accordion[^"]*"[^>]*>[\s\S]*?<summary[^>]*>([\s\S]*?)<\/summary>[\s\S]*?<div[^>]*class="[^"]*sfd-faq-answer[^"]*"[^>]*>([\s\S]*?)<\/div>[\s\S]*?<\/details>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(html)) !== null && items.length < 8) {
+    const question = cleanText(match[1]);
+    const answer = cleanText(match[2]);
+    if (question && answer) {
+      items.push({ question, answer });
+    }
+  }
+  return items;
+}
+
 /** A published CMS page that has a builder layout. */
 function usable(page: CMSPage | null): page is CMSPage {
   const blocks = (page?.puckData as { content?: unknown[] } | undefined)?.content;
@@ -144,44 +169,57 @@ export default async function BlogPostPage({ params }: PageProps) {
     mainEntityOfPage: `https://smartfonedoctor.com/blog/${article.slug}`,
   };
 
+  const extractedFaqs = extractFaqsFromHtml(article.contentHtml);
+  const faqEntities =
+    extractedFaqs.length >= 2
+      ? extractedFaqs.map((faq) => ({
+          "@type": "Question",
+          name: faq.question,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: faq.answer,
+          },
+        }))
+      : [
+          {
+            "@type": "Question",
+            name: `How quickly can SmartFoneDoctor resolve this issue in Philadelphia?`,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: `Most repairs related to ${article.title} are completed within 20 to 45 minutes on our repair bench at 33 S 52nd St. We keep all popular replacement components in stock for same-day walk-in service.`,
+            },
+          },
+          {
+            "@type": "Question",
+            name: "Do I need to book an appointment or can I just walk in?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "No appointment is needed! Walk-ins are welcome daily at our West Philadelphia flagship (33 S 52nd St) and our Lancaster Ave stores. Booking online reserves replacement parts and secures priority bench time.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "Will my photos, messages, or apps be erased during the repair?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "No. Our technicians work directly on hardware modules without factory-resetting or erasing storage. Your personal data stays untouched and confidential.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "What warranty do you offer on repairs?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Every completed repair includes our comprehensive 90-day parts and labor warranty against manufacturer defects and touchscreen or component unresponsiveness.",
+            },
+          },
+        ];
+
   // Structured FAQ Schema for Google Rich SERP snippets
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: [
-      {
-        "@type": "Question",
-        name: `How quickly can SmartFoneDoctor resolve this issue in Philadelphia?`,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: `Most repairs related to ${article.title} are completed within 20 to 45 minutes on our repair bench at 33 S 52nd St. We keep all popular replacement components in stock for same-day walk-in service.`,
-        },
-      },
-      {
-        "@type": "Question",
-        name: "Do I need to book an appointment or can I just walk in?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "No appointment is needed! Walk-ins are welcome daily at our West Philadelphia flagship (33 S 52nd St) and our Lancaster Ave stores. Booking online reserves replacement parts and secures priority bench time.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "Will my photos, messages, or apps be erased during the repair?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "No. Our technicians work directly on hardware modules without factory-resetting or erasing storage. Your personal data stays untouched and confidential.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "What warranty do you offer on repairs?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Every completed repair includes our comprehensive 90-day parts and labor warranty against manufacturer defects and touchscreen or component unresponsiveness.",
-        },
-      },
-    ],
+    mainEntity: faqEntities,
   };
 
   return (

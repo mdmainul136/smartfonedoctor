@@ -65,11 +65,43 @@ import {
   Sliders,
 } from "lucide-react";
 
+export type RichTextAiMode =
+  | "full_article"
+  | "aeo_capsule"
+  | "geo_local"
+  | "pseo_links"
+  | "comparison_table"
+  | "faq_block"
+  | "seo_optimize"
+  | "expand"
+  | "polish"
+  | "grammar"
+  | "shorten"
+  | "cta"
+  | "custom";
+
+export interface RichTextArticleContext {
+  title?: string;
+  slug?: string;
+  category?: string;
+  focusKeyword?: string;
+  excerpt?: string;
+}
+
+export interface RichTextAiMetaSuggestion {
+  excerpt?: string;
+  focusKeyword?: string;
+  tags?: string[];
+  readTime?: string;
+}
+
 interface RichTextEditorProps {
   value: string;
   onChange: (html: string) => void;
   placeholder?: string;
   minHeight?: string;
+  articleContext?: RichTextArticleContext;
+  onAiMetaSuggestion?: (meta: RichTextAiMetaSuggestion) => void;
 }
 
 interface SlashCommandItem {
@@ -143,6 +175,8 @@ export default function RichTextEditor({
   onChange,
   placeholder = "Write your guide content here... (Type '/' for Payload slash commands)",
   minHeight = "460px",
+  articleContext,
+  onAiMetaSuggestion,
 }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -159,12 +193,16 @@ export default function RichTextEditor({
   const [linkOpenNewTab, setLinkOpenNewTab] = useState(false);
   const [linkTitle, setLinkTitle] = useState("");
 
-  // AI Content Assistant Dialog
+  // AI Content Writer Dialog (SEO + AEO + GEO + pSEO)
   const [aiModalOpen, setAiModalOpen] = useState(false);
   const [aiSelectedText, setAiSelectedText] = useState("");
-  const [aiAction, setAiAction] = useState<"polish" | "grammar" | "seo" | "expand" | "shorten" | "cta" | "faq">("polish");
+  const [aiAction, setAiAction] = useState<RichTextAiMode>("full_article");
   const [aiCustomPrompt, setAiCustomPrompt] = useState("");
   const [aiResultText, setAiResultText] = useState("");
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [aiModelUsed, setAiModelUsed] = useState<string | null>(null);
+  const [aiMetaSuggestion, setAiMetaSuggestion] = useState<RichTextAiMetaSuggestion | null>(null);
+  const [aiPreviewTab, setAiPreviewTab] = useState<"preview" | "html">("preview");
   const [isAiLoading, setIsAiLoading] = useState(false);
 
   // Media Library Dialog
@@ -546,14 +584,18 @@ export default function RichTextEditor({
     let str = "";
     if (typeof window !== "undefined") {
       const sel = window.getSelection();
-      if (sel && sel.rangeCount > 0) {
+      if (sel && sel.rangeCount > 0 && editorRef.current?.contains(sel.anchorNode)) {
         savedRangeRef.current = sel.getRangeAt(0).cloneRange();
         str = sel.toString().trim();
       }
     }
-    const targetText = str || "SmartFone Doctor provides same-day iPhone and Samsung screen repair at 33 S 52nd St in Philadelphia.";
-    setAiSelectedText(targetText);
+    setAiSelectedText(str);
+    setAiAction(str ? "seo_optimize" : "full_article");
     setAiResultText("");
+    setAiError(null);
+    setAiModelUsed(null);
+    setAiMetaSuggestion(null);
+    setAiPreviewTab("preview");
     setAiModalOpen(true);
   };
 
@@ -806,78 +848,102 @@ export default function RichTextEditor({
     handleInput();
   };
 
-  // AI Content Assistant Engine
-  const handleTriggerAiGenerate = () => {
-    const input = aiSelectedText.trim();
-    if (!input) return;
-
+  // Real AI Content Writer Engine (SEO + AEO + GEO + pSEO)
+  const handleTriggerAiGenerate = async () => {
+    if (isAiLoading) return;
     setIsAiLoading(true);
+    setAiError(null);
+    setAiResultText("");
+    setAiModelUsed(null);
+    setAiMetaSuggestion(null);
 
-    setTimeout(() => {
-      let output = "";
-      switch (aiAction) {
-        case "polish":
-          output = `At SmartFone Doctor in Philadelphia, our certified technicians ensure precision repairs for your device. ${input.replace(/\bbroken\b/gi, "compromised")}. Every repair includes thorough multi-point diagnostics and is backed by our comprehensive 90-day parts and labor warranty.`;
-          break;
-        case "grammar": {
-          const clean = input
-            .replace(/\s+/g, " ")
-            .replace(/([.?!])\s*([a-z])/g, (_, p1, p2) => `${p1} ${p2.toUpperCase()}`);
-          output = clean.charAt(0).toUpperCase() + clean.slice(1);
-          break;
-        }
-        case "seo":
-          output = `${input} For residents across Philadelphia—including West Philadelphia, University City, and Center City—SmartFone Doctor (located at 33 S 52nd St, Philadelphia, PA 19139) offers premium bench diagnostics and genuine OEM-grade replacement parts with fast turnaround times.`;
-          break;
-        case "expand":
-          output = `${input}\n\nTechnical Diagnostic Checklist:\n• Pre-repair visual inspection for micro-fractures and frame misalignment\n• Precision thermal separation using controlled ESD-safe heat plates\n• Internal flex cable and touch digitizer impedance testing\n• Post-installation calibrated true-tone and biometric verification\n• Backed by SmartFone Doctor's 90-day Philadelphia technician guarantee.`;
-          break;
-        case "shorten":
-          output = `• Fast Diagnostics: Rapid bench assessment for common device failures.\n• Quality Parts: OEM & premium-grade components tested for longevity.\n• Philadelphia Walk-Ins: Convenient repair service at 33 S 52nd St with a 90-day warranty.`;
-          break;
-        case "cta":
-          output = `Need immediate help with your device? Visit SmartFone Doctor at 33 S 52nd St in Philadelphia for fast walk-in diagnostic service, or call us at (215) 437-0105. Most standard repairs completed in under 45 minutes with a 90-day warranty!`;
-          break;
-        case "faq":
-          output = `<div class="sfd-faq-item" style="border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin: 16px 0; background: #f8fafc;">\n  <strong style="color: #0f172a; font-size: 15px; display: block; margin-bottom: 6px;">Q: How does SmartFone Doctor handle this repair in Philadelphia?</strong>\n  <p style="color: #334155; font-size: 13px; margin: 0; line-height: 1.6;">A: ${input} Walk-in service is available at 33 S 52nd St with typical turnaround under 45 minutes and a 90-day parts warranty.</p>\n</div>`;
-          break;
-        default:
-          output = input;
+    try {
+      const res = await fetch("/api/admin/content-ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: aiAction,
+          selectedText: aiSelectedText.trim() || undefined,
+          customPrompt: aiCustomPrompt.trim() || undefined,
+          context: {
+            ...articleContext,
+            existingHtml: editorRef.current?.innerHTML || value || undefined,
+          },
+        }),
+      });
+
+      const json = (await res.json()) as {
+        success?: boolean;
+        html?: string;
+        meta?: RichTextAiMetaSuggestion;
+        model?: string;
+        error?: string;
+      };
+
+      if (!res.ok || !json.html) {
+        setAiError(json.error || "AI content generation failed.");
+        return;
       }
 
-      if (aiCustomPrompt.trim()) {
-        output += `\n\n[Custom Directive: ${aiCustomPrompt.trim()}]`;
-      }
-
-      setAiResultText(output);
+      setAiResultText(json.html);
+      setAiModelUsed(json.model || "AI");
+      if (json.meta) setAiMetaSuggestion(json.meta);
+    } catch {
+      setAiError("Network error contacting AI Content Writer endpoint.");
+    } finally {
       setIsAiLoading(false);
-    }, 450);
+    }
   };
 
-  const handleApplyAiResult = (mode: "replace" | "below") => {
+  const handleApplyAiResult = (applyMode: "replace_all" | "insert_cursor" | "append") => {
     if (!aiResultText) return;
-    editorRef.current?.focus();
 
-    if (savedRangeRef.current && typeof window !== "undefined") {
-      const sel = window.getSelection();
-      sel?.removeAllRanges();
-      sel?.addRange(savedRangeRef.current);
+    if (applyMode === "replace_all") {
+      if (editorRef.current && mode === "visual") {
+        editorRef.current.innerHTML = aiResultText;
+        updateCounts();
+      }
+      onChange(aiResultText);
+    } else if (applyMode === "append") {
+      const nextHtml = `${(editorRef.current?.innerHTML || value || "").trim()}${aiResultText}`;
+      if (editorRef.current && mode === "visual") {
+        editorRef.current.innerHTML = nextHtml;
+        updateCounts();
+      }
+      onChange(nextHtml);
+    } else {
+      // Insert at saved cursor position (fallback to append if no editor selection exists)
+      if (mode === "visual" && editorRef.current) {
+        editorRef.current.focus();
+        const sel = typeof window !== "undefined" ? window.getSelection() : null;
+        if (
+          sel &&
+          savedRangeRef.current &&
+          editorRef.current.contains(savedRangeRef.current.commonAncestorContainer)
+        ) {
+          sel.removeAllRanges();
+          sel.addRange(savedRangeRef.current);
+          document.execCommand("insertHTML", false, aiResultText);
+          handleInput();
+        } else {
+          const nextHtml = `${(editorRef.current.innerHTML || "").trim()}${aiResultText}`;
+          editorRef.current.innerHTML = nextHtml;
+          updateCounts();
+          onChange(nextHtml);
+        }
+      } else {
+        onChange(`${(value || "").trim()}${aiResultText}`);
+      }
     }
 
-    if (mode === "replace") {
-      const html = aiResultText.includes("<div") || aiResultText.includes("<p")
-        ? aiResultText
-        : `<p>${aiResultText.replace(/\n\n/g, "</p><p>").replace(/\n/g, "<br/>")}</p>`;
-      document.execCommand("insertHTML", false, html);
-    } else {
-      const html = `<p><br></p><div style="background: #f0fdfa; border-left: 4px solid #00897b; padding: 14px 18px; margin: 16px 0; border-radius: 0 8px 8px 0;"><span style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: #00897b; letter-spacing: 0.05em; display: block; margin-bottom: 4px;">Key points</span>${aiResultText.replace(/\n/g, "<br/>")}</div><p><br></p>`;
-      document.execCommand("insertHTML", false, html);
+    if (aiMetaSuggestion && onAiMetaSuggestion) {
+      onAiMetaSuggestion(aiMetaSuggestion);
     }
 
     setAiModalOpen(false);
     setAiResultText("");
     setAiSelectedText("");
-    handleInput();
+    setAiError(null);
   };
 
   // Custom Table Insertion
@@ -1370,10 +1436,10 @@ export default function RichTextEditor({
   const slashCommands: SlashCommandItem[] = [
     {
       id: "ai",
-      title: "Writing Assistant",
-      description: "Polish clarity, fix grammar, or format technical notes",
-      badge: "Assist",
-      icon: Wand2,
+      title: "AI Content Writer (SEO/AEO/GEO)",
+      description: "Generate full SEO/AEO/GEO/pSEO guides, FAQs, or rewrite text",
+      badge: "AI",
+      icon: Sparkles,
       action: openAiModal,
     },
     {
@@ -2434,15 +2500,15 @@ export default function RichTextEditor({
           </div>
         </div>
 
-        {/* Clean Writing Assistant */}
+        {/* AI Content Writer (SEO + AEO + GEO + pSEO) */}
         <button
           type="button"
           onClick={openAiModal}
-          className="h-[28px] px-2.5 rounded-md border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer shadow-2xs transition"
-          title="Writing Assistant (Polish, Grammar, Tone)"
+          className="h-[28px] px-2.5 rounded-md border border-teal-200 bg-teal-50/70 hover:bg-teal-100 hover:border-teal-300 text-teal-800 text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer shadow-2xs transition"
+          title="AI Content Writer (SEO, AEO, GEO & pSEO)"
         >
-          <Wand2 className="w-3.5 h-3.5 text-gray-500" />
-          <span>Assist</span>
+          <Sparkles className="w-3.5 h-3.5 text-[#00897b]" />
+          <span>AI Writer</span>
         </button>
 
         {/* View Toggle & Elementor Block Styler */}
@@ -2628,11 +2694,11 @@ export default function RichTextEditor({
               e.preventDefault();
               openAiModal();
             }}
-            className="px-2 py-0.5 rounded hover:bg-neutral-800 text-neutral-300 hover:text-white inline-flex items-center gap-1 transition"
-            title="Writing Assistant"
+            className="px-2 py-0.5 rounded hover:bg-neutral-800 text-teal-300 hover:text-white inline-flex items-center gap-1 transition"
+            title="AI Content Writer (SEO, AEO, GEO & pSEO)"
           >
-            <Wand2 className="w-3 h-3 text-neutral-400" />
-            <span>Assist</span>
+            <Sparkles className="w-3 h-3 text-teal-400" />
+            <span>AI Writer</span>
           </button>
         </div>
       )}
@@ -3428,18 +3494,36 @@ export default function RichTextEditor({
         </div>
       )}
 
-      {/* MODAL: WRITING ASSISTANT */}
+      {/* MODAL: AI CONTENT WRITER (SEO + AEO + GEO + pSEO) */}
       {aiModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-5 border border-gray-200 space-y-4 animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b pb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-700">
-                  <Wand2 className="w-4 h-4" />
+        <div className="fixed inset-0 z-50 bg-black/45 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-5 border border-gray-200 space-y-4 animate-in zoom-in-95 duration-150 max-h-[92vh] overflow-y-auto">
+            <div className="flex items-start justify-between border-b pb-3 gap-3">
+              <div className="flex items-start gap-2.5">
+                <div className="w-9 h-9 rounded-lg bg-teal-50 border border-teal-200 flex items-center justify-center text-[#00897b] shrink-0">
+                  <Sparkles className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-sm text-gray-900 leading-tight">Writing Assistant</h4>
-                  <span className="text-[11px] text-gray-500">Refine tone, fix grammar, or expand technical details</span>
+                  <h4 className="font-bold text-sm text-gray-900 leading-tight">
+                    AI Content Writer — SEO · AEO · GEO · pSEO
+                  </h4>
+                  <span className="text-[11px] text-gray-500 block mt-0.5">
+                    Generate search-ranked articles, Answer Engine capsules, Philadelphia local GEO sections &amp; verified internal links
+                  </span>
+                  {(articleContext?.title || articleContext?.focusKeyword) && (
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                      {articleContext.title && (
+                        <span className="text-[10px] font-medium bg-gray-100 text-gray-700 px-2 py-0.5 rounded-md border border-gray-200 max-w-[260px] truncate">
+                          Topic: {articleContext.title}
+                        </span>
+                      )}
+                      {articleContext.focusKeyword && (
+                        <span className="text-[10px] font-semibold bg-teal-50 text-teal-800 px-2 py-0.5 rounded-md border border-teal-200">
+                          KW: {articleContext.focusKeyword}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               <button
@@ -3451,83 +3535,136 @@ export default function RichTextEditor({
               </button>
             </div>
 
-            {/* Target Selected Text */}
-            <div>
-              <label className="text-[11px] font-semibold text-gray-700 block mb-1">
-                Selected Text
-              </label>
-              <textarea
-                value={aiSelectedText}
-                onChange={(e) => setAiSelectedText(e.target.value)}
-                rows={3}
-                placeholder="Select text in editor or type here..."
-                className="w-full p-2.5 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-gray-500 leading-relaxed font-sans"
-              />
-            </div>
-
-            {/* Quick Strategy Options */}
-            <div>
-              <label className="text-[11px] font-semibold text-gray-700 block mb-1.5">
-                Action
+            {/* Group 1: Full & Modular SEO / AEO / GEO / pSEO Generators */}
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 block">
+                Generate SEO / AEO / GEO / pSEO Blocks
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {[
-                  { id: "polish", label: "Polish Tone", desc: "Clear & professional" },
-                  { id: "grammar", label: "Fix Grammar", desc: "Punctuation & spelling" },
-                  { id: "seo", label: "Local Terms", desc: "Philadelphia keywords" },
-                  { id: "cta", label: "Repair CTA", desc: "Walk-in & booking callout" },
-                  { id: "expand", label: "Diagnostic Steps", desc: "Detailed specs & steps" },
-                  { id: "shorten", label: "Key Takeaways", desc: "Concise bullet summary" },
-                  { id: "faq", label: "FAQ Format", desc: "Question & answer card" },
-                ].map((item) => (
+                {(
+                  [
+                    { id: "full_article", label: "Full SEO+AEO+GEO Guide", desc: "950–1,300w complete article" },
+                    { id: "aeo_capsule", label: "AEO Quick Answer", desc: "AI Overview snippet + takeaways" },
+                    { id: "geo_local", label: "GEO Philly Trust", desc: "33 S 52nd St & Lancaster Ave" },
+                    { id: "pseo_links", label: "pSEO Internal Links", desc: "Verified service & repair URLs" },
+                    { id: "comparison_table", label: "Comparison Table", desc: "Topic-specific tier matrix" },
+                    { id: "faq_block", label: "AEO FAQ Accordion", desc: "4–5 schema-ready Q&A items" },
+                  ] as const
+                ).map((item) => (
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => setAiAction(item.id as any)}
+                    onClick={() => setAiAction(item.id)}
                     className={`p-2 rounded-lg border text-left transition cursor-pointer ${
                       aiAction === item.id
-                        ? "border-gray-900 bg-gray-100 shadow-2xs font-semibold text-gray-900"
+                        ? "border-[#00897b] bg-teal-50/70 shadow-2xs font-semibold text-teal-950"
                         : "border-gray-200 hover:border-gray-300 text-gray-700"
                     }`}
                   >
-                    <span className="text-xs block font-medium">{item.label}</span>
-                    <span className="text-[10px] text-gray-500 block leading-tight">{item.desc}</span>
+                    <span className="text-xs block font-semibold">{item.label}</span>
+                    <span className="text-[10px] text-gray-500 block leading-tight mt-0.5">{item.desc}</span>
                   </button>
                 ))}
               </div>
             </div>
 
+            {/* Group 2: Rewrite & Polish Actions */}
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 block">
+                Rewrite &amp; Refine Selection
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {(
+                  [
+                    { id: "seo_optimize", label: "SEO+AEO Optimize" },
+                    { id: "expand", label: "Expand Technical Depth" },
+                    { id: "polish", label: "Polish Tone" },
+                    { id: "grammar", label: "Fix Grammar" },
+                    { id: "shorten", label: "Key Takeaways" },
+                    { id: "cta", label: "Walk-In CTA" },
+                    { id: "custom", label: "Custom Prompt" },
+                  ] as const
+                ).map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setAiAction(item.id)}
+                    className={`px-2.5 py-1.5 rounded-lg border text-xs transition cursor-pointer ${
+                      aiAction === item.id
+                        ? "border-gray-900 bg-gray-900 text-white font-semibold"
+                        : "border-gray-200 bg-gray-50/70 hover:border-gray-300 text-gray-700 font-medium"
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Target Selected Text (optional for generators) */}
+            <div>
+              <label className="text-[11px] font-semibold text-gray-700 block mb-1">
+                Selected Text / Draft Notes{" "}
+                <span className="font-normal text-gray-400">
+                  (optional for Full Article, AEO, GEO, Comparison &amp; FAQ generators)
+                </span>
+              </label>
+              <textarea
+                value={aiSelectedText}
+                onChange={(e) => setAiSelectedText(e.target.value)}
+                rows={3}
+                placeholder="Highlight text in the editor to rewrite, or leave empty to generate from your article title & focus keyword..."
+                className="w-full p-2.5 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-[#00897b] leading-relaxed font-sans"
+              />
+            </div>
+
             {/* Optional Custom Directive */}
             <div>
               <label className="text-[11px] font-medium text-gray-600 block mb-1">
-                Additional Instructions (Optional)
+                Custom SEO / Technical Instructions (Optional)
               </label>
               <input
                 type="text"
                 value={aiCustomPrompt}
                 onChange={(e) => setAiCustomPrompt(e.target.value)}
-                placeholder="e.g. Keep it concise, mention 45-minute walk-in turnaround"
-                className="w-full h-[32px] px-3 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-gray-500"
+                placeholder="e.g. Mention retimer IC testing, $149 starting price, or University City same-day walk-ins"
+                className="w-full h-[34px] px-3 rounded-lg border border-gray-300 text-xs focus:outline-none focus:border-[#00897b]"
               />
             </div>
 
+            {aiError && (
+              <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-700 font-medium">
+                {aiError}
+              </div>
+            )}
+
             {/* Generate Trigger */}
-            <div className="flex justify-end">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[11px] text-gray-400">
+                Uses your saved Gemini / OpenAI key from Settings with automatic model failover.
+              </span>
               <button
                 type="button"
                 onClick={handleTriggerAiGenerate}
-                disabled={isAiLoading || !aiSelectedText.trim()}
-                className="h-[32px] px-4 rounded-lg bg-gray-900 hover:bg-black text-white text-xs font-semibold shadow-2xs cursor-pointer inline-flex items-center gap-1.5 disabled:opacity-50 transition"
+                disabled={
+                  isAiLoading ||
+                  (!["full_article", "aeo_capsule", "geo_local", "pseo_links", "comparison_table", "faq_block", "cta"].includes(aiAction) &&
+                    !aiSelectedText.trim() &&
+                    !(value && value.trim()) &&
+                    !articleContext?.title?.trim() &&
+                    !aiCustomPrompt.trim())
+                }
+                className="h-[34px] px-4 rounded-lg bg-[#00897b] hover:bg-[#00796b] text-white text-xs font-semibold shadow-2xs cursor-pointer inline-flex items-center gap-1.5 disabled:opacity-50 transition shrink-0"
               >
                 {isAiLoading ? (
                   <>
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Processing...</span>
+                    <span>Generating with AI...</span>
                   </>
                 ) : (
                   <>
-                    <Wand2 className="w-3.5 h-3.5" />
-                    <span>Generate</span>
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Generate Content</span>
                   </>
                 )}
               </button>
@@ -3535,41 +3672,93 @@ export default function RichTextEditor({
 
             {/* Result Preview Box */}
             {aiResultText && (
-              <div className="space-y-2 pt-2 border-t border-gray-100">
-                <div className="flex items-center justify-between text-xs font-medium text-gray-700">
-                  <span>Generated Output:</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      navigator.clipboard.writeText(aiResultText);
-                    }}
-                    className="text-[11px] text-gray-500 hover:text-black inline-flex items-center gap-1 cursor-pointer"
-                  >
-                    <Copy className="w-3 h-3" />
-                    <span>Copy</span>
-                  </button>
+              <div className="space-y-2.5 pt-3 border-t border-gray-200">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-gray-800">Generated Output</span>
+                    {aiModelUsed && (
+                      <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full">
+                        {aiModelUsed}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center bg-gray-100 p-0.5 rounded-md border border-gray-200 text-[11px]">
+                      <button
+                        type="button"
+                        onClick={() => setAiPreviewTab("preview")}
+                        className={`px-2 py-0.5 rounded font-medium cursor-pointer ${
+                          aiPreviewTab === "preview" ? "bg-white text-gray-900 shadow-2xs" : "text-gray-500"
+                        }`}
+                      >
+                        Visual Preview
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAiPreviewTab("html")}
+                        className={`px-2 py-0.5 rounded font-medium cursor-pointer ${
+                          aiPreviewTab === "html" ? "bg-white text-gray-900 shadow-2xs" : "text-gray-500"
+                        }`}
+                      >
+                        Raw HTML
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(aiResultText);
+                      }}
+                      className="text-[11px] text-gray-500 hover:text-black inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <Copy className="w-3 h-3" />
+                      <span>Copy HTML</span>
+                    </button>
+                  </div>
                 </div>
 
-                <div className="p-3.5 rounded-lg bg-gray-50 border border-gray-200 text-xs text-gray-800 leading-relaxed font-sans max-h-48 overflow-y-auto whitespace-pre-wrap">
-                  {aiResultText}
-                </div>
+                {aiPreviewTab === "preview" ? (
+                  <div
+                    className="sfd-article-prose p-4 rounded-lg bg-gray-50/50 border border-gray-200 max-h-72 overflow-y-auto text-sm"
+                    dangerouslySetInnerHTML={{ __html: aiResultText }}
+                  />
+                ) : (
+                  <pre className="p-3.5 rounded-lg bg-gray-900 text-emerald-300 text-[11px] font-mono max-h-72 overflow-y-auto whitespace-pre-wrap break-all">
+                    {aiResultText}
+                  </pre>
+                )}
 
-                {/* Replacement Actions */}
-                <div className="flex items-center justify-end gap-2 pt-1">
+                {/* Apply Actions */}
+                <div className="flex items-center justify-end flex-wrap gap-2 pt-1">
                   <button
                     type="button"
-                    onClick={() => handleApplyAiResult("below")}
-                    className="h-[30px] px-3 rounded-lg border border-gray-300 text-xs font-medium text-gray-700 hover:bg-gray-50 cursor-pointer"
-                  >
-                    Insert Below
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleApplyAiResult("replace")}
-                    className="h-[30px] px-3.5 rounded-lg bg-[#00897b] hover:bg-[#00796b] text-white text-xs font-semibold shadow-2xs cursor-pointer inline-flex items-center gap-1.5"
+                    onClick={() => handleApplyAiResult("insert_cursor")}
+                    className={`h-[32px] px-3 rounded-lg text-xs font-semibold cursor-pointer inline-flex items-center gap-1.5 transition ${
+                      aiAction !== "full_article"
+                        ? "bg-[#00897b] hover:bg-[#00796b] text-white shadow-2xs"
+                        : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                    }`}
                   >
                     <Check className="w-3.5 h-3.5" />
-                    <span>Apply to Editor</span>
+                    <span>Insert at Cursor</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleApplyAiResult("append")}
+                    className="h-[32px] px-3 rounded-lg border border-gray-300 text-xs font-medium text-gray-700 hover:bg-gray-50 cursor-pointer"
+                  >
+                    Append to End
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleApplyAiResult("replace_all")}
+                    className={`h-[32px] px-3.5 rounded-lg text-xs font-semibold cursor-pointer inline-flex items-center gap-1.5 transition ${
+                      aiAction === "full_article"
+                        ? "bg-[#00897b] hover:bg-[#00796b] text-white shadow-2xs"
+                        : "border border-red-200 bg-red-50 hover:bg-red-100 text-red-700"
+                    }`}
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Replace Full Article</span>
                   </button>
                 </div>
               </div>
