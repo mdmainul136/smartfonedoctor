@@ -5,6 +5,16 @@ import { getRepairCatalog } from "@/lib/repairCatalog";
 export const AGENT_BASE_URL =
   process.env.NEXT_PUBLIC_SITE_URL || "https://smartfonedoctor.com";
 
+export type PublicStoreCode = "52nd-st" | "lancaster-4016" | "lancaster-4060";
+
+/** Normalizes internal Prisma enum values (e.g. `nd_st`) to canonical public store codes matching booking enums. */
+export function normalizePublicStoreCode(rawCode?: string | null): PublicStoreCode {
+  const val = String(rawCode || "").trim().toLowerCase();
+  if (val.includes("4016")) return "lancaster-4016";
+  if (val.includes("4060")) return "lancaster-4060";
+  return "52nd-st";
+}
+
 export function mapStoreLocationToId(location?: unknown): number {
   const val = String(location || "").toLowerCase();
   if (val.includes("4016")) return 2;
@@ -24,7 +34,7 @@ export async function getAgentLocations(neighborhood?: string) {
           const geo = getGeoStoreByCode(loc.store_code);
           return {
             storeId: geo?.storeId ?? 1,
-            storeCode: loc.store_code,
+            storeCode: normalizePublicStoreCode(loc.store_code),
             name: geo?.name || loc.name,
             address: `${loc.address}`,
             postalCode: geo?.postalCode || "19139",
@@ -39,7 +49,7 @@ export async function getAgentLocations(neighborhood?: string) {
         })
       : GEO_STORES.map((geo) => ({
           storeId: geo.storeId,
-          storeCode: geo.storeCode,
+          storeCode: normalizePublicStoreCode(geo.storeCode),
           name: geo.name,
           address: `${geo.streetAddress}, ${geo.addressLocality}, ${geo.addressRegion} ${geo.postalCode}`,
           postalCode: geo.postalCode,

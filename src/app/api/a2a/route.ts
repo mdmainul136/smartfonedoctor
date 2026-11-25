@@ -26,9 +26,101 @@ interface A2aRequest {
   method?: string;
   params?: {
     id?: string;
+    name?: string;
+    contextId?: string;
     message?: {
+      messageId?: string;
+      contextId?: string;
+      taskId?: string;
       parts?: A2aPart[];
     };
+  };
+}
+
+interface StoredA2aTask {
+  id: string;
+  contextId: string;
+  timestamp: string;
+  summaryText: string;
+  structuredData: unknown;
+  createdAtMs: number;
+}
+
+const TASK_STORE = new Map<string, StoredA2aTask>();
+const MAX_STORED_TASKS = 500;
+const TASK_TTL_MS = 60 * 60 * 1000;
+
+function saveTask(task: StoredA2aTask) {
+  const now = Date.now();
+  if (TASK_STORE.size >= MAX_STORED_TASKS) {
+    const cutoff = now - TASK_TTL_MS;
+    for (const [key, item] of TASK_STORE.entries()) {
+      if (item.createdAtMs < cutoff) TASK_STORE.delete(key);
+    }
+    if (TASK_STORE.size >= MAX_STORED_TASKS) {
+      const oldestKey = TASK_STORE.keys().next().value;
+      if (oldestKey) TASK_STORE.delete(oldestKey);
+    }
+  }
+  TASK_STORE.set(task.id, task);
+}
+
+function getTask(rawId: string): StoredA2aTask | null {
+  const cleanId = rawId.trim().replace(/^tasks\//i, "");
+  if (!cleanId) return null;
+  const found = TASK_STORE.get(cleanId);
+  if (!found) return null;
+  if (Date.now() - found.createdAtMs > TASK_TTL_MS) {
+    TASK_STORE.delete(cleanId);
+    return null;
+  }
+  return found;
+}
+
+function formatTaskForVersion(task: StoredA2aTask, isV1: boolean) {
+  if (isV1) {
+    return {
+      id: task.id,
+      contextId: task.contextId,
+      status: {
+        state: "TASK_STATE_COMPLETED",
+        timestamp: task.timestamp,
+        message: {
+          messageId: `${task.id}-msg`,
+          role: "ROLE_AGENT",
+          parts: [{ text: task.summaryText }],
+        },
+      },
+      artifacts: [
+        {
+          artifactId: `${task.id}-response`,
+          parts: [{ text: task.summaryText }, { data: task.structuredData }],
+        },
+      ],
+    };
+  }
+
+  return {
+    id: task.id,
+    contextId: task.contextId,
+    status: {
+      state: "completed",
+      timestamp: task.timestamp,
+      message: {
+        messageId: `${task.id}-msg`,
+        role: "agent",
+        parts: [{ kind: "text", text: task.summaryText }],
+      },
+    },
+    artifacts: [
+      {
+        artifactId: `${task.id}-response`,
+        parts: [
+          { kind: "text", text: task.summaryText },
+          { kind: "data", data: task.structuredData },
+        ],
+      },
+    ],
   };
 }
 
@@ -84,7 +176,7 @@ export async function GET() {
       protocol: "A2A",
       version: "1.0",
       agentCard: `${AGENT_BASE_URL}/.well-known/agent-card.json`,
-      supportedMethods: ["message/send", "tasks/send"],
+      supportedMethods: ["SendMessage", "GetTask", "message/send", "tasks/send", "tasks/get"],
     },
     { headers: CORS_HEADERS }
   );
@@ -95,7 +187,39 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as A2aRequest;
     const method = body?.method || "";
 
-    if (method !== "message/send" && method !== "tasks/send") {
+    const isSendV1 = method === "SendMessage";
+    const isSendV03 = method === "message/send" || method === "tasks/send";
+    const isGetV1 = method === "GetTask";
+    const isGetV03 = method === "tasks/get";
+
+    if (isGetV1 || isGetV03) {
+      const requestedId =
+        (typeof body.params?.id === "string" && body.params.id) ||
+        (typeof body.params?.name === "string" && body.params.name) ||
+        "";
+      const stored = getTask(requestedId);
+      if (!stored) {
+        return NextResponse.json(
+          {
+            jsonrpc: "2.0",
+            id: body?.id ?? null,
+            error: { code: -32001, message: `Task not found: ${requestedId || "(empty)"}` },
+          },
+          { status: 200, headers: CORS_HEADERS }
+        );
+      }
+
+      return NextResponse.json(
+        {
+          jsonrpc: "2.0",
+          id: body?.id ?? null,
+          result: formatTaskForVersion(stored, isGetV1),
+        },
+        { headers: CORS_HEADERS }
+      );
+    }
+
+    if (!isSendV1 && !isSendV03) {
       return NextResponse.json(
         {
           jsonrpc: "2.0",
@@ -114,9 +238,10 @@ export async function POST(req: NextRequest) {
       /\b(price|cost|how much|estimate|repair|fix|replace|screen|battery|hdmi|charging|water)\b/i.test(
         lower
       );
-    const isLocationAsk = /\b(location|locations|store|stores|address|hours|open|close|where|directions|52nd|lancaster|drexel|upenn|closest)\b/i.test(
-      lower
-    );
+    const isLocationAsk =
+      /\b(location|locations|store|stores|address|hours|open|close|where|directions|52nd|lancaster|drexel|upenn|closest)\b/i.test(
+        lower
+      );
 
     let summaryText = "";
     let structuredData: unknown = null;
@@ -146,27 +271,29 @@ export async function POST(req: NextRequest) {
           : `SmartFoneDoctor Philadelphia repairs iPhones, Samsung Galaxy, iPads, MacBooks, and PS5/Xbox/Switch consoles with 90-day warranties. View all services at ${AGENT_BASE_URL}/repairs or book at ${AGENT_BASE_URL}/schedule-repair.`;
     }
 
-    const taskId = body.params?.id || `sfd-task-${Date.now()}`;
+    const nowMs = Date.now();
+    const taskId =
+      body.params?.id ||
+      body.params?.message?.taskId ||
+      `sfd-task-${nowMs}-${Math.random().toString(36).slice(2, 7)}`;
+    const contextId =
+      body.params?.contextId || body.params?.message?.contextId || `sfd-ctx-${nowMs}`;
+
+    const storedTask: StoredA2aTask = {
+      id: taskId,
+      contextId,
+      timestamp: new Date(nowMs).toISOString(),
+      summaryText,
+      structuredData,
+      createdAtMs: nowMs,
+    };
+    saveTask(storedTask);
+
     return NextResponse.json(
       {
         jsonrpc: "2.0",
         id: body.id ?? null,
-        result: {
-          id: taskId,
-          status: {
-            state: "completed",
-            timestamp: new Date().toISOString(),
-          },
-          artifacts: [
-            {
-              artifactId: `${taskId}-response`,
-              parts: [
-                { kind: "text", text: summaryText },
-                { kind: "data", data: structuredData },
-              ],
-            },
-          ],
-        },
+        result: formatTaskForVersion(storedTask, isSendV1),
       },
       { headers: CORS_HEADERS }
     );

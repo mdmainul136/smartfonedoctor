@@ -7,6 +7,11 @@ import {
   mapStoreLocationToId,
   searchAgentRepairServices,
 } from "@/lib/agentData";
+import {
+  checkBookingRateLimit,
+  extractClientIp,
+  validateBookingPayload,
+} from "@/lib/agentSecurity";
 
 export const dynamic = "force-dynamic";
 
@@ -182,7 +187,7 @@ function rpcErr(id: string | number | null | undefined, code: number, message: s
   return { jsonrpc: "2.0", id: id ?? null, error: { code, message } };
 }
 
-async function executeMcpTool(name: string, args: Record<string, unknown>) {
+async function executeMcpTool(name: string, args: Record<string, unknown>, clientIp: string) {
   switch (name) {
     case "get_store_locations": {
       const neighborhood = typeof args.neighborhood === "string" ? args.neighborhood : undefined;
@@ -220,9 +225,26 @@ async function executeMcpTool(name: string, args: Record<string, unknown>) {
           isError: true,
         };
       }
+
+      const validation = validateBookingPayload({ customerName, phone, email, device, issue });
+      if (!validation.valid) {
+        return { data: { error: validation.error }, isError: true };
+      }
+
+      const rateCheck = checkBookingRateLimit(`mcp:${clientIp}`, 5, 15 * 60 * 1000);
+      if (!rateCheck.allowed) {
+        return {
+          data: {
+            error: `Too many booking requests from this IP. Please retry in ${rateCheck.retryAfterSeconds}s or call (215) 598-2090.`,
+            retryAfterSeconds: rateCheck.retryAfterSeconds,
+          },
+          isError: true,
+        };
+      }
+
       const res = await submitLeadAction({
         customerName,
-        phone,
+        phone: validation.normalizedPhone || phone,
         email,
         device,
         issue,
@@ -237,7 +259,7 @@ async function executeMcpTool(name: string, args: Record<string, unknown>) {
   }
 }
 
-async function handleJsonRpc(msg: JsonRpcRequest) {
+async function handleJsonRpc(msg: JsonRpcRequest, clientIp: string) {
   const method = msg.method || "";
   const params = msg.params || {};
 
@@ -274,7 +296,7 @@ async function handleJsonRpc(msg: JsonRpcRequest) {
       params.arguments && typeof params.arguments === "object"
         ? (params.arguments as Record<string, unknown>)
         : {};
-    const outcome = await executeMcpTool(toolName, rawArgs);
+    const outcome = await executeMcpTool(toolName, rawArgs, clientIp);
     if (!outcome) {
       return rpcErr(msg.id, -32601, `Unknown tool: ${toolName}`);
     }
@@ -313,7 +335,25 @@ export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const accept = req.headers.get("accept") || "";
+  // Per MCP Streamable HTTP spec, return 405 if a client requests an SSE stream on GET when unsupported.
+  if (accept.includes("text/event-stream")) {
+    return new NextResponse(
+      JSON.stringify({
+        error: "SSE streaming over GET is not enabled on this stateless MCP endpoint. Use POST JSON-RPC.",
+      }),
+      {
+        status: 405,
+        headers: {
+          ...CORS_HEADERS,
+          "Content-Type": "application/json; charset=utf-8",
+          Allow: "POST, OPTIONS",
+        },
+      }
+    );
+  }
+
   return NextResponse.json(
     {
       name: "smartfonedoctor-philadelphia-mcp",
@@ -330,11 +370,13 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const clientIp = extractClientIp(req.headers);
     const body: unknown = await req.json();
 
     if (Array.isArray(body)) {
-      const responses = (await Promise.all(body.map((item) => handleJsonRpc(item as JsonRpcRequest))))
-        .filter((r) => r !== null);
+      const responses = (
+        await Promise.all(body.map((item) => handleJsonRpc(item as JsonRpcRequest, clientIp)))
+      ).filter((r) => r !== null);
       if (responses.length === 0) {
         return new NextResponse(null, { status: 202, headers: CORS_HEADERS });
       }
@@ -348,7 +390,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const result = await handleJsonRpc(body as JsonRpcRequest);
+    const result = await handleJsonRpc(body as JsonRpcRequest, clientIp);
     if (result === null) {
       return new NextResponse(null, { status: 202, headers: CORS_HEADERS });
     }

@@ -2,7 +2,13 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { requireAdmin } from "@/lib/adminGuard";
+import {
+  checkBookingRateLimit,
+  extractClientIp,
+  validateBookingPayload,
+} from "@/lib/agentSecurity";
 import { Prisma, enum_leads_store, enum_leads_status, enum_leads_source } from "@prisma/client";
 import {
   extractAttributionCookies,
@@ -172,12 +178,43 @@ export async function submitLeadAction(input: CreateLeadInput): Promise<{
       return { success: false, error: "Missing required contact or device details" };
     }
 
+    const validation = validateBookingPayload({
+      customerName: input.customerName,
+      phone: input.phone,
+      email: input.email,
+      device: input.device,
+      issue: input.issue,
+    });
+    if (!validation.valid) {
+      return { success: false, error: validation.error || "Invalid booking details" };
+    }
+
+    const isAgentSource = (input.source || "").toLowerCase().includes("ai");
+    try {
+      const reqHeaders = await headers();
+      const clientIp = extractClientIp(reqHeaders);
+      const limit = isAgentSource ? 5 : 15;
+      const rateCheck = checkBookingRateLimit(
+        `lead:${isAgentSource ? "ai" : "web"}:${clientIp}`,
+        limit,
+        15 * 60 * 1000
+      );
+      if (!rateCheck.allowed) {
+        return {
+          success: false,
+          error: `Too many booking requests. Please wait ${rateCheck.retryAfterSeconds}s or call (215) 598-2090.`,
+        };
+      }
+    } catch {
+      // Proceed cleanly if headers() is unavailable outside request scope.
+    }
+
     const attribution = await extractAttributionCookies();
 
     const created = await prisma.lead.create({
       data: {
         customer_name: input.customerName.trim(),
-        phone: input.phone.trim(),
+        phone: validation.normalizedPhone || input.phone.trim(),
         email: input.email?.trim() || null,
         device: input.device.trim(),
         issue: input.issue.trim(),
