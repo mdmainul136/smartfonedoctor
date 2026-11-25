@@ -176,6 +176,13 @@ export async function GET() {
       md += `${settings.llmsCustomSections.trim()}\n\n`;
     }
 
+    // Agentic Discovery & Protocol endpoints
+    md += `## Agentic Discovery & Protocols (ARD · MCP · A2A)\n\n`;
+    md += `- [ARD Catalog Manifest](${BASE_URL}/.well-known/ard.json): Agentic Resource Discovery (v0.91) catalog listing MCP, A2A, OpenAPI, and Markdown resources.\n`;
+    md += `- [Remote MCP Server Card](${BASE_URL}/.well-known/mcp/server-card.json): Streamable HTTP Model Context Protocol server at \`${BASE_URL}/api/mcp\`.\n`;
+    md += `- [A2A v1.0 Agent Card](${BASE_URL}/.well-known/agent-card.json): Agent2Agent protocol card and JSON-RPC endpoint at \`${BASE_URL}/api/a2a\`.\n`;
+    md += `- [OpenAPI 3.1 Specification](${BASE_URL}/api/openapi.json): Machine-readable API schema for repair pricing and store locations.\n\n`;
+
     // 5. Optional Section
     md += `## Optional\n\n`;
     md += `- [Full Knowledge Base (llms-full.txt)](${BASE_URL}/llms-full.txt): Complete single-file catalog, repair prices, common issues, FAQs, and locations.\n`;
@@ -192,7 +199,7 @@ export async function GET() {
       headers: {
         "Content-Type": "text/markdown; charset=utf-8",
         "Cache-Control": "public, max-age=60, s-maxage=60, stale-while-revalidate=300",
-        "Link": `<${BASE_URL}/llms.txt>; rel="self", <${BASE_URL}/sitemap.xml>; rel="alternate"; type="application/xml"`,
+        "Link": `<${BASE_URL}/llms.txt>; rel="self", <${BASE_URL}/.well-known/ard.json>; rel="ard", <${BASE_URL}/sitemap.xml>; rel="alternate"; type="application/xml"`,
       },
     });
   } catch (error) {

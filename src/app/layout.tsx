@@ -187,6 +187,7 @@ export default async function RootLayout({
         <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16" />
         <link rel="apple-touch-icon" href={appleTouchIcon} />
         <link rel="ard" href="/.well-known/ard.json" type="application/json" />
+        <link rel="service-desc" href="/api/openapi.json" type="application/openapi+json" />
         {googleVerification && (
           <meta name="google-site-verification" content={googleVerification} />
         )}

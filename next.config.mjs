@@ -40,7 +40,7 @@ const nextConfig = {
           },
           {
             key: 'Link',
-            value: '</.well-known/ard.json>; rel="ard"',
+            value: '</.well-known/ard.json>; rel="ard", </api/openapi.json>; rel="service-desc"; type="application/openapi+json", </llms.txt>; rel="describedby"; type="text/markdown"',
           },
         ],
       },
@@ -51,6 +51,18 @@ const nextConfig = {
       {
         source: '/.well-known/ard.json',
         destination: '/api/ard',
+      },
+      {
+        source: '/.well-known/mcp/server-card.json',
+        destination: '/api/mcp-server-card',
+      },
+      {
+        source: '/.well-known/agent-card.json',
+        destination: '/api/agent-card',
+      },
+      {
+        source: '/.well-known/agent.json',
+        destination: '/api/agent-card',
       },
       {
         // "/:path*.md" does not capture the path, so every .md URL served the homepage.

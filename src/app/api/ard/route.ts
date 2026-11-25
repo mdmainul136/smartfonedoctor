@@ -20,17 +20,42 @@ export async function GET() {
     specVersion: "0.91",
     entries: [
       {
+        identifier: `urn:air:${DOMAIN_HOST}:mcp:repair-concierge`,
+        displayName: "SmartFoneDoctor Philadelphia Remote MCP Server",
+        type: "application/mcp-server-card+json",
+        version: "1.0.0",
+        url: `${BASE_URL}/.well-known/mcp/server-card.json`,
+        description:
+          "Streamable HTTP Model Context Protocol server exposing live store lookup, repair pricing search, ticket status checking, warranty policy, and appointment booking tools.",
+        representativeQueries: [
+          "connect to SmartFoneDoctor MCP tools for Philadelphia device repair",
+          "book an iPhone or PS5 repair via SmartFoneDoctor MCP",
+        ],
+      },
+      {
+        identifier: `urn:air:${DOMAIN_HOST}:agent:repair-concierge`,
+        displayName: "SmartFoneDoctor Philadelphia A2A Repair Concierge Agent",
+        type: "application/a2a-agent-card+json",
+        version: "1.0.0",
+        url: `${BASE_URL}/.well-known/agent-card.json`,
+        description:
+          "Agent2Agent (A2A v1.0) concierge answering natural-language repair pricing, Philadelphia location, turnaround, and 90-day warranty requests.",
+        representativeQueries: [
+          "talk to SmartFoneDoctor agent about PS5 HDMI repair turnaround",
+          "ask SmartFoneDoctor Philadelphia agent for store hours near UPenn",
+        ],
+      },
+      {
         identifier: `urn:air:${DOMAIN_HOST}:api:repair-services`,
         displayName: "SmartFoneDoctor Philadelphia Repair & Locations API",
         type: "application/openapi+json",
         version: "1.0.0",
         url: `${BASE_URL}/api/openapi.json`,
         description:
-          "Search smartphone, tablet, MacBook, and console repair services, pricing estimates, and Philadelphia walk-in store locations.",
+          "OpenAPI 3.1.0 specification for querying smartphone, tablet, MacBook, and console repair estimates and Philadelphia walk-in store locations.",
         representativeQueries: [
           "find iPhone screen repair prices in Philadelphia",
           "where is SmartFoneDoctor located in West Philadelphia",
-          "PS5 HDMI port repair near University City",
         ],
       },
       {

@@ -134,6 +134,34 @@ export default function WebMcpProvider() {
         },
       },
       {
+        name: "get_warranty_and_walkin_policy",
+        description:
+          "Get SmartFoneDoctor Philadelphia 90-day warranty terms, free diagnostic policy, walk-in hours, and zero data erasure guarantee.",
+        inputSchema: {
+          type: "object",
+          properties: {},
+          additionalProperties: false,
+        },
+        annotations: { readOnlyHint: true },
+        execute: async () => ({
+          success: true,
+          brand: "SmartFoneDoctor Philadelphia",
+          warrantyDays: 90,
+          warrantyScope:
+            "Parts and labor coverage on all completed display, battery, charging port, and micro-soldering repairs.",
+          diagnosticsFee: "$0 (Free bench diagnostics before work begins)",
+          walkInsWelcome: true,
+          standardTurnaround:
+            "20 to 45 minutes for standard screens and batteries; same-day to 24h for logic-board micro-soldering.",
+          dataPrivacy:
+            "Devices are repaired at hardware level with zero factory resets or customer data erasure.",
+          hours: "Mon–Sat: 10:00 AM – 7:00 PM · Sun: Closed",
+          phone: "+1 (215) 598-2090",
+          warrantyUrl: "/warranty",
+          bookingUrl: "/schedule-repair",
+        }),
+      },
+      {
         name: "schedule_repair_appointment",
         description:
           "Submit a new device repair booking at SmartFoneDoctor Philadelphia and receive a confirmation ticket number.",
