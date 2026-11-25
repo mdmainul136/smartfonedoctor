@@ -2,8 +2,9 @@ import type * as React from "react";
 
 export interface WebMcpToolSchemaProperty {
   type: "string" | "number" | "integer" | "boolean" | "object" | "array";
-  description: string;
+  description?: string;
   enum?: string[];
+  items?: Record<string, unknown>;
 }
 
 export interface WebMcpInputSchema {
@@ -17,15 +18,17 @@ export interface WebMcpToolDefinition {
   name: string;
   description: string;
   inputSchema: WebMcpInputSchema;
+  outputSchema?: WebMcpInputSchema;
   annotations?: {
     readOnlyHint?: boolean;
+    untrustedContentHint?: boolean;
   };
   execute: (input: Record<string, unknown>) => Promise<unknown>;
 }
 
 export interface ModelContextApi {
-  registerTool: (tool: WebMcpToolDefinition) => void;
-  unregisterTool?: (name: string) => void;
+  registerTool: (tool: WebMcpToolDefinition) => void | Promise<void>;
+  unregisterTool?: (name: string) => void | Promise<void>;
 }
 
 declare global {

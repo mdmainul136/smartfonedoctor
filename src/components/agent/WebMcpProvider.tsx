@@ -18,9 +18,10 @@ function mapStoreLocationToId(location?: unknown): number {
  */
 export default function WebMcpProvider() {
   useEffect(() => {
+    // Chrome WebMCP (Nov 2026 spec) exposes `document.modelContext` primarily, with `navigator.modelContext` fallback.
     const mc =
-      (typeof navigator !== "undefined" ? navigator.modelContext : undefined) ??
-      (typeof document !== "undefined" ? document.modelContext : undefined);
+      (typeof document !== "undefined" ? document.modelContext : undefined) ??
+      (typeof navigator !== "undefined" ? navigator.modelContext : undefined);
 
     if (!mc || typeof mc.registerTool !== "function") {
       return;
@@ -41,6 +42,15 @@ export default function WebMcpProvider() {
             },
           },
           additionalProperties: false,
+        },
+        outputSchema: {
+          type: "object",
+          properties: {
+            success: { type: "boolean", description: "Whether the location lookup succeeded." },
+            city: { type: "string", description: "City and state served." },
+            locations: { type: "array", description: "Matched Philadelphia walk-in repair store branches." },
+          },
+          required: ["success", "locations"],
         },
         annotations: { readOnlyHint: true },
         execute: async (input) => {
@@ -88,6 +98,16 @@ export default function WebMcpProvider() {
           },
           required: ["device"],
           additionalProperties: false,
+        },
+        outputSchema: {
+          type: "object",
+          properties: {
+            success: { type: "boolean", description: "Whether the catalog search succeeded." },
+            count: { type: "integer", description: "Number of matching repair services returned." },
+            services: { type: "array", description: "List of repair services with estimated price, turnaround, and URLs." },
+            bookingUrl: { type: "string", description: "Direct URL to schedule a repair online." },
+          },
+          required: ["success", "services"],
         },
         annotations: { readOnlyHint: true },
         execute: async (input) => {
@@ -229,21 +249,32 @@ export default function WebMcpProvider() {
       },
     ];
 
+    let cancelled = false;
     const registeredNames: string[] = [];
+
     for (const tool of tools) {
       try {
-        mc.registerTool(tool);
+        const result = mc.registerTool(tool);
         registeredNames.push(tool.name);
+        if (result && typeof (result as Promise<void>).catch === "function") {
+          void (result as Promise<void>).catch((err) => {
+            if (!cancelled) console.warn(`[WebMCP] Tool "${tool.name}" rejected:`, err);
+          });
+        }
       } catch (err) {
         console.warn(`[WebMCP] Skipping tool "${tool.name}":`, err);
       }
     }
 
     return () => {
+      cancelled = true;
       if (typeof mc.unregisterTool !== "function") return;
       for (const name of registeredNames) {
         try {
-          mc.unregisterTool(name);
+          const res = mc.unregisterTool(name);
+          if (res && typeof (res as Promise<void>).catch === "function") {
+            void (res as Promise<void>).catch(() => undefined);
+          }
         } catch {
           // Ignore cleanup errors if context was already torn down.
         }

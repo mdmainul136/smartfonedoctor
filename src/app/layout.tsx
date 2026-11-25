@@ -167,6 +167,10 @@ export default async function RootLayout({
   const settings = await getSeoSettings();
   const faviconUrl = settings?.faviconUrl || "/favicon.ico";
   const appleTouchIcon = settings?.appleTouchIcon || "/apple-touch-icon.png";
+  const webMcpOriginTrialToken =
+    process.env.WEBMCP_ORIGIN_TRIAL_TOKEN?.trim() ||
+    process.env.NEXT_PUBLIC_WEBMCP_ORIGIN_TRIAL_TOKEN?.trim() ||
+    "";
   const {
     googleVerification,
     bingVerification,
@@ -188,6 +192,9 @@ export default async function RootLayout({
         <link rel="apple-touch-icon" href={appleTouchIcon} />
         <link rel="ard" href="/.well-known/ard.json" type="application/json" />
         <link rel="service-desc" href="/api/openapi.json" type="application/openapi+json" />
+        {webMcpOriginTrialToken && (
+          <meta httpEquiv="origin-trial" content={webMcpOriginTrialToken} />
+        )}
         {googleVerification && (
           <meta name="google-site-verification" content={googleVerification} />
         )}
